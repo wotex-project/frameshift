@@ -97,11 +97,13 @@ if ! kill -0 "$release_pid" 2>/dev/null; then
   exit 1
 fi
 
-FRAMESHIFT_SOCKET_PATH="$runtime_root/data/core.sock" \
-FRAMESHIFT_IPC_TOKEN="$ipc_token" \
-  swift run \
-    --package-path "$repository_root/apps/macos" \
-    frameshift-ipc-probe
+if [ "$(uname -s)" = Darwin ]; then
+  FRAMESHIFT_SOCKET_PATH="$runtime_root/data/core.sock" \
+  FRAMESHIFT_IPC_TOKEN="$ipc_token" \
+    swift run \
+      --package-path "$repository_root/apps/macos" \
+      frameshift-ipc-probe
+fi
 
 kill "$release_pid"
 wait "$release_pid"
