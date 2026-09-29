@@ -155,12 +155,22 @@ covers all four application roots after these moves.
 
 ## B server-foundation slice, 2026-09-24
 
-The implemented dependency lock selects Phoenix 1.8.14, Ash 3.33.10,
+The 2026-09-24 dependency lock selected Phoenix 1.8.14, Ash 3.33.10,
 AshPostgres 2.13.1, phoenix-assets 1.1.1 and Beamlens 0.3.1. Frontend versions
 are exact in `apps/build-platform/assets/package.json`. PostgreSQL 18.6 uses
 the same image digest in local Compose and CI. These versions compiled locally
 on the repository's pinned Erlang/Elixir toolchain; CI execution is a separate
 observation.
+
+On 2026-09-28, Ash was raised to 3.33.11 after
+[EEF-CVE-2026-93477](https://osv.dev/vulnerability/EEF-CVE-2026-93477)
+identified a bulk action argument vulnerability in earlier versions. The
+dependency floor and lock now select that patched release. Mint was raised to
+1.11.0 in the core and platform locks after
+[EEF-CVE-2026-91043](https://osv.dev/vulnerability/EEF-CVE-2026-91043),
+[EEF-CVE-2026-92103](https://osv.dev/vulnerability/EEF-CVE-2026-92103), and
+[EEF-CVE-2026-94194](https://osv.dev/vulnerability/EEF-CVE-2026-94194)
+reported HTTP response handling vulnerabilities in earlier releases.
 
 Compilation exposed two required dependencies: Ash consumes StreamData at
 runtime, and Beamlens' Puck backend references Req even though its upstream

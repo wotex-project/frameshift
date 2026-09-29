@@ -49,7 +49,7 @@ defmodule FrameshiftPlatform.MixProject do
       {:rustler, "0.38.0", runtime: false, override: true},
       {:phoenix, "~> 1.8.14"},
       {:phoenix_assets, "~> 1.1.1"},
-      {:ash, "~> 3.33.9"},
+      {:ash, "~> 3.33.11"},
       {:ash_postgres,
        git: "https://github.com/futhr/ash_postgres.git",
        ref: "528177429ab9bd72ab6ee7bfdf278f94c9fd8252",

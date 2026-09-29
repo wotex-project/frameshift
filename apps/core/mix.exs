@@ -54,7 +54,7 @@ defmodule FrameshiftCore.MixProject do
       {:telemetry_metrics, "~> 1.1"},
       {:jsv, "~> 0.22.0"},
       {:rfc8785, "~> 1.0.0"},
-      {:mint, "~> 1.10"},
+      {:mint, "~> 1.11.0"},
       {:wotex,
        git: "https://github.com/wotex-project/wotex.git",
        ref: @wotex_ref,
