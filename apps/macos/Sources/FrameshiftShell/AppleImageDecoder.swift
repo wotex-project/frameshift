@@ -128,7 +128,9 @@ package enum AppleImageDecoder {
   private static func canonicalRGBA(image: CGImage, width: Int, height: Int) throws -> Data {
     let bytesPerRow = width * 4
     var rgba = Data(count: bytesPerRow * height)
-    let colorSpace = CGColorSpace(name: CGColorSpace.sRGB)
+    guard let colorSpace = CGColorSpace(name: CGColorSpace.sRGB) else {
+      throw CoreClientError.importUnreadable
+    }
     let bitmapInfo = CGBitmapInfo(
       rawValue: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.premultipliedLast.rawValue
     )
@@ -142,7 +144,7 @@ package enum AppleImageDecoder {
           bitsPerComponent: 8,
           bytesPerRow: bytesPerRow,
           space: colorSpace,
-          bitmapInfo: bitmapInfo
+          bitmapInfo: bitmapInfo.rawValue
         )
       else {
         return false
