@@ -559,12 +559,15 @@ defmodule Frameshift.ContainerReceiverTest do
          extra_env \\ %{}
        ) do
     name = "frameshift-receiver-#{System.unique_integer([:positive])}"
+    %{uid: uid, gid: gid} = File.stat!(context.root)
 
     args = [
       "run",
       "--rm",
       "--name",
       name,
+      "--user",
+      "#{uid}:#{gid}",
       "--init",
       "--read-only",
       "--cap-drop",
