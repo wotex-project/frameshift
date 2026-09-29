@@ -9,16 +9,16 @@ mise exec -- gleam deps download
 cmp build/packages/gleam_json/LICENCE priv/licenses/gleam_json.txt
 cmp build/packages/gleam_stdlib/LICENCE ../decision-kernel/priv/licenses/gleam_stdlib.txt
 
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix deps.get --check-locked
+mise exec -- mix deps.get --check-locked
 mise exec -- gleam format --check src test
 mise exec -- gleam build --target erlang --warnings-as-errors
 mise exec -- gleam build --target javascript --warnings-as-errors
 mise exec -- gleam test --target erlang
 mise exec -- gleam test --target javascript
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix format --check-formatted
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix compile --warnings-as-errors
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix test
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix credo --strict
+mise exec -- mix format --check-formatted
+mise exec -- mix compile --warnings-as-errors
+mise exec -- mix test
+mise exec -- mix credo --strict
 mise exec -- node --check js/profile.mjs
 mise exec -- node --check js/build.mjs
 mise exec -- node --check js/mapping.mjs
@@ -35,7 +35,7 @@ mise exec -- gleam run --target erlang --module profile_parity --no-print-progre
 mise exec -- gleam run --target javascript --module profile_parity --no-print-progress > "$parity_directory/javascript.jsonl"
 cmp "$parity_directory/erlang.jsonl" "$parity_directory/javascript.jsonl"
 test "$(wc -l < "$parity_directory/erlang.jsonl" | tr -d ' ')" = 256
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix run --no-start --no-compile \
+mise exec -- mix run --no-start --no-compile \
   checks/identity_parity.exs "$parity_directory/erlang.jsonl" > "$parity_directory/erlang.hashes"
 mise exec -- node test/identity_parity.mjs "$parity_directory/javascript.jsonl" > "$parity_directory/javascript.hashes"
 cmp "$parity_directory/erlang.hashes" "$parity_directory/javascript.hashes"
@@ -45,7 +45,7 @@ mise exec -- gleam run --target erlang --module assembly_parity --no-print-progr
 mise exec -- gleam run --target javascript --module assembly_parity --no-print-progress > "$parity_directory/assembly.javascript.jsonl"
 cmp "$parity_directory/assembly.erlang.jsonl" "$parity_directory/assembly.javascript.jsonl"
 test "$(wc -l < "$parity_directory/assembly.erlang.jsonl" | tr -d ' ')" = 256
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix run --no-start --no-compile \
+mise exec -- mix run --no-start --no-compile \
   checks/identity_parity.exs "$parity_directory/assembly.erlang.jsonl" assembly > "$parity_directory/assembly.erlang.hashes"
 mise exec -- node test/identity_parity.mjs "$parity_directory/assembly.javascript.jsonl" assembly > "$parity_directory/assembly.javascript.hashes"
 cmp "$parity_directory/assembly.erlang.hashes" "$parity_directory/assembly.javascript.hashes"
@@ -55,7 +55,7 @@ mise exec -- gleam run --target erlang --module mapping_parity --no-print-progre
 mise exec -- gleam run --target javascript --module mapping_parity --no-print-progress > "$parity_directory/mapping.javascript.jsonl"
 cmp "$parity_directory/mapping.erlang.jsonl" "$parity_directory/mapping.javascript.jsonl"
 test "$(wc -l < "$parity_directory/mapping.erlang.jsonl" | tr -d ' ')" = 256
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix run --no-start --no-compile \
+mise exec -- mix run --no-start --no-compile \
   checks/identity_parity.exs "$parity_directory/mapping.erlang.jsonl" mapping > "$parity_directory/mapping.erlang.hashes"
 mise exec -- node test/identity_parity.mjs "$parity_directory/mapping.javascript.jsonl" mapping > "$parity_directory/mapping.javascript.hashes"
 cmp "$parity_directory/mapping.erlang.hashes" "$parity_directory/mapping.javascript.hashes"
@@ -65,7 +65,7 @@ mise exec -- gleam run --target erlang --module layout_parity --no-print-progres
 mise exec -- gleam run --target javascript --module layout_parity --no-print-progress > "$parity_directory/layout.javascript.jsonl"
 cmp "$parity_directory/layout.erlang.jsonl" "$parity_directory/layout.javascript.jsonl"
 test "$(wc -l < "$parity_directory/layout.erlang.jsonl" | tr -d ' ')" = 256
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix run --no-start --no-compile \
+mise exec -- mix run --no-start --no-compile \
   checks/identity_parity.exs "$parity_directory/layout.erlang.jsonl" layout > "$parity_directory/layout.erlang.hashes"
 mise exec -- node test/identity_parity.mjs "$parity_directory/layout.javascript.jsonl" layout > "$parity_directory/layout.javascript.hashes"
 cmp "$parity_directory/layout.erlang.hashes" "$parity_directory/layout.javascript.hashes"
@@ -150,13 +150,13 @@ mise exec -- node --check checks/artifact-oracle.mjs
 mise exec -- node checks/artifact-oracle.mjs "$parity_directory/artifact.erlang.jsonl"
 
 cat "$repository_root"/data/physical/profiles/*.json > "$parity_directory/catalog.jsonl"
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix run --no-start --no-compile \
+mise exec -- mix run --no-start --no-compile \
   checks/identity_parity.exs "$parity_directory/catalog.jsonl" > "$parity_directory/catalog.erlang.hashes"
 mise exec -- node test/identity_parity.mjs "$parity_directory/catalog.jsonl" > "$parity_directory/catalog.javascript.hashes"
 cmp "$parity_directory/catalog.erlang.hashes" "$parity_directory/catalog.javascript.hashes"
 echo "Sourced candidate profiles and hashes match on BEAM and JavaScript"
 
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES MIX_ENV=prod mix release --overwrite --path "$parity_directory/release" >/dev/null
+mise exec -- env MIX_ENV=prod mix release --overwrite --path "$parity_directory/release" >/dev/null
 "$parity_directory/release/bin/frameshift_build" eval '
 {:ok, _} = FrameshiftBuild.profile_identity(File.read!("test/fixtures/profile-v1.json"))
 {:ok, _} = FrameshiftBuild.build_identity(File.read!("test/fixtures/assembly-v1.json"))

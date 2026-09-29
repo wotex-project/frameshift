@@ -20,7 +20,7 @@ promtool check rules rules.yml
 promtool test rules rules.test.yml
 (
   cd "$repository_root/apps/build-platform"
-  mise exec -- env -u MIX_HOME -u MIX_ARCHIVES MIX_ENV=test \
+  mise exec -- env MIX_ENV=test \
     mix run --no-start --no-compile ops/metric_fixture.exs
 ) >"$metric_fixture"
 promtool check metrics <"$metric_fixture"

@@ -17,7 +17,7 @@ renderer_path="$renderer_root/zig-out/bin/frameshift-raster"
 
 (
   cd "$core_root"
-  mise exec -- env -u MIX_HOME -u MIX_ARCHIVES MIX_ENV=prod mix release --overwrite
+  mise exec -- env MIX_ENV=prod mix release --overwrite
 )
 
 swift build \

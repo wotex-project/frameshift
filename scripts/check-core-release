@@ -23,7 +23,7 @@ trap cleanup EXIT HUP INT TERM
 
 (
   cd "$core_root"
-  mise exec -- env -u MIX_HOME -u MIX_ARCHIVES MIX_ENV=prod mix release --overwrite
+  mise exec -- env MIX_ENV=prod mix release --overwrite
 )
 
 physical_result=$(

@@ -85,7 +85,7 @@ qualify an installed Linux service or its group permissions.
 Run the complete core check from this directory:
 
 ```sh
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix check
+mise exec -- mix check
 ```
 
 `mix check` runs the locked dependency check, unused dependency check,

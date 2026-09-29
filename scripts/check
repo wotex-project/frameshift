@@ -60,11 +60,11 @@ check_platform() {
 
   (
     cd "$repository_root/apps/build-platform"
-    mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix hex.audit
-    mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix check
-    mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix phoenix_assets.gen --check
-    mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix phoenix_assets.doctor --production
-    mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix ash_postgres.generate_migrations --check
+    mise exec -- mix hex.audit
+    mise exec -- mix check
+    mise exec -- mix phoenix_assets.gen --check
+    mise exec -- mix phoenix_assets.doctor --production
+    mise exec -- mix ash_postgres.generate_migrations --check
   )
 }
 
@@ -113,7 +113,7 @@ check_core() {
 
   (
     cd "$repository_root/apps/core"
-    mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix check
+    mise exec -- mix check
   )
 
   "$repository_root/scripts/check-core-release"
@@ -174,8 +174,7 @@ check_container() {
 
   (
     cd "$repository_root/apps/core"
-    mise exec -- env -u MIX_HOME -u MIX_ARCHIVES \
-      FRAMESHIFT_CONTAINER_TESTS=1 \
+    mise exec -- env FRAMESHIFT_CONTAINER_TESTS=1 \
       mix test test/frameshift/container_receiver_test.exs
   )
 }

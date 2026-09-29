@@ -56,7 +56,7 @@ esac
 
 (
   cd "$repository_root/apps/core"
-  mise exec -- env -u MIX_HOME -u MIX_ARCHIVES \
+  mise exec -- env \
     FRAMESHIFT_KEYCHAIN_PROBE_REFERENCE="$reference" \
     FRAMESHIFT_CREDENTIAL_SOCKET="$credential_socket" \
     FRAMESHIFT_IPC_TOKEN="$ipc_token" \

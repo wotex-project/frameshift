@@ -23,14 +23,14 @@ From this directory:
 
 ```sh
 docker compose -p frameshift-platform up -d --wait
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix deps.get --check-locked
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix ecto.setup
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix phoenix_assets.gen
+mise exec -- mix deps.get --check-locked
+mise exec -- mix ecto.setup
+mise exec -- mix phoenix_assets.gen
 cd assets
 mise exec -- npm ci
 mise exec -- npm run build
 cd ..
-mise exec -- env -u MIX_HOME -u MIX_ARCHIVES mix phx.server
+mise exec -- mix phx.server
 ```
 
 Open `http://localhost:4080`. The database fixture binds only to loopback port
