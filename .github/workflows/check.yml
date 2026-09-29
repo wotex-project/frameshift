@@ -98,6 +98,9 @@ jobs:
           version: 2026.9.11
       - name: Report Swift toolchain
         run: swift --version
+      - name: Install Elixir dependencies
+        working-directory: apps/core
+        run: mix deps.get --check-locked
       - name: Check Swift shell
         run: ./scripts/check macos
 
