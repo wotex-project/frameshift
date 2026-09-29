@@ -98,13 +98,13 @@ FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH="$runtime_root/data/d.sock" \
   "$app_bundle/Contents/MacOS/frameshiftctl" diagnostics health \
   >"$runtime_root/diagnostics.json"
 
-if ! rg -q '"available" : true|"available": true' "$runtime_root/diagnostics.json"; then
+if ! grep -Eq '"available"[[:space:]]*:[[:space:]]*true' "$runtime_root/diagnostics.json"; then
   echo "packaged diagnostics CLI did not report a running collector" >&2
   exit 1
 fi
 
-if ! rg -q '"metricPageBudgetBytes"[[:space:]]*:[[:space:]]*33554432' "$runtime_root/diagnostics.json" || \
-   ! rg -q '"metricAllocatedBytes"[[:space:]]*:[[:space:]]*[0-9]+' "$runtime_root/diagnostics.json"; then
+if ! grep -Eq '"metricPageBudgetBytes"[[:space:]]*:[[:space:]]*33554432' "$runtime_root/diagnostics.json" || \
+   ! grep -Eq '"metricAllocatedBytes"[[:space:]]*:[[:space:]]*[0-9]+' "$runtime_root/diagnostics.json"; then
   echo "packaged diagnostics CLI did not report the metric page budget" >&2
   exit 1
 fi
@@ -113,8 +113,8 @@ FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH="$runtime_root/data/d.sock" \
   "$app_bundle/Contents/MacOS/frameshiftctl" diagnostics metrics --limit 2 \
   >"$runtime_root/metrics.json"
 
-if ! rg -q '"catalog"' "$runtime_root/metrics.json" || \
-   ! rg -q '"entries"' "$runtime_root/metrics.json"; then
+if ! grep -Eq '"catalog"' "$runtime_root/metrics.json" || \
+   ! grep -Eq '"entries"' "$runtime_root/metrics.json"; then
   echo "packaged diagnostics CLI did not return a metric page and catalog" >&2
   exit 1
 fi
@@ -123,7 +123,7 @@ FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH="$runtime_root/data/d.sock" \
   "$app_bundle/Contents/MacOS/frameshiftctl" diagnostics audit --limit 2 \
   >"$runtime_root/audit.json"
 
-if ! rg -q '"entries"' "$runtime_root/audit.json"; then
+if ! grep -Eq '"entries"' "$runtime_root/audit.json"; then
   echo "packaged diagnostics CLI did not return an audit page" >&2
   exit 1
 fi
