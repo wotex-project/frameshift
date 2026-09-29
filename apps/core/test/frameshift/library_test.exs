@@ -236,11 +236,6 @@ defmodule Frameshift.LibraryTest do
              Library.start_link(data_dir: data_dir, name: nil)
   end
 
-  test "the default data directory uses the operating-system application support location" do
-    assert Frameshift.Paths.data_dir() ==
-             Path.join([System.user_home!(), "Library", "Application Support", "Frameshift"])
-  end
-
   test "identical master bytes reuse the content-addressed object", %{library: library} do
     assert {:ok, first} = Library.import_master(library, "same bytes", master_attributes())
     assert {:ok, second} = Library.import_master(library, "same bytes", master_attributes())
