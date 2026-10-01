@@ -1,7 +1,10 @@
 <script lang="ts">
 import "../app.css"
+import AdaptiveContent from "$lib/composition/AdaptiveContent.svelte"
 
 let { children } = $props()
 </script>
 
-{@render children()}
+<AdaptiveContent>
+  {@render children()}
+</AdaptiveContent>

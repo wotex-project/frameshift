@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite --host 127.0.0.1",
     "build": "vite build",
-    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json && npm run test:layout",
+    "test:layout": "node --experimental-strip-types --test src/lib/composition/layout-profile.test.ts",
     "lint": "biome check . && phoenix-assets-lint-svelte && phoenix-assets-lint-tailwind"
   },
   "devDependencies": {
@@ -17,6 +18,7 @@
     "@sveltejs/kit": "2.70.3",
     "@sveltejs/vite-plugin-svelte": "7.3.1",
     "@tailwindcss/vite": "4.3.3",
+    "@types/node": "26.6.3",
     "svelte": "5.57.1",
     "svelte-check": "4.7.6",
     "tailwindcss": "4.3.3",

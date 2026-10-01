@@ -9,16 +9,46 @@
   --font-sans: "Avenir Next", "Segoe UI", sans-serif;
 }
 
+:root {
+  --fs-ink: #172329;
+  --fs-paper: #f3f2ed;
+  --fs-surface: #faf9f5;
+  --fs-muted: #606d73;
+  --fs-line: #d8ddda;
+  --fs-line-strong: #b7c0bc;
+  --fs-accent: #14644f;
+  --fs-danger: #8f3e37;
+  --fs-control-radius: 0.3rem;
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  font-synthesis: none;
+  color-scheme: light;
+}
+
+html {
+  background: var(--fs-paper);
+}
+
 body {
   margin: 0;
-  background: var(--color-paper);
-  color: var(--color-ink);
+  background: var(--fs-paper);
+  color: var(--fs-ink);
 }
+
+.adaptive-content {
+  min-height: 100vh;
+  container: frameshift-content / inline-size;
+}
+
 a {
-  color: var(--color-accent);
+  color: var(--fs-accent);
   text-underline-offset: 0.2em;
 }
+
 :focus-visible {
-  outline: 3px solid var(--color-accent);
-  outline-offset: 4px;
+  outline: 3px solid var(--fs-accent);
+  outline-offset: 3px;
+}
+
+::selection {
+  background: #c8dfd7;
 }
