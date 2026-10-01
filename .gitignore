@@ -37,3 +37,6 @@
 
 # Local runtime data
 /var/
+
+# Local agent client state
+/.claude/
