@@ -125,8 +125,10 @@ them. Optional service requirement 14 applies only to an enabled service profile
 7. Agents verify and atomically retain assets, execute still playlists,
    distinguish desired/current state, recover from interruption and run signed
    rollback-capable firmware.
-8. The compact UI passes keyboard/VoiceOver scenarios and never conflates
-   accepted, transferred, refreshing and displayed states.
+8. The native UI passes keyboard/VoiceOver and accessibility-preference
+   scenarios across compact, focused and Settings modes, preserves selected
+   still-artwork task state between them, and never conflates accepted,
+   transferred, refreshing and displayed states.
 9. Versioned conformance evidence covers value/schema, runtime, binding, live
    transport, packaged application, firmware, hardware, security, lifecycle and
    upgrade/recovery profiles at their exact revisions.

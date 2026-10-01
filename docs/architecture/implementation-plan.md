@@ -142,13 +142,18 @@ Conjunct assembly viewer is separate from this artwork renderer.
   menu-bar icon, and compact branded dropdown header with an accessible Quit
   control;
 - native translucent dropdown backdrop and a bounded scrolling artwork list;
+- task-first compact, focused and Settings presentation modes that preserve one
+  selected-frame, still-artwork, draft, focus and delivery-state envelope
+  without browser breakpoint logic;
 - target selection, instruction/import, library search, result cards;
 - regenerate, pin, remove, queue/send, and concise status;
 - Keychain, Vision labels/feature prints, notifications, accessibility;
 - Settings and `SMAppService` opt-in background lifecycle.
 
-**Exit:** menu-bar acceptance scenarios pass with keyboard/VoiceOver and with no
-AI provider configured.
+**Exit:** menu-bar acceptance scenarios pass at the specified native popover and
+window fixtures with keyboard/VoiceOver and macOS accessibility preferences,
+with no AI provider configured and no change to the selected still or delivery
+meaning across presentation modes.
 
 ### H4 — AI adapters
 

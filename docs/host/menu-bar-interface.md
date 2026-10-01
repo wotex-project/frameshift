@@ -80,6 +80,42 @@ text contrast.
 
 The drawing is structural, not a visual-style prescription.
 
+### Task-first native composition
+
+Compose the shell around the current task, not a dashboard or browser device
+class. The compact menu-bar popover covers selecting a target, choosing or
+describing one still, sending or queueing it, and reading its concise delivery
+state. Artwork comparison, playlist editing and recovery that need persistent
+space open a focused native sheet or window. Frame management, provider and
+privacy configuration, storage, accessibility and diagnostics remain in the
+resizable Settings scene. Do not translate CSS breakpoints or web container
+profiles into SwiftUI width checks.
+
+Each presentation carries one state envelope: selected frame and advertised
+capability revision; master, variant, rendered artifact and display-profile
+identity; current library selection, search, draft instruction, focus and
+playlist order; source/provider and cloud-destination disclosure; command and
+delivery intent identity; and queued, transferred, refreshing, displayed,
+failed, cancelled or outcome-unknown state. Opening a larger surface preserves
+that envelope. Dismissing or resizing a surface cannot reinterpret a send,
+discard an acknowledged draft or describe transferred bytes as displayed.
+
+The compact popover must not hide the selected target, still-artwork identity,
+provider destination, required confirmation, current failure or relevant
+recovery action. Artwork cards remain appropriate because each result is an
+independently selectable still. Other sections do not become cards by default,
+and Frameshift does not add a dashboard unless a recurring monitoring decision
+requires one. No presentation mode adds video, motion, audio or streaming
+controls to the artwork path.
+
+Native material and accessibility settings apply in every mode. Reduce
+Transparency may replace translucent material with an opaque system result;
+Increase Contrast, Reduce Motion, text scaling, Full Keyboard Access and
+VoiceOver must preserve hierarchy, focus order and status meaning. Evidence
+covers the compact popover at 360 and 420 points and the resizable Settings or
+focused window at its admitted minimum and representative expanded size. These
+are native layout fixtures, not a CSS breakpoint system.
+
 ### Target row
 
 The first row selects a paired frame or an explicitly configured offline render
@@ -255,3 +291,9 @@ Settings contains:
    relaunch the menu-bar agent without losing durable artwork.
 7. Understand whether bytes are queued, transferred, refreshing, or physically
    displayed from the compact status alone.
+8. Move from the compact popover to a focused or Settings window and back while
+   preserving the exact selected frame, artwork, instruction draft, focus
+   return, command identity and delivery state. Exercise 360- and 420-point
+   popovers plus admitted minimum and expanded window sizes with VoiceOver,
+   Full Keyboard Access, increased text size, Increase Contrast and Reduce
+   Transparency.
