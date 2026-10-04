@@ -5,7 +5,7 @@ import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { cohort, digest, verifyBundle } from './artifacts.mjs';
+import { cohort, digest, inventory, verifyBundle } from './artifacts.mjs';
 
 const repository = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const [bundleArgument, expectedDigest] = process.argv.slice(2);
@@ -166,14 +166,14 @@ end
   assert.deepEqual(JSON.parse(readFileSync(join(work, 'elixir-report.json'), 'utf8')),
     JSON.parse(readFileSync(join(work, 'node-report.json'), 'utf8')), 'port/WASM original responses differ');
   const browserResult = await browser();
-  const evidence = join(sourceBundle, '..', `${sourceBundle.split(sep).at(-1)}-consumer`);
-  mkdirSync(evidence);
-  for (const name of ['elixir-report.json', 'node-report.json', 'browser-report.json',
+  const evidence = mkdtempSync(join(sourceBundle, '..', `${sourceBundle.split(sep).at(-1)}-consumer-`));
+  for (const name of ['elixir-report.json', 'node-report.json', 'browser-report.json', 'frame-profile-probe.json',
     'configuration.json', 'wrong-contract.json', 'fixtures']) cpSync(join(work, name), join(evidence, name), { recursive: true });
   const output = join(evidence, 'report.json');
   const report = { version: 'frameshift.conjunct-consumer.v1', cohort_revision: cohort.revision,
     manifest_digest: expectedDigest, target: manifest.target, browser: browserResult,
     elixir_tests: 3, semantic_qualification: false,
+    checker_files: inventory(fileURLToPath(new URL('.', import.meta.url))),
     responses_digest: digest(readFileSync(join(work, 'elixir-report.json'))) };
   writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
   console.log(`Staged Elixir/Node/browser consumers pass: ${output}`);

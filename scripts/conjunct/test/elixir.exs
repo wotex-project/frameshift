@@ -96,12 +96,38 @@ defmodule Frameshift.ConjunctConsumerTest do
              Conjunct.Kernel.create(server, File.read!("wrong-contract.json"))
 
     assert "unsupported_contract" in codes(wrong_contract)
+    assert {:ok, source} = Conjunct.Kernel.load(kernel, fixture("profile-probe-source.json"))
+    assert decode(source)["outcome"] == "completed"
+    assert {:ok, control} = Conjunct.Kernel.load(kernel, fixture("present-rule.json"))
+    assert decode(control)["outcome"] == "completed"
+
+    assert {:ok, unsupported_flow} =
+             Conjunct.Kernel.load(kernel, fixture("directed-flow-rule.json"))
+
+    assert decode(unsupported_flow)["outcome"] == "refused"
+
+    assert Enum.any?(
+             decode(unsupported_flow)["diagnostics"],
+             &(&1["code"] == "schema_violation" and &1["path"] == "/body/rules/0")
+           )
+
     assert :ok = Conjunct.Kernel.destroy(kernel)
 
     report = %{
       "artifact_id" => id,
       "canonical" => canonical,
-      "responses" => [created, loaded, refused, malformed, oversized, wrong_contract]
+      "frame_profile_available" => false,
+      "responses" => [
+        created,
+        loaded,
+        refused,
+        malformed,
+        oversized,
+        wrong_contract,
+        source,
+        control,
+        unsupported_flow
+      ]
     }
 
     {:ok, bytes} = Conjunct.Wire.encode_canonical(report)

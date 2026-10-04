@@ -3,7 +3,8 @@ defmodule FrameshiftPlatformWeb.Router do
   Defines the platform's public catalog, liveness, UI and metrics routes.
 
   The JSON API exposes `/api/health`, `/api/sources`, `/api/profiles` and an
-  exact-profile download route. `/` serves the installed Svelte application;
+  exact-profile download route. `/api/composition/:class` reports the qualified
+  consumer-profile boundary. `/` serves the installed Svelte application;
   `/ops/metrics` delegates authorization to the metrics controller. Catalog reads
   require no account and expose only their explicit public projections.
 
@@ -27,6 +28,7 @@ defmodule FrameshiftPlatformWeb.Router do
     get "/sources", SourceController, :index
     get "/profiles", ProfileController, :index
     get "/profiles/:digest", ProfileController, :show
+    get "/composition/:class", CompositionController, :show
   end
 
   get "/ops/metrics", FrameshiftPlatformWeb.MetricsController, :show

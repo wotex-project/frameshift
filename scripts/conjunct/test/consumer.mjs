@@ -46,8 +46,16 @@ export async function exercise(kernel, data, cohort, fixtures, check) {
   const wrongContract = await kernel.create(encode({ protocol: cohort.protocol,
     contract: { ...cohort.contract, digest: 'sha256:' + '0'.repeat(64) }, limits: cohort.limits }));
   check(wrongContract.context === null && codes(wrongContract.response).includes('unsupported_contract'), 'unknown contract');
+  const source = await kernel.load(created.context, fixtures['profile-probe-source']);
+  check(decode(source).outcome === 'completed', 'synthetic profile probe source');
+  const control = await kernel.load(created.context, fixtures['present-rule']);
+  check(decode(control).outcome === 'completed', 'supported rule control');
+  const unsupportedFlow = await kernel.load(created.context, fixtures['directed-flow-rule']);
+  check(decode(unsupportedFlow).outcome === 'refused' && decode(unsupportedFlow).diagnostics.some(item =>
+    item.code === 'schema_violation' && item.path === '/body/rules/0'), 'directed flow absent from producer contract');
   await kernel.destroy(created.context);
   return { artifact_id: id.value, canonical: new TextDecoder().decode(canonical.value),
-    responses: [created.response, loaded, refused, malformed, oversized, wrongContract.response]
+    frame_profile_available: false,
+    responses: [created.response, loaded, refused, malformed, oversized, wrongContract.response, source, control, unsupportedFlow]
       .map(bytes => new TextDecoder().decode(bytes)) };
 }

@@ -109,6 +109,62 @@ Photo or Pixel displays. Simulated behavior never becomes measured power data.
 
 ## Immutable BuildSpec
 
+### S2 successor obligation mapping
+
+At Conjunct `f6609c5e4c2188626f5e1f345446fec04e78d6c9`, each
+retained stage below remains mandatory. A candidate predicate mapping has not
+passed its full product corpus. A producer gap means that the closed current
+wire contract lacks the needed derivation or assessment; a consumer cannot
+implement that generic algorithm and label its output a kernel result.
+No whole frame class is available under the successor contract yet.
+
+| Retained stage | Producer mapping candidate and unresolved requirement |
+| --- | --- |
+| `graph` | Explicit Selection/occurrence closure and `present`/`equal`/`occurrence-count` cover some representation/role checks. Occurrence-forest and rule-dependency DAG validation do not establish acyclicity of the separate power/dependency networks; require an exact directed-network assessment. |
+| `completeness` | ProductDefinition rules require each named property/interface/role through `present`, `equal`, counts and implications. Freeze display/controller/energy-source obligations independently of optional part declarations; absent/missing/conflicted cases remain required. |
+| `geometry` | `contains`/`clearance_ge` with exact adopted geometry, transforms, qualified error bounds and explicit AssessmentSet. Complete installed, connector and service envelopes remain distinct; no unqualified mesh supplies them. |
+| `viewing` | Qualified geometry can cover containment and plane constraints. Complete projected active/aperture rectangle-union coverage, tiled overlap/gaps and occlusion still need a producer assessment contract; simple pairwise containment is insufficient. |
+| `power_interfaces` | Exact scoped `interface_match` covers complementary roles, voltage containment and declared pinout/reference/polarity/protection fields. Product rules must preserve each whole operating interval and missing/conflicting source state. |
+| `power_loads` | `sum_le` evaluates explicitly listed terms. Require producer derivation of directed passive/converter flow: downstream demand, repeated loads, cumulative voltage drops, per-port/shared ratings, ambiguity, missing feeds and cycle handling. Caller-computed totals or a boolean claim are not this derivation. |
+| `power_contracts` | Pairwise `interface_match`/`subset` cannot establish one common alternative over an entire connected rail with passive ties. Require exact connected-group intersection and its source-bound witness/refusal. |
+| `thermal` | Exact `range`/`sum_le` can represent component ambient and heat budgets, with absolute temperature and temperature-difference kinds kept distinct. Product mappings must include internal rise, enclosure scope and common assembly declaration; sums alone are not measured thermal qualification. |
+| `mounting` | `sum_le` and scoped mechanical interfaces can compare a known support load. Require producer support-path/subtree derivation with repeated mass, shared ratings, ambiguous support, self-anchoring and cycles; geometry fit alone supplies none of these. |
+| `signals` | Scoped `interface_match` covers endpoint voltages and declared fields. Connected-group common driver alternatives require the same group reasoning as power contracts; thresholds/timing and executable mappings retain separate qualification. |
+| `signal_routes` | Require a producer route assessment over exact controller ownership, endpoint mappings and expanded paths, retaining wrong root, cycles, missing/ambiguous feeds and versioned internal mappings. A relation label or connected endpoint is insufficient. |
+| `operation` | Scoped `in_set`, `range`, counts and `sum_le` can compare declared firmware/protocol/encoding, hard dwell and storage values. Integrated/dedicated/shared storage ownership and artifact closure need a faithful mapping. Recommendations remain advisory; producer comparison does not qualify a runtime. |
+| `artifacts` | Physical quantities do not establish pixel-coordinate assignments, complete canvas union coverage, encoding-derived bytes or retained-copy storage ownership. Require an exact raster/layout assessment with integer units, rotations, overlap/gap witnesses, size bounds and source/runtime binding. |
+
+The current predicate/operand lists are closed in the producer's
+[`domain.schema.json`](https://github.com/futhr/conjunct/blob/f6609c5e4c2188626f5e1f345446fec04e78d6c9/schemas/domain/0.1/domain.schema.json),
+with execution defined by
+[`domain-operations.md`](https://github.com/futhr/conjunct/blob/f6609c5e4c2188626f5e1f345446fec04e78d6c9/docs/specs/cj02/domain-operations.md).
+The consumer fixture `scripts/conjunct/test/fixtures/directed-flow-rule.json`
+changes only the supported control predicate to the proposed, unsupported
+`directed_flow` name. A real staged kernel loads its source and `present` control
+but refuses that rule at `/body/rules/0` with `schema_violation`. This is a
+reproducing current-contract refusal, not a proposed API specification or proof
+that every possible producer extension must use that name.
+
+The upstream requirement is an independently specified, bounded network/route
+assessment over immutable expanded occurrences and exact scoped claims,
+including complete positive, violated, missing/conflicting, repeated-use,
+cycle/ambiguity and overflow fixtures. Its canonical witness/report must be
+available through the public port and browser operations under a newly selected
+ContractRef. An assessment cannot merely import the retained v1 verdict.
+The thirteen-stage positive synthetic Paper composition remains unqualified
+until all mappings and their acceptance corpus are complete. Photo and Pixel
+remain independent choices with the same mandatory coverage gate.
+
+`GET /api/composition/:class` returns the product-owned availability projection
+for exact `paper`, `photo` or `pixel`: `status: unavailable`,
+`reason: producer_profile_incomplete`, `admission: false`, producer revision,
+the complete mandatory stage list and the identified producer gaps. Unknown or
+structured class values refuse with `400 unsupported_class`; extra readiness
+parameters cannot change the result. It starts no producer worker or effect,
+exposes no private inputs and uses `Cache-Control: no-store`. POST and other
+mutation routes remain absent. This projection reports the integration gate;
+it does not classify a physical candidate as incompatible.
+
 **PB-03 — Identity.** A BuildSpec pins its schema/compiler semantics, exact part
 and profile revisions, quantities, canonical geometry/tolerances, mounting,
 controller/electrical requirements, assembly intent, and compatibility inputs.

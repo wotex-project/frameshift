@@ -7,7 +7,7 @@ import { renderGuide, prepareGeometry } from '@conjunct/guide';
 import { exercise } from './consumer.mjs';
 
 const cohort = JSON.parse(readFileSync('./cohort.json', 'utf8'));
-const fixtures = Object.fromEntries(['scope', 'unsupported', 'duplicate'].map(name =>
+const fixtures = Object.fromEntries(['scope', 'unsupported', 'duplicate', 'profile-probe-source', 'present-rule', 'directed-flow-rule'].map(name =>
   [name, new Uint8Array(readFileSync(`fixtures/${name}.json`))]));
 globalThis.fetch = () => { throw new Error('consumer attempted network access'); };
 assert.equal(typeof renderGuide, 'function');
@@ -29,6 +29,8 @@ try {
   assert.deepEqual(await exercise(kernel, data, cohort, fixtures, assert), rawReport);
   const configuration = readFileSync('configuration.json');
   const { context } = await kernel.create(configuration);
+  writeFileSync('frame-profile-probe.json', JSON.stringify({ source: rawReport.responses[6],
+    control: rawReport.responses[7], unsupported_flow: rawReport.responses[8], frame_profile_available: false }));
   kernel.close();
   await assert.rejects(kernel.load(context, fixtures.scope), { kind: 'stale_context' });
   const fresh = await kernel.create(configuration);

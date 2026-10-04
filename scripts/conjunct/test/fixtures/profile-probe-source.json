@@ -1,0 +1,1 @@
+{"body":{"blob_ref":null,"media_type":"application/json","native_revision":"profile-probe-1","publisher":"urn:frameshift:test:fixtures","reference":"urn:frameshift:test:directed-flow-profile-probe","retention":"reference-only"},"kind":"source-revision","required_profiles":["cj/core/0.2"],"schema_ref":"urn:conjunct:schema:domain:0.1","wire_version":"1"}

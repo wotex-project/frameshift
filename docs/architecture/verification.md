@@ -69,7 +69,7 @@ Fresh consumers outside the repository resolved runtime dependencies offline;
 the distributed declarations compiled without suppressing declaration checks.
 Three Elixir cases and the Node/browser exercises passed. Chrome
 154.0.8037.95 consumed the local Worker artifacts with networking disabled
-after loading them. Canonical scope identity and six original protocol
+after loading them. Canonical scope identity and nine original protocol
 responses matched through the Elixir port, raw WASM and Node/browser Workers.
 Unsupported profiles/contracts, escaped duplicate keys, rational overflow,
 oversized documents, stale contexts, canceled dispatched work, bounded queue
@@ -83,6 +83,23 @@ This is package/data/transport integration evidence for the recorded target,
 not complete semantic conformance, frame-rule coverage, v1 migration, a joined
 guide procedure, another browser/OS or physical/operated qualification.
 No catalog identity or existing compiler authority changes.
+
+### Frame successor profile refusal, 2026-10-04
+
+The [thirteen-stage S2 mapping](physical-build-contract.md#s2-successor-obligation-mapping)
+records candidate predicates and missing producer derivations separately.
+`FrameshiftPlatform.CompositionTest` checks every class retains all obligations,
+reports unavailable and refuses caller-supplied readiness/admission flags;
+invalid classes and HTTP mutation routes refuse. The complete platform check
+passes 35 tests against a fresh isolated PostgreSQL database, with formatter,
+warnings-as-errors compilation and strict Credo.
+`scripts/check conjunct` loads one synthetic source and a supported `present`
+RuleSet control, then reproduces the unsupported `directed_flow` predicate's
+located schema refusal through the real Elixir port and raw/Worker/browser WASM.
+Exact original responses agree and are retained with the checker/input digests.
+This establishes the current-contract refusal and product availability gate.
+It does not complete S2's positive/violated/unknown corpus, S3 migration or S4;
+generic producer flow/route/group/support/raster assessments remain required.
 
 ### Physical compiler evidence
 
