@@ -212,6 +212,14 @@ source changes invalidate results, and timeout/stop retain worker custody. Actua
 packaged prints compare through IPC. Semantic quality, installed accessibility
 and other supported OS/CPU execution remain separate evidence dependencies.
 
+Local connection admission now caps command and diagnostic workers independently
+at sixteen, with a sixty-four-child ordinary task budget and a separate
+seventeen-child diagnostic supervisor. Unix-socket fixtures exercise overflow
+without a receipt, saturated-task diagnostic reads, partial-read deadlines and
+capacity recovery after actual worker exit. This supplies implementable S7 host
+refusal behavior; whole-workload RSS, downstream deadlines, storage failure,
+Linux groups and physical power-loss measurements remain their own open gates.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

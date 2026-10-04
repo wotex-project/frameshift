@@ -6,7 +6,9 @@ defmodule Frameshift.LocalIPC.Server do
   explicit or application-owned library/task/pairing dependencies. Each connection
   carries one four-byte-length-prefixed JSON request/response; the request ceiling
   is 64 KiB, the response ceiling 1 MiB and the request deadline five seconds.
-  There is no TCP listener.
+  At most sixteen live connection workers are admitted; overflow closes before
+  decode or command claim. Actual worker exit releases a slot, without a pending
+  user-space queue or an automatic retry. There is no TCP listener.
 
   ## Command custody
 
@@ -48,6 +50,7 @@ defmodule Frameshift.LocalIPC.Server do
   @maximum_request_bytes 64 * 1024
   @maximum_response_bytes 1024 * 1024
   @request_timeout_ms 5_000
+  @maximum_clients 16
   @token_pattern ~r/^[0-9a-f]{64}$/
   @request_keys %{
     "command" => ~w(version requestId operation auth command),
@@ -178,15 +181,16 @@ defmodule Frameshift.LocalIPC.Server do
 
   defp start_acceptor(task_supervisor, listener, library, token, pairing) do
     Task.Supervisor.start_child(task_supervisor, fn ->
-      accept_loop(task_supervisor, listener, library, token, pairing)
+      accept_loop(task_supervisor, listener, library, token, pairing, [])
     end)
   end
 
-  defp accept_loop(task_supervisor, listener, library, token, pairing) do
+  defp accept_loop(task_supervisor, listener, library, token, pairing, workers) do
     case :gen_tcp.accept(listener) do
       {:ok, socket} ->
-        hand_off(task_supervisor, socket, library, token, pairing)
-        accept_loop(task_supervisor, listener, library, token, pairing)
+        live_workers = Enum.filter(workers, &Process.alive?/1)
+        next_workers = hand_off(task_supervisor, socket, library, token, pairing, live_workers)
+        accept_loop(task_supervisor, listener, library, token, pairing, next_workers)
 
       {:error, :closed} ->
         :ok
@@ -196,7 +200,12 @@ defmodule Frameshift.LocalIPC.Server do
     end
   end
 
-  defp hand_off(task_supervisor, socket, library, token, pairing) do
+  defp hand_off(_, socket, _, _, _, workers) when length(workers) >= @maximum_clients do
+    :gen_tcp.close(socket)
+    workers
+  end
+
+  defp hand_off(task_supervisor, socket, library, token, pairing, workers) do
     case Task.Supervisor.start_child(task_supervisor, fn ->
            receive do
              {:serve, ^socket} -> serve(socket, library, token, pairing)
@@ -206,12 +215,19 @@ defmodule Frameshift.LocalIPC.Server do
          end) do
       {:ok, worker} ->
         case :gen_tcp.controlling_process(socket, worker) do
-          :ok -> send(worker, {:serve, socket})
-          {:error, _} -> :gen_tcp.close(socket)
+          :ok ->
+            send(worker, {:serve, socket})
+            [worker | workers]
+
+          {:error, _} ->
+            :gen_tcp.close(socket)
+            # This worker still owns its finite handoff wait until it exits.
+            [worker | workers]
         end
 
       {:error, _} ->
         :gen_tcp.close(socket)
+        workers
     end
   end
 

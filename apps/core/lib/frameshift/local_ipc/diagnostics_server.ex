@@ -69,7 +69,7 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
     path = options |> Keyword.fetch!(:path) |> Path.expand()
     library = Keyword.get(options, :library, Library)
     metrics = Keyword.get(options, :metrics, Metrics)
-    task_supervisor = Keyword.get(options, :task_supervisor, Frameshift.TaskSupervisor)
+    task_supervisor = Keyword.get(options, :task_supervisor, Frameshift.DiagnosticsTaskSupervisor)
 
     with :ok <- prepare_path(path),
          {:ok, listener} <- :socket.open(:local, :stream, :default),

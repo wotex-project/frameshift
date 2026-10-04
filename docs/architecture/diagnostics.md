@@ -292,7 +292,8 @@ versioned local IPC contract. Responses are size-limited and audit queries use
 stable pagination and explicit retention metadata. A standalone client cannot
 reuse the menu shell's in-memory bootstrap token. Its separate read-only
 authentication must verify the Unix peer identity and private socket directory
-on each platform. Mutation IPC retains its boot token. The CLI does not open
+on each platform. The current Mac mutation endpoint retains its boot token;
+Linux peer/group admission follows the Linux host contract. The CLI does not open
 the database or read the Apple unified log store programmatically. Explicit
 local export is redacted, bounded, and records its own audit fact.
 
@@ -300,9 +301,38 @@ Before the OTP fallback file handler starts, the core must inspect the final
 diagnostics directory and any existing log file without following a symlink.
 It must refuse a symlink or non-regular log target, require a private directory,
 and restrict an existing regular log to owner-only access. A failed admission
-must fail core startup rather than redirect sanitized diagnostic records into
-an attacker-chosen file. This local path check does not replace installed
-filesystem, ownership, or race-condition acceptance testing.
+must leave the fallback sink unavailable while the authoritative core continues;
+it must never redirect records into an attacker-chosen file. This local path
+check does not replace installed filesystem, ownership, or race-condition
+acceptance testing.
+
+### Local connection admission
+
+The command listener admits at most sixteen live connection workers;
+read-only diagnostics independently admits sixteen. Kernel listen backlogs
+remain sixteen, without a user-space request queue. At capacity the listener
+closes the new connection before decoding or claiming a command; a worker's
+actual exit releases its slot. Authentication and bounded framing are unchanged.
+A stalled partial request retains the existing five-second read deadline.
+
+The ordinary application task supervisor has a hard sixty-four-child ceiling,
+including acceptors and other supervised work. Diagnostics has a separate
+seventeen-child supervisor (one acceptor and sixteen workers), so exhausted
+ordinary task capacity cannot deny a diagnostic worker. A rejected task start
+closes the socket without creating a receipt or retry. These are process and
+admission bounds, not measured RSS, a deadline for every downstream operation,
+Linux control-group qualification or guaranteed SQLite responsiveness during
+a storage failure.
+
+The pinned Elixir 1.20.4 `Task.Supervisor` passes `max_children` to its dynamic
+supervisor and returns `{:error, :max_children}` on rejected child admission.
+Its [upstream source at v1.20.4](https://github.com/elixir-lang/elixir/blob/v1.20.4/lib/elixir/lib/task/supervisor.ex)
+and installed source were inspected on 2026-10-04; the GitHub source blob is
+`0164e9b8111312f44c394339190dcb5c47c1b35a`. Real Unix-socket fixtures must close
+overflow without mutation, read diagnostics while ordinary tasks are saturated,
+and admit a fresh request after worker exit. Packaged startup must exercise the
+separate supervised owners. Physical disk/power and full operated-load
+measurements retain their separate gates.
 
 ## Failure and acceptance cases
 

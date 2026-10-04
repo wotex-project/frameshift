@@ -19,6 +19,11 @@ defmodule Frameshift.Application do
   unconfirmed delivery as displayed artwork. Durable recovery remains the library
   and frame owners' responsibility; restarting a process is not a new external
   command or permission to discard a pending outcome.
+
+  Ordinary supervised tasks have a sixty-four-child admission ceiling. Read-only
+  diagnostics owns a separate seventeen-child supervisor so command/task pressure
+  cannot consume its acceptor and sixteen client slots. Listener-local limits
+  still apply; neither process bound establishes measured memory or disk behavior.
   """
 
   use Application
@@ -34,7 +39,7 @@ defmodule Frameshift.Application do
   def start(_, _) do
     children =
       [
-        {Task.Supervisor, name: Frameshift.TaskSupervisor}
+        {Task.Supervisor, name: Frameshift.TaskSupervisor, max_children: 64}
       ] ++ library_children() ++ metrics_children() ++ renderer_children() ++ local_ipc_children()
 
     case Supervisor.start_link(children, strategy: :one_for_one, name: Frameshift.Supervisor) do
@@ -96,8 +101,14 @@ defmodule Frameshift.Application do
       broker = configure_credential_broker(token)
 
       [
+        Supervisor.child_spec(
+          {Task.Supervisor, name: Frameshift.DiagnosticsTaskSupervisor, max_children: 17},
+          id: Frameshift.DiagnosticsTaskSupervisor
+        ),
         {Frameshift.LocalIPC.Server, path: Frameshift.Paths.socket_path(), token: token},
-        {DiagnosticsServer, path: Frameshift.Paths.diagnostics_socket_path()}
+        {DiagnosticsServer,
+         path: Frameshift.Paths.diagnostics_socket_path(),
+         task_supervisor: Frameshift.DiagnosticsTaskSupervisor}
       ] ++ outbox_children(broker)
     else
       []
