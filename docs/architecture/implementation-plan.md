@@ -75,7 +75,7 @@ updates the verification map only with results actually obtained.
 | S2 — Frame profile; after S1 | PB-01–PB-09 and CI-02/CI-04/CI-06: obligation-to-rule/assessment mapping for all thirteen retained stages, occurrence/count semantics, exact units/coordinates, mandatory missing/conflicting facts and resource limits. Start with a complete synthetic Paper software fixture; retain sourced Paper/Photo/Pixel candidates as unknown/refusal fixtures. Other builder tracks remain independent. | Every mandatory obligation has positive, violated and missing/conflicting fixtures against the real producer operation. Unsupported semantics return unavailable and have a reproducing upstream requirement; they cannot be skipped. Synthetic test-purpose compatibility never grants physical/current-use admission. Existing sourced candidates stay unqualified. |
 | S3 — Identity and migration; after S1, coordinated with S2 | CI-03, PB-02 and build-artifacts: map all five existing v1 domains to exact producer artifacts, preserving raw bytes/IDs and recording old/new references, semantic differences, loss and read/write/execute support. Define source/assessment closure and duplicate/Unicode/rational overflow refusal. | Existing v1 corpus replays unchanged; BEAM/browser consume the same successor bytes and reports. Exact conversions succeed; erased obligations, ambiguous coordinates or unsupported evidence refuse. No catalog row is rehashed in place. Any pre-release persistence change edits original `_create_`/`_install_` migrations. |
 | S4 — Independent composition/guide; after S2/S3 for its claimed profile | BP-01/BP-04/BP-05, CI-05–CI-07 and PC-05/PC-06: frame controls, comparison, projection, source-bound procedure, reviewed DocShell projection, local file I/O, browser artwork privacy, guide/export/print and unadmitted observations. Specify source/geometry/scene identities, exact transforms/loss and essential text fallback. Manual geometry is the first supported path; qualify STEP separately. | Real kernel/guide exports produce compatible/incompatible/unknown outputs; a valid procedure cannot override a blocked composition. Local save/reload/import/export, comparison and exact parts counts survive restart/offline operation. Text/print agree on IDs, parameters and warnings. Keyboard, screen reader, reduced motion, high zoom and low graphics paths are exercised; no network-only guide assets or hidden upload. |
-| S5 — Authenticated server storage; after S4, before any new write endpoint | BP-06/BP-08 and PC-06: freeze the host session mechanism and action/resource permission matrix; server-derived actor/scope, private sharing/retention, stable command ID/payload digest/expected revision, CSRF and asset access. Existing public catalog reads remain separate. | Forged roles, cross-scope references, stale revisions, changed-payload replay, concurrent writes and private asset/cache/search leakage refuse. Same-ID/same-payload commands replay without duplicate mutation. Ash actor policies alone do not count as an authenticated browser boundary. Local composition remains usable without an account. |
+| S5 — Authenticated server storage; session/permission groundwork is independent, composition writes require S4 and S5 | BP-06/BP-08 and PC-06: freeze the host session mechanism and action/resource permission matrix; server-derived actor/scope, private sharing/retention, stable command ID/payload digest/expected revision, CSRF and asset access. Existing public catalog reads remain separate. | Forged roles, cross-scope references, stale revisions, changed-payload replay, concurrent writes and private asset/cache/search leakage refuse. Same-ID/same-payload commands replay without duplicate mutation. Ash actor policies alone do not count as an authenticated browser boundary. Local composition remains usable without an account. |
 | S6 — Generality, operator and formal profiles; generality can follow S1, operator requires S5 | CI-08, PC-03/PC-04 and BO-01–BO-08: replay passive/sensor producer fixtures; map installed Refpath admission exports and exact cohort, atomic review-through-commit, scopes/fences/receipts/restart; map ExMaude SearchRun termination and witness replay. Specify missing cancellation/state-limit/full-predicate evidence upstream. | Passive/sensor inputs need no Frameshift imports. Two operator scopes pass concurrent successor, review withdrawal, lost receipt, complete VM restart, missing closure, stale command and unknown-effect recovery against the real durable store. Formal cases retain exact model/query/limits/trace and broken-rule witnesses; empty bounded search never counts as proof. Each claim records its own qualified cohort. |
 | S7 — Physical and operated qualification; after the corresponding software profile | CI-06/CI-07, frame/hardware owners and PC-08: exact panel/controller/power/firmware revision packets, whole installed envelope, source rights, measured behavior; host queue/memory/deadline/restore/telemetry profile. No controller or real frame is selected by the synthetic slice. | Exact received configurations pass electrical/thermal/mounting and interrupted refresh/network/power-loss tests, with last-valid artwork and recovery evidence. Operated host passes overload, worker replacement, missing assets, revocation and restore closure before its operational claims. CAD acquisition, signing and hardware measurements are explicit dependencies rather than inferred successes. |
 
@@ -140,6 +140,29 @@ because unreleased descriptor/suite identities change with normative bytes.
 Update these owning specifications if that check changes the contract, then
 rerun the affected acceptance corpus. Preserve remaining external evidence
 gates without withholding independent implementation work.
+
+### Independent software delivery order
+
+Deliver S1 first, then inspect and exercise the exact S2/S3 mappings before
+activating any S4 profile. A reproducible refusal for missing producer semantics
+is an implementation result, not completion of that profile. Preserve the
+retained v1 compiler and corpus while the successor gate remains closed.
+
+Alongside these composition slices, implement the native focused library and
+playlist interfaces against the existing host commands, then settings and
+accessibility, provider generation, bounded diagnostic logging and Linux
+packaging. Their contracts are owned by [the menu interface](../host/menu-bar-interface.md),
+[the content pipeline](content-pipeline.md), [diagnostics](diagnostics.md)
+and [the Linux host](../host/linux.md). Session and permission groundwork can
+also proceed independently; it does not authorize composition write endpoints.
+Review the affected owner and freeze its remaining behavior questions before
+each implementation, rather than assuming the composition sequence owns all
+host work.
+
+Commit each coherent specification/implementation slice with its actual
+verification evidence. Hardware measurements, qualified producer behavior,
+live-provider checks and signed installed releases remain attached to the
+specific claims that require them. Optional transactions remain on hold.
 
 ## Shared contracts
 
