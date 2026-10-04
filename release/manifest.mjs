@@ -121,8 +121,10 @@ async function verifyArtifact(directory, artifact) {
   }
 }
 
-export async function verifyRelease({ manifestPath, signaturePath, publicKeyPath,
-                                      trustedKeyDigest, artifactDirectory }) {
+// Retained site evidence uses this signature-only boundary; it does not assert
+// that local archives or public bytes were checked during this invocation.
+export async function verifyManifestSignature({ manifestPath, signaturePath, publicKeyPath,
+                                                trustedKeyDigest }) {
   if (typeof trustedKeyDigest !== 'string' || !/^[0-9a-f]{64}$/.test(trustedKeyDigest)) {
     throw new Error('missing pinned release key fingerprint');
   }
@@ -136,7 +138,12 @@ export async function verifyRelease({ manifestPath, signaturePath, publicKeyPath
       signature.length !== 64 || !verify(null, bytes, key, signature)) {
     throw new Error('release signature or trusted key mismatch');
   }
-  for (const artifact of manifest.artifacts) await verifyArtifact(artifactDirectory, artifact);
+  return manifest;
+}
+
+export async function verifyRelease(options) {
+  const manifest = await verifyManifestSignature(options);
+  for (const artifact of manifest.artifacts) await verifyArtifact(options.artifactDirectory, artifact);
   return manifest;
 }
 

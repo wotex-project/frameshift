@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { checkDocumentationIndex, checkLinks, documentationPolicy, headersForPath, inventory, labelHeadingAnchors, releaseSourceIdentity, resolveRoute, sharedVersionMenu, siteHeaders, sourceIdentity, validateDevelopmentOutput, validateReleaseDocumentationOutput } from './site.mjs';
+import { canonicalDocumentationMetadata, checkDocumentationIndex, checkLinks, documentationPolicy, headersForPath, inventory, labelHeadingAnchors, releaseSourceIdentity, resolveRoute, sharedVersionMenu, siteHeaders, sourceIdentity, validateDevelopmentOutput, validateReleaseDocumentationOutput } from './site.mjs';
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'frameshift-site-test-'));
@@ -164,4 +164,25 @@ test('retained candidate identity and complete inventory refuse unowned or chang
   assert.equal(readFileSync(join(root, 'index.html'), 'utf8'), 'external retained change');
   writeFileSync(record, JSON.stringify({ ...manifest, publishable: true, files: inventory(root).filter(file => file.path !== 'site-manifest.json') }));
   assert.throws(() => validateReleaseDocumentationOutput(root, identity), /unowned/);
+});
+
+test('VM object-key variation cannot change frozen metadata; list order, text and all references survive', t => {
+  const roots = [fixture(t), fixture(t)];
+  const items = [{ type: 'module', title: 'Frame', doc: 'Exact Unicode å and </script> text', ref: 'Frame.html' },
+    { type: 'function', title: 'activate', doc: 'second item', ref: 'Frame.html#activate/1' }];
+  const reordered = items.map(item => Object.fromEntries(Object.entries(item).reverse()));
+  for (const [index, root] of roots.entries()) {
+    mkdirSync(join(root, 'dist'));
+    writeFileSync(join(root, 'dist/search_data-00000000.js'), 'searchData=' + JSON.stringify({ items: index ? reordered : items, producer: { name: 'ex_doc' } }));
+    writeFileSync(join(root, 'dist/sidebar_items-11111111.js'), 'sidebarNodes=' + JSON.stringify(index ? { extras: [], modules: ['Frame', 'Other'] } : { modules: ['Frame', 'Other'], extras: [] }));
+    writeFileSync(join(root, 'index.html'), '<script src="dist/search_data-00000000.js"></script><script src="dist/sidebar_items-11111111.js"></script>');
+    writeFileSync(join(root, '.build'), 'index.html\ndist/search_data-00000000.js\ndist/sidebar_items-11111111.js\n');
+    canonicalDocumentationMetadata(root);
+    assert.deepEqual(checkLinks(root), { pages: 1, links: 2 });
+    const search = inventory(root).find(file => file.path.startsWith('dist/search_data-'));
+    const data = JSON.parse(readFileSync(join(root, search.path), 'utf8').slice('searchData='.length));
+    assert.deepEqual(data.items, items);
+    assert.ok(readFileSync(join(root, '.build'), 'utf8').includes(search.path));
+  }
+  assert.deepEqual(inventory(roots[0]), inventory(roots[1]));
 });

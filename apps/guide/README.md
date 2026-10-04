@@ -49,6 +49,17 @@ fixture and verify refusal/rerun custody; the browser lane tests actual version
 changes with preserved API anchors. See the
 [versioned documentation contract](../../docs/architecture/install-and-guide.md#versioned-documentation-builds).
 
+`./scripts/assemble-site development DEV_SITE OUTPUT [TRUST_FILE]` updates eligible
+development docs while retaining the current release and global pages. Its
+`release` mode requires the exact versioned bundle, release workflow source
+commit, pinned signature, local archives and public readback before promotion.
+`recover OUTPUT [TRUST_FILE]` reconciles its private local journal without any
+network/release effect. Conflicting versions, changed custody and another
+writer's lock refuse. See the
+[assembly and recovery contract](../../docs/architecture/install-and-guide.md#site-assembly-and-local-recovery)
+for complete command arguments and evidence boundaries. These commands perform
+no external deployment or channel publication.
+
 The three compressed frame illustrations come from the maintainer's desktop
 `Frameshift.html` visual draft. The Frameshift SVG is the existing macOS mark.
 No externally loaded fonts, scripts, trackers, or image hosts are required.

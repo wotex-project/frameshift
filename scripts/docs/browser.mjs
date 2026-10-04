@@ -10,6 +10,8 @@ import { headersForPath, resolveRoute } from './site.mjs';
 const repository = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const output = process.env.FRAMESHIFT_DOCS_SITE || join(repository, 'var/site-preview');
 const manifest = JSON.parse(readFileSync(join(output, 'site-manifest.json'), 'utf8'));
+const documentation = manifest.documentation ? [{ ...manifest.documentation, commit: manifest.commit }] :
+  (manifest.releases || []).map(entry => ({ ...entry, tag: `v${entry.version}` }));
 const chromePath = process.env.FRAMESHIFT_CHROME || (process.platform === 'darwin'
   ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : '/usr/bin/google-chrome');
 if (!existsSync(chromePath)) throw new Error('Set FRAMESHIFT_CHROME to an installed Chrome executable');
@@ -110,16 +112,16 @@ try {
   await navigate('/docs/dev/Frameshift.Library.html#restore_master/3');
   assert.equal(await evaluate('!!document.getElementById("restore_master/3")'), true);
   assert.equal(await evaluate('document.documentElement.scrollWidth === innerWidth'), true);
-  assert.equal(await evaluate('versionNodes[0].url'), '/docs/dev');
+  assert.equal(await evaluate('versionNodes.some(node => node.url === "/docs/dev")'), true);
   assert.equal(await evaluate('document.querySelector(".sidebar-projectVersion select").selectedOptions[0].textContent.trim()'), 'v0.1.0-dev (unreleased)');
-  if (manifest.documentation) {
-    const route = `/docs/${manifest.documentation.tag}`;
+  for (const version of documentation) {
+    const route = `/docs/${version.tag}`;
     await navigate(`${route}/Frameshift.Library.html#restore_master/3`);
     assert.equal(await evaluate('!!document.getElementById("restore_master/3")'), true);
-    assert.match(await evaluate('document.body.innerText'), new RegExp(`Versioned documentation ${manifest.documentation.version.replaceAll('.', '\\.')}`));
+    assert.match(await evaluate('document.body.innerText'), new RegExp(`Versioned documentation ${version.version.replaceAll('.', '\\.')}`));
     assert.equal(await evaluate('document.body.innerText.includes("Unreleased development")'), false);
-    assert.equal(await evaluate('document.body.innerText.includes(' + JSON.stringify(manifest.commit) + ')'), true);
-    assert.equal(await evaluate('document.querySelector(".sidebar-projectVersion select").selectedOptions[0].textContent.trim()'), manifest.documentation.tag);
+    assert.equal(await evaluate('document.body.innerText.includes(' + JSON.stringify(version.commit) + ')'), true);
+    assert.equal(await evaluate('document.querySelector(".sidebar-projectVersion select").selectedOptions[0].textContent.trim()'), version.tag);
     const changeVersion = async url => {
       await evaluate(`(() => { const select = document.querySelector('.sidebar-projectVersion select'); select.value = ${JSON.stringify(url)}; select.dispatchEvent(new Event('change')); })()`);
       await waitFor(() => evaluate(`location.pathname === ${JSON.stringify(url + '/Frameshift.Library.html')} && location.hash === '#restore_master/3' && document.readyState === 'complete'`), 'version navigation preserves API anchor');
@@ -134,12 +136,15 @@ try {
   await command('Emulation.setScriptExecutionDisabled', { value: true });
   await navigate('/docs/dev/docs--architecture--library-backup.html');
   assert.match(await evaluate('document.querySelector("main").innerText'), /Restore/);
-  if (manifest.documentation) {
-    await navigate(`/docs/${manifest.documentation.tag}/docs--architecture--library-backup.html`);
+  for (const version of documentation) {
+    await navigate(`/docs/${version.tag}/docs--architecture--library-backup.html`);
     assert.match(await evaluate('document.querySelector("main").innerText'), /Restore/);
   }
   await navigate('/download/');
-  assert.match(await evaluate('document.querySelector("main").innerText'), /No qualified release or installer/);
+  assert.match(await evaluate('document.querySelector("main").innerText'), manifest.latest ? /Verified host release/ : /No qualified release or installer/);
+  await navigate('/docs/');
+  if (manifest.latest) assert.equal(await evaluate(`!!document.querySelector('a[href="/docs/v${manifest.latest}/"]')`), true);
+  else assert.match(await evaluate('document.querySelector("main").innerText'), /No release is available/);
   await command('Emulation.setScriptExecutionDisabled', { value: false });
   await navigate('/');
   await waitFor(() => evaluate('document.querySelector("#profile-result")?.textContent'), 'combined guide hydration');

@@ -64,9 +64,9 @@ routes require cache revalidation.
 
 The development builder refuses to replace an output containing retained
 `docs/vX.Y.Z/` directories. Its failure preserves those bytes and stable entry
-points. The publication assembler must later verify and retain release docs,
-isolate development replacement, serialize writes and reconcile interrupted
-deployment; this builder does not claim that publication work has passed.
+points. The local assembler below verifies and retains release docs, isolates
+development replacement and serializes recoverable local swaps. External
+deployment reconciliation remains separate; this builder performs no publication.
 Acceptance combines clean/dirty source fixtures, parsed link/image custody,
 full corpus rendering and local link/anchor checks, real Chrome search/API/version
 navigation, narrow-viewport keyboard access, essential text without JavaScript
@@ -108,12 +108,81 @@ must not inherit the development cache policy. The locked ExDoc 0.40.4
 and [generated head](https://github.com/elixir-lang/ex_doc/blob/80270f3a4c4fe0d85c4b86029128e50995fcc21a/lib/ex_doc/formatter/html/templates/head_template.eex#L24)
 were checked locally and through `gh` on 2026-10-04.
 
+Before freezing inventories, serialize ExDoc's search/sidebar metadata with
+sorted JSON object keys, preserving array order and exact string values. Update
+its content-derived filenames, HTML references and generated file list together.
+The pinned [`ExDoc.Utils.to_json/1`](https://github.com/elixir-lang/ex_doc/blob/80270f3a4c4fe0d85c4b86029128e50995fcc21a/lib/ex_doc/utils.ex#L102)
+uses map iteration order (source blob `44571a0a4ce370c38a01af4d59c524c71b3be15f`,
+checked locally and through `gh` on 2026-10-05). Separate local VMs produced
+semantically identical search items with different property order; raw file
+digests therefore differed. Object-key normalization closes that reproducibility
+gap without changing search meaning or accepting conflicting retained content.
+
 Acceptance covers exact tag/application/source matching, tag movement during
 build, rendered version/source/links/search, shared menu loading, independent
 CSP/cache rules and byte-preserving identical/conflicting reruns. Stable
 promotion still requires the separately pinned signed manifest, exact local
 artifacts, public readback and source/build provenance; this candidate grants
 none of those qualifications.
+
+### Site assembly and local recovery
+
+`./scripts/assemble-site development DEV_SITE OUTPUT [TRUST_FILE]` assembles a
+clean-main eligible development build, preserving every retained release and
+the current guide, download page and stable docs entry. The first assembly may
+use the development build's no-release global pages. Preview, changed/unowned
+inventories and non-private output custody refuse. Updating development docs
+replaces only their subtree and regenerates the shared version menu, scoped
+headers and assembly inventory.
+
+`./scripts/assemble-site release DEV_SITE RELEASE_DOCS OUTPUT MANIFEST SIGNATURE
+PUBLIC_KEY ARTIFACT_DIR TRUST_FILE SOURCE_COMMIT` additionally admits one exact
+versioned candidate. Its tag/version/commit must match the manifest version and
+the release workflow's explicit source commit. Verify the separately pinned
+Ed25519 trust root, signature, exact local archive bytes and bounded public
+readback before adding that version or generating customer links. Record the
+accepted manifest/signature/public key and source/documentation digest beside
+the assembled output; private keys and installer archives are never site assets.
+Source provenance remains separate from manifest v1's artifact-byte claims.
+
+Every retained version must match its complete documentation inventory and
+recorded source identity, and its retained release signature must verify against
+the separately supplied trust file. Development updates to a site containing
+releases therefore require that trust file. Same-version changed source, docs
+or signed archive manifest refuses. The regular trust file is builder/root-owned
+with group/world write permissions clear. An identical replay retains the version
+bytes. Stable docs/download/guide promotion selects the greatest admitted stable
+SemVer using exact numeric components; adding an older version cannot rewind it.
+The local assembly admits at most 32 retained versions within the static asset
+budget. Reaching a ceiling refuses an additional version; no automatic pruning
+or replacement is permitted.
+Shared menu URLs omit a trailing slash because the pinned ExDoc consumer adds
+the current page/anchor itself. Versioned asset cache and CSP rules stay scoped.
+
+Serialize local writes with an exclusive private `OUTPUT.lock` directory under
+an existing owned parent. Stage a complete validated assembly, sync its files and
+directories, and record an owned bounded recovery journal before swapping local
+directories. Recheck inputs and prior output before the swap. Refuse an existing
+lock or unreconciled `OUTPUT.previous`; do not guess that another process ended.
+Failures before swapping leave the prior output intact. Failures after swapping
+begins retain the journal, stage/prior/current bytes and report uncertainty.
+
+`./scripts/assemble-site recover OUTPUT [TRUST_FILE]` performs no network or
+release effect. Inspect the journal's exact old/new manifest digests and actual
+inventory/signature custody. Complete a verified new output or restore the
+verified prior output; remove only this journal's owned stage/prior/lock after
+reconciliation. Unknown, changed, symlinked or conflicting states refuse with
+bytes preserved. This is local build recovery, not atomic GitHub/Cask/Sparkle/
+Cloudflare publication or proof of filesystem power-loss persistence.
+
+Acceptance joins real source/rendered bundles to signed fixture archives and
+synthetic public responses, proving retention, independent development updates,
+older-version and changed-version refusal, wrong trust/public bytes, lock
+contention, input changes and actual process death at each directory-swap
+boundary. Browser checks exercise multiple retained versions, stable/no-release
+routes, download links, search/anchors, per-route CSP/cache and essential text
+without JavaScript. Real production trust, installer/installed evidence, source
+provenance and public deployment/readback remain their separate gates.
 
 ## Composition and independent instructions
 

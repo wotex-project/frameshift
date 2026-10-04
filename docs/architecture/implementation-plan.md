@@ -215,9 +215,10 @@ pages and the guide/lab with explicit no-release routes. Clean-main identity,
 source digests, index coverage, local links/anchors and output custody gate the
 staged build; dirty previews carry no publication eligibility. Chrome exercises
 search, keyboard controls, narrow layout, API anchors, no-JavaScript recovery
-text and the generated security policies. Release docs retention/assembly,
-public hostname/readback and deployment automation remain separate open work;
-the development builder refuses to replace retained release directories.
+text and the generated security policies. Versioned docs and local retention
+assembly are implemented below; public hostname/readback and deployment automation
+remain separate open work. The development builder refuses to replace retained
+release directories.
 
 The same renderer now builds a separate versioned documentation candidate from
 clean exact tag/commit source, refusing an application-version mismatch. Its
@@ -227,10 +228,23 @@ Generated pages load a shared revalidated ExDoc version menu outside immutable
 directories. An isolated clean-source fixture renders the complete corpus,
 checks real Chrome version changes with retained API anchors, search, CSP/cache
 separation and no-JavaScript recovery text. The candidate keeps no-release
-global pages and is explicitly ineligible for deployment. The next R4 boundary
-is serialized assembly that verifies retained versions, isolates development
-updates and reconciles interrupted local swaps; stable promotion still requires
-R5's signed/public artifacts and source/build provenance.
+global pages and is explicitly ineligible for deployment. R4 now has a serialized
+local assembler: it verifies retained version inventories
+and pinned release signatures, replaces development independently, and requires
+signed/local/public archive checks plus explicit source provenance before
+promoting one version. Exact numeric SemVer ordering prevents an older release
+from rewinding stable links. Private staged writes and a synced journal support
+inspection/recovery after actual process death at both swap steps; changed
+current/prior/staged custody refuses without deletion. A two-version rendered
+fixture joins ephemeral signatures and synthetic public responses to real
+Chrome navigation/search/CSP/no-JavaScript checks. R4 local assembly is
+implemented; R5/R6 production trust, installer/source acceptance, multi-channel
+publication, hostname/deployment and real public readback remain separate work.
+Pinned ExDoc metadata now uses stable object-key serialization before its
+content-derived names and references are frozen. Three independent local VM
+renders with observed raw search-key variation yield identical complete file
+inventories after normalization; search/list semantics and immutable conflicts
+remain enforced.
 
 The local storage budget slice enforces unique registered object bytes under
 the Library writer and exposes active/trash accounting with a native

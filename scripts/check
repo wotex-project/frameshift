@@ -20,6 +20,7 @@ check_policy() {
     "$repository_root/scripts/build-macos-icons" \
     "$repository_root/scripts/build-guide" \
     "$repository_root/scripts/build-site" \
+    "$repository_root/scripts/assemble-site" \
     "$repository_root/scripts/build-release-guide" \
     "$repository_root/scripts/check" \
     "$repository_root/scripts/check-workspace" \
@@ -118,10 +119,12 @@ check_docs() {
     mise exec -- mix format --check-formatted ../../scripts/docs/*.exs
     mise exec -- mix run --no-start ../../scripts/docs/markdown_test.exs
   )
-  mise exec -- node --test "$repository_root/scripts/docs/site.test.mjs"
+  mise exec -- node --test "$repository_root/scripts/docs/site.test.mjs" "$repository_root/scripts/docs/assembly.test.mjs"
   mise exec -- node --check "$repository_root/scripts/docs/build.mjs"
   mise exec -- node --check "$repository_root/scripts/docs/browser.mjs"
   mise exec -- node --check "$repository_root/scripts/docs/release-build.mjs"
+  mise exec -- node --check "$repository_root/scripts/docs/assembly.mjs"
+  mise exec -- node --check "$repository_root/scripts/docs/assemble.mjs"
   "$repository_root/scripts/build-site" --preview
   if [ "${1:-}" = '--browser' ]; then
     mise exec -- node "$repository_root/scripts/docs/release-build.mjs" --browser

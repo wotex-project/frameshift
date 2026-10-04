@@ -1,8 +1,8 @@
 import { execFileSync } from 'node:child_process';
-import { cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkDocumentationIndex, checkLinks, digest, documentationPolicy, headersForPath, inventory, labelHeadingAnchors, releaseSourceIdentity, sharedVersionMenu, siteHeaders, sourceIdentity, validateDevelopmentOutput, validateReleaseDocumentationOutput } from './site.mjs';
+import { canonicalDocumentationMetadata, pathExists, checkDocumentationIndex, checkLinks, digest, documentationPolicy, headersForPath, inventory, labelHeadingAnchors, releaseSourceIdentity, sharedVersionMenu, siteHeaders, sourceIdentity, validateDevelopmentOutput, validateReleaseDocumentationOutput } from './site.mjs';
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const arguments_ = process.argv.slice(2);
@@ -33,7 +33,7 @@ if (!pages.some(page => page.source === 'docs/README.md')) throw new Error('Docu
 
 const output = join(repository, 'var', releaseDocs ? `site-${identity.tag}` : preview ? 'site-preview' : 'site');
 const validateOutput = () => releaseDocs ? validateReleaseDocumentationOutput(output, identity) : validateDevelopmentOutput(output);
-if (existsSync(output)) validateOutput();
+if (pathExists(output)) validateOutput();
 mkdirSync(dirname(output), { recursive: true });
 const stage = mkdtempSync(join(dirname(output), '.site-stage-'));
 const inputPath = join(stage, '.build-input.json');
@@ -51,6 +51,7 @@ try {
     execFileSync('mise', ['exec', '--', 'mix', 'run', '--no-start', '../../scripts/docs/render.exs', inputPath],
       { cwd: join(repository, 'apps/core'), env: { ...process.env, MIX_ENV: 'dev' }, stdio: 'inherit' });
     rmSync(inputPath);
+    canonicalDocumentationMetadata(docs);
     for (const file of inventory(docs).filter(file => file.path.endsWith('.html'))) {
       const path = join(docs, file.path);
       writeFileSync(path, sharedVersionMenu(labelHeadingAnchors(readFileSync(path, 'utf8'))));
@@ -101,7 +102,7 @@ try {
   }
 
   // This first-stage builder must never erase a retained release or its index.
-  if (existsSync(output)) {
+  if (pathExists(output)) {
     const previousManifest = validateOutput();
     if (releaseDocs) {
       const retained = file => file.path.startsWith(`docs/${identity.tag}/`);
@@ -115,12 +116,12 @@ try {
       console.log(`Identical release documentation verified: ${identity.tag} at ${commit}`);
     }
   }
-  if (!(releaseDocs && existsSync(output))) {
+  if (!(releaseDocs && pathExists(output))) {
     const previous = output + '.previous';
-    if (existsSync(previous)) throw new Error('Unreconciled previous site staging directory');
-    if (existsSync(output)) renameSync(output, previous);
+    if (pathExists(previous)) throw new Error('Unreconciled previous site staging directory');
+    if (pathExists(output)) renameSync(output, previous);
     try { renameSync(stage, output); }
-    catch (error) { if (existsSync(previous)) renameSync(previous, output); throw error; }
+    catch (error) { if (pathExists(previous)) renameSync(previous, output); throw error; }
     rmSync(previous, { recursive: true, force: true });
     console.log(`${releaseDocs ? 'Release documentation candidate' : 'Development site'} built: ${pages.length} maintained pages; ${links.pages} HTML pages; ${links.links} local links; ${output}`);
   }

@@ -27,6 +27,14 @@ building a guide with download links. A failed check leaves the previous
 `apps/guide/dist` untouched. It prepares static files; deployment and release
 acceptance remain separate actions.
 
+The local [site assembler](../docs/architecture/install-and-guide.md#site-assembly-and-local-recovery)
+uses the same verifier before promoting versioned documentation and download
+links. Retained records use `verifyManifestSignature` to recheck the pinned key
+and exact manifest without needing installer archives on the docs build worker;
+that narrower call makes no fresh local/public archive claim. Development updates
+preserve accepted versions and stable pages, and local journal recovery repeats
+no release or network effect. These tools create no external publication.
+
 The plan is compact JSON with one trailing newline, such as:
 
 ```json

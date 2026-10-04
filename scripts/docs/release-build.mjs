@@ -1,10 +1,12 @@
 import assert from 'node:assert/strict';
+import { generateKeyPairSync, sign } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
 import { cpSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { checkLinks, headersForPath, inventory, validateReleaseDocumentationOutput } from './site.mjs';
+import { checkLinks, digest, headersForPath, inventory, validateReleaseDocumentationOutput } from './site.mjs';
+import { assembleSite, validateAssembly } from './assembly.mjs';
 
 const repository = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const browser = process.argv.length === 3 && process.argv[2] === '--browser';
@@ -16,7 +18,7 @@ const commit = () => {
   git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'docs: qualify fixture source']);
   return git(['rev-parse', 'HEAD']);
 };
-const build = revision => spawnSync(join(root, 'scripts/build-site'), ['--release-docs', 'v0.1.0', revision], {
+const build = (revision, tag = 'v0.1.0') => spawnSync(join(root, 'scripts/build-site'), ['--release-docs', tag, revision], {
   cwd: root, env: process.env, encoding: 'utf8', timeout: 120_000, maxBuffer: 4 * 1024 * 1024,
 });
 const succeeded = result => assert.equal(result.status, 0, result.stderr + result.stdout);
@@ -98,7 +100,60 @@ try {
   assert.match(conflict.stderr, /Conflicting content for an existing documentation version/);
   assert.ok(readFileSync(api, 'utf8').includes('conflicting retained content'));
   assert.deepEqual(inventory(output).filter(file => file.path !== 'site-manifest.json'), manifest.files);
+
+  // Join actual clean/rendered bundles to the release verifier and assembler.
+  // Ephemeral signatures and synthetic public responses prove software wiring,
+  // never production trust, an installed DEB or real public archive availability.
+  writeFileSync(api, html);
+  manifest.files = inventory(output).filter(file => file.path !== 'site-manifest.json');
+  writeFileSync(join(output, 'site-manifest.json'), JSON.stringify(manifest, null, 2) + '\n');
+  execFileSync(join(root, 'scripts/build-site'), [], { cwd: root, env: process.env, stdio: 'pipe', timeout: 120_000 });
+  const development = join(root, 'var/site');
+  const assembled = join(root, 'var/site-assembled');
+  execFileSync(join(root, 'scripts/assemble-site'), ['development', development, assembled], { cwd: root, env: process.env, stdio: 'pipe', timeout: 30_000 });
+  const keys = generateKeyPairSync('ed25519');
+  const trustFile = join(root, 'var/fixture-trust.sha256');
+  writeFileSync(trustFile, digest(keys.publicKey.export({ type: 'spki', format: 'der' })) + '\n');
+  const bytes = Buffer.from('fixture archive');
+  const signedInput = (candidate, version, sourceCommit) => {
+    const directory = mkdtempSync(join(root, 'var/fixture-signature-'));
+    const file = `frameshift-${version}-amd64.deb`;
+    const manifest = Buffer.from(JSON.stringify({ schemaVersion: 1, product: 'io.frameshift.app', version,
+      artifacts: [{ platform: 'ubuntu', architecture: 'amd64', format: 'deb', file,
+        url: `https://example.invalid/releases/v${version}/${file}`, bytes: bytes.length, sha256: digest(bytes) }] }) + '\n');
+    const manifestPath = join(directory, 'manifest.json');
+    const signaturePath = join(directory, 'manifest.sig');
+    const publicKeyPath = join(directory, 'public.pem');
+    writeFileSync(manifestPath, manifest);
+    writeFileSync(signaturePath, sign(null, manifest, keys.privateKey));
+    writeFileSync(publicKeyPath, keys.publicKey.export({ type: 'spki', format: 'pem' }));
+    writeFileSync(join(directory, file), bytes);
+    return { candidate, sourceCommit, manifestPath, signaturePath, publicKeyPath, artifactDirectory: directory };
+  };
+  const fetcher = async () => new Response(bytes, { headers: { 'content-length': String(bytes.length) } });
+  await assembleSite({ development, output: assembled, trustFile, release: signedInput(output, '0.1.0', revision) }, { fetcher });
+  const retainedVersion = inventory(join(assembled, 'docs/v0.1.0'));
+  const globalGuide = readFileSync(join(assembled, 'index.html'));
+  execFileSync(join(root, 'scripts/assemble-site'), ['development', development, assembled, trustFile], { cwd: root, env: process.env, stdio: 'pipe', timeout: 30_000 });
+  assert.deepEqual(inventory(join(assembled, 'docs/v0.1.0')), retainedVersion);
+  assert.deepEqual(readFileSync(join(assembled, 'index.html')), globalGuide);
+
+  writeFileSync(mix, original.replace(/version: "[^"]+"/, 'version: "0.0.1"'));
+  const olderCommit = commit();
+  git(['tag', 'v0.0.1']);
+  succeeded(build(olderCommit, 'v0.0.1'));
+  await assembleSite({ development, output: assembled, trustFile,
+    release: signedInput(join(root, 'var/site-v0.0.1'), '0.0.1', olderCommit) }, { fetcher });
+  const accepted = await validateAssembly(assembled, trustFile);
+  assert.equal(accepted.latest, '0.1.0');
+  assert.deepEqual(accepted.releases.map(entry => entry.version), ['0.1.0', '0.0.1']);
+  assert.deepEqual(inventory(join(assembled, 'docs/v0.1.0')), retainedVersion);
+  assert.deepEqual(readFileSync(join(assembled, 'index.html')), globalGuide);
+  if (browser) execFileSync('mise', ['exec', '--', 'node', join(root, 'scripts/docs/browser.mjs')], {
+    cwd: root, env: { ...process.env, FRAMESHIFT_DOCS_SITE: assembled }, stdio: 'inherit', timeout: 90_000,
+  });
   console.log(`Release docs fixture passed: ${manifest.links.pages} HTML pages, ${manifest.links.links} links; exact source/version refusal, immutable rerun/conflict${browser ? ', Chrome version/search/CSP/no-JS' : ''}.`);
+  console.log(`Assembled fixture passed: ${accepted.links.pages} HTML pages, ${accepted.links.links} links; two retained versions, signed/synthetic-public join, clean development CLI update and older-version refusal to rewind.`);
 } finally {
   rmSync(root, { recursive: true, force: true });
 }

@@ -1,9 +1,14 @@
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { lstatSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { lstatSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
 
 export const digest = bytes => createHash('sha256').update(bytes).digest('hex');
+
+export function pathExists(path) {
+  try { lstatSync(path); return true; }
+  catch (error) { if (error.code === 'ENOENT') return false; throw error; }
+}
 
 export function sourceIdentity(repository, preview = false) {
   const git = args => execFileSync('git', args, { cwd: repository, encoding: 'utf8' }).trim();
@@ -142,6 +147,39 @@ export function checkDocumentationIndex(directory, pages, route = '/docs/dev/') 
 
 export function sharedVersionMenu(html) {
   return html.replaceAll('src="docs_config.js"', 'src="/docs/docs_config.js"');
+}
+
+export function canonicalDocumentationMetadata(directory) {
+  // ExDoc 0.40.4 serializes maps in VM iteration order. Its search/sidebar
+  // properties have identical meaning but may produce different asset hashes.
+  // Keep lists and strings intact; sort only object keys before freezing bytes.
+  const stableObject = value => Array.isArray(value) ? value.map(stableObject) :
+    value && typeof value === 'object' ? Object.fromEntries(Object.keys(value).sort().map(key => [key, stableObject(value[key])])) : value;
+  const files = inventory(directory);
+  const rewrites = files.filter(file => /^dist\/(search_data|sidebar_items)-[A-F0-9]{8}\.js$/.test(file.path)).map(file => {
+    const text = new TextDecoder('utf-8', { fatal: true }).decode(readFileSync(join(directory, file.path)));
+    const match = /^(searchData|sidebarNodes)=(\{[\s\S]*\})$/.exec(text);
+    const expected = file.path.startsWith('dist/search_data-') ? 'searchData' : 'sidebarNodes';
+    if (!match || match[1] !== expected) throw new Error('Unsupported ExDoc metadata assignment');
+    const content = match[1] + '=' + JSON.stringify(stableObject(JSON.parse(match[2])));
+    const revision = createHash('md5').update(content).digest('hex').slice(0, 8).toUpperCase();
+    const path = file.path.replace(/-[A-F0-9]{8}\.js$/, `-${revision}.js`);
+    return { old: file.path, path, content };
+  });
+  if (rewrites.length !== 2 || !rewrites.some(item => item.old.startsWith('dist/search_data-')) ||
+      !rewrites.some(item => item.old.startsWith('dist/sidebar_items-'))) {
+    throw new Error('Expected the pinned ExDoc search and sidebar metadata assets');
+  }
+  for (const file of files.filter(file => file.path.endsWith('.html') || file.path === '.build')) {
+    const path = join(directory, file.path);
+    let text = readFileSync(path, 'utf8');
+    for (const item of rewrites) text = text.replaceAll(item.old, item.path);
+    writeFileSync(path, text);
+  }
+  for (const item of rewrites) {
+    writeFileSync(join(directory, item.path), item.content);
+    if (item.old !== item.path) rmSync(join(directory, item.old));
+  }
 }
 
 export function validateReleaseDocumentationOutput(directory, identity) {
