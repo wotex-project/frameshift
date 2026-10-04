@@ -7,6 +7,23 @@ defmodule Frameshift.Transport.MTLSCredentialTest do
 
   @pin "sha256:" <> String.duplicate("a", 64)
 
+  test "IPv6 origins preserve URI authority syntax and the exact transport port" do
+    for {origin, normalized, host, port} <- [
+          {"https://[::1]:443/", "https://[::1]", "::1", 443},
+          {"https://[FD00::A]:8443", "https://[fd00::a]:8443", "fd00::a", 8443},
+          {"https://FRAME.local:443/", "https://frame.local", "frame.local", 443},
+          {"https://192.168.1.2:8443", "https://192.168.1.2:8443", "192.168.1.2", 8443}
+        ] do
+      assert {:ok, credential} = MTLSCredential.new(origin, @pin, <<1>>, {:rsa, :fixture})
+      assert credential.origin == normalized
+      assert credential.host == host
+      assert credential.port == port
+      assert {:ok, uri} = URI.new(credential.origin <> "/.well-known/wot")
+      assert uri.host == host
+      assert uri.port == port
+    end
+  end
+
   test "accepts an OTP-compatible non-exportable signer without exposing it in inspection" do
     owner = self()
 

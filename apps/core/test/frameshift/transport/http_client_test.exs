@@ -72,6 +72,26 @@ defmodule Frameshift.Transport.HTTPClientTest do
     assert bytes =~ "GET /state HTTP/1.1"
   end
 
+  test "executes a pinned mutually authenticated request on literal IPv6 loopback", pki do
+    server = Keyword.put(pki.server, :ip, {0, 0, 0, 0, 0, 0, 0, 1})
+
+    %{url: listener_url, request: received} =
+      serve_once([:inet6 | server], "HTTP/1.1 200 OK\r\nContent-Length: 2\r\n\r\n42")
+
+    port = URI.new!(listener_url).port
+    origin = "https://[::1]:#{port}"
+    credential = credential(pki, origin)
+    assert credential.origin == origin
+
+    assert {:ok, response} =
+             HTTPClient.request(request(origin <> "/state"), credential, %{allow_loopback: true})
+
+    assert Response.body(response) == "42"
+    assert_receive {^received, bytes}
+    assert bytes =~ "GET /state HTTP/1.1"
+    assert bytes =~ "[::1]:#{port}"
+  end
+
   test "executes a selected TD Property through the pinned Wotex binding", pki do
     body = ~s({"displayState":"displayed","stateRevision":7})
 

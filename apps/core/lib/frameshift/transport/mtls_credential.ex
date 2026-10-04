@@ -6,6 +6,9 @@ defmodule Frameshift.Transport.MTLSCredential do
   certificate bytes and supported OTP key representation. It normalizes host and
   port and retains the binary SPKI digest. Origins cannot contain userinfo, query,
   fragment or an application path; malformed input returns a typed error.
+  URI reconstruction preserves brackets around IPv6 literals and suppresses the
+  default HTTPS port while keeping a selected nondefault port. The unbracketed
+  host remains separate for resolution and exact transport audience checks.
 
   ## Lifetime and inspection
 
@@ -72,8 +75,8 @@ defmodule Frameshift.Transport.MTLSCredential do
          true <- uri.path in [nil, "", "/"],
          port when port in 1..65_535 <- uri.port || 443 do
       host = String.downcase(uri.host)
-      authority = if port == 443, do: host, else: "#{host}:#{port}"
-      {:ok, host, port, "https://#{authority}"}
+      normalized_origin = URI.to_string(%URI{scheme: "https", host: host, port: port})
+      {:ok, host, port, normalized_origin}
     else
       _ -> {:error, :invalid_credential_origin}
     end

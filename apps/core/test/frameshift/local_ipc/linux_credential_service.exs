@@ -46,7 +46,8 @@ defmodule Frameshift.LinuxCredentialFixture do
       {:ok, config} = ProtectedFile.configure(root)
       {:ok, identity} = ProtectedFile.resolve(reference, config)
       true = identity.certificate == certificate
-      tls_join(pki, identity)
+      tls_join(pki, identity, :inet)
+      tls_join(pki, identity, :inet6)
       refusal_checks(root, path, pem, reference, config, wrong_owner)
       IO.puts("protected-file-pinned-tls-passed")
     after
@@ -54,13 +55,15 @@ defmodule Frameshift.LinuxCredentialFixture do
     end
   end
 
-  defp tls_join(pki, identity) do
+  defp tls_join(pki, identity, family) do
     {:ok, _} = Application.ensure_all_started(:ssl)
+
+    address = if family == :inet6, do: {0, 0, 0, 0, 0, 0, 0, 1}, else: {127, 0, 0, 1}
 
     {:ok, listener} =
       :ssl.listen(
         0,
-        pki.server_config ++
+        [family | Keyword.put(pki.server_config, :ip, address)] ++
           [
             active: false,
             mode: :binary,
@@ -90,7 +93,7 @@ defmodule Frameshift.LinuxCredentialFixture do
         end)
 
       {:ok, pin} = SPKIPin.fingerprint_der(Keyword.fetch!(pki.server_config, :cert))
-      origin = "https://localhost:#{port}"
+      origin = if family == :inet6, do: "https://[::1]:#{port}", else: "https://127.0.0.1:#{port}"
 
       {:ok, credential} =
         MTLSCredential.new(origin, pin, identity.certificate, identity.private_key)

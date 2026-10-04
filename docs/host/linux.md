@@ -297,6 +297,14 @@ nonroot Linux file custody and a PEM-resolved pinned mutual-TLS exchange, alongs
 malformed/mismatched/encrypted/oversized/symlink/owner/mode refusal. Installed
 systemd, TPM, amd64 closure and physical identity recovery remain open.
 
+The credential transport normalizes DNS/IPv4/IPv6 HTTPS origins once, keeps
+an unbracketed resolver host and exact port, and reconstructs bracketed IPv6
+URI authorities, omitting only default port 443. Appended TD paths and HTTP
+Host headers retain that authority. This follows [RFC 3986 section 3.2.2](https://www.rfc-editor.org/rfc/rfc3986.html#section-3.2.2),
+checked on 2026-10-04. Live pinned mutual TLS on IPv4 and IPv6 loopback using
+loaded protected PEM is software acceptance; it does not qualify scoped
+link-local addresses, routed discovery or a received frame.
+
 ### Actor-bound physical pairing commands
 
 Linux `pair` and `recoverPair` use the existing standalone IPC operations and

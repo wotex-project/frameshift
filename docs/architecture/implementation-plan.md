@@ -141,6 +141,11 @@ Update these owning specifications if that check changes the contract, then
 rerun the affected acceptance corpus. Preserve remaining external evidence
 gates without withholding independent implementation work.
 
+HTTPS credential normalization now preserves IPv6 literal authorities through
+TD path construction and actual pinned mutual TLS. IPv4/IPv6 protected-PEM
+loopback joins test that boundary on the pinned Linux/OTP runtime; scoped
+link-local and installed discovery remain separate work.
+
 ### Independent software delivery order
 
 Deliver S1 first, then inspect and exercise the exact S2/S3 mappings before
