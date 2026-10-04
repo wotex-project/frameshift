@@ -40,6 +40,19 @@ env -u FRAMESHIFT_RENDERER_PATH -u FRAMESHIFT_IPC_TOKEN_FILE \
   PATH=/usr/bin:/bin "$release_root/bin/frameshiftctl" --help >"$runtime_root/cli-help"
 test ! -e "$runtime_root/cli-data"
 
+identity_version=$(
+  env -u FRAMESHIFT_RENDERER_PATH -u FRAMESHIFT_IPC_TOKEN_FILE \
+    -u FRAMESHIFT_SERVICE_UID -u FRAMESHIFT_CREDENTIAL_DIRECTORY \
+    FRAMESHIFT_DATA_DIR="$runtime_root/identity-data" PATH=/usr/bin:/bin \
+    "$release_root/bin/frameshift-identity" --version
+)
+test "$identity_version" = 'frameshift-identity 0.1.0-dev'
+env -u FRAMESHIFT_RENDERER_PATH -u FRAMESHIFT_IPC_TOKEN_FILE \
+  -u FRAMESHIFT_SERVICE_UID -u FRAMESHIFT_CREDENTIAL_DIRECTORY \
+  FRAMESHIFT_DATA_DIR="$runtime_root/identity-data" PATH=/usr/bin:/bin \
+  "$release_root/bin/frameshift-identity" --help >"$runtime_root/identity-help"
+test ! -e "$runtime_root/identity-data"
+
 physical_result=$(
   FRAMESHIFT_RENDERER_PATH="$renderer_path" \
     "$release_root/bin/frameshift_core" eval \

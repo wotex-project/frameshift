@@ -36,7 +36,8 @@ check_policy() {
     "$repository_root/scripts/launch-bundled-core" \
     "$repository_root/scripts/package-macos" \
     "$repository_root/apps/core/test/fixtures/hanging-worker.sh" \
-    "$repository_root/apps/core/rel/overlays/bin/frameshiftctl"
+    "$repository_root/apps/core/rel/overlays/bin/frameshiftctl" \
+    "$repository_root/apps/core/rel/overlays/bin/frameshift-identity"
   mise exec -- actionlint "$repository_root/.github/workflows/check.yml"
   "$repository_root/scripts/check-elixir-docs"
   "$repository_root/scripts/check-workspace"

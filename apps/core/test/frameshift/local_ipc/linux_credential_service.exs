@@ -4,7 +4,15 @@ defmodule Frameshift.LinuxCredentialFixture do
   @moduledoc false
 
   alias Frameshift.Digest
-  alias Frameshift.Transport.{HTTPClient, MTLSCredential, ProtectedFile, SPKIPin}
+
+  alias Frameshift.Transport.{
+    HTTPClient,
+    MTLSCredential,
+    ProtectedFile,
+    ProtectedFileInstaller,
+    SPKIPin
+  }
+
   alias Wotex.Binding.HTTP.{Request, Response}
 
   @spec run(String.t()) :: :ok
@@ -40,19 +48,239 @@ defmodule Frameshift.LinuxCredentialFixture do
           {type, der, :not_encrypted}
         ])
 
-      File.write!(path, pem)
-      File.chmod!(path, 0o400)
-      File.touch!(path, 1)
       {:ok, config} = ProtectedFile.configure(root)
+      {:ok, ^reference, :created} = ProtectedFileInstaller.install(pem, config)
+      true = File.read!(path) == pem
+      {:ok, %{mode: mode}} = File.lstat(path)
+      true = Bitwise.band(mode, 0o7777) == 0o400
+      File.touch!(path, 1)
+      {:ok, before} = File.lstat(path)
+      {:ok, ^reference, :existing} = ProtectedFileInstaller.install("\n" <> pem, config)
+      {:ok, after_replay} = File.lstat(path)
+      true = Map.delete(before, :atime) == Map.delete(after_replay, :atime)
       {:ok, identity} = ProtectedFile.resolve(reference, config)
       true = identity.certificate == certificate
       tls_join(pki, identity, :inet)
       tls_join(pki, identity, :inet6)
       pairing_directory_join(root)
+      installation_checks(root, path, pem, reference, config)
       refusal_checks(root, path, pem, reference, config, wrong_owner)
       IO.puts("protected-file-pinned-tls-passed")
     after
       File.rm_rf!(root)
+    end
+  end
+
+  defp installation_checks(root, path, pem, reference, config) do
+    concurrent = Path.join(root, "concurrent")
+    File.mkdir!(concurrent)
+    File.chmod!(concurrent, 0o700)
+    {:ok, parallel_config} = ProtectedFile.configure(concurrent)
+
+    results =
+      1..8
+      |> Enum.map(fn _ ->
+        Task.async(fn -> ProtectedFileInstaller.install(pem, parallel_config) end)
+      end)
+      |> Enum.map(&Task.await(&1, 10_000))
+
+    1 = Enum.count(results, &(&1 == {:ok, reference, :created}))
+
+    true =
+      Enum.all?(
+        results,
+        &(&1 in [
+            {:ok, reference, :created},
+            {:ok, reference, :existing},
+            {:error, :credential_conflict}
+          ])
+      )
+
+    {:ok, _} = ProtectedFile.resolve(reference, parallel_config)
+    [name] = File.ls!(concurrent)
+    true = String.ends_with?(name, ".pem") and not String.starts_with?(name, ".")
+
+    input = Path.join(root, "stdin.pem")
+    File.write!(input, pem)
+    File.chmod!(input, 0o600)
+    {:ok, %{uid: uid}} = ProtectedFile.configure(root)
+    cli = Path.join(root, "cli")
+    File.mkdir!(cli)
+    File.chmod!(cli, 0o700)
+
+    code =
+      "Code.prepend_paths(Path.wildcard(\"/src/_build/test/lib/*/ebin\")); Frameshift.IdentityCLI.main(System.argv())"
+
+    env = [
+      {"FRAMESHIFT_SERVICE_UID", Integer.to_string(uid)},
+      {"FRAMESHIFT_CREDENTIAL_DIRECTORY", cli},
+      {"FRAMESHIFT_IDENTITY_FIXTURE", input}
+    ]
+
+    {output, 0} = identity_process(code, env)
+
+    %{"version" => 1, "credentialRef" => ^reference, "status" => "created"} =
+      JSON.decode!(output)
+
+    false = String.contains?(output, ["PRIVATE KEY", pem, root])
+    [name] = File.ls!(cli)
+    cli_path = Path.join(cli, name)
+    File.touch!(cli_path, 1)
+    previous = File.stat!(cli_path)
+    {output, 0} = identity_process(code, env)
+
+    %{"version" => 1, "credentialRef" => ^reference, "status" => "existing"} =
+      JSON.decode!(output)
+
+    false = String.contains?(output, ["PRIVATE KEY", pem, root])
+
+    for {bytes, status} <- [{"invalid PEM", 2}, {"", 64}, {:binary.copy(<<0>>, 131_073), 64}] do
+      File.write!(input, bytes)
+      {output, ^status} = identity_process(code, env)
+      false = String.contains?(output, ["PRIVATE KEY", pem, root])
+      [^name] = File.ls!(cli)
+    end
+
+    true = File.read!(cli_path) == pem
+    true = Map.delete(previous, :atime) == Map.delete(File.stat!(cli_path), :atime)
+    File.rm!(input)
+
+    orphan = Path.join(root, ".identity-abandoned.pem")
+    File.write!(orphan, pem)
+    File.chmod!(orphan, 0o400)
+
+    {:error, :credential_custody_unavailable} =
+      ProtectedFile.resolve("linux-pem-v1:.identity-abandoned", config)
+
+    true = File.read!(orphan) == pem
+    File.chmod!(path, 0o600)
+    File.write!(path, "malformed retained custody")
+    File.chmod!(path, 0o400)
+    {:error, :credential_conflict} = ProtectedFileInstaller.install(pem, config)
+    "malformed retained custody" = File.read!(path)
+    File.rm!(path)
+    File.ln_s!(orphan, path)
+    {:error, :credential_conflict} = ProtectedFileInstaller.install(pem, config)
+    true = File.read!(orphan) == pem
+    File.rm!(path)
+    File.mkdir!(path)
+    {:error, :credential_conflict} = ProtectedFileInstaller.install(pem, config)
+    File.rmdir!(path)
+    {:error, :invalid_protected_credential} = ProtectedFileInstaller.install("junk", config)
+    false = File.exists?(path)
+    {:ok, ^reference, :created} = ProtectedFileInstaller.install(pem, config)
+    publication_fault_check(root, pem, reference, config.uid)
+    full_disk_check(root, pem)
+    IO.puts("protected-identity-import-passed")
+  end
+
+  defp identity_process(code, env) do
+    System.cmd(
+      "/bin/sh",
+      [
+        "-c",
+        ~s(exec elixir "$@" < "$FRAMESHIFT_IDENTITY_FIXTURE"),
+        "--",
+        "-e",
+        code,
+        "--",
+        "import"
+      ],
+      env: env,
+      stderr_to_stdout: true
+    )
+  end
+
+  defp publication_fault_check(root, pem, reference, uid) do
+    directory = Path.join(root, "post-link-fault")
+    File.mkdir!(directory)
+    File.chmod!(directory, 0o700)
+    {:ok, config} = ProtectedFile.configure(directory)
+    "linux-pem-v1:" <> hex = reference
+    target = Path.join(directory, hex <> ".pem")
+    original = Process.whereis(:file_server_2)
+    Process.unregister(:file_server_2)
+
+    # In this isolated VM, forward real OTP filesystem calls and change actual
+    # custody after the successful hard link but before its caller can proceed.
+    proxy = spawn(fn -> filesystem_proxy(original, target, directory) end)
+    Process.register(proxy, :file_server_2)
+    names = ~w(FRAMESHIFT_SERVICE_UID FRAMESHIFT_CREDENTIAL_DIRECTORY)
+    previous = Map.new(names, &{&1, System.get_env(&1)})
+
+    try do
+      System.put_env("FRAMESHIFT_SERVICE_UID", Integer.to_string(uid))
+      System.put_env("FRAMESHIFT_CREDENTIAL_DIRECTORY", directory)
+      {:ok, input} = StringIO.open(pem)
+      {75, output, error} = Frameshift.IdentityCLI.run(["import"], input)
+      StringIO.close(input)
+
+      %{"version" => 1, "credentialRef" => ^reference, "status" => "unknown"} =
+        JSON.decode!(output)
+
+      true = error =~ "uncertain installation"
+      false = String.contains?(output <> error, ["PRIVATE KEY", pem, root])
+      true = File.read!(target) == pem
+      [name] = File.ls!(directory)
+      true = name == hex <> ".pem"
+    after
+      Process.unregister(:file_server_2)
+      Process.register(original, :file_server_2)
+      Process.exit(proxy, :kill)
+      File.chmod!(directory, 0o700)
+
+      Enum.each(previous, fn
+        {name, nil} -> System.delete_env(name)
+        {name, value} -> System.put_env(name, value)
+      end)
+    end
+
+    {:ok, ^reference, :existing} = ProtectedFileInstaller.install(pem, config)
+    {:ok, _} = ProtectedFile.resolve(reference, config)
+  end
+
+  defp filesystem_proxy(original, target, directory) do
+    receive do
+      {:"$gen_call", from, request} ->
+        result = GenServer.call(original, request, 5_000)
+
+        case {request, result} do
+          {{:make_link, _, destination}, :ok} ->
+            if to_string(destination) == target do
+              {_, 0} = System.cmd("/bin/chmod", ["755", directory], stderr_to_stdout: true)
+            end
+
+          _ ->
+            :ok
+        end
+
+        GenServer.reply(from, result)
+        filesystem_proxy(original, target, directory)
+    end
+  end
+
+  defp full_disk_check(root, pem) do
+    directory = Path.join(root, "full")
+    File.mkdir!(directory)
+    File.chmod!(directory, 0o700)
+    {:ok, config} = ProtectedFile.configure(directory)
+    filler = Path.join(root, "filler")
+    {:ok, file} = File.open(filler, [:write, :raw, :binary, :exclusive])
+
+    try do
+      fill(file, 0)
+      {:error, :credential_installation_unavailable} = ProtectedFileInstaller.install(pem, config)
+      [] = File.ls!(directory)
+    after
+      File.close(file)
+      File.rm(filler)
+    end
+  end
+
+  defp fill(file, count) when count < 1_024 do
+    case :file.write(file, :binary.copy(<<0>>, 65_536)) do
+      :ok -> fill(file, count + 1)
+      {:error, :enospc} -> :ok
     end
   end
 

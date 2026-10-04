@@ -35,6 +35,7 @@ defmodule Frameshift.LocalIPC.LinuxCredentialContract do
 
     assert output =~ "protected-file-pinned-tls-passed"
     assert output =~ "pairing-directory-sync-passed"
+    assert output =~ "protected-identity-import-passed"
     assert File.read!(path) == "root-owned fixture must not be read"
     assert {:ok, %File.Stat{uid: 0, mode: mode}} = File.lstat(path)
     assert Bitwise.band(mode, 0o7777) == 0o600

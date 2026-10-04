@@ -158,7 +158,20 @@ Backup/restore and simulated pairing authority now require OTP directory
 synchronization through explicit directory handles. Parent-sync failure after
 publication remains an uncertain commit with retained bytes. Local syscall and
 nonroot Linux pairing joins cover this software boundary; exact filesystem
-power-loss qualification remains open. Identity installation must use this boundary.
+power-loss qualification remains open.
+
+The separate clean `frameshift-identity import` command now installs one
+explicit protected PEM under actual nonroot service custody. Bounded stdin,
+certificate/key proof, exclusive private staging, no-replacement hard-link
+publication and real directory sync precede the new-name acknowledgement.
+Existing verified custody replays without rewriting; uncertain publication
+retains bytes and returns exit 75 with its opaque reference. Nonroot Linux
+fixtures exercise concurrent installation, fresh CLI create/replay/refusal,
+conflict preservation, abandoned stages, full tmpfs and a post-link custody
+fault, alongside resolved-key pinned TLS. Administrator issuance/encrypted
+backup, systemd credential policy, installed Ubuntu closure and exact physical
+identity recovery remain separate R3 evidence. Streamed original import and its
+Linux codec contract are the next independent command boundary.
 
 ### Independent software delivery order
 

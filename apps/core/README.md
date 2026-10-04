@@ -91,6 +91,15 @@ bridge for local discovery. The Linux IPC lane retains no external network and
 uses an executable temporary filesystem only for owned deadline-test helpers.
 These are software fixtures, not supported Ubuntu install or hardware evidence.
 
+The separate bundled `frameshift-identity import` command accepts one bounded
+certificate/private-key PEM on closed stdin while running as the configured
+nonroot service UID. Set `FRAMESHIFT_SERVICE_UID` and an existing service-owned
+`0700` `FRAMESHIFT_CREDENTIAL_DIRECTORY`. It validates and installs an opaque
+certificate-bound reference without replacing an existing file or starting the
+host. Exit 75 preserves an uncertain installation for inspection. Issuance and
+encrypted identity backup are separate from artwork backup; see the
+[Linux custody and recovery contract](../../docs/host/linux.md#offline-protected-identity-import).
+
 Run the complete core check from this directory:
 
 ```sh

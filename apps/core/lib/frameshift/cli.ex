@@ -31,7 +31,7 @@ defmodule Frameshift.CLI do
   unknown mutation outcome. Help/version need no service or credential access.
   """
 
-  alias Frameshift.Digest
+  alias Frameshift.{CLIInput, Digest}
   alias Frameshift.Discovery.Avahi
   alias Frameshift.LocalIPC.Client
   alias Frameshift.Pairing.Bootstrap
@@ -380,31 +380,17 @@ defmodule Frameshift.CLI do
 
   defp bootstrap_input(%{"operation" => operation} = body, input)
        when operation in ["pair", "recoverPair"] do
-    task = Task.async(fn -> read_bootstrap(input) end)
-
-    case Task.yield(task, 5_000) || Task.shutdown(task, :brutal_kill) do
-      {:ok, bytes} when is_binary(bytes) ->
-        with {:ok, %{device_id: id}} <- Bootstrap.parse(bytes),
-             true <- id == body["discoveredId"] do
-          {:ok, Map.put(body, "bootstrap", bytes)}
-        else
-          _ -> {:error, :usage}
-        end
-
+    with {:ok, bytes} <- CLIInput.read(input, 2_048),
+         {:ok, %{device_id: id}} <- Bootstrap.parse(bytes),
+         true <- id == body["discoveredId"] do
+      {:ok, Map.put(body, "bootstrap", bytes)}
+    else
       _ ->
         {:error, :usage}
     end
   end
 
   defp bootstrap_input(body, _), do: {:ok, body}
-
-  defp read_bootstrap(input) do
-    IO.binread(input, 2_049)
-  rescue
-    _ -> nil
-  catch
-    _, _ -> nil
-  end
 
   defp response_result({:ok, %{"ok" => false, "error" => %{"code" => code}} = response})
        when code in ["command_outcome_unknown", "pairing_outcome_unknown", "pairing_incomplete"],

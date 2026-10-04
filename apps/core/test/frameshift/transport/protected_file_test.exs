@@ -30,6 +30,8 @@ defmodule Frameshift.Transport.ProtectedFileTest do
   test "bounded PEM resolves the certificate identity and proves private/public key agreement",
        c do
     assert {:ok, identity} = ProtectedFile.decode(c.reference, c.pem)
+    assert {:ok, reference} = ProtectedFile.identify(c.pem)
+    assert reference == c.reference
     assert identity.certificate == c.certificate
     assert identity.private_key == c.key
     assert {:ok, ^identity} = ProtectedFile.decode(c.reference, " \n" <> c.pem <> "\t")
@@ -43,6 +45,31 @@ defmodule Frameshift.Transport.ProtectedFileTest do
       ])
 
     assert {:ok, ^identity} = ProtectedFile.decode(c.reference, pem)
+  end
+
+  test "reference derivation requires the complete valid proof, not just a certificate header",
+       c do
+    [cert, key] = :public_key.pem_decode(c.pem)
+    wrong = :public_key.generate_key({:rsa, 2048, 65_537})
+
+    mismatched =
+      :public_key.pem_encode([
+        cert,
+        {:RSAPrivateKey, :public_key.der_encode(:RSAPrivateKey, wrong), :not_encrypted}
+      ])
+
+    for bytes <- [
+          nil,
+          "",
+          <<255>>,
+          "junk" <> c.pem,
+          :public_key.pem_encode([cert]),
+          :public_key.pem_encode([cert, key, cert]),
+          mismatched,
+          String.duplicate("x", 131_073)
+        ] do
+      assert {:error, :invalid_protected_credential} = ProtectedFile.identify(bytes)
+    end
   end
 
   test "unsupported RSA size and EC curve refuse before returning TLS key material", c do

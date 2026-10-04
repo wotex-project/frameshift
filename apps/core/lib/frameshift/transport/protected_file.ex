@@ -18,6 +18,11 @@ defmodule Frameshift.Transport.ProtectedFile do
   keys never belong in SQLite, recipes, command receipts, logs or CLI output.
   Errors are finite atoms and omit paths and decode exceptions.
 
+  `identify/1` derives only the certificate-bound reference from fully validated
+  PEM, including the same possession proof. The offline installer uses this
+  pure boundary; filesystem admission and no-replacement publication belong to
+  `Frameshift.Transport.ProtectedFileInstaller`, not the resolver.
+
   PEM custody is exportable. This resolver creates no keys and does not rotate
   or restore an identity automatically. Operator key backup is separate from
   artwork backup; missing material leaves delivery pending. Final inode checks
@@ -92,6 +97,25 @@ defmodule Frameshift.Transport.ProtectedFile do
   end
 
   def resolve(_, _), do: {:error, :credential_custody_unavailable}
+
+  @doc "Derives a reference only after bounded PEM grammar and certificate/key proof pass."
+  @spec identify(binary()) :: {:ok, String.t()} | {:error, :invalid_protected_credential}
+  def identify(bytes) when is_binary(bytes) and byte_size(bytes) in 1..@maximum_bytes do
+    with [{:Certificate, der, :not_encrypted}, _] <- :public_key.pem_decode(bytes),
+         true <- byte_size(der) in 1..65_536,
+         reference = "linux-pem-v1:" <> Digest.hex!(Digest.sha256(der)),
+         {:ok, _} <- decode(reference, bytes) do
+      {:ok, reference}
+    else
+      _ -> {:error, :invalid_protected_credential}
+    end
+  rescue
+    _ -> {:error, :invalid_protected_credential}
+  catch
+    _, _ -> {:error, :invalid_protected_credential}
+  end
+
+  def identify(_), do: {:error, :invalid_protected_credential}
 
   @doc "Decodes bounded PEM and proves key agreement; it does not admit filesystem custody."
   @spec decode(String.t(), binary()) ::

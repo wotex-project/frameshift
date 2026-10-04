@@ -305,6 +305,59 @@ checked on 2026-10-04. Live pinned mutual TLS on IPv4 and IPv6 loopback using
 loaded protected PEM is software acceptance; it does not qualify scoped
 link-local addresses, routed discovery or a received frame.
 
+### Offline protected identity import
+
+The bundled `frameshift-identity import` maintenance command installs an
+administrator-supplied PEM while running as the configured nonroot service
+UID. It starts no application, database or listener. It requires canonical
+`FRAMESHIFT_SERVICE_UID` and the existing `FRAMESHIFT_CREDENTIAL_DIRECTORY`;
+actual real/effective/saved/filesystem UIDs must match, and final directory
+custody must already be service-owned `0700`. It never creates a directory,
+changes an existing file's permissions, generates a key or selects a systemd
+ACL/encrypted credential policy. Missing/unsafe custody refuses before input.
+
+Pipe one certificate/private-key PEM into stdin and close it. The shared CLI
+intake reads at most 131073 bytes under one five-second deadline and admits
+1–131072 bytes. PEM never goes into argv, environment, output or a database.
+Certificate/key grammar, bounds and possession proof are the resolver's exact
+rules. Derive the opaque reference from the admitted certificate DER; that
+content identity provides idempotence for this offline installation. It is
+separate from actor-bound artwork/pairing command receipts and has no hidden
+service mutation or physical pairing effect.
+
+Write only a fresh exclusive random staging file under the admitted private
+directory, restrict it to `0400` before any PEM bytes, sync and close it, and
+install `HEX.pem` using a hard link that cannot replace an existing name.
+Recheck custody and resolve the final reference before acknowledging new
+publication, requiring a real directory sync. If an existing reference resolves
+to the same verified certificate/key identity, return it without rewriting its
+bytes, permissions or name.
+Malformed, unsafe, wrong-owner, symlink or directory conflicts remain untouched;
+no force/replace/rotation option is provided. Concurrent identical imports
+converge on one final name; a loser validates retained custody or refuses until
+it can be inspected. An interrupted private stage is not resolvable by
+a credential reference. Owned staging cleanup is attempted, with no automatic
+deletion of other credentials or abandoned stages.
+
+Successful canonical JSON contains only version, opaque credential reference
+and status `created`/`existing`. Invalid input or a conflict exits 2, invalid
+arguments/configuration/input framing exits 64, custody or pre-publication I/O
+unavailable exits 69. A failure after new-name publication exits 75 with that
+reference and status `unknown`, preserves installed bytes and requires explicit
+inspection; it cannot acknowledge persistence or silently replace identity.
+Lost output can be reconciled by deliberately submitting the same PEM, since
+installation never replaces a final name. Help/version need no custody/input.
+
+Administrator key issuance and encrypted backup remain external setup actions;
+artwork backup retains only the opaque reference. This import qualifies no CA,
+TLS-validity, TPM, signing/notarization, physical pairing or installed Ubuntu
+release. Acceptance requires pure shared input/PEM refusal, real nonroot Linux
+exclusive/file/directory custody, concurrent/import-replay/conflict/crash-stage
+fixtures, fresh stdin CLI output and resolved-key pinned TLS. An isolated full
+tmpfs exercises actual pre-publication ENOSPC; a post-link custody fault must
+retain the file and return exit 75 without key/path output. Neither establishes
+exact installed-filesystem disk-failure or power-loss qualification.
+
 ### Actor-bound physical pairing commands
 
 Linux `pair` and `recoverPair` use the existing standalone IPC operations and
