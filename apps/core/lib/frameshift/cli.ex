@@ -7,8 +7,10 @@ defmodule Frameshift.CLI do
   maps explicit product arguments to the existing wire contract; each mutation
   requires a caller-retained `--id`. No retry or replacement ID hides an unknown
   outcome. Pairing reads bounded physical bootstrap JSON from stdin with a finite
-  deadline; only discovery/origin/reference and retained ID appear in argv. Import
-  awaits its streamed custody boundary. Physical recovery never reposts a secret.
+  deadline; only discovery/origin/reference and retained ID appear in argv.
+  `discover` takes a bounded Avahi introduction snapshot without starting the
+  host or reading credentials. Import awaits its streamed custody boundary.
+  Physical recovery never reposts a secret.
 
   Catalog edits carry the observed metadata/storage revision. Metadata requires
   an explicit complete user-label set or clear flag, preserving machine labels
@@ -30,6 +32,7 @@ defmodule Frameshift.CLI do
   """
 
   alias Frameshift.Digest
+  alias Frameshift.Discovery.Avahi
   alias Frameshift.LocalIPC.Client
   alias Frameshift.Pairing.Bootstrap
 
@@ -45,6 +48,7 @@ defmodule Frameshift.CLI do
            [--dismiss filename|metadata|vision LABEL]...
          frameshiftctl loop TARGET MILLISECONDS|profile ITEM... | loop-pinned TARGET MILLISECONDS|profile
          frameshiftctl pair|recover-pair DISCOVERED_ID ORIGIN CREDENTIAL_REF
+         frameshiftctl discover
   Every mutation requires --id COMMAND_ID. Configure service UID, endpoint GID and socket path.
   Pair/recover-pair reads one bounded physical bootstrap JSON from closed stdin.
   """
@@ -68,6 +72,13 @@ defmodule Frameshift.CLI do
     {0, "frameshiftctl #{Application.spec(:frameshift_core, :vsn)}\n", ""}
   end
 
+  def run(["discover"], _) do
+    case Avahi.browse() do
+      {:ok, snapshot} -> {0, RFC8785.encode!(snapshot) <> "\n", ""}
+      _ -> {69, "", "frameshiftctl: discovery unavailable\n"}
+    end
+  end
+
   def run(args, input) do
     with {:ok, {role, body}} <- parse(args),
          {:ok, path, policy} <- endpoint(role),
@@ -89,7 +100,8 @@ defmodule Frameshift.CLI do
   end
 
   @doc "Admits exact CLI arguments without opening a socket or allocating a command identity."
-  @spec parse([String.t()]) :: {:ok, {:command | :diagnostics, map()}} | {:error, :usage}
+  @spec parse([String.t()]) ::
+          {:ok, {:command | :diagnostics | :discovery, map()}} | {:error, :usage}
   def parse(args) when is_list(args) do
     if length(args) <= 270 and Enum.all?(args, &valid_argument?/1) and
          Enum.reduce(args, 0, &(byte_size(&1) + &2)) <= 64 * 1024,
@@ -114,6 +126,7 @@ defmodule Frameshift.CLI do
   end
 
   defp parse_args(["state"]), do: read("snapshot")
+  defp parse_args(["discover"]), do: {:ok, {:discovery, %{}}}
   defp parse_args(["storage"]), do: read("libraryStorage")
   defp parse_args(["metadata", id]), do: identified_read("libraryMetadata", "itemID", id)
   defp parse_args(["recovery"]), do: read("libraryRecovery")

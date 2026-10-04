@@ -124,3 +124,5 @@ jobs:
         run: ./scripts/check container
       - name: Check Linux peer credentials
         run: ./scripts/check linux-ipc
+      - name: Check Linux Avahi discovery
+        run: ./scripts/check linux-discovery

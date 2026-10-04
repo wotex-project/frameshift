@@ -739,3 +739,101 @@ defmodule Frameshift.LocalIPC.LinuxClientContract do
       }
     }
 end
+
+defmodule Frameshift.Discovery.LinuxProcessContract do
+  @moduledoc false
+
+  use ExUnit.Case, async: false
+
+  alias Frameshift.Discovery.Avahi
+
+  @row ~s(=;eth0;IPv4;opaque-node;_frameshift._tcp;local;frame.local;192.168.1.2;8443;"v=0" "id=paper-frame-00001" "td=/.well-known/wot" "scheme=https"\n)
+
+  setup do
+    root = "/tmp/fg-discovery-#{System.unique_integer([:positive])}"
+    File.mkdir!(root)
+    File.chmod!(root, 0o755)
+    on_exit(fn -> File.rm_rf!(root) end)
+    %{root: root}
+  end
+
+  test "protected helper executes exact arguments, resolves a bounded snapshot and discards failed/oversized output",
+       %{root: root} do
+    output = Path.join(root, "output")
+    File.write!(output, @row)
+
+    script =
+      "#!/bin/sh\nset -eu\n[ \"$*\" = '--parsable --resolve --terminate --no-db-lookup --domain=local _frameshift._tcp' ]\ncat \"#{output}\"\n"
+
+    browser = helper(root, script)
+
+    assert {:ok, %{"frames" => [_], "authority" => "introduction"}} =
+             Avahi.browse(browser: browser)
+
+    code =
+      "Code.prepend_paths(Path.wildcard(\"/src/_build/test/lib/*/ebin\")); IO.inspect(Frameshift.Discovery.Avahi.browse(browser: System.argv() |> hd()))"
+
+    assert {result, 0} =
+             System.cmd("runuser", ["-u", "nobody", "--", "elixir", "-e", code, "--", browser],
+               stderr_to_stdout: true
+             )
+
+    assert result =~ ~s("authority" => "introduction")
+
+    File.write!(browser, script <> "printf '%s' 'secret-path-and-raw-exception'\nexit 1\n")
+    assert {:error, :discovery_unavailable} = Avahi.browse(browser: browser)
+    File.write!(output, String.duplicate("x", 65_537))
+    File.write!(browser, script)
+    assert {:error, :discovery_unavailable} = Avahi.browse(browser: browser)
+
+    File.chmod!(browser, 0o777)
+    assert {:error, :discovery_unavailable} = Avahi.browse(browser: browser)
+    File.chmod!(browser, 0o755)
+    File.chown!(browser, 65_534)
+    assert {:error, :discovery_unavailable} = Avahi.browse(browser: browser)
+    File.chown!(browser, 0)
+    link = Path.join(root, "link")
+    File.ln_s!(browser, link)
+    assert {:error, :discovery_unavailable} = Avahi.browse(browser: link)
+    assert File.read!(browser) == script
+    assert {:error, :discovery_unavailable} = Avahi.browse(browser: "/missing/browser")
+    assert {:error, :discovery_unavailable} = Avahi.browse(browser: browser, deadline_ms: 5_001)
+    assert {:error, :discovery_unavailable} = Avahi.browse(browser: browser, unknown: true)
+  end
+
+  test "the OS deadline kills an uncooperative helper and the collector returns no partial introduction",
+       %{root: root} do
+    pid_path = Path.join(root, "pid")
+    output = Path.join(root, "output")
+    File.write!(output, @row)
+
+    browser =
+      helper(
+        root,
+        "#!/bin/sh\ntrap '' TERM HUP\nprintf '%s' \"$$\" > \"#{pid_path}\"\ncat \"#{output}\"\nwhile :; do :; done\n"
+      )
+
+    started = System.monotonic_time(:millisecond)
+    assert {:error, :discovery_unavailable} = Avahi.browse(browser: browser, deadline_ms: 300)
+    assert System.monotonic_time(:millisecond) - started < 1_500
+    pid = File.read!(pid_path)
+
+    # PID 1 may retain a zombie in this container; it has exited and cannot run.
+    status = File.read("/proc/#{pid}/status")
+
+    assert status == {:error, :enoent} or
+             (elem(status, 0) == :ok and elem(status, 1) =~ "State:\tZ")
+
+    assert {:error, :discovery_unavailable} =
+             Avahi.browse(browser: browser, timeout: "/missing/timeout")
+
+    assert {69, "", "frameshiftctl: discovery unavailable\n"} = Frameshift.CLI.run(["discover"])
+  end
+
+  defp helper(root, bytes) do
+    path = Path.join(root, "browser")
+    File.write!(path, bytes)
+    File.chmod!(path, 0o755)
+    path
+  end
+end

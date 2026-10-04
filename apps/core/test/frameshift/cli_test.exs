@@ -200,4 +200,17 @@ defmodule Frameshift.CLITest do
     assert version == "frameshiftctl 0.1.0-dev\n"
     assert {64, "", _} = CLI.run(["send"])
   end
+
+  test "discovery is an exact standalone read without a service command identity" do
+    assert {:ok, {:discovery, %{}}} = CLI.parse(["discover"])
+
+    for args <- [["discover", "--id", "id"], ["discover", "--all"], ["discover", "/tmp/helper"]] do
+      assert {:error, :usage} = CLI.parse(args)
+      assert {64, "", _} = CLI.run(args)
+    end
+
+    unless :os.type() == {:unix, :linux} do
+      assert {69, "", "frameshiftctl: discovery unavailable\n"} = CLI.run(["discover"])
+    end
+  end
 end

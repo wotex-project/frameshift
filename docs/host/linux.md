@@ -144,7 +144,7 @@ must not reach the service, and Apple observations require their native adapter.
 Standalone pair/recover use the actor-bound physical-command contract below;
 missing command identity or unsupported reference policy refuses before claims.
 Missing protected keys on first execution yield a retained preflight refusal.
-Streamed import, credential provisioning, discovery, the full CLI and installed
+Streamed import, credential provisioning, the full CLI and installed
 packages remain required work;
 this admission slice does not qualify a complete Linux application.
 
@@ -216,7 +216,7 @@ and 8 KiB per argument, before constructing JSON. Catalog edits, replay and stal
 revision acceptance use the actual SQLite owner; ordered-loop argument fixtures
 join the retained core rendering/playlist tests. These are software checks, not
 Linux NIF, installed package, qualified target or physical display evidence.
-Import and automatic discovery remain required CLI work with their own adapters.
+Streamed import remains required CLI work with its own custody/codec adapter.
 Physical pair/recovery and stdin intake follow the dedicated contracts below.
 
 Requests retain 64 KiB/8 KiB framing bounds and responses 1 MiB/256 KiB bounds.
@@ -281,7 +281,7 @@ backup live outside the artwork backup and metadata database; the resolver never
 writes key material. Restoring artwork alone does not restore identity. Missing
 identity requires deliberate re-provisioning of the same verified certificate/key
 or physical re-pairing; there is no automatic replacement key or replay of a
-consumed pairing secret. Pair/recover CLI actor/receipt work remains separate.
+consumed pairing secret. Pair/recover uses the actor/receipt contract below.
 
 This protected-file policy does not assume systemd credentials have service-owned
 private modes. Upstream uses root ownership plus ACLs when supported and ownership
@@ -339,8 +339,8 @@ First execution calls the existing pinned pairing/TD admission using the command
 ID, then completes the receipt under the same actor. Unknown exchange/incomplete
 admission remains explicit. Recovery with its own deliberate command ID reads
 only the authenticated TD and never posts the secret. It cannot silently rotate
-an identity or reuse a pair ID as a recovery command. The CLI supplies bounded bootstrap intake under the contract below; automatic
-discovery remains separate required work.
+an identity or reuse a pair ID as a recovery command. The CLI supplies bounded
+bootstrap intake and discovery under the dedicated contracts below.
 Acceptance joins actual SQLite success/failure/pending/conflict/restart and
 secret-exclusion checks to nonroot kernel attribution and dispatcher tests; live
 protected-PEM TLS is separate from physical-window and exact-frame qualification.
@@ -372,9 +372,68 @@ response also exits 75 and preserves its JSON envelope on stdout; other domain
 refusals exit 2. There is no automatic retry, new ID, pair-to-recover switch or
 secret repost. Recovery is a deliberate command with its own retained ID.
 Acceptance covers bounded real input, refusal before dispatch, matching/mismatched
-frame envelopes, unknown exits and the actual Linux actor/receipt join. Automatic
-DNS-SD discovery, installed UI/credentials and exact physical commissioning remain
-separate requirements.
+frame envelopes, unknown exits and the actual Linux actor/receipt join. Installed
+discovery/UI/credentials and exact physical commissioning remain separate gates.
+
+### Bounded DNS-SD discovery CLI
+
+`frameshiftctl discover` performs one local introduction snapshot without
+starting the core, reading its database or obtaining a credential. It invokes
+the installed root-owned `/usr/bin/avahi-browse` through `/usr/bin/timeout`
+with fixed arguments: parsable resolved output, explicit `local` domain,
+original service type and termination after the current browse. No shell,
+executable path from argv/PATH, daemon auto-start or automatic retry is used.
+The package must declare and qualify Avahi/coreutils runtime dependencies and
+the system D-Bus/Avahi service. Missing binaries/daemon or a nonzero exit is
+unavailable, preserving all host/frame state.
+
+GNU timeout sends KILL to the owned process group after five seconds; the
+collector has a six-second absolute deadline. It retains at most 65536 output
+bytes, 512 events and 64 active service identities, and rejects partial final
+lines and malformed machine output. Oversized output is discarded while the
+finite subprocess deadline remains in force. Output collected before helper
+failure/timeout never becomes a successful partial snapshot. Child cleanup
+and output limits need real Linux process tests; these bounds are not measured
+RSS or a complete installed service qualification.
+
+Decode Avahi's DNS-label escapes and quoted TXT decimal/quote/backslash escapes
+without losing duplicate keys. Admit only `_frameshift._tcp` in `local`, an
+opaque ASCII instance of at most 63 bytes and the reference introduction:
+exact version `0`, HTTPS scheme, `/.well-known/wot`, ASCII device ID of
+16–128 bytes and optional pair `0`/`1`, with at most 512 length-prefixed TXT
+bytes. Reject extra private metadata, duplicate fields and malformed escapes.
+Added/unresolved and removed services never appear as resolved candidates.
+An introduction or route that cannot be admitted is counted and omitted;
+structural/output/service-count failures refuse the whole snapshot.
+
+Require a bounded ASCII `.local` SRV hostname and canonical numeric port.
+Return a literal local IPv4 or ULA IPv6 HTTPS origin from the resolved address,
+avoiding an unqualified NSS/mDNS hostname dependency. Loopback, multicast,
+public addresses, mapped IPv6 and scope-dependent IPv6 link-local results are
+omitted. Multiple family/interface results for the same instance, hostname,
+port and introduction coalesce, preferring IPv4 then the lexical origin;
+conflicting instance/host/port/introduction under one device ID omit that
+device as ambiguous. The result is sorted by device ID and contains only
+device ID, origin, TD path and physical pair-mode hint. `omittedCount` counts
+invalid introduction/route events plus candidates suppressed for ID ambiguity;
+it is not a count of currently present devices. It contains no service instance,
+interface, friendly metadata or TD.
+
+Successful JSON explicitly identifies `authority: "introduction"`. Select a
+candidate's device ID and origin for the existing pair/recover command; no
+first candidate is paired automatically. A closed pair hint does not remove
+the frame from discovery or authorize/forbid physical recovery. TLS pin,
+physical bootstrap, local-address admission and authenticated TD ID remain
+mandatory. Advertising the same ID is not proof of custody or compatibility.
+No introduction persists beyond this invocation.
+
+Research and exact upstream locators are in
+[protocol foundations](../research/protocol-foundations.md#linux-discovery-adapter).
+Acceptance requires hostile/duplicate/private TXT and lifecycle fixtures,
+dual-family/ambiguity and local-address refusal, actual bounded Linux helpers
+and CLI output, and an Avahi browse/resolve producer join. Supported Ubuntu
+installed discovery, scoped link-local support and independent
+physical-frame interoperability remain separately unqualified.
 
 ## Nerves Pi 5 bridge
 

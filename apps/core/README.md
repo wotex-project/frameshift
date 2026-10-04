@@ -82,6 +82,15 @@ The separate `scripts/check linux-ipc` lane exercises actual Linux kernel
 peer credentials on pinned OTP in a network-disabled container; it does not
 qualify an installed Linux service or its group permissions.
 
+The Linux `frameshiftctl discover` command returns a finite, unauthenticated
+DNS-SD introduction snapshot using installed Avahi/coreutils dependencies.
+`scripts/check linux-discovery` builds a separate dated Debian Avahi/D-Bus
+fixture and checks the actual producer, nonroot CLI, refusal and daemon restart.
+It needs network access for signed snapshot packages and an isolated Docker
+bridge for local discovery. The Linux IPC lane retains no external network and
+uses an executable temporary filesystem only for owned deadline-test helpers.
+These are software fixtures, not supported Ubuntu install or hardware evidence.
+
 Run the complete core check from this directory:
 
 ```sh

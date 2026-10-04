@@ -146,6 +146,14 @@ TD path construction and actual pinned mutual TLS. IPv4/IPv6 protected-PEM
 loopback joins test that boundary on the pinned Linux/OTP runtime; scoped
 link-local and installed discovery remain separate work.
 
+The Linux `discover` command now takes one bounded Avahi introduction snapshot,
+omits privacy/route/identity violations and returns no authenticated frame
+authority. Parser/CLI fixtures and real Linux helper deadlines join a separate
+pinned Avahi/D-Bus producer lane, including nonroot CLI and daemon restart.
+Streamed original-byte import and a qualified Linux canonical codec are the
+next command-surface boundary; native Ubuntu closure, protected provisioning
+and installed package acceptance remain R3 requirements.
+
 ### Independent software delivery order
 
 Deliver S1 first, then inspect and exercise the exact S2/S3 mappings before
@@ -258,7 +266,7 @@ checks the physical discovery ID, validates the returned frame ID and reports
 missing or explicitly uncertain outcomes with exit 75. Fresh Linux CLI VMs consume
 real stdin and UID 1 reaches the actual dispatcher/receipt wrappers; withheld input
 terminates its reader without a socket send. Bootstrap data never enters argv.
-Linux database/NIF qualification, streamed import and automatic discovery,
+Linux database/NIF qualification, streamed import,
 systemd ACL/credential mounts and encrypted provisioning, package wiring, installed
 lifecycle and physical power-loss measurements remain open gates.
 

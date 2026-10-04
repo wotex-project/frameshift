@@ -137,6 +137,46 @@ mDNS is link-local. Routed or remote discovery requires a separately specified
 and authorized directory/relay deployment; it is not achieved by leaking the
 full TD in TXT records.
 
+### Linux discovery adapter
+
+On 2026-10-04 the bounded CLI adapter selects the existing system Avahi client
+rather than embedding a second multicast stack or introducing a general D-Bus
+client solely for discovery. [Avahi's API guidance](https://avahi.org/doxygen/html/)
+recommends its daemon APIs and discourages multiple desktop mDNS stacks. The
+command uses the upstream client through fixed arguments and the existing
+system bus; it does not interpret TXT as an authenticated TD. Native D-Bus
+integration remains an alternative if a measured long-lived service requires
+it, not an extra implementation alongside this snapshot.
+
+`gh` source inspection covers [Avahi v0.8 browse/resolve output](https://github.com/avahi/avahi/blob/f060abee2807c943821d88839c013ce15db17b58/avahi-utils/avahi-browse.c)
+(`print_service_line`, `service_resolver_callback`, `check_terminate`; blob
+`4101895ee208df33b3a7de3b4472a69dfd521d84`) and [TXT string encoding](https://github.com/avahi/avahi/blob/f060abee2807c943821d88839c013ce15db17b58/avahi-common/strlst.c)
+(`avahi_string_list_to_string`; blob `f09ec3885555d106383e56f5353e0cba63779129`).
+TXT quoting escapes quote/backslash and uses three-digit decimal bytes outside
+printable ASCII; service labels have distinct DNS escapes in
+[domain.c](https://github.com/avahi/avahi/blob/f060abee2807c943821d88839c013ce15db17b58/avahi-common/domain.c).
+Splitting TXT on spaces/semicolons or turning it into a map before duplicate
+detection loses required information. The same output boundaries were checked
+in current upstream commit `3ed8102c8a881e6fe273bbf06f45e86dccf51e02`.
+
+[GNU timeout source](https://github.com/coreutils/coreutils/blob/a2415242cbb428b6cbf66fe00fceb1eba21af514/src/timeout.c)
+creates a process group and propagates the chosen signal to the child and
+group. KILL avoids relying on the helper to cooperate with a deadline. Runtime
+fixtures must check actual child exit, bounded output and finite unavailable
+results; source inspection alone proves none of these joins. The existing
+Linux/OTP fixture image contains coreutils 9.7-3 but no Avahi or D-Bus, so its
+helper doubles cannot establish actual Avahi discovery. The separate
+`scripts/check linux-discovery` lane builds an isolated producer fixture from
+that exact base and the signed Debian snapshot `20260930T000000Z`, pinning
+Avahi `0.8-16` and D-Bus `1.16.2-2`. The 2026-10-04 arm64 run passes actual
+browse/resolve, clean nonroot CLI, private/duplicate TXT and conflicting-ID
+refusal, daemon loss and restart. The snapshot authenticates public package
+bytes with the Debian archive keyring and retained checksums; its HTTP download
+uses no credentials, and only archive expiry is disabled for the fixed date.
+This is Debian software-fixture evidence, not an Ubuntu installed release,
+native SQLite/renderer closure or physical-frame qualification. Target package
+dependency closure remains required.
+
 ## Pairing conclusion
 
 A short numeric PIN without a reviewed password-authenticated key exchange is

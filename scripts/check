@@ -214,9 +214,30 @@ check_linux_ipc() {
 
   docker run --rm --network none --read-only \
     --mount "type=bind,src=$repository_root/apps/core,dst=/src,readonly" \
-    --tmpfs /tmp:mode=1777,size=16m \
+    --tmpfs /tmp:mode=1777,size=16m,exec \
     elixir@sha256:3898ffe18d695e770239e4b342dc6b83136f52da0a37df2298083c03068cfd4e \
     elixir /src/test/frameshift/local_ipc/linux_peer_identity_contract.exs
+}
+
+check_linux_discovery() {
+  if ! docker info >/dev/null 2>&1; then
+    echo "Docker-compatible daemon required for Linux discovery test" >&2
+    return 1
+  fi
+
+  (
+    cd "$repository_root/apps/core"
+    mise exec -- env MIX_ENV=test mix compile --warnings-as-errors
+  )
+
+  # The dated, signed Debian snapshot supplies only this isolated producer test.
+  docker build --tag frameshift-linux-discovery:fixture - \
+    < "$repository_root/apps/core/test/fixtures/linux-discovery.Dockerfile"
+  docker run --rm --init --network bridge --read-only \
+    --mount "type=bind,src=$repository_root/apps/core,dst=/src,readonly" \
+    --tmpfs /tmp:mode=1777,size=32m --tmpfs /run:mode=0755,size=16m \
+    frameshift-linux-discovery:fixture \
+    elixir /src/test/frameshift/discovery/linux_avahi_join.exs
 }
 
 case "${1:-all}" in
@@ -246,9 +267,10 @@ case "${1:-all}" in
   macos) check_macos ;;
   container) check_container ;;
   linux-ipc) check_linux_ipc ;;
+  linux-discovery) check_linux_discovery ;;
   keychain-pairing) "$repository_root/scripts/check-keychain-pairing" ;;
   *)
-    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|keychain-pairing]" >&2
+    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
     exit 64
     ;;
 esac
