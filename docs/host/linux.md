@@ -185,7 +185,8 @@ cursor/limit on paginated queries. `state`, `metadata ID`, `recovery [--after ID
 and `storage` use finite existing command reads. Initial mutations are
 `instruction TEXT`, `select TARGET`, `send ITEM TARGET`, `reconcile TARGET`,
 `pin ID`, `unpin ID`, `remove ID`, `restore ID`, and `resume TARGET REVISION`.
-Every mutation requires an explicit `--id COMMAND_ID` of 1–64 UTF-8 bytes; the
+Every mutation requires an explicit `--id COMMAND_ID` of 1–64 UTF-8 bytes
+(the pairing contract below restricts that ID to its commissioning alphabet); the
 CLI neither invents an ID after failure nor automatically retries an exchange.
 Arguments map to existing product commands and cannot supply an actor UID.
 `storage-set REVISION BYTES --id COMMAND_ID` changes the registered-object budget
@@ -215,7 +216,8 @@ and 8 KiB per argument, before constructing JSON. Catalog edits, replay and stal
 revision acceptance use the actual SQLite owner; ordered-loop argument fixtures
 join the retained core rendering/playlist tests. These are software checks, not
 Linux NIF, installed package, qualified target or physical display evidence.
-Import and discovery/pairing remain required CLI work with their own adapters.
+Import and automatic discovery remain required CLI work with their own adapters.
+Physical pair/recovery and stdin intake follow the dedicated contracts below.
 
 Requests retain 64 KiB/8 KiB framing bounds and responses 1 MiB/256 KiB bounds.
 The connection and send use finite deadlines; the response has one absolute
@@ -231,6 +233,7 @@ validated outcome is unavailable. Exit 75 explicitly reports
 `command_outcome_unknown`; callers reconcile with the same command ID. A closed,
 truncated, oversized, mismatched or hostile response never becomes success.
 Receipt conflict and pending outcomes remain the server's authoritative results.
+Validated unknown or incomplete outcomes use exit 75 as specified below.
 
 Acceptance runs pure argument/refusal fixtures, real socket wrong-peer/framing
 checks, the actual nonroot Linux application/CLI join and a clean production
@@ -328,11 +331,42 @@ First execution calls the existing pinned pairing/TD admission using the command
 ID, then completes the receipt under the same actor. Unknown exchange/incomplete
 admission remains explicit. Recovery with its own deliberate command ID reads
 only the authenticated TD and never posts the secret. It cannot silently rotate
-an identity or reuse a pair ID as a recovery command. Linux CLI bootstrap intake
-and discovery remain separate work until their bounded input contracts land.
+an identity or reuse a pair ID as a recovery command. The CLI supplies bounded bootstrap intake under the contract below; automatic
+discovery remains separate required work.
 Acceptance joins actual SQLite success/failure/pending/conflict/restart and
 secret-exclusion checks to nonroot kernel attribution and dispatcher tests; live
 protected-PEM TLS is separate from physical-window and exact-frame qualification.
+
+### Pairing CLI intake
+
+`frameshiftctl pair DISCOVERED_ID ORIGIN CREDENTIAL_REF --id COMMAND_ID` and
+`recover-pair` with the same arguments use the actor-bound operations above.
+The CLI accepts the protected-file reference and ASCII commissioning ID only.
+Its origin is a bounded HTTPS authority without userinfo, query, fragment or an
+application path. Discovery values are candidate inputs, not frame authority;
+manual selection does not replace the pin and authenticated matching TD.
+
+Pipe one physical bootstrap JSON record into stdin and close the stream. The
+CLI reads at most 2049 bytes with one five-second deadline and admits at most
+2048 bytes through the existing strict bootstrap parser. Device ID must equal
+the selected discovery value before opening the service socket. Bootstrap text
+never goes into argv, shell history, stderr or stdout; it stays transient in the
+CLI/request and is not written to a staging file. Invalid, oversized, empty,
+partial or withheld input refuses before a send. The clean CLI VM owns and
+terminates its input task; a timed-out reader cannot extend the process lifetime.
+
+The existing client verifies service/socket identity before sending that record.
+Pair/recovery success requires exactly a matching `frameId` in the response, in
+addition to the envelope identity. Sent pair/recovery with no validated response
+is an unknown mutation, never an unavailable read. A validated
+`command_outcome_unknown`, `pairing_outcome_unknown` or `pairing_incomplete`
+response also exits 75 and preserves its JSON envelope on stdout; other domain
+refusals exit 2. There is no automatic retry, new ID, pair-to-recover switch or
+secret repost. Recovery is a deliberate command with its own retained ID.
+Acceptance covers bounded real input, refusal before dispatch, matching/mismatched
+frame envelopes, unknown exits and the actual Linux actor/receipt join. Automatic
+DNS-SD discovery, installed UI/credentials and exact physical commissioning remain
+separate requirements.
 
 ## Nerves Pi 5 bridge
 

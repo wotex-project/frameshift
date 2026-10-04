@@ -6,7 +6,9 @@ defmodule Frameshift.CLI do
   This module does not start the host application or access SQLite. `parse/1`
   maps explicit product arguments to the existing wire contract; each mutation
   requires a caller-retained `--id`. No retry or replacement ID hides an unknown
-  outcome. Import and pairing await their platform-specific custody boundaries.
+  outcome. Pairing reads bounded physical bootstrap JSON from stdin with a finite
+  deadline; only discovery/origin/reference and retained ID appear in argv. Import
+  awaits its streamed custody boundary. Physical recovery never reposts a secret.
 
   Catalog edits carry the observed metadata/storage revision. Metadata requires
   an explicit complete user-label set or clear flag, preserving machine labels
@@ -29,6 +31,7 @@ defmodule Frameshift.CLI do
 
   alias Frameshift.Digest
   alias Frameshift.LocalIPC.Client
+  alias Frameshift.Pairing.Bootstrap
 
   @usage """
   usage: frameshiftctl diagnostics health|metrics|audit [--limit 1..100] [--cursor ID]
@@ -41,7 +44,9 @@ defmodule Frameshift.CLI do
          frameshiftctl metadata-edit ITEM REVISION TITLE --label LABEL... | --clear-user-labels
            [--dismiss filename|metadata|vision LABEL]...
          frameshiftctl loop TARGET MILLISECONDS|profile ITEM... | loop-pinned TARGET MILLISECONDS|profile
+         frameshiftctl pair|recover-pair DISCOVERED_ID ORIGIN CREDENTIAL_REF
   Every mutation requires --id COMMAND_ID. Configure service UID, endpoint GID and socket path.
+  Pair/recover-pair reads one bounded physical bootstrap JSON from closed stdin.
   """
 
   @doc "Prints a finite CLI result and exits with its status without starting the application."
@@ -54,17 +59,19 @@ defmodule Frameshift.CLI do
   end
 
   @doc "Runs one command, returning status, stdout and stderr for launchers and joined fixtures."
-  @spec run([String.t()]) :: {non_neg_integer(), String.t(), String.t()}
-  def run(["--help"]), do: {0, @usage, ""}
+  @spec run([String.t()], IO.device()) :: {non_neg_integer(), String.t(), String.t()}
+  def run(args, input \\ :stdio)
+  def run(["--help"], _), do: {0, @usage, ""}
 
-  def run(["--version"]) do
+  def run(["--version"], _) do
     Application.load(:frameshift_core)
     {0, "frameshiftctl #{Application.spec(:frameshift_core, :vsn)}\n", ""}
   end
 
-  def run(args) do
+  def run(args, input) do
     with {:ok, {role, body}} <- parse(args),
-         {:ok, path, policy} <- endpoint(role) do
+         {:ok, path, policy} <- endpoint(role),
+         {:ok, body} <- bootstrap_input(body, input) do
       request =
         Map.merge(body, %{
           "version" => 1,
@@ -114,6 +121,30 @@ defmodule Frameshift.CLI do
   defp parse_args(["recovery", "--after", id]),
     do: identified_read("libraryRecovery", "afterID", id)
 
+  defp parse_args([verb, discovered, origin, "linux-pem-v1:" <> hex = reference, "--id", id])
+       when verb in ["pair", "recover-pair"] and byte_size(discovered) in 16..128 and
+              byte_size(origin) in 1..1_024 and byte_size(id) in 1..64 and byte_size(hex) == 64 do
+    with true <- Regex.match?(~r/\A[A-Za-z0-9._~-]+\z/, discovered),
+         true <- Regex.match?(~r/\A[A-Za-z0-9._~-]+\z/, id),
+         true <- Digest.valid_sha256?("sha256:" <> hex),
+         :ok <- pairing_origin(origin) do
+      operation = if verb == "pair", do: "pair", else: "recoverPair"
+
+      {:ok,
+       {:command,
+        %{
+          "auth" => "peer",
+          "operation" => operation,
+          "commandId" => id,
+          "discoveredId" => discovered,
+          "origin" => origin,
+          "credentialRef" => reference
+        }}}
+    else
+      _ -> {:error, :usage}
+    end
+  end
+
   defp parse_args(args) do
     case Enum.split(args, -2) do
       {action, ["--id", id]} when is_binary(id) and byte_size(id) in 1..64 ->
@@ -128,6 +159,17 @@ defmodule Frameshift.CLI do
 
       _ ->
         {:error, :usage}
+    end
+  end
+
+  defp pairing_origin(origin) do
+    with {:ok, uri} <- URI.new(origin),
+         true <- uri.scheme == "https" and is_binary(uri.host) and uri.host != "",
+         true <- is_nil(uri.userinfo) and is_nil(uri.query) and is_nil(uri.fragment),
+         true <- uri.path in [nil, "", "/"] and uri.port in 1..65_535 do
+      :ok
+    else
+      _ -> {:error, :usage}
     end
   end
 
@@ -322,6 +364,40 @@ defmodule Frameshift.CLI do
       _ -> {:error, :usage}
     end
   end
+
+  defp bootstrap_input(%{"operation" => operation} = body, input)
+       when operation in ["pair", "recoverPair"] do
+    task = Task.async(fn -> read_bootstrap(input) end)
+
+    case Task.yield(task, 5_000) || Task.shutdown(task, :brutal_kill) do
+      {:ok, bytes} when is_binary(bytes) ->
+        with {:ok, %{device_id: id}} <- Bootstrap.parse(bytes),
+             true <- id == body["discoveredId"] do
+          {:ok, Map.put(body, "bootstrap", bytes)}
+        else
+          _ -> {:error, :usage}
+        end
+
+      _ ->
+        {:error, :usage}
+    end
+  end
+
+  defp bootstrap_input(body, _), do: {:ok, body}
+
+  defp read_bootstrap(input) do
+    IO.binread(input, 2_049)
+  rescue
+    _ -> nil
+  catch
+    _, _ -> nil
+  end
+
+  defp response_result({:ok, %{"ok" => false, "error" => %{"code" => code}} = response})
+       when code in ["command_outcome_unknown", "pairing_outcome_unknown", "pairing_incomplete"],
+       do:
+         {75, RFC8785.encode!(response) <> "\n",
+          "frameshiftctl: uncertain outcome; retain the command ID and use explicit recovery\n"}
 
   defp response_result({:ok, %{"ok" => ok} = response}),
     do: {if(ok, do: 0, else: 2), RFC8785.encode!(response) <> "\n", ""}

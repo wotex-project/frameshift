@@ -6,7 +6,20 @@ alias Frameshift.LocalIPC.SocketDirectory
 :ok = SocketDirectory.restrict_group_socket(path, 50, 65_534)
 File.write!(ready, "ready")
 
-for mode <- [:refusal, :mismatch, :duplicate, :oversized, :truncated, :deadline, :hostile] do
+for mode <- [
+      :refusal,
+      :mismatch,
+      :duplicate,
+      :oversized,
+      :truncated,
+      :deadline,
+      :hostile,
+      :pair_ok,
+      :recover_ok,
+      :pair_mismatch,
+      :pair_incomplete,
+      :pair_closed
+    ] do
   {:ok, socket} = :gen_tcp.accept(listener, 10_000)
   {:ok, payload} = :gen_tcp.recv(socket, 0, 1_000)
   request = RFC8785.decode!(payload)
@@ -32,11 +45,37 @@ for mode <- [:refusal, :mismatch, :duplicate, :oversized, :truncated, :deadline,
       :hostile ->
         ~s({"version":1,"requestId":#{id},"ok":true,"snapshot":{"integer":9007199254740993}})
 
+      mode when mode in [:pair_ok, :recover_ok, :pair_mismatch] ->
+        {:ok, %{device_id: "sim-photo-00000001"}} =
+          Frameshift.Pairing.Bootstrap.parse(request["bootstrap"])
+
+        true = request["commandId"] == "physical-retained"
+        true = request["operation"] == if(mode == :recover_ok, do: "recoverPair", else: "pair")
+        frame = if mode == :pair_mismatch, do: "other-photo-00001", else: request["discoveredId"]
+
+        RFC8785.encode!(%{
+          "version" => 1,
+          "requestId" => request["requestId"],
+          "ok" => true,
+          "frame" => %{"frameId" => frame}
+        })
+
+      :pair_incomplete ->
+        RFC8785.encode!(%{
+          "version" => 1,
+          "requestId" => request["requestId"],
+          "ok" => false,
+          "error" => %{"code" => "pairing_incomplete"}
+        })
+
       _ ->
         nil
     end
 
   case mode do
+    :pair_closed ->
+      :ok
+
     :oversized ->
       :gen_tcp.send(socket, <<1_048_577::unsigned-big-32>>)
 

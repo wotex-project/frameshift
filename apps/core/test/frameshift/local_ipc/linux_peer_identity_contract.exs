@@ -378,16 +378,44 @@ defmodule Frameshift.LocalIPC.LinuxCommandContract do
         "secret" => Base.url_encode64(:binary.copy(<<17>>, 16), padding: false)
       })
 
-    physical =
-      Map.merge(pairing, %{
-        "requestId" => "pair-connection",
-        "commandId" => "pair-command",
-        "bootstrap" => bootstrap,
-        "credentialRef" => "linux-pem-v1:" <> String.duplicate("c", 64)
-      })
+    source = Path.join(root, "bootstrap.json")
+    File.write!(source, bootstrap)
+    File.chmod!(source, 0o600)
 
-    assert {refused, 0} = client(path, physical)
+    code =
+      "Code.prepend_paths(Path.wildcard(\"/src/_build/test/lib/*/ebin\")); Frameshift.CLI.main(System.argv())"
+
+    arguments = [
+      "pair",
+      "sim-photo-00000001",
+      "https://frame.invalid",
+      "linux-pem-v1:" <> String.duplicate("c", 64),
+      "--id",
+      "pair-command"
+    ]
+
+    assert {refused, 2} =
+             System.cmd(
+               "/bin/sh",
+               [
+                 "-c",
+                 "exec runuser -u daemon -g daemon -G staff -- elixir \"$@\" < \"$FRAMESHIFT_BOOTSTRAP_FIXTURE\"",
+                 "--",
+                 "-e",
+                 code,
+                 "--" | arguments
+               ],
+               env: [
+                 {"FRAMESHIFT_BOOTSTRAP_FIXTURE", source},
+                 {"FRAMESHIFT_SERVICE_UID", "65534"},
+                 {"FRAMESHIFT_CONTROL_GID", "50"},
+                 {"FRAMESHIFT_SOCKET_PATH", path}
+               ],
+               stderr_to_stdout: true
+             )
+
     assert refused =~ ~s("code":"pairing_preflight_failed")
+    refute refused =~ Base.url_encode64(:binary.copy(<<17>>, 16), padding: false)
     # Control membership alone cannot read the distinct observer endpoint.
     assert {observer_denied, 0} =
              client(observer_path, %{
@@ -603,6 +631,98 @@ defmodule Frameshift.LocalIPC.LinuxClientContract do
 
     assert System.monotonic_time(:millisecond) - started < 1_000
     assert {:error, :command_outcome_unknown} = Client.exchange(path, request(), :command, policy)
+
+    args = [
+      "pair",
+      "sim-photo-00000001",
+      "https://frame.invalid",
+      "linux-pem-v1:" <> String.duplicate("c", 64),
+      "--id",
+      "physical-retained"
+    ]
+
+    secret = Base.url_encode64(:binary.copy(<<17>>, 16), padding: false)
+
+    bootstrap =
+      RFC8785.encode!(%{
+        "version" => 1,
+        "deviceId" => "sim-photo-00000001",
+        "serverSpki" => "sha256:" <> String.duplicate("b", 64),
+        "secret" => secret
+      })
+
+    for bytes <- [
+          "",
+          "partial",
+          String.duplicate("x", 2_049),
+          String.replace(bootstrap, "sim-photo-00000001", "other-photo-00001")
+        ] do
+      {:ok, input} = StringIO.open(bytes)
+      assert {64, "", usage} = Frameshift.CLI.run(args, input)
+      refute usage =~ secret
+      StringIO.close(input)
+    end
+
+    owner = self()
+
+    input =
+      spawn(fn ->
+        receive do
+          {:io_request, reader, _, _} ->
+            send(owner, {:held_reader, reader})
+
+            receive do
+              :stop -> :ok
+            end
+        end
+      end)
+
+    started = System.monotonic_time(:millisecond)
+    assert {64, "", _} = Frameshift.CLI.run(args, input)
+    assert (System.monotonic_time(:millisecond) - started) in 4_500..6_500
+    assert_receive {:held_reader, reader}
+    refute Process.alive?(reader)
+    send(input, :stop)
+
+    source = Path.join(control, "physical.json")
+    File.write!(source, bootstrap)
+    File.chmod!(source, 0o600)
+
+    code =
+      "Code.prepend_paths(Path.wildcard(\"/src/_build/test/lib/*/ebin\")); Frameshift.CLI.main(System.argv())"
+
+    invoke = fn arguments ->
+      System.cmd(
+        "/bin/sh",
+        [
+          "-c",
+          "exec elixir \"$@\" < \"$FRAMESHIFT_BOOTSTRAP_FIXTURE\"",
+          "--",
+          "-e",
+          code,
+          "--" | arguments
+        ],
+        env: [{"FRAMESHIFT_BOOTSTRAP_FIXTURE", source}],
+        stderr_to_stdout: true
+      )
+    end
+
+    assert {success, 0} = invoke.(args)
+    assert success =~ ~s("frameId":"sim-photo-00000001")
+    assert {recovery, 0} = invoke.(["recover-pair" | tl(args)])
+    assert recovery =~ ~s("frameId":"sim-photo-00000001")
+    assert {mismatch, 75} = invoke.(args)
+    assert mismatch =~ "command_outcome_unknown"
+    assert {incomplete, 75} = invoke.(args)
+    assert incomplete =~ ~s("code":"pairing_incomplete")
+    assert {closed, 75} = invoke.(args)
+    assert closed =~ "command_outcome_unknown"
+
+    for output <- [success, recovery, mismatch, incomplete, closed] do
+      refute output =~ secret
+      refute output =~ source
+    end
+
     assert {_, 0} = Task.await(service, 10_000)
   end
 

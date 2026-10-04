@@ -248,7 +248,12 @@ exercise completed/pending/unknown replay, changed actor/payload refusal, restar
 secret exclusion and failure between paired admission and receipt completion. A
 nonroot dispatcher fixture traces UID 1 through a missing-key pair claim/refusal
 and completion; no fixture proves a received frame or supported Ubuntu NIF.
-Linux database/NIF qualification, streamed import, discovery and pairing CLI intake,
+The pairing CLI now reads at most 2049 stdin bytes with a five-second deadline,
+checks the physical discovery ID, validates the returned frame ID and reports
+missing or explicitly uncertain outcomes with exit 75. Fresh Linux CLI VMs consume
+real stdin and UID 1 reaches the actual dispatcher/receipt wrappers; withheld input
+terminates its reader without a socket send. Bootstrap data never enters argv.
+Linux database/NIF qualification, streamed import and automatic discovery,
 systemd ACL/credential mounts and encrypted provisioning, package wiring, installed
 lifecycle and physical power-loss measurements remain open gates.
 

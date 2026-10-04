@@ -9,6 +9,41 @@ defmodule Frameshift.CLITest do
 
   @photo Path.expand("../../../../protocol/fixtures/valid/capabilities-photo.json", __DIR__)
 
+  test "physical CLI arguments keep commissioning IDs and require the protected namespace" do
+    reference = "linux-pem-v1:" <> Digest.hex!(Digest.sha256("certificate"))
+
+    for {verb, operation} <- [{"pair", "pair"}, {"recover-pair", "recoverPair"}] do
+      assert {:ok,
+              {:command,
+               %{
+                 "operation" => ^operation,
+                 "commandId" => "retained",
+                 "credentialRef" => ^reference
+               } = body}} =
+               CLI.parse([
+                 verb,
+                 "sim-photo-00000001",
+                 "https://frame.local",
+                 reference,
+                 "--id",
+                 "retained"
+               ])
+
+      refute Map.has_key?(body, "bootstrap")
+
+      for {origin, ref, id} <- [
+            {"http://frame.local", reference, "id"},
+            {"https://frame.local/path", reference, "id"},
+            {"https://user:pass@frame.local", reference, "id"},
+            {"https://frame.local", "keychain:wrong-policy", "id"},
+            {"https://frame.local", reference, "id/secret"},
+            {"https://frame.local", reference, String.duplicate("x", 65)}
+          ] do
+        assert {:error, :usage} = CLI.parse([verb, "sim-photo-00000001", origin, ref, "--id", id])
+      end
+    end
+  end
+
   test "loop arguments preserve order and milliseconds through the playlist decision" do
     items = Enum.map(1..64, &Digest.sha256("ordered-#{&1}"))
 

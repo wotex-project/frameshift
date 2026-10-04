@@ -117,7 +117,7 @@ defmodule Frameshift.LocalIPC.Client do
        ) do
     key = if role == :diagnostics, do: "diagnostics", else: response_key(request["operation"])
 
-    if id == request["requestId"] and is_map(response[key]) and
+    if id == request["requestId"] and valid_payload?(key, response[key], request) and
          Map.keys(response) -- ["version", "requestId", "ok", key] == [],
        do: :ok,
        else: {:error, :invalid_response}
@@ -136,14 +136,26 @@ defmodule Frameshift.LocalIPC.Client do
 
   defp validate_envelope(_, _, _), do: {:error, :invalid_response}
 
+  defp valid_payload?("frame", %{"frameId" => id} = frame, request),
+    do:
+      map_size(frame) == 1 and is_binary(id) and byte_size(id) in 16..128 and
+        id == request["discoveredId"]
+
+  defp valid_payload?("frame", _, _), do: false
+  defp valid_payload?(_, value, _), do: is_map(value)
+
   defp response_key("command"), do: "snapshot"
   defp response_key("snapshot"), do: "snapshot"
   defp response_key("libraryMetadata"), do: "metadata"
   defp response_key("libraryRecovery"), do: "recovery"
   defp response_key("libraryStorage"), do: "storage"
+  defp response_key(operation) when operation in ["pair", "recoverPair"], do: "frame"
   defp response_key(_), do: nil
 
-  defp uncertain_code(%{"operation" => "command"}), do: :command_outcome_unknown
+  defp uncertain_code(%{"operation" => operation})
+       when operation in ["command", "pair", "recoverPair"],
+       do: :command_outcome_unknown
+
   defp uncertain_code(_), do: :unavailable
   defp limits(:command), do: {64 * 1024, 1024 * 1024}
   defp limits(:diagnostics), do: {8_192, 256 * 1024}
