@@ -274,6 +274,52 @@ stored with provenance and confidence. Vision feature prints support local
 similarity search. Labeling does not upload an image by default and has no role
 in artifact correctness.
 
+### Native Vision adapter
+
+The native adapter accepts only a validated full-source preview, never a target
+crop. Its input is the existing source-preview v1 envelope: top-left sRGB RGB24,
+white-composited alpha, bilinear reduction without enlargement, maximum edge
+256 pixels. Record the master digest, exact preview-pixel digest and renderer
+build digest. Classification of this reduced input is an observation, not an
+optical/artifact or whole-resolution image-quality claim.
+
+Select `VNClassifyImageRequest` revision 2 and
+`VNGenerateImageFeaturePrintRequest` revision 2 explicitly, refusing when either
+revision is unsupported. Feature-print scaling uses `scaleFit`. The adapter
+revision includes the numerical macOS version, host CPU architecture and
+input/scale contract; a different OS/CPU/revision/input cohort is not
+interchangeable. Retain at most 32
+distinct classifier identifiers with finite confidence from 0.5 through 1,
+ordered by decreasing confidence then identifier. Labels use the existing
+NFC/control/128-byte bounds. User labels remain owned by the Library writer.
+
+Feature prints are opaque secure-coded `VNFeaturePrintObservation` archives,
+at most 16 KiB, with revision 2, finite element/data bounds and an exact archive
+digest. Swift owns secure decoding and Vision distance computation; Elixir
+must not interpret or invent feature vectors. A comparison admits at most 16
+distinct candidate master IDs per batch, checks the same adapter cohort and
+secure archive type/revision before use, and returns finite nonnegative
+distances ordered by distance then master ID. Larger distance means less
+similarity; it is not a percentage or confidence in a semantic match. Invalid
+or non-comparable archives refuse the batch rather than silently dropping them.
+
+One native worker slot covers analysis and comparison. Caller deadlines are
+ten seconds; cancellation invokes Vision's cooperative `cancel()` and resolves
+the caller once with a finite result. A timed-out/cancelled operation retains
+the slot until its actual worker exits, discards late results and admits no
+replacement worker meanwhile. Inputs, results and archives stay in memory in
+this adapter; it reads no external paths and performs no network request. Core
+observation persistence, background scheduling and Library similarity UI retain
+their own joined consumer acceptance and are not established by an adapter test.
+
+Acceptance requires actual Vision requests/secure round trip and comparable
+same-image distances on the inspected macOS/SDK, malformed/target/cohort refusal,
+finite input/output checks, cancellation/timeout and slot custody under a
+non-cooperative fixture. This does not establish semantic labeling accuracy,
+another macOS revision, the installed accessibility matrix or network-isolation
+measurement. Upstream contracts and the inspected SDK are recorded in the
+[software stack research](../research/software-stack.md#native-vision-source-check).
+
 ## Editable metadata and recovery contract
 
 Artwork bytes, source provenance, dimensions, recipes and variant lineage remain

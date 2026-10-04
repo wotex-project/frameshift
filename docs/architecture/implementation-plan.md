@@ -195,6 +195,14 @@ configuration, not filesystem quota/free-space measurement, model-download
 management or permanent trash expiration. Those lifecycles and physical
 full-disk/power-loss evidence remain attached to their owning contracts.
 
+The bounded native Vision adapter now selects revision-2 classification and
+feature prints, verifies secure archives and compares same-cohort prints with
+one deadline/cancellation-owned worker slot. Actual requests pass on the
+inspected Mac; synthetic rasters establish the exported API and refusal/custody
+behavior, not label accuracy. Next join its observations to the existing
+Library writer, background import scheduling and explicitly identified visual
+similarity results; preserve metadata drafts and refuse removed/stale inputs.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

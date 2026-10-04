@@ -189,6 +189,37 @@ and [Service Management](https://developer.apple.com/documentation/servicemanage
 The Swift layer must not duplicate library, recipe, scheduling, or frame state.
 It submits commands and subscribes to snapshots from the Elixir core.
 
+### Native Vision source check
+
+Observed on 2026-10-04: the installed MacOSX27.0 SDK (`26A425`) exposes
+`VNClassifyImageRequest` revisions 1/2 and
+`VNGenerateImageFeaturePrintRequest` revisions 1/2. Its header makes feature
+revision 2 available from macOS 14 and associates it with classifier revision
+2. `VNObservation` conforms to `NSSecureCoding`;
+`VNFeaturePrintObservation` supplies element type/count/data and
+`computeDistance`, which refuses non-comparable prints. Its distance description
+orders greater values as more dissimilar, not a normalized probability.
+
+The SDK's `VNRequest.cancel` documentation promises an attempt to abort as soon
+as possible, with cancelled results absent. It does not supply an enforceable
+thread-termination deadline. The selected adapter therefore bounds caller wait
+and retains its sole worker slot until execution exits; a timer alone cannot
+authorize another native inference worker. The older `usesCPUOnly` switch is
+deprecated from macOS 14, so it is not used to claim local execution or hardware
+qualification. Vision owns its supported native compute-device selection.
+
+Primary locators are Apple's
+[classification request](https://developer.apple.com/documentation/vision/vnclassifyimagerequest),
+[feature-print request](https://developer.apple.com/documentation/vision/vngenerateimagefeatureprintrequest),
+[feature-print observation](https://developer.apple.com/documentation/vision/vnfeatureprintobservation),
+and [cancellation](https://developer.apple.com/documentation/vision/vnrequest/cancel()).
+The installed SDK headers `VNClassifyImageRequest.h`,
+`VNGenerateImageFeaturePrintRequest.h`, `VNObservation.h` and `VNRequest.h`
+were inspected at those exported boundaries. The source check supports a
+bounded adapter implementation; accuracy, exact installed producer/consumer
+behavior, oldest-supported-macOS execution and local-only traffic measurements
+require separate recorded tests.
+
 ## Zig boundary
 
 The existing project-owned host raster executable is Zig. It accepts a
