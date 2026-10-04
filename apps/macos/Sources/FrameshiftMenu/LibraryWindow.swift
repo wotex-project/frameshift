@@ -37,6 +37,18 @@ struct LibraryWindow: View {
         if let error = model.searchError {
           Text(error).foregroundStyle(.secondary).padding()
         }
+        VStack(alignment: .leading, spacing: 8) {
+          if model.isAnalysisBusy {
+            ProgressView("Labeling locally…")
+            Button("Stop labeling", systemImage: "stop.circle") { model.stopAnalysis() }
+              .accessibilityIdentifier("library-stop-labeling")
+          }
+          if let message = model.analysisMessage {
+            Text(message).font(.caption).foregroundStyle(.secondary)
+          }
+        }
+        .padding(12)
+        .accessibilityElement(children: .contain)
       }
       .navigationSplitViewColumnWidth(min: 220, ideal: 260, max: 360)
       .searchable(

@@ -8,6 +8,12 @@ struct LibraryMetadataEditor: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 12) {
       Text("Artwork metadata").font(.headline)
+      Button("Analyze artwork locally", systemImage: "sparkle.magnifyingglass") {
+        model.analyzeSelectedArtwork()
+      }
+      .disabled(model.isAnalysisBusy || model.isMetadataLoading || model.isBusy)
+      .help("Refresh Apple Vision observations. Your title and labels are preserved.")
+      .accessibilityIdentifier("library-analyze-artwork")
       if let draft = model.metadataDraft {
         TextField(
           "Title",

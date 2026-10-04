@@ -28,6 +28,8 @@ public final class ShellModel {
   public private(set) var recoveryMessage: String?
   public private(set) var isRecoveryLoading = false
   public var isRecoveryPresented = false
+  public private(set) var isAnalysisBusy = false
+  public private(set) var analysisMessage: String?
 
   private let client: any CoreClient
   private var searchRevision = 0
@@ -38,6 +40,11 @@ public final class ShellModel {
   private var metadataRevision = 0
   private var metadataLoad: (itemID: String, revision: Int, task: Task<Void, Never>)?
   private var recoveryRevision = 0
+  private var analysisTask: Task<Void, Never>?
+  private var analysisQueue: [(itemID: String, force: Bool)] = []
+  private var analysisAttempted: Set<String> = []
+  private var analysisRemaining = 16
+  private var automaticAnalysisStopped = false
 
   public init(
     client: any CoreClient,
@@ -50,7 +57,120 @@ public final class ShellModel {
   }
 
   public func refresh() async {
-    await perform { try await client.snapshot() }
+    if await perform({ try await client.snapshot() }) {
+      automaticAnalysisStopped = false
+      startAnalysis(discoverPending: true)
+    }
+  }
+
+  public func analyzeSelectedArtwork() {
+    guard let itemID = selectedItem?.id else { return }
+    automaticAnalysisStopped = false
+    enqueueAnalysis(itemID, force: true)
+  }
+
+  public func stopAnalysis() {
+    automaticAnalysisStopped = true
+    analysisQueue.removeAll()
+    analysisTask?.cancel()
+    analysisMessage = "Stopping local labeling. An accepted save may still finish."
+  }
+
+  private func enqueueAnalysis(_ itemID: String, force: Bool) {
+    guard validLibraryDigest(itemID), !automaticAnalysisStopped else { return }
+    if analysisTask == nil {
+      analysisRemaining = 16
+      analysisAttempted.removeAll()
+    }
+    guard !analysisAttempted.contains(itemID) else { return }
+    if let index = analysisQueue.firstIndex(where: { $0.itemID == itemID }) {
+      analysisQueue[index].force = analysisQueue[index].force || force
+    } else if analysisQueue.count < analysisRemaining {
+      analysisQueue.append((itemID, force))
+    }
+    startAnalysis(discoverPending: false)
+  }
+
+  private func startAnalysis(discoverPending: Bool) {
+    guard analysisTask == nil, !automaticAnalysisStopped else { return }
+    analysisRemaining = 16
+    analysisAttempted.removeAll()
+    isAnalysisBusy = true
+    analysisMessage = "Labeling artwork locally…"
+    analysisTask = Task { await runAnalysisBatch(discoverPending: discoverPending) }
+  }
+
+  private func runAnalysisBatch(discoverPending: Bool) async {
+    defer {
+      if Task.isCancelled, analysisMessage?.hasPrefix("Stopping local labeling") == true {
+        analysisMessage = "Local labeling stopped."
+      }
+      analysisTask = nil
+      analysisQueue.removeAll()
+      isAnalysisBusy = false
+    }
+    var hasMore = false
+    var saved = 0
+    var failed = 0
+    if discoverPending {
+      do {
+        let pending = try await client.analysisPending()
+        try pending.validate()
+        guard !Task.isCancelled else { return }
+        hasMore = pending.hasMore
+        for itemID in pending.itemIDs where !analysisQueue.contains(where: { $0.itemID == itemID })
+        {
+          if analysisQueue.count < analysisRemaining {
+            analysisQueue.append((itemID, false))
+          } else {
+            hasMore = true
+          }
+        }
+      } catch {
+        analysisMessage = "Local labeling is unavailable. Refresh or analyze an artwork to retry."
+        return
+      }
+    }
+    while !Task.isCancelled, analysisRemaining > 0, !analysisQueue.isEmpty {
+      let job = analysisQueue.removeFirst()
+      analysisRemaining -= 1
+      analysisAttempted.insert(job.itemID)
+      do {
+        // A background snapshot can predate newer ordinary commands. Read only
+        // current metadata/search after the commit; never apply that snapshot.
+        _ = try await client.analyzeArtwork(itemID: job.itemID, force: job.force)
+        saved += 1
+        if selectedItem?.id == job.itemID {
+          metadataRevision += 1
+          metadataLoad = nil
+          await loadSelectedMetadata()
+        }
+        await refreshSearch()
+      } catch CoreClientError.commandOutcomeUnknown {
+        analysisQueue.removeAll()
+        if selectedItem?.id == job.itemID {
+          metadataRevision += 1
+          metadataLoad = nil
+          await loadSelectedMetadata()
+        }
+        analysisMessage =
+          "The labeling save was not confirmed. Review current metadata before retrying."
+        return
+      } catch {
+        if !Task.isCancelled { failed += 1 }
+      }
+    }
+    if Task.isCancelled {
+      analysisMessage =
+        saved > 0 ? "Local analysis saved; background labeling stopped." : "Local labeling stopped."
+    } else if failed > 0 {
+      analysisMessage = "Some artwork could not be labeled. Refresh or analyze it to retry."
+    } else if hasMore {
+      analysisMessage = "Local labeling batch finished. Refresh to label more artwork."
+    } else {
+      analysisMessage =
+        saved > 0 ? "Local artwork analysis saved." : "Local artwork analysis is up to date."
+    }
   }
 
   public var visibleItems: [LibraryItem] {
@@ -401,7 +521,11 @@ public final class ShellModel {
   }
 
   public func importFile(_ url: URL) async {
-    await send(CoreCommand(kind: .importFile, importPath: url.path))
+    if await send(CoreCommand(kind: .importFile, importPath: url.path)),
+      let itemID = snapshot.importedItemID
+    {
+      enqueueAnalysis(itemID, force: false)
+    }
   }
 
   public func togglePin(_ itemID: String) async {
@@ -620,14 +744,16 @@ public final class ShellModel {
     return succeeded
   }
 
-  private func perform(_ operation: () async throws -> CoreSnapshot) async {
-    guard !isBusy else { return }
+  private func perform(_ operation: () async throws -> CoreSnapshot) async -> Bool {
+    guard !isBusy else { return false }
     isBusy = true
     defer { isBusy = false }
 
+    var succeeded = false
     do {
       apply(try await operation())
       errorMessage = nil
+      succeeded = true
     } catch let error as CoreClientError {
       Self.logger.error("core refresh failed: \(String(describing: error), privacy: .public)")
       errorMessage = "The core command could not be completed."
@@ -635,6 +761,7 @@ public final class ShellModel {
       errorMessage = "The core command could not be completed."
     }
     await refreshSearch()
+    return succeeded
   }
 
   private func apply(_ next: CoreSnapshot) {

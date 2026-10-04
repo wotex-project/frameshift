@@ -8,6 +8,14 @@ defmodule Frameshift.Library.Metadata do
   recipes, pins and frame intent are never changed by an edit. SQLite's existing
   ASCII NOCASE label identity is retained; Unicode input is NFC-normalized.
 
+  `record_vision/3` replaces only bounded Vision observations under an observed
+  metadata revision, storing one opaque native secure archive and its exact
+  input/cohort/digest identity. The core verifies bounds and bytes, while Swift
+  owns inference, secure decoding and comparison. These labels cannot qualify
+  artwork, rendering or physical compatibility. `analysis/2` and
+  `analysis_pending/2` project active records and bounded background work without
+  exposing paths or writable handles.
+
   ## Transactions and recovery
 
   Only `Frameshift.Library` passes its private connection to this module. Title,
@@ -26,6 +34,199 @@ defmodule Frameshift.Library.Metadata do
   alias Frameshift.Library.Writer
 
   @machine_sources ~w(vision filename metadata)
+  @vision_cohort ~r/\Aapple-vision-v1:c2:f2:macos[0-9]{1,4}\.[0-9]{1,4}\.[0-9]{1,4}:(arm64|x86_64):source256-fit\z/
+
+  @doc "Checks the exact supported native adapter identity spelling and byte ceiling."
+  @spec vision_cohort?(term()) :: boolean()
+  def vision_cohort?(value) when is_binary(value) and byte_size(value) <= 128,
+    do: String.valid?(value) and Regex.match?(@vision_cohort, value)
+
+  def vision_cohort?(_), do: false
+
+  @doc "Reads one active master's bounded native archive with byte/digest verification."
+  @spec analysis(pid(), String.t()) :: {:ok, map()} | {:error, atom()}
+  def analysis(connection, digest) do
+    with {:ok, %{"removedAtMs" => nil}} <- read(connection, digest),
+         [record] <-
+           rows(connection, "SELECT * FROM master_analysis WHERE master_digest = ?", [digest]),
+         true <- vision_cohort?(record["cohort"]),
+         bytes = record["feature_archive"],
+         true <- is_binary(bytes) and byte_size(bytes) in 1..16_384,
+         true <- Digest.sha256(bytes) == record["feature_digest"],
+         true <-
+           Digest.valid_sha256?(record["input_digest"]) and
+             Digest.valid_sha256?(record["renderer_build_digest"]) do
+      {:ok,
+       %{
+         "itemID" => digest,
+         "cohort" => record["cohort"],
+         "inputDigest" => record["input_digest"],
+         "rendererBuildDigest" => record["renderer_build_digest"],
+         "observedAtMs" => record["observed_at_ms"],
+         "featurePrint" => %{
+           "cohort" => record["cohort"],
+           "archive" => Base.encode64(bytes),
+           "digest" => record["feature_digest"]
+         }
+       }}
+    else
+      {:ok, _} -> {:error, :item_not_found}
+      {:error, reason} -> {:error, reason}
+      _ -> {:error, :analysis_unavailable}
+    end
+  rescue
+    _ in Exqlite.Error -> {:error, :analysis_unavailable}
+  end
+
+  @doc "Lists at most sixteen active masters without a matching native observation cohort."
+  @spec analysis_pending(pid(), String.t()) :: {:ok, map()} | {:error, atom()}
+  def analysis_pending(connection, cohort) do
+    if vision_cohort?(cohort) do
+      ids =
+        Exqlite.query!(
+          connection,
+          """
+          SELECT m.digest FROM masters m LEFT JOIN master_analysis a ON a.master_digest = m.digest
+          WHERE m.removed_at_ms IS NULL AND (a.master_digest IS NULL OR a.cohort != ?)
+          ORDER BY m.digest LIMIT 17
+          """,
+          [cohort]
+        ).rows
+        |> List.flatten()
+
+      {:ok, %{"itemIDs" => Enum.take(ids, 16), "hasMore" => length(ids) > 16}}
+    else
+      {:error, :invalid_request}
+    end
+  rescue
+    _ in Exqlite.Error -> {:error, :analysis_unavailable}
+  end
+
+  @doc "Atomically replaces Vision rows and one opaque archive without overwriting user work."
+  @spec record_vision(pid(), String.t(), map()) :: {:ok, map()} | {:error, term()}
+  def record_vision(connection, digest, command) do
+    with true <- vision_cohort?(command["cohort"]),
+         true <-
+           Digest.valid_sha256?(command["inputDigest"]) and
+             Digest.valid_sha256?(command["rendererBuildDigest"]),
+         {:ok, current} <- read(connection, digest),
+         :ok <- editable(current, command),
+         {:ok, labels} <- vision_labels(command["visionLabels"], command["cohort"]),
+         true <-
+           length(Enum.reject(current["labels"], &(&1["provenance"] == "vision"))) +
+             length(labels) <= 64,
+         {:ok, archive} <-
+           vision_archive(command["featureArchiveChunks"], command["featureDigest"]) do
+      Writer.transaction(connection, &persist_vision(&1, digest, command, labels, archive))
+      |> Writer.unwrap()
+    else
+      false -> {:error, :invalid_analysis}
+      error -> error
+    end
+  end
+
+  defp persist_vision(writer, digest, command, labels, archive) do
+    Exqlite.query!(
+      writer,
+      "DELETE FROM labels WHERE master_digest = ? AND provenance = 'vision'",
+      [digest]
+    )
+
+    for label <- labels,
+        do:
+          insert_label(
+            writer,
+            digest,
+            label["label"],
+            "vision",
+            label["confidence"],
+            command["cohort"]
+          )
+
+    Exqlite.query!(
+      writer,
+      """
+      INSERT INTO master_analysis(master_digest, cohort, input_digest, renderer_build_digest,
+                                  feature_digest, feature_archive, observed_at_ms)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(master_digest) DO UPDATE SET cohort = excluded.cohort,
+        input_digest = excluded.input_digest, renderer_build_digest = excluded.renderer_build_digest,
+        feature_digest = excluded.feature_digest, feature_archive = excluded.feature_archive,
+        observed_at_ms = excluded.observed_at_ms
+      """,
+      [
+        digest,
+        command["cohort"],
+        command["inputDigest"],
+        command["rendererBuildDigest"],
+        command["featureDigest"],
+        {:blob, archive},
+        System.system_time(:millisecond)
+      ]
+    )
+
+    Store.record_audit(writer, "master.vision-recorded", digest, %{
+      "commandId" => command["id"]
+    })
+
+    read(writer, digest)
+  end
+
+  defp vision_archive(chunks, expected) when is_list(chunks) and length(chunks) in 1..3 do
+    decoded =
+      Enum.map(chunks, fn chunk ->
+        if is_binary(chunk) and byte_size(chunk) in 1..8192,
+          do: Base.decode64(chunk),
+          else: :error
+      end)
+
+    if Enum.all?(decoded, &match?({:ok, _}, &1)) do
+      bytes = Enum.map(decoded, fn {:ok, bytes} -> bytes end)
+      archive = IO.iodata_to_binary(bytes)
+
+      canonical =
+        Enum.zip(chunks, bytes)
+        |> Enum.all?(fn {text, binary} -> Base.encode64(binary) == text end)
+
+      full = Enum.all?(Enum.drop(bytes, -1), &(byte_size(&1) == 6144))
+
+      if canonical and full and byte_size(archive) in 1..16_384 and
+           Digest.sha256(archive) == expected,
+         do: {:ok, archive},
+         else: {:error, :invalid_analysis}
+    else
+      {:error, :invalid_analysis}
+    end
+  end
+
+  defp vision_archive(_, _), do: {:error, :invalid_analysis}
+
+  defp vision_labels(labels, cohort) when is_list(labels) and length(labels) <= 32 do
+    Enum.reduce_while(labels, {:ok, [], MapSet.new()}, fn label, {:ok, accepted, seen} ->
+      with %{
+             "label" => text,
+             "provenance" => "vision",
+             "confidence" => confidence,
+             "revision" => ^cohort
+           } <- label,
+           true <-
+             Enum.sort(Map.keys(label)) == Enum.sort(~w(label provenance confidence revision)),
+           true <- is_number(confidence) and confidence >= 0.5 and confidence <= 1,
+           {:ok, normalized} <- normalize_label(text),
+           key = ascii_key(normalized),
+           false <- MapSet.member?(seen, key) do
+        {:cont, {:ok, [Map.put(label, "label", normalized) | accepted], MapSet.put(seen, key)}}
+      else
+        _ -> {:halt, {:error, :invalid_analysis}}
+      end
+    end)
+    |> case do
+      {:ok, accepted, _} -> {:ok, Enum.reverse(accepted)}
+      error -> error
+    end
+  end
+
+  defp vision_labels(_, _), do: {:error, :invalid_analysis}
 
   @doc "Reads a bounded metadata record and revision, including removed masters."
   @spec read(pid(), String.t()) :: {:ok, map()} | {:error, atom()}

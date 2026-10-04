@@ -88,6 +88,17 @@ defmodule Frameshift.Library.Migrations do
        ) STRICT
        """,
        """
+       CREATE TABLE master_analysis (
+         master_digest TEXT PRIMARY KEY REFERENCES masters(digest) ON DELETE CASCADE,
+         cohort TEXT NOT NULL CHECK (length(cohort) BETWEEN 1 AND 128),
+         input_digest TEXT NOT NULL CHECK (length(input_digest) = 71),
+         renderer_build_digest TEXT NOT NULL CHECK (length(renderer_build_digest) = 71),
+         feature_digest TEXT NOT NULL CHECK (length(feature_digest) = 71),
+         feature_archive BLOB NOT NULL CHECK (length(feature_archive) BETWEEN 1 AND 16384),
+         observed_at_ms INTEGER NOT NULL CHECK (observed_at_ms >= 0)
+       ) STRICT
+       """,
+       """
        CREATE TABLE frame_asset_refs (
          frame_id TEXT NOT NULL,
          role TEXT NOT NULL CHECK (role IN ('desired', 'current', 'previous-known-good', 'queued', 'playlist')),

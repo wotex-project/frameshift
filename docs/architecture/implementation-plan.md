@@ -199,9 +199,13 @@ The bounded native Vision adapter now selects revision-2 classification and
 feature prints, verifies secure archives and compares same-cohort prints with
 one deadline/cancellation-owned worker slot. Actual requests pass on the
 inspected Mac; synthetic rasters establish the exported API and refusal/custody
-behavior, not label accuracy. Next join its observations to the existing
-Library writer, background import scheduling and explicitly identified visual
-similarity results; preserve metadata drafts and refuse removed/stale inputs.
+behavior, not label accuracy. The Library now persists its bounded observations
+and archive transactionally with FTS/audit, retaining them across restart and
+backup. Authenticated reads and chunked writes preserve IPC limits and receipts;
+sixteen-item native batches return after import, preserve drafts and refuse stale
+edits. Stop pauses import labeling until refresh or explicit analysis, with an
+accepted-save caveat. Next build explicitly identified visual similarity results
+from same-cohort archives without changing literal search or frame intent.
 
 ## Shared contracts
 

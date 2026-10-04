@@ -61,13 +61,57 @@ public actor LocalCoreClient: CoreClient {
     return storage
   }
 
-  private func libraryRead(operation: String, itemID: String? = nil, afterID: String? = nil)
+  public func analysis(itemID: String) async throws -> LibraryAnalysis {
+    guard validLibraryDigest(itemID) else { throw CoreClientError.invalidCommand }
+    let response = try await libraryRead(operation: "libraryAnalysis", itemID: itemID)
+    guard let analysis = response.analysis else { throw CoreClientError.protocolFailure }
+    try analysis.validate(itemID: itemID)
+    return analysis
+  }
+
+  public func analysisPending() async throws -> PendingLibraryAnalysis {
+    let response = try await libraryRead(
+      operation: "libraryAnalysisPending", cohort: AppleArtworkAnalyzer.cohort)
+    guard let pending = response.analysisPending else { throw CoreClientError.protocolFailure }
+    try pending.validate()
+    return pending
+  }
+
+  public func analyzeArtwork(itemID: String, force: Bool) async throws -> CoreSnapshot {
+    guard validLibraryDigest(itemID) else { throw CoreClientError.invalidCommand }
+    if !force {
+      do {
+        if try await analysis(itemID: itemID).cohort == AppleArtworkAnalyzer.cohort {
+          return try await snapshot()
+        }
+      } catch CoreClientError.analysisUnavailable {
+        // Missing derived metadata permits one fresh local observation, without provider fallback.
+      }
+    }
+    let metadata = try await metadata(itemID: itemID)
+    guard metadata.removedAtMs == nil else { throw CoreClientError.itemNotFound }
+    let preview = try await preview(masterID: itemID, target: nil)
+    let observed = try await AppleArtworkAnalyzer.shared.analyze(preview)
+    guard !Task.isCancelled else { throw ArtworkAnalysisError.cancelled }
+    return try await send(
+      CoreCommand(
+        kind: .recordVision, itemID: itemID, metadataRevision: metadata.revision,
+        cohort: observed.cohort, inputDigest: observed.inputDigest,
+        rendererBuildDigest: observed.rendererBuildDigest, visionLabels: observed.labels,
+        featureArchiveChunks: featureArchiveChunks(observed.featurePrint.archive),
+        featureDigest: observed.featurePrint.digest))
+  }
+
+  private func libraryRead(
+    operation: String, itemID: String? = nil, afterID: String? = nil,
+    cohort: String? = nil
+  )
     async throws -> WireResponse
   {
     try await BundledCore.shared.ensureRunning(socketPath: socketPath)
     let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
     let request = LibraryWireRequest(
-      operation: operation, auth: auth, itemID: itemID, afterID: afterID)
+      operation: operation, auth: auth, itemID: itemID, afterID: afterID, cohort: cohort)
     let responseData = try await send(encoder.encode(request))
     guard let response = try? decoder.decode(WireResponse.self, from: responseData),
       response.version == 1, response.requestID == request.requestID
@@ -267,6 +311,8 @@ public actor LocalCoreClient: CoreClient {
 
   private static func clientError(for code: String?) -> CoreClientError {
     switch code {
+    case "analysis_unavailable": .analysisUnavailable
+    case "invalid_analysis": .invalidAnalysis
     case "library_storage_full": .libraryStorageFull
     case "storage_revision_conflict": .storageRevisionConflict
     case "storage_configuration_invalid", "storage_unavailable", "invalid_storage_setting":
@@ -546,9 +592,10 @@ private struct LibraryWireRequest: Encodable, Sendable {
   let auth: String
   let itemID: String?
   let afterID: String?
+  let cohort: String?
 
   private enum CodingKeys: String, CodingKey {
-    case version, operation, auth, itemID, afterID
+    case version, operation, auth, itemID, afterID, cohort
     case requestID = "requestId"
   }
 }
@@ -586,6 +633,8 @@ private struct WireResponse: Decodable, Sendable {
   let metadata: LibraryMetadata?
   let recovery: LibraryRecoveryPage?
   let storage: LibraryStorage?
+  let analysis: LibraryAnalysis?
+  let analysisPending: PendingLibraryAnalysis?
   let error: WireError?
 
   private enum CodingKeys: String, CodingKey {
@@ -599,6 +648,8 @@ private struct WireResponse: Decodable, Sendable {
     case metadata
     case recovery
     case storage
+    case analysis
+    case analysisPending
     case error
   }
 }

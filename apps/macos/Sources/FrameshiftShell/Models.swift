@@ -161,6 +161,7 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
   public var pinnedSetTooLarge: Bool?
   public var updatedMetadata: LibraryMetadata?
   public var updatedStorage: LibraryStorage?
+  public var importedItemID: String?
 
   public init(
     targets: [FrameTarget],
@@ -172,7 +173,8 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
     pinnedItems: [PlaylistItem]? = nil,
     pinnedSetTooLarge: Bool? = nil,
     updatedMetadata: LibraryMetadata? = nil,
-    updatedStorage: LibraryStorage? = nil
+    updatedStorage: LibraryStorage? = nil,
+    importedItemID: String? = nil
   ) {
     self.targets = targets
     self.selectedTargetID = selectedTargetID
@@ -184,6 +186,7 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
     self.pinnedSetTooLarge = pinnedSetTooLarge
     self.updatedMetadata = updatedMetadata
     self.updatedStorage = updatedStorage
+    self.importedItemID = importedItemID
   }
 
   public var selectedTarget: FrameTarget? {
@@ -211,6 +214,7 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     case restore
     case updateMetadata
     case updateStorage
+    case recordVision
     case queue
     case loopPinned
     case loopArtwork
@@ -241,6 +245,12 @@ public struct CoreCommand: Codable, Equatable, Sendable {
   public let dismissedLabels: [LabelDismissal]?
   public let storageRevision: String?
   public let objectByteLimit: Int?
+  public let cohort: String?
+  public let inputDigest: String?
+  public let rendererBuildDigest: String?
+  public let visionLabels: [ArtworkLabel]?
+  public let featureArchiveChunks: [String]?
+  public let featureDigest: String?
 
   public init(
     id: UUID = UUID(),
@@ -265,7 +275,13 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     userLabels: [String]? = nil,
     dismissedLabels: [LabelDismissal]? = nil,
     storageRevision: String? = nil,
-    objectByteLimit: Int? = nil
+    objectByteLimit: Int? = nil,
+    cohort: String? = nil,
+    inputDigest: String? = nil,
+    rendererBuildDigest: String? = nil,
+    visionLabels: [ArtworkLabel]? = nil,
+    featureArchiveChunks: [String]? = nil,
+    featureDigest: String? = nil
   ) {
     self.id = id
     self.kind = kind
@@ -290,6 +306,12 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     self.dismissedLabels = dismissedLabels
     self.storageRevision = storageRevision
     self.objectByteLimit = objectByteLimit
+    self.cohort = cohort
+    self.inputDigest = inputDigest
+    self.rendererBuildDigest = rendererBuildDigest
+    self.visionLabels = visionLabels
+    self.featureArchiveChunks = featureArchiveChunks
+    self.featureDigest = featureDigest
   }
 
   func withDecodedImport(_ decoded: DecodedImport) -> CoreCommand {

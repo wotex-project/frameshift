@@ -385,6 +385,20 @@ defmodule Frameshift.Library do
   def update_metadata(server \\ __MODULE__, digest, command),
     do: GenServer.call(server, {:update_metadata, digest, command})
 
+  @doc "Reads an active master's bounded native analysis archive without interpreting vectors."
+  @spec analysis(server(), digest()) :: {:ok, map()} | {:error, atom()}
+  def analysis(server \\ __MODULE__, digest), do: GenServer.call(server, {:analysis, digest})
+
+  @doc "Lists sixteen active masters awaiting the selected native observation cohort."
+  @spec analysis_pending(server(), String.t()) :: {:ok, map()} | {:error, atom()}
+  def analysis_pending(server \\ __MODULE__, cohort),
+    do: GenServer.call(server, {:analysis_pending, cohort})
+
+  @doc "Replaces Vision observations and their archive against an exact metadata revision."
+  @spec record_vision(server(), digest(), map()) :: {:ok, map()} | {:error, term()}
+  def record_vision(server \\ __MODULE__, digest, command),
+    do: GenServer.call(server, {:record_vision, digest, command})
+
   @doc "Lists 50 removed masters and retention reasons using an exclusive digest cursor."
   @spec recovery_page(server(), digest() | nil) :: {:ok, map()} | {:error, atom()}
   def recovery_page(server \\ __MODULE__, after_id \\ nil),
@@ -696,6 +710,15 @@ defmodule Frameshift.Library do
 
   def handle_call({:update_metadata, digest, command}, _, state),
     do: {:reply, Metadata.update(state.connection, digest, command), state}
+
+  def handle_call({:analysis, digest}, _, state),
+    do: {:reply, Metadata.analysis(state.connection, digest), state}
+
+  def handle_call({:analysis_pending, cohort}, _, state),
+    do: {:reply, Metadata.analysis_pending(state.connection, cohort), state}
+
+  def handle_call({:record_vision, digest, command}, _, state),
+    do: {:reply, Metadata.record_vision(state.connection, digest, command), state}
 
   def handle_call({:recovery_page, after_id}, _, state),
     do: {:reply, Metadata.recovery_page(state.connection, after_id), state}

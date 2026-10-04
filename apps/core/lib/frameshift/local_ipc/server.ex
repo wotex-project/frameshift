@@ -22,6 +22,9 @@ defmodule Frameshift.LocalIPC.Server do
   they accept neither paths nor replacement provenance/capability documents.
   `libraryStorage` reports path-free registered-byte accounting and configuration
   identity; budget changes retain the ordinary durable command receipt boundary.
+  `libraryAnalysis` verifies one bounded archive and `libraryAnalysisPending`
+  lists at most sixteen active IDs for an exact native cohort. Neither operation
+  changes state; chunked observation commands keep the existing JSON limits.
   The listener monitors its acceptor and removes the
   socket on termination. The token file is consumed before startup through
   `Frameshift.LocalIPC.Token`; read-only diagnostics use a separate peer-UID
@@ -263,11 +266,14 @@ defmodule Frameshift.LocalIPC.Server do
         "preview" ->
           ~w(version requestId operation auth itemID targetID profileID capabilityDigest)
 
-        "libraryMetadata" ->
+        operation when operation in ["libraryMetadata", "libraryAnalysis"] ->
           ~w(version requestId operation auth itemID)
 
         "libraryRecovery" ->
           ~w(version requestId operation auth afterID)
+
+        "libraryAnalysisPending" ->
+          ~w(version requestId operation auth cohort)
 
         operation when operation in ["pair", "recoverPair"] ->
           ~w(version requestId operation auth bootstrap discoveredId origin credentialRef)
@@ -309,6 +315,8 @@ defmodule Frameshift.LocalIPC.Server do
               "libraryMetadata",
               "libraryRecovery",
               "libraryStorage",
+              "libraryAnalysis",
+              "libraryAnalysisPending",
               "command",
               "pair",
               "recoverPair",
@@ -366,7 +374,8 @@ defmodule Frameshift.LocalIPC.Server do
 
   defp validate_preview_shape(_, _, _), do: :ok
 
-  defp validate_library_read(request, "libraryMetadata", request_id) do
+  defp validate_library_read(request, operation, request_id)
+       when operation in ["libraryMetadata", "libraryAnalysis"] do
     if Digest.valid_sha256?(request["itemID"]),
       do: :ok,
       else: {:error, {request_id, :invalid_request}}
@@ -374,6 +383,12 @@ defmodule Frameshift.LocalIPC.Server do
 
   defp validate_library_read(request, "libraryRecovery", request_id) do
     if request["afterID"] == nil or Digest.valid_sha256?(request["afterID"]),
+      do: :ok,
+      else: {:error, {request_id, :invalid_request}}
+  end
+
+  defp validate_library_read(request, "libraryAnalysisPending", request_id) do
+    if Frameshift.Library.Metadata.vision_cohort?(request["cohort"]),
       do: :ok,
       else: {:error, {request_id, :invalid_request}}
   end
@@ -517,6 +532,30 @@ defmodule Frameshift.LocalIPC.Server do
          _
        ) do
     library_read_response(request_id, "storage", Library.storage(library))
+  end
+
+  defp execute_request(
+         %{"requestId" => request_id, "operation" => "libraryAnalysis", "itemID" => item_id},
+         library,
+         _
+       ) do
+    library_read_response(request_id, "analysis", Library.analysis(library, item_id))
+  end
+
+  defp execute_request(
+         %{
+           "requestId" => request_id,
+           "operation" => "libraryAnalysisPending",
+           "cohort" => cohort
+         },
+         library,
+         _
+       ) do
+    library_read_response(
+      request_id,
+      "analysisPending",
+      Library.analysis_pending(library, cohort)
+    )
   end
 
   defp execute_request(

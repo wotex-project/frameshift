@@ -9,9 +9,24 @@ public protocol CoreClient: Sendable {
   func metadata(itemID: String) async throws -> LibraryMetadata
   func recovery(afterID: String?) async throws -> LibraryRecoveryPage
   func storage() async throws -> LibraryStorage
+  func analysis(itemID: String) async throws -> LibraryAnalysis
+  func analysisPending() async throws -> PendingLibraryAnalysis
+  func analyzeArtwork(itemID: String, force: Bool) async throws -> CoreSnapshot
 }
 
 extension CoreClient {
+  public func analysis(itemID _: String) async throws -> LibraryAnalysis {
+    throw CoreClientError.analysisUnavailable
+  }
+
+  public func analysisPending() async throws -> PendingLibraryAnalysis {
+    throw CoreClientError.analysisUnavailable
+  }
+
+  public func analyzeArtwork(itemID _: String, force _: Bool) async throws -> CoreSnapshot {
+    throw CoreClientError.analysisUnavailable
+  }
+
   public func storage() async throws -> LibraryStorage {
     throw CoreClientError.storageUnavailable
   }
@@ -36,6 +51,8 @@ extension CoreClient {
 
 public enum CoreClientError: Error, Equatable, Sendable {
   case commandIDConflict
+  case analysisUnavailable
+  case invalidAnalysis
   case libraryStorageFull
   case storageUnavailable
   case storageRevisionConflict

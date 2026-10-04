@@ -230,6 +230,110 @@ defmodule Frameshift.LocalIPC.ServerTest do
     assert refreshed["snapshot"]["instruction"] == "Stored by the core"
   end
 
+  test "Vision reads and maximum chunked writes authenticate and retain receipt replay", c do
+    cohort = "apple-vision-v1:c2:f2:macos27.0.1:arm64:source256-fit"
+
+    {:ok, master} =
+      Library.import_master(c.library, "analysis fixture", %{
+        title: "Analysis",
+        source_kind: :import,
+        width: 2,
+        height: 1,
+        media_type: "image/png",
+        provenance: %{"kind" => "local-import"}
+      })
+
+    digest = master["digest"]
+    {:ok, metadata} = Library.metadata(c.library, digest)
+
+    read = %{
+      "version" => 1,
+      "requestId" => "analysis-read",
+      "operation" => "libraryAnalysis",
+      "itemID" => digest
+    }
+
+    assert %{"ok" => false, "error" => %{"code" => "authentication_required"}} =
+             request(c.socket_path, Map.put(read, "auth", String.duplicate("b", 64)))
+
+    assert %{"ok" => false, "error" => %{"code" => "analysis_unavailable"}} =
+             request(c.socket_path, read)
+
+    assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+             request(c.socket_path, Map.put(read, "path", "/caller"))
+
+    bytes = :binary.copy(<<0, 255>>, 8192)
+    <<first::binary-size(6144), second::binary-size(6144), last::binary>> = bytes
+
+    command = %{
+      "id" => "vision-save",
+      "kind" => "recordVision",
+      "itemID" => digest,
+      "metadataRevision" => metadata["revision"],
+      "cohort" => cohort,
+      "inputDigest" => Digest.sha256("preview"),
+      "rendererBuildDigest" => Digest.sha256("renderer"),
+      "visionLabels" => [
+        %{
+          "label" => "forest",
+          "provenance" => "vision",
+          "confidence" => 0.8,
+          "revision" => cohort
+        }
+      ],
+      "featureDigest" => Digest.sha256(bytes),
+      "featureArchiveChunks" => Enum.map([first, second, last], &Base.encode64/1)
+    }
+
+    envelope = %{
+      "version" => 1,
+      "requestId" => "analysis-save",
+      "operation" => "command",
+      "command" => command
+    }
+
+    assert byte_size(Jason.encode!(Map.put(envelope, "auth", @token))) < 64 * 1024
+
+    assert %{"ok" => true, "snapshot" => %{"updatedMetadata" => saved}} =
+             request(c.socket_path, envelope)
+
+    assert %{"ok" => true} =
+             request(c.socket_path, Map.put(envelope, "requestId", "analysis-replay"))
+
+    assert %{"ok" => true, "analysis" => %{"featurePrint" => %{"archive" => encoded}}} =
+             request(c.socket_path, read)
+
+    assert Base.decode64!(encoded) == bytes
+
+    pending = %{
+      "version" => 1,
+      "requestId" => "analysis-pending",
+      "operation" => "libraryAnalysisPending",
+      "cohort" => cohort
+    }
+
+    assert %{"ok" => true, "analysisPending" => %{"itemIDs" => [], "hasMore" => false}} =
+             request(c.socket_path, pending)
+
+    assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+             request(c.socket_path, Map.put(pending, "cohort", "unknown"))
+
+    assert %{"entries" => entries} = Library.audit_page(c.library)
+    assert Enum.count(entries, &(&1["operation"] == "master.vision-recorded")) == 1
+    stale = Map.put(command, "id", "vision-stale")
+
+    assert %{"ok" => false, "error" => %{"code" => "metadata_revision_conflict"}} =
+             request(c.socket_path, Map.put(envelope, "command", stale))
+
+    oversized =
+      command
+      |> Map.put("id", "oversized-string")
+      |> Map.put("metadataRevision", saved["revision"])
+      |> Map.put("featureArchiveChunks", [String.duplicate("a", 8193)])
+
+    assert %{"ok" => false} = request(c.socket_path, Map.put(envelope, "command", oversized))
+  end
+
   test "metadata and paginated recovery authenticate, refuse forged reads and replay edits once",
        context do
     {:ok, master} =

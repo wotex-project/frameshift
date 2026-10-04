@@ -40,6 +40,10 @@ defmodule Frameshift.LocalAPI do
   with explicit machine-observation dismissals. It returns the committed metadata
   in addition to shell state; immutable bytes, recipes and delivery remain intact.
   `restore` verifies retained bytes before returning removed artwork to search.
+  `recordVision` stores bounded local adapter observations against the same
+  metadata revision, replacing only Vision labels and one opaque feature archive.
+  Secure archive decoding and inference remain native responsibilities; these
+  observations cannot authorize rendering, delivery or physical compatibility.
   Metadata and recovery reads use their own bounded authenticated IPC operations
   so ordinary snapshots never expand to arbitrary source provenance or all labels.
 
@@ -216,7 +220,7 @@ defmodule Frameshift.LocalAPI do
          {:ok, rgba} <- read_file(canonical_path, @maximum_rgba_bytes),
          :ok <- validate_canonical(rgba, width, height, canonical_digest),
          {:ok, package} <- MasterPackage.encode(original, rgba, width, height),
-         {:ok, _} <-
+         {:ok, master} <-
            Library.import_master(library, package, %{
              title: import_title(path),
              source_kind: :import,
@@ -234,7 +238,12 @@ defmodule Frameshift.LocalAPI do
                "canonicalRepresentation" => "rgba8-srgb-straight-alpha-top-left"
              }
            }) do
-      {:ok, snapshot(library, "Image imported into the durable library")}
+      {:ok,
+       Map.put(
+         snapshot(library, "Image imported into the durable library"),
+         "importedItemID",
+         master["digest"]
+       )}
     else
       nil -> {:error, :unsupported_media_type}
       detected when is_binary(detected) -> {:error, :media_type_mismatch}
@@ -289,6 +298,21 @@ defmodule Frameshift.LocalAPI do
 
       {:error, _} ->
         {:error, :metadata_unavailable}
+    end
+  end
+
+  defp do_execute(library, %{"kind" => "recordVision", "itemID" => digest} = command)
+       when is_binary(digest) do
+    case Library.record_vision(library, digest, command) do
+      {:ok, metadata} ->
+        {:ok,
+         Map.put(snapshot(library, "Local artwork analysis saved"), "updatedMetadata", metadata)}
+
+      {:error, reason} when is_atom(reason) ->
+        {:error, reason}
+
+      {:error, _} ->
+        {:error, :analysis_unavailable}
     end
   end
 
@@ -590,6 +614,10 @@ defmodule Frameshift.LocalAPI do
 
   defp allowed_command_keys("updateMetadata"),
     do: ~w(id kind itemID metadataRevision title userLabels dismissedLabels)
+
+  defp allowed_command_keys("recordVision"),
+    do:
+      ~w(id kind itemID metadataRevision cohort inputDigest rendererBuildDigest visionLabels featureArchiveChunks featureDigest)
 
   defp allowed_command_keys("selectTarget"), do: ~w(id kind targetID)
   defp allowed_command_keys("queue"), do: ~w(id kind targetID itemID)

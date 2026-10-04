@@ -320,6 +320,59 @@ another macOS revision, the installed accessibility matrix or network-isolation
 measurement. Upstream contracts and the inspected SDK are recorded in the
 [software stack research](../research/software-stack.md#native-vision-source-check).
 
+### Vision observation persistence and background labeling
+
+`recordVision` is an ordinary authenticated receipt-bound command. It names one
+active master, the observed metadata revision, the adapter cohort, input-pixel
+and renderer digests, up to 32 Vision labels and the bounded secure archive with
+its SHA-256 identity. The core checks exact fields, cohort/label bounds and
+archive bytes/digest; secure decoding and inference remain the Swift adapter's
+responsibility. These are adapter observations, not a signed classifier or
+render/profile qualification. Caller pixels, paths and replacement artwork are
+absent from this command.
+The secure archive crosses the command boundary as at most three canonical
+base64 chunks of at most 8,192 bytes each (6,144 decoded bytes per full chunk),
+with a 16 KiB aggregate decoded ceiling. The existing IPC string/request limits
+remain in force; the read response returns one bounded base64 archive.
+
+The Library writer replaces only that master's Vision rows, preserving title,
+user/filename/metadata labels, immutable content and delivery references. It
+refuses removed/missing masters, stale metadata, duplicate label identities or
+more than 64 combined labels before mutation. Labels, their FTS projection, one
+bounded `master_analysis` record and a redacted audit fact commit together.
+The analysis record stores the exact archive and its input/cohort/digest identity
+as local derived metadata, not an ANN index or a second master. At most 16 KiB
+per master is retained in SQLite; it falls outside the object-byte budget's
+explicit artwork accounting. Backup/restore copies it with the metadata DB.
+Replacing an observation does not grow a history of native feature vectors.
+
+`libraryAnalysis` reads one active master's record and verifies archive size and
+digest before returning it. Missing analysis is an explicit unavailable result.
+`libraryAnalysisPending` accepts only a bounded adapter cohort and returns at
+most 16 digest-ordered active IDs whose observation is absent or belongs to
+another cohort, plus a `hasMore` indication. Removed masters are excluded.
+Neither read follows a caller path or authorizes artwork/intent changes.
+
+The native shared session schedules background labeling after successful import
+and ordinary refresh. Each activation admits at most 16 pending IDs, runs one
+analysis at a time and does not retry failures automatically. Existing same-
+cohort observations are reused; explicit reanalysis can replace them and add a
+previously dismissed machine observation again. Import returns before labeling
+and remains successful if labeling fails. The selected Library item offers local
+analysis/cancellation and readable status. Stopping pauses automatic import
+labeling until an ordinary refresh or explicit analysis. Cancellation discards
+results before command submission; an already accepted save may finish. A
+receipt-unknown commit needs fresh metadata review, never blind replay.
+Selection, unsaved metadata/instructions and pins survive background updates.
+Concurrent edits refuse stale observations rather than overwriting user work.
+
+Acceptance joins actual native Vision, verified source preview, authenticated
+IPC, transactional label/archive/FTS/audit persistence, restart and backup
+readback. Fixtures cover stale/removed/duplicate/count/archive refusal, audit
+rollback, empty classifier results, independent user labels, pending bounds,
+background scheduling/selection/draft races and cancellation. Visual similarity
+pagination/ranking/UI remains a separate read-only consumer of these archives.
+
 ## Editable metadata and recovery contract
 
 Artwork bytes, source provenance, dimensions, recipes and variant lineage remain

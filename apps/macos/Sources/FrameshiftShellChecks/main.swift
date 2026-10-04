@@ -327,7 +327,7 @@ private actor InMemoryCoreClient: CoreClient {
       try updateItem(command.itemID) { $0.queuedTargetID = targetID }
     case .loopPinned, .loopArtwork, .resumePlaylist:
       throw CoreClientError.loopUnavailable
-    case .updateMetadata, .restore, .updateStorage:
+    case .updateMetadata, .restore, .updateStorage, .recordVision:
       throw CoreClientError.invalidCommand
     case .reconcileDelivery:
       guard let targetID = command.targetID,
