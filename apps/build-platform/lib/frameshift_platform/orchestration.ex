@@ -4,7 +4,7 @@ defmodule FrameshiftPlatform.Orchestration do
   alias Refpath.BootConfig.Contract
   alias Refpath.BootConfig.Readiness
 
-  @revision "4a8e128628cac28706b0479bd2eabd3b9d240236"
+  @revision "ee60f58cb885f8fe6875ce9468b0c6ffdb5496c0"
 
   @spec revision() :: String.t()
   def revision, do: @revision
@@ -18,6 +18,7 @@ defmodule FrameshiftPlatform.Orchestration do
       pubsub: FrameshiftPlatform.PubSub,
       security_profile: :local_loopback,
       settings: %{
+        hosting_mode: :self_hosted,
         skip_pubsub: true,
         beamlens_enabled: false,
         autonomous_enabled: false,

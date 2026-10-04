@@ -92,10 +92,12 @@ mise exec -- mix check
 warnings-as-errors compile, formatter, strict Credo, dependency audits, Doctor
 documentation and type coverage, warning-free ExDoc build, ExCoveralls tests,
 Dialyzer, and whitespace validation. Protocol and renderer-wire property tests
-use StreamData. Run `mix bench` separately to regenerate the checked Markdown
-reports in `bench/output/`; timings are machine-specific evidence, not a
-release threshold. Run `make index` at the repository root to create or refresh
-Dexter's local code index in the ignored `.dexter/` directory.
+use StreamData. Checks stop at the first failed tool; retry remains disabled so
+each run starts the complete configured lane. Run `mix bench` separately to
+regenerate the checked Markdown reports in `bench/output/`; timings are
+machine-specific evidence, not a release threshold. Run `make index` at the
+repository root to create or refresh Dexter's local code index in the ignored
+`.dexter/` directory.
 
 The explicit environment cleanup avoids inheriting a stale developer-level Mix
 installation. It does not affect the application runtime.

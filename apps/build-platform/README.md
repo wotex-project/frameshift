@@ -112,8 +112,14 @@ the maintainer's control. Native runtime dependencies use the pinned Rust toolch
 AshPostgres uses Refpath's published, pinned dynamic-repository fork. This is
 required for upserts through the shared host pool; ordinary reads alone do not
 qualify the integration. The test suite covers repeated upserts and migrations.
-See the [dependency qualification record](../../docs/research/build-platform-decisions.md#embedded-runtime-dependency-qualification-2026-09-24)
+See the [dependency refresh](../../docs/research/build-platform-decisions.md#dependency-refresh-2026-10-04)
+and [original qualification record](../../docs/research/build-platform-decisions.md#embedded-runtime-dependency-qualification-2026-09-24)
 for compatible native/numerical pins and the three scoped advisory exceptions.
+
+The frontend retains SvelteKit 2.70.3 and TypeScript 6.0.3. SvelteKit 3 removes
+`svelte.config.js`, which phoenix-assets 1.1.1's doctor and type-check setup
+require. TypeScript 7 is outside svelte-check 4.7.6's peer range. Upgrade these
+cohorts together when their integrations support the new contracts.
 
 The pinned frontend `cookie` override upgrades SvelteKit's transitive legacy
 parser to 0.7.2 for its published security fix. Keep the override until the

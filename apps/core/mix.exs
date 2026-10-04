@@ -4,7 +4,7 @@ defmodule FrameshiftCore.MixProject do
   use Mix.Project
 
   @source_url "https://github.com/wotex-project/frameshift"
-  @wotex_ref "e6aa01a69ea35447afa989d5dea061618d20b3cf"
+  @wotex_ref "c8c727a7c8c18fec82d80cc5ba88d246af3c67fc"
 
   def project do
     [
@@ -49,10 +49,10 @@ defmodule FrameshiftCore.MixProject do
   defp deps do
     [
       {:frameshift_decisions, path: "../../packages/decision-kernel"},
-      {:exqlite, "~> 0.40.0"},
+      {:exqlite, "~> 0.42.0"},
       {:telemetry, "~> 1.4"},
       {:telemetry_metrics, "~> 1.1"},
-      {:jsv, "~> 0.22.0"},
+      {:jsv, "~> 0.25.0"},
       {:rfc8785, "~> 1.0.0"},
       {:mint, "~> 1.11.0"},
       {:wotex,
@@ -74,7 +74,7 @@ defmodule FrameshiftCore.MixProject do
       {:credo, "~> 1.7.19", only: [:dev, :test], runtime: false},
       {:dialyxir, "~> 1.4.8", only: [:dev, :test], runtime: false},
       {:doctor, "~> 0.22", only: [:dev, :test], runtime: false},
-      {:ex_check, "~> 0.16", only: [:dev, :test], runtime: false},
+      {:ex_check, "~> 0.17", only: [:dev, :test], runtime: false},
       {:ex_doc, "~> 0.38", only: [:dev, :test, :docs], runtime: false},
       {:excoveralls, "~> 0.18", only: :test},
       {:mix_audit, "~> 2.1", only: [:dev, :test], runtime: false},

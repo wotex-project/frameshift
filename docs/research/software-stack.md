@@ -71,7 +71,7 @@ Selected libraries and bounded candidates are tracked independently:
 
 | Need | Candidate | Use boundary |
 | --- | --- | --- |
-| WoT value/runtime | Wotex `wotex` and `wotex_runtime`, both pinned to `e6aa01a69ea35447afa989d5dea061618d20b3cf` | Bounded TD/TM admission, extension preservation, deterministic Form selection, typed requests/results, and explicit credential/transport ports. Frameshift retains state, policy, binary assets, and effect truth. |
+| WoT value/runtime | Wotex `wotex` and `wotex_runtime`, both pinned to `c8c727a7c8c18fec82d80cc5ba88d246af3c67fc` | Bounded TD/TM admission, extension preservation, deterministic Form selection, typed requests/results, and explicit credential/transport ports. Frameshift retains state, policy, binary assets, and effect truth. |
 | WoT HTTP mapping | Pinned `wotex_binding_http` plus a Frameshift-owned client | JSON Property/Action and SSE mapping only. It is not the binary artifact binding, TLS policy, HTTP server, or physical-effect proof. |
 | HTTP client | `Mint` one-shot connections | Keep client certificates and keys inside one caller-owned callback; resolve and authorize every destination, disable pooling/proxies/redirects/retries, pin the frame SPKI, and enforce an absolute operation deadline plus incremental response bounds. |
 | HTTP server for simulator/optional Nerves bridge | `Plug` + `Bandit` | Small explicit router; not a dependency of MCU firmware. |

@@ -12,6 +12,9 @@ defmodule FrameshiftPlatform.OrchestrationTest do
     assert {:ok, ^contract} = Contract.validate(contract)
     assert {:ok, manifest} = Contract.conformance_manifest(contract)
     assert manifest.repo_mode == :durable
+    boot_config = Contract.to_boot_config(contract)
+    assert boot_config.settings.deployment_mode == :embedded
+    assert boot_config.settings.hosting_mode == :self_hosted
     assert Enum.all?(manifest.features, fn {_, enabled} -> enabled == false end)
     assert contract.settings.beamlens_enabled == false
     assert contract.settings.skip_pubsub == true

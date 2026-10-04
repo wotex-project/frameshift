@@ -1,6 +1,6 @@
 # Build Platform Technical Decision Research
 
-**Updated:** 2026-09-25; earlier source observations are dated 2026-09-24 unless stated otherwise.
+**Updated:** 2026-10-04; earlier source observations retain their recorded dates.
 **Evidence:** repository/source inspection and attributed published measurements.
 **Not performed:** Frameshift model benchmarks, paid inference, Maude proof runs, live provider qualification or physical hardware validation.
 
@@ -15,7 +15,7 @@ the product contract. They do not define the product's business model.
 | Source | Inspected revision or document | Technical consequence |
 | --- | --- | --- |
 | Frameshift | Current native, guide, platform and v1 BuildSpec source | Keep product behavior, v1 replay and exact fixtures while extracting genuinely generic semantics |
-| Refpath | Inspected cohort `4a8e128628cac28706b0479bd2eabd3b9d240236` | Reuse runtime owners, qualify actual exports and joined consumer behavior; unreleased/private source is not a public distribution path |
+| Refpath | Current host cohort `ee60f58cb885f8fe6875ce9468b0c6ffdb5496c0`; [dependency refresh](#dependency-refresh-2026-10-04) | Reuse runtime owners, qualify actual exports and joined consumer behavior; unreleased/private source is not a public distribution path |
 | phoenix-assets | `c76b626104e938d1c6601b73ed8c4d9d7aa4feb3` | Existing Phoenix/SvelteKit asset tooling, generated contracts and Ash metadata; no second schema generator |
 | ExMaude | `73acecf087934e593d6bae231b0e1a4d2ddf60b4` | Separate-process backend; explicit completion/bound/session evidence must be qualified |
 | Conjunct | 0.2 working specification recorded in the [source record](conjunct-adoption.md#conjunct-02-working-specification) | Generic physical model, evidence, geometry/procedure and operator-host seams; no qualified runtime package |
@@ -269,6 +269,66 @@ rejects injected Set-Cookie input. `DependencyBoundaryTest` exercises those
 guards. The three advisory IDs are narrowly excluded from the automated audit
 for these inspected paths. Reassess when the graph, transport, cookie handling,
 or source/provider adapters change; newly reported advisories still fail.
+
+## Dependency refresh, 2026-10-04
+
+GitHub source and changelog inspection used `gh`; Hex/npm resolution produced
+the checked locks. This refresh supersedes the dependency selections in the
+dated records above, without extending their product-readiness claims.
+
+| Surface | Selected update | Relevant upstream change and consumer action |
+| --- | --- | --- |
+| SQLite host | Exqlite 0.42.0 | [Statement cleanup fixes](https://github.com/elixir-sqlite/exqlite/blob/v0.42.0/CHANGELOG.md) avoid busy-handler waits and defer finalization while a connection is locked; existing persistence/restart tests exercise the consumer. |
+| Protocol validation | JSV 0.25.0 | [Changelog](https://hex.pm/packages/jsv/0.25.0/files/CHANGELOG.md) fixes IPv6 URI/IRI validation and property-name error locations. The embedded, offline schema resolver remains the owner. |
+| Core checks/docs | ex_check 0.17.0; Makeup 1.2.3 | [ex_check](https://hex.pm/packages/ex_check/0.17.0/files/CHANGELOG.md) adds `halt_on_failure`; enable it with retries disabled. [Makeup](https://hex.pm/packages/makeup/1.2.3/files/CHANGELOG.md) fixes deterministic compilation and escaping. |
+| Platform | Phoenix 1.8.15; Ash 3.34.0; AshSQL 0.8.0; AshOban 0.9.0; AshTypescript 0.19.0 | [Phoenix](https://hexdocs.pm/phoenix/changelog.html) fixes transport replacement/close behavior. [Ash](https://hexdocs.pm/ash/changelog.html) fixes filter/atomic-update and notification handling; temporal resources are optional. [AshSQL](https://hexdocs.pm/ash_sql/changelog.html), [AshOban](https://hexdocs.pm/ash_oban/changelog.html), and [AshTypescript](https://hexdocs.pm/ash_typescript/changelog.html) cover aggregate joins, current Oban plugin configuration, pagination and generated types. Automation remains disabled; generated-contract and migration drift checks pass. |
+| Platform transitive packages | Finch 0.24.0; RustlerPrecompiled 0.10.0; pgvector 0.4.2 | [Finch](https://hex.pm/packages/finch/0.24.0/files/CHANGELOG.md) fixes failed/stale HTTP connection handling; [RustlerPrecompiled](https://hex.pm/packages/rustler_precompiled/0.10.0/files/CHANGELOG.md) avoids unlinking loaded native libraries; [pgvector](https://hex.pm/packages/pgvector/0.4.2/files/CHANGELOG.md) improves sparse-vector conversion. Existing native-loading and shared-pool upsert tests pass. |
+| Other platform transitive packages | CLI_mate 0.11.0; LLMdb 2026.9.8; Peri 0.11.3; Xema 0.17.10; Zoi 0.18.11 | [CLI_mate](https://hex.pm/packages/cli_mate/0.11.0/files/CHANGELOG.md), [LLMdb](https://hex.pm/packages/llm_db/2026.9.8/files/CHANGELOG.md), [Peri](https://hex.pm/packages/peri/0.11.3/files/CHANGELOG.md), and [Zoi](https://hex.pm/packages/zoi/0.18.11/files/CHANGELOG.md) document option inheritance, provider metadata, generator/schema, and coercion/default changes. Consumer compilation and tests pass; model inference remains unqualified. [Xema's source changelog](https://github.com/hrzndhrn/xema/blob/04bb684a3e0d01d87faceb7266b06dbb68c0ff8f/CHANGELOG.md) changes string lengths to code points and labels 0.17.10 with a future date; the selected version is the available Hex artifact, not evidence of that date. |
+| Frontend | Biome 2.5.15; Vite 8.3.2; Node types 26.6.4 | [Biome release](https://github.com/biomejs/biome/releases/tag/%40biomejs%2Fbiome%402.5.15) and [Vite changelog](https://github.com/vitejs/vite/blob/v8.3.2/packages/vite/CHANGELOG.md) contain lint/type, watcher, preload and build fixes; type checks, layout tests, lint and static build pass. |
+
+The [Refpath source comparison](https://github.com/refpath/refpath/compare/4a8e128628cac28706b0479bd2eabd3b9d240236...ee60f58cb885f8fe6875ce9468b0c6ffdb5496c0)
+advances the immutable pin to `ee60f58cb885f8fe6875ce9468b0c6ffdb5496c0`.
+Its boot contract separates process deployment from infrastructure ownership.
+The host explicitly selects `hosting_mode: :self_hosted`; the boundary test
+asserts the exported settings retain `deployment_mode: :embedded` and that
+hosting mode. Refpath still owns its unreleased v1 migration baseline, invoked
+through the existing `InstallRefpath` migration. No alter migration is added.
+New upstream work-product/reconciliation exports require their own joined
+consumer qualification before replacing retained Conjunct boundaries.
+
+All three Wotex packages advance together to
+`c8c727a7c8c18fec82d80cc5ba88d246af3c67fc`. The
+[source comparison](https://github.com/wotex-project/wotex/compare/e6aa01a69ea35447afa989d5dea061618d20b3cf...c8c727a7c8c18fec82d80cc5ba88d246af3c67fc)
+changes guidance/test scaffolding for the consumed packages, with no runtime
+API migration required.
+
+Retained constraints are deliberate:
+
+- AshPostgres stays at `528177429ab9bd72ab6ee7bfdf278f94c9fd8252`.
+  Inspection of published 2.14.0 and the fork's current branch found neither
+  preserves the dynamic-repo upsert fix required by the shared pool.
+- Nx 0.12.1, Axon 0.8.1, Scholar 0.4.1 and Rustler 0.38.0 retain Refpath's
+  numerical/native ABI. Newer numerical majors conflict with its Nx constraint.
+- SvelteKit 2.70.3/static adapter 3.0.10 remain: the
+  [Kit 3 migration](https://svelte.dev/docs/kit/migrating-to-sveltekit-3) removes
+  `svelte.config.js`, still required by phoenix-assets 1.1.1's doctor and
+  generated type-check setup. TypeScript 6.0.3 remains within svelte-check
+  4.7.6's declared peer range; TypeScript 7 is outside it. The Kit 2 cookie
+  override stays at 0.7.2; npm audit reports zero advisories.
+- Gleam packages already resolve to the current compatible releases. Swift and
+  Zig have no external package dependencies to refresh.
+
+Verification: the core lane passed 262 tests/properties (14 environment-gated
+tests excluded), Dialyzer, documentation, format/static checks, both dependency
+audits, dual-target kernel checks and the Swift-to-Elixir release IPC probe.
+The isolated PostgreSQL fixture passed fresh
+install, full rollback, reinstall, 32 platform tests, strict Credo, generated
+contracts, production asset checks and migration drift. Platform `mix hex.audit`
+passes with the existing three narrowly scoped Gun/cowlib exceptions; source
+inspection of the new Refpath cohort still found no direct vulnerable encoder
+call or configured header-validation bypass, and `DependencyBoundaryTest`
+passes. Those packages remain unpatched; this does not widen the exceptions or
+qualify unused provider/source adapters.
 
 ## B server telemetry hardening, 2026-09-24
 

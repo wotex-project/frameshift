@@ -1,5 +1,6 @@
 [
   parallel: false,
+  halt_on_failure: true,
   retry: false,
   skipped: false,
   tools: [
