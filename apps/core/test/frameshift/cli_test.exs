@@ -5,6 +5,90 @@ defmodule Frameshift.CLITest do
 
   alias Frameshift.CLI
   alias Frameshift.Digest
+  alias Frameshift.Playlist.Plan
+
+  @photo Path.expand("../../../../protocol/fixtures/valid/capabilities-photo.json", __DIR__)
+
+  test "loop arguments preserve order and milliseconds through the playlist decision" do
+    items = Enum.map(1..64, &Digest.sha256("ordered-#{&1}"))
+
+    assert {:ok, {:command, %{"command" => command}}} =
+             CLI.parse(["loop", "frame", "1501"] ++ items ++ ["--id", "loop-id"])
+
+    assert command["itemIDs"] == items
+    assert command["dwellMs"] == 1_501
+    capabilities = @photo |> File.read!() |> JSON.decode!()
+    assert {:error, :playlist_too_long} = Plan.build(capabilities, items, command["dwellMs"])
+
+    assert {:ok, %{dwell_ms: 1_501}} =
+             Plan.build(capabilities, Enum.take(items, 2), command["dwellMs"])
+
+    assert {:ok, {:command, %{"command" => profile}}} =
+             CLI.parse(["loop", "frame", "profile", hd(items), "--id", "profile-id"])
+
+    refute Map.has_key?(profile, "dwellMs")
+    assert {:error, :interval_required} = Plan.build(capabilities, profile["itemIDs"])
+
+    assert {:ok, {:command, %{"command" => pinned}}} =
+             CLI.parse(["loop-pinned", "frame", "1", "--id", "pinned-id"])
+
+    assert pinned["kind"] == "loopPinned"
+    refute Map.has_key?(pinned, "itemIDs")
+    assert {:ok, %{dwell_ms: 1_000}} = Plan.build(capabilities, [hd(items)], pinned["dwellMs"])
+
+    for action <- [
+          ["loop", "frame", "1"],
+          ["loop", "frame", "1", hd(items), hd(items)],
+          ["loop", "frame", "1"] ++ items ++ [Digest.sha256("overflow")],
+          ["loop-pinned", "frame", "profile", hd(items)],
+          ["loop", "frame", "1", "bad"]
+        ] do
+      assert {:error, :usage} = CLI.parse(action ++ ["--id", "id"])
+    end
+  end
+
+  test "catalog options require explicit label intent and bounded canonical numbers" do
+    digest = Digest.sha256("fixture")
+    prefix = ["metadata-edit", digest, digest, "  Cafe\u0301  "]
+    labels = Enum.flat_map(1..32, &["--label", "label-#{&1}"])
+    dismissals = Enum.flat_map(1..64, &["--dismiss", "vision", "machine-#{&1}"])
+
+    assert {:ok, {:command, %{"command" => edit}}} =
+             CLI.parse(prefix ++ labels ++ dismissals ++ ["--id", "edit-id"])
+
+    assert edit["title"] == "Café"
+    assert edit["userLabels"] == Enum.map(1..32, &"label-#{&1}")
+    assert length(edit["dismissedLabels"]) == 64
+
+    for options <- [
+          [],
+          ["--dismiss", "vision", "machine"],
+          ["--clear-user-labels", "--label", "label"],
+          ["--label", "label", "--clear-user-labels"],
+          ["--clear-user-labels", "--clear-user-labels"],
+          ["--label", "x\ny"],
+          ["--label", String.duplicate("é", 65)],
+          ["--clear-user-labels", "--dismiss", "user", "label"],
+          labels ++ ["--label", "overflow"],
+          labels ++ dismissals ++ ["--dismiss", "metadata", "overflow"]
+        ] do
+      assert {:error, :usage} = CLI.parse(prefix ++ options ++ ["--id", "id"])
+    end
+
+    for value <- ["0", "-1", "01", "+1", "1.0", "1ms", "31536000001"] do
+      assert {:error, :usage} =
+               CLI.parse(["loop-pinned", "frame", value, "--id", "id"])
+    end
+
+    for value <- ["1048575", "1099511627777", "01048576", "1048576bytes"] do
+      assert {:error, :usage} = CLI.parse(["storage-set", digest, value, "--id", "id"])
+    end
+
+    for value <- [1_048_576, 1_099_511_627_776] do
+      assert {:ok, {:command, %{"command" => %{"objectByteLimit" => ^value}}}} =
+               CLI.parse(["storage-set", digest, Integer.to_string(value), "--id", "id"])
+    end
+  end
 
   test "commands retain caller identities and map still-artwork actions to the owned contract" do
     item = Digest.sha256("item")

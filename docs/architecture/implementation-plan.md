@@ -230,11 +230,15 @@ permissions, refuse caller-path imports/pairing and exercise orderly socket
 cleanup. Fresh SQLite fixtures bind claim/replay/completion to the actor across
 restart and verified backup, with atomic audit rollback. The initial bundled
 CLI now supplies state/metadata/recovery/storage reads and explicit-ID settings,
-pin/removal/restore/send/reconciliation/resume commands, with server UID checks,
-bounded framing and unknown-outcome exit 75. Clean production CLI help/version
+pin/removal/restore/send/reconciliation/resume commands, plus revision-bound
+metadata/storage edits and ordered/pinned playlist creation. Catalog CLI fixtures
+join the SQLite writer's stale-observation, immutable-byte and over-budget
+behavior; planner fixtures preserve millisecond intervals and target refusal.
+Server UID checks, bounded framing and unknown-outcome exit 75 still apply.
+Clean production CLI help/version
 uses the shipped runtime without service configuration or development tools.
-Linux database/NIF qualification, streamed import, pairing/credentials, remaining
-CLI operations and package wiring, installed provisioning and physical power-loss
+Linux database/NIF qualification, streamed import, discovery/pairing/credentials
+and package wiring, installed provisioning and physical power-loss
 measurements remain open gates.
 
 ## Shared contracts

@@ -186,8 +186,34 @@ and `storage` use finite existing command reads. Initial mutations are
 Every mutation requires an explicit `--id COMMAND_ID` of 1–64 UTF-8 bytes; the
 CLI neither invents an ID after failure nor automatically retries an exchange.
 Arguments map to existing product commands and cannot supply an actor UID.
-Import, discovery/pairing, metadata editing, storage editing and playlist creation
-remain required CLI work until their dedicated argument/adapter contracts land.
+`storage-set REVISION BYTES --id COMMAND_ID` changes the registered-object budget
+against its observed revision; BYTES is a whole decimal from 1048576 through
+1099511627776. It never deletes objects to reach the new limit.
+`metadata-edit ITEM REVISION TITLE` requires either one or more `--label LABEL`
+options (the complete replacement user-label set), or explicit
+`--clear-user-labels`. Up to 32 user labels and 64 `--dismiss PROVENANCE LABEL`
+options are allowed; each dismissal names an exact currently observed machine
+label/provenance pair (`filename`, `metadata`, or `vision`) under the metadata
+revision. Title/labels follow the existing trimmed NFC/control/byte bounds.
+Label omission alone refuses so a title-only-looking command cannot implicitly
+clear the existing user-label set. Immutable artwork and machine provenance remain
+owned by the existing metadata command.
+
+`loop TARGET INTERVAL ITEM...` preserves 1–64 distinct digest IDs in caller order;
+`loop-pinned TARGET INTERVAL` snapshots the existing bounded pin set. INTERVAL is
+an explicit whole millisecond value from 1 through 31536000000, or `profile` to
+request the qualified source-backed recommendation. The existing core still
+clamps an override to the advertised minimum and refuses a missing recommendation,
+unsupported target/profile, inactive item or rendering failure. Both forms and
+metadata edits retain the required trailing `--id COMMAND_ID`. Resume keeps its
+exact suspended playlist revision contract.
+
+The argument admission ceiling is 270 arguments, 64 KiB total raw UTF-8 bytes,
+and 8 KiB per argument, before constructing JSON. Catalog edits, replay and stale
+revision acceptance use the actual SQLite owner; ordered-loop argument fixtures
+join the retained core rendering/playlist tests. These are software checks, not
+Linux NIF, installed package, qualified target or physical display evidence.
+Import and discovery/pairing remain required CLI work with their own adapters.
 
 Requests retain 64 KiB/8 KiB framing bounds and responses 1 MiB/256 KiB bounds.
 The connection and send use finite deadlines; the response has one absolute

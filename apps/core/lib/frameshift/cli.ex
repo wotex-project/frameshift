@@ -8,6 +8,12 @@ defmodule Frameshift.CLI do
   requires a caller-retained `--id`. No retry or replacement ID hides an unknown
   outcome. Import and pairing await their platform-specific custody boundaries.
 
+  Catalog edits carry the observed metadata/storage revision. Metadata requires
+  an explicit complete user-label set or clear flag, preserving machine labels
+  unless named dismissals match the current revision. Ordered/pinned loops select
+  an explicit millisecond interval or the source-backed profile recommendation;
+  the core still owns target admission, clamping, rendering and display truth.
+
   ## Policy and output
 
   `run/1` reads the configured service UID, selected endpoint GID and socket path.
@@ -31,6 +37,10 @@ defmodule Frameshift.CLI do
          frameshiftctl instruction TEXT | select TARGET | send ITEM TARGET
          frameshiftctl reconcile TARGET | pin ID | unpin ID | remove ID | restore ID
          frameshiftctl resume TARGET REVISION
+         frameshiftctl storage-set REVISION BYTES
+         frameshiftctl metadata-edit ITEM REVISION TITLE --label LABEL... | --clear-user-labels
+           [--dismiss filename|metadata|vision LABEL]...
+         frameshiftctl loop TARGET MILLISECONDS|profile ITEM... | loop-pinned TARGET MILLISECONDS|profile
   Every mutation requires --id COMMAND_ID. Configure service UID, endpoint GID and socket path.
   """
 
@@ -74,9 +84,10 @@ defmodule Frameshift.CLI do
   @doc "Admits exact CLI arguments without opening a socket or allocating a command identity."
   @spec parse([String.t()]) :: {:ok, {:command | :diagnostics, map()}} | {:error, :usage}
   def parse(args) when is_list(args) do
-    if length(args) <= 16 and Enum.all?(args, &valid_argument?/1),
-      do: parse_args(args),
-      else: {:error, :usage}
+    if length(args) <= 270 and Enum.all?(args, &valid_argument?/1) and
+         Enum.reduce(args, 0, &(byte_size(&1) + &2)) <= 64 * 1024,
+       do: parse_args(args),
+       else: {:error, :usage}
   end
 
   def parse(_), do: {:error, :usage}
@@ -154,7 +165,108 @@ defmodule Frameshift.CLI do
       else: {:error, :usage}
   end
 
+  defp action(["storage-set", revision, value]) do
+    with true <- Digest.valid_sha256?(revision),
+         {:ok, limit} <- decimal(value, 1_048_576, 1_099_511_627_776) do
+      {:ok,
+       %{"kind" => "updateStorage", "storageRevision" => revision, "objectByteLimit" => limit}}
+    else
+      _ -> {:error, :usage}
+    end
+  end
+
+  defp action(["metadata-edit", item, revision, title | options]) do
+    with true <- Digest.valid_sha256?(item) and Digest.valid_sha256?(revision),
+         {:ok, title} <- metadata_text(title, 256),
+         {:ok, edit} <- metadata_options(options, %{labels: [], dismissed: [], clear: false}),
+         true <- edit.clear or edit.labels != [] do
+      {:ok,
+       %{
+         "kind" => "updateMetadata",
+         "itemID" => item,
+         "metadataRevision" => revision,
+         "title" => title,
+         "userLabels" => Enum.reverse(edit.labels),
+         "dismissedLabels" => Enum.reverse(edit.dismissed)
+       }}
+    else
+      _ -> {:error, :usage}
+    end
+  end
+
+  defp action([verb, target, interval | items])
+       when verb in ["loop", "loop-pinned"] and byte_size(target) in 1..128 do
+    with {:ok, dwell} <- interval(interval),
+         :ok <- loop_items(verb, items) do
+      command = %{
+        "kind" => if(verb == "loop", do: "loopArtwork", else: "loopPinned"),
+        "targetID" => target
+      }
+
+      command = if verb == "loop", do: Map.put(command, "itemIDs", items), else: command
+      {:ok, if(dwell, do: Map.put(command, "dwellMs", dwell), else: command)}
+    else
+      _ -> {:error, :usage}
+    end
+  end
+
   defp action(_), do: {:error, :usage}
+
+  defp decimal(value, minimum, maximum) when byte_size(value) in 1..13 do
+    case Integer.parse(value) do
+      {number, ""} when number >= minimum and number <= maximum ->
+        if value == Integer.to_string(number), do: {:ok, number}, else: {:error, :usage}
+
+      _ ->
+        {:error, :usage}
+    end
+  end
+
+  defp decimal(_, _, _), do: {:error, :usage}
+  defp interval("profile"), do: {:ok, nil}
+  defp interval(value), do: decimal(value, 1, 31_536_000_000)
+
+  defp loop_items("loop-pinned", []), do: :ok
+
+  defp loop_items("loop", items) when length(items) in 1..64 do
+    if length(Enum.uniq(items)) == length(items) and Enum.all?(items, &Digest.valid_sha256?/1),
+      do: :ok,
+      else: {:error, :usage}
+  end
+
+  defp loop_items(_, _), do: {:error, :usage}
+
+  defp metadata_text(text, maximum) do
+    value = text |> String.normalize(:nfc) |> String.trim()
+
+    if byte_size(value) in 1..maximum and not String.match?(value, ~r/\p{Cc}/u),
+      do: {:ok, value},
+      else: {:error, :usage}
+  end
+
+  defp metadata_options([], edit), do: {:ok, edit}
+
+  defp metadata_options(["--clear-user-labels" | rest], %{clear: false, labels: []} = edit),
+    do: metadata_options(rest, %{edit | clear: true})
+
+  defp metadata_options(["--label", label | rest], %{clear: false, labels: labels} = edit)
+       when length(labels) < 32 do
+    with {:ok, label} <- metadata_text(label, 128) do
+      metadata_options(rest, %{edit | labels: [label | labels]})
+    end
+  end
+
+  defp metadata_options(["--dismiss", source, label | rest], %{dismissed: dismissed} = edit)
+       when source in ~w(filename metadata vision) and length(dismissed) < 64 do
+    with {:ok, label} <- metadata_text(label, 128) do
+      metadata_options(rest, %{
+        edit
+        | dismissed: [%{"provenance" => source, "label" => label} | dismissed]
+      })
+    end
+  end
+
+  defp metadata_options(_, _), do: {:error, :usage}
 
   defp read(operation), do: {:ok, {:command, %{"operation" => operation, "auth" => "peer"}}}
 
