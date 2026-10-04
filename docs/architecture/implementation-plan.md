@@ -215,6 +215,12 @@ particular reference candidates selected for a test.
   unified logging and Linux logging adapters, and a diagnostic CLI;
 - test-only CLI or local harness.
 
+Fallback logging now has an exact idempotent installation contract, archive-path
+admission, asynchronous overload controls and configuration health. A real core
+release completes commands with an unsafe diagnostic path refused. Rotation and
+redaction fixtures pass; cross-platform long-running log/resource and physical
+storage measurements remain H1 acceptance dependencies.
+
 **Exit:** crash and restart preserve committed masters; identical recipes reuse
 cache; removal cannot collect referenced/pinned content; Mac and Linux/Pi host
 contract tests preserve the same domain and protocol behavior. A failed update

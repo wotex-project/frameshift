@@ -253,6 +253,40 @@ unified-log persistence, so it is not the audit store. Ubuntu sends sanitized
 operational logs to journald for `journalctl`. The Nerves Pi appliance has no
 journal and uses a bounded OTP circular disk log.
 
+### Fallback handler failure and custody
+
+The Mac fallback uses OTP `logger_std_h` at error level with the existing
+allowlisted formatter, a 2 MiB rotation threshold and three retained archives.
+The current file and all supported archive names are admitted as regular files
+inside a real owner-only `0700` directory; existing files and the initial active
+file are restricted to `0600`. New rotated files remain private through that
+directory. Unsafe paths and permission/open failures refuse installation, but
+MUST NOT raise through host startup or terminate the Library, renderer or command
+boundary. Diagnostic failure cannot replace a committed command result.
+
+Installation is idempotent only for the exact handler module, path, formatter,
+level and limits. A conflicting existing handler refuses without reconfiguring
+or removing it. A newly added handler whose initial file cannot be secured is
+removed; unrelated handlers remain owned by OTP and their callers.
+
+The fallback sets equal sync/drop thresholds of 256 records, a flush threshold
+of 512, and a 500-record/second burst limit. OTP selects drop before sync at equal
+thresholds, so this sink does not impose synchronous overload backpressure on
+command callers. These are overload controls, not an atomic mailbox capacity or
+loss-free logging claim. The formatter bounds retained fields; raw error reports
+and exception text never enter this sink. See the pinned OTP 29.1 sources
+`logger_olp:check_load/1` and the
+[OTP handler/overload documentation](https://www.erlang.org/doc/apps/kernel/logger_chapter.html#protecting-the-handler-from-overload).
+
+Authenticated diagnostic health includes fallback configuration availability,
+finite state, rotation/archive limits and an explicit null loss-free interval.
+Missing or changed handler configuration reports unavailable. Availability
+describes the configured sink, not current disk writability, durable audit
+coverage or every subsequent write. Real-handler fixtures exercise rotation and
+sanitization at a reduced threshold, failed admission, configuration conflict and
+handler removal; long-running Mac/Linux storage and failure measurements remain
+separate evidence.
+
 `frameshiftctl diagnostics health|metrics|audit` is a read-only client of the
 versioned local IPC contract. Responses are size-limited and audit queries use
 stable pagination and explicit retention metadata. A standalone client cannot

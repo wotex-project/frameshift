@@ -61,6 +61,13 @@ umask 077
 printf '%s' "$ipc_token" >"$ipc_token_file"
 chmod 600 "$ipc_token_file"
 
+# An unavailable diagnostic sink must not prevent authoritative host startup.
+# These paths are isolated fixture data, never an existing user library.
+mkdir -p "$runtime_root/data" "$runtime_root/unrelated-log-directory"
+chmod 755 "$runtime_root/unrelated-log-directory"
+printf 'preserve unrelated bytes' >"$runtime_root/unrelated-log-directory/sentinel"
+ln -s "$runtime_root/unrelated-log-directory" "$runtime_root/data/diagnostics"
+
 FRAMESHIFT_DATA_DIR="$runtime_root/data" \
 FRAMESHIFT_IPC_TOKEN_FILE="$ipc_token_file" \
 FRAMESHIFT_RENDERER_PATH="$renderer_path" \
@@ -103,7 +110,22 @@ if [ "$(uname -s)" = Darwin ]; then
     swift run \
       --package-path "$repository_root/apps/macos" \
       frameshift-ipc-probe
+
+  FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH="$runtime_root/data/d.sock" \
+    swift run \
+      --package-path "$repository_root/apps/macos" \
+      frameshiftctl diagnostics health >"$runtime_root/fallback-health.json"
+
+  if ! grep -Eq '"scope"[[:space:]]*:[[:space:]]*"handler_configuration"' "$runtime_root/fallback-health.json" || \
+     ! grep -Eq '"state"[[:space:]]*:[[:space:]]*"unavailable"' "$runtime_root/fallback-health.json"; then
+    echo "diagnostic health did not report the unavailable fallback sink" >&2
+    exit 1
+  fi
 fi
+
+test "$(cat "$runtime_root/unrelated-log-directory/sentinel")" = 'preserve unrelated bytes'
+test ! -e "$runtime_root/unrelated-log-directory/core-fallback.log"
+test "$(find "$runtime_root/unrelated-log-directory" -type f | wc -l | tr -d ' ')" = 1
 
 kill "$release_pid"
 wait "$release_pid"

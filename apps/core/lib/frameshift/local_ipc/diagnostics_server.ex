@@ -22,7 +22,7 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
 
   use GenServer
 
-  alias Frameshift.Diagnostics.{Catalog, Metrics}
+  alias Frameshift.Diagnostics.{Catalog, FallbackLog, Metrics}
   alias Frameshift.Library
   alias Frameshift.LocalIPC.PeerIdentity
   alias Frameshift.LocalIPC.SocketDirectory
@@ -266,6 +266,7 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
     success_response(request_id, %{
       "store" => Library.diagnostics_health(library),
       "collector" => collector_status(metrics),
+      "fallbackLog" => FallbackLog.status(),
       "observedAtMs" => System.os_time(:millisecond)
     })
   end

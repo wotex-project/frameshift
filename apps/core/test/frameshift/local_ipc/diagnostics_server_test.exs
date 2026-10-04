@@ -46,6 +46,9 @@ defmodule Frameshift.LocalIPC.DiagnosticsServerTest do
     assert health["store"]["metricPageMeasurementAvailable"]
     assert health["store"]["metricAllocatedBytes"] <= health["store"]["metricPageBudgetBytes"]
     assert health["collector"]["available"]
+    assert health["fallbackLog"]["scope"] == "handler_configuration"
+    assert health["fallbackLog"]["lossFreeSinceMs"] == nil
+    refute Map.has_key?(health["fallbackLog"], "path")
 
     :telemetry.execute(
       [:frameshift, :command, :completed],

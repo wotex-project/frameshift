@@ -24,7 +24,6 @@ defmodule Frameshift.Application do
   use Application
 
   alias Frameshift.Diagnostics.FallbackLog
-  alias Frameshift.Diagnostics.LogFormatter
   alias Frameshift.Diagnostics.Metrics
   alias Frameshift.LocalIPC.DiagnosticsServer
   alias Frameshift.LocalIPC.Token
@@ -52,24 +51,9 @@ defmodule Frameshift.Application do
     if Application.get_env(:frameshift_core, :start_local_ipc, false) do
       directory = Path.join(Frameshift.Paths.data_dir(), "diagnostics")
       path = Path.join(directory, "core-fallback.log")
-      :ok = FallbackLog.prepare(path)
-
-      config = %{
-        level: :error,
-        formatter: {LogFormatter, %{}},
-        config: %{
-          type: :file,
-          file: String.to_charlist(path),
-          max_no_bytes: 2 * 1024 * 1024,
-          max_no_files: 3
-        }
-      }
-
-      case :logger.add_handler(:frameshift_fallback, :logger_std_h, config) do
-        :ok -> :ok = FallbackLog.secure_file(path)
-        {:error, {:already_exist, _}} -> :ok
-        {:error, reason} -> raise "could not start fallback logging: #{inspect(reason)}"
-      end
+      # Logging availability is observable through diagnostic health and cannot
+      # take down the already-started authoritative services.
+      FallbackLog.install(path)
     end
   end
 
