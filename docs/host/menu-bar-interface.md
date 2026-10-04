@@ -112,7 +112,13 @@ unsaved text, including edits made while a save is awaiting acknowledgement,
 survives refresh, pin/remove/target commands and opening/closing the window.
 The window displays source-master identity and queued/loop state explicitly;
 it cannot infer a rendered preview or physical display from that identity.
-Target previews and comparison remain separate software acceptance slices.
+The selected master has a bounded local source preview when unpaired and an
+approximate target-crop preview for a supported paired profile. The focused
+window and selected compact card share it. Identity, dimensions and exact pixel
+digest are checked before display; changed selection clears old pixels, and a
+late response cannot replace the new selection. Unsupported/stale/busy previews
+show refusal and retry. Comparison remains a separate software slice. See the
+[bounded preview contract](../architecture/content-pipeline.md#bounded-native-preview-contract).
 
 Use SwiftUI's native [window scenes and open-window action](https://developer.apple.com/documentation/swiftui/windows)
 with a 700 × 520 point minimum and an initial 860 × 640 point size for this
@@ -250,8 +256,8 @@ where admitted; the saved per-frame override is the next editor default.
 set and interval. It refuses stale intent, pending delivery and changed
 capabilities for review. It does not recreate a playlist from current pins.
 Capability/recommendation changes are labelled before queueing. A photo or pixel
-interval is a viewing choice, not a measured energy optimization. Target-rendered
-image previews and the installed accessibility/layout matrix remain open.
+interval is a viewing choice, not a measured energy optimization. Optical
+preview comparison and the installed accessibility/layout matrix remain open.
 
 ## Progress and failure
 

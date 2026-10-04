@@ -30,6 +30,30 @@ public actor LocalCoreClient: CoreClient {
     return try await exchange(operation: "command", command: prepared.command)
   }
 
+  public func preview(masterID: String, target: FrameTarget?) async throws -> ArtworkPreview {
+    try await BundledCore.shared.ensureRunning(socketPath: socketPath)
+    let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
+    let request = PreviewWireRequest(
+      auth: auth, itemID: masterID, targetID: target?.id, profileID: target?.profileID,
+      capabilityDigest: target?.capabilityDigest)
+    let payload = try encoder.encode(request)
+    guard payload.count <= Self.maximumRequestBytes else { throw CoreClientError.invalidCommand }
+    let responseData = try await send(payload)
+    guard let response = try? decoder.decode(WireResponse.self, from: responseData),
+      response.version == 1, response.requestID == request.requestID
+    else { throw CoreClientError.protocolFailure }
+    guard response.ok, let preview = response.preview else {
+      if ["timeout", "unsupported_profile", "preview_unavailable"].contains(
+        response.error?.code ?? "")
+      {
+        throw CoreClientError.previewUnavailable
+      }
+      throw Self.clientError(for: response.error?.code)
+    }
+    try preview.validate(masterID: masterID, target: target)
+    return preview
+  }
+
   public func outboxStatus() async throws -> OutboxServiceStatus {
     try await BundledCore.shared.ensureRunning(socketPath: socketPath)
     let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
@@ -204,6 +228,9 @@ public actor LocalCoreClient: CoreClient {
     case "playlist_revision_conflict": .loopRevisionConflict
     case "playlist_profile_changed": .loopProfileChanged
     case "duplicate_artifact": .duplicateLoopArtwork
+    case "busy": .previewBusy
+    case "preview_profile_changed": .previewProfileChanged
+    case "preview_unavailable": .previewUnavailable
     case "no_pinned_artwork": .noPinnedArtwork
     case "interval_required", "invalid_interval": .intervalRequired
     case "pull_not_supported", "frame_not_paired", "compatible_binding_unavailable":
@@ -432,6 +459,22 @@ private struct WireRequest: Encodable, Sendable {
   }
 }
 
+private struct PreviewWireRequest: Encodable, Sendable {
+  let version = 1
+  let requestID = UUID().uuidString.lowercased()
+  let operation = "preview"
+  let auth: String
+  let itemID: String
+  let targetID: String?
+  let profileID: String?
+  let capabilityDigest: String?
+
+  private enum CodingKeys: String, CodingKey {
+    case version, operation, auth, itemID, targetID, profileID, capabilityDigest
+    case requestID = "requestId"
+  }
+}
+
 private struct PairingWireRequest: Encodable, Sendable {
   let version = 1
   let requestID = UUID().uuidString.lowercased()
@@ -461,6 +504,7 @@ private struct WireResponse: Decodable, Sendable {
   let snapshot: CoreSnapshot?
   let frame: PairedFrameResult?
   let outbox: OutboxServiceStatus?
+  let preview: ArtworkPreview?
   let error: WireError?
 
   private enum CodingKeys: String, CodingKey {
@@ -470,6 +514,7 @@ private struct WireResponse: Decodable, Sendable {
     case snapshot
     case frame
     case outbox
+    case preview
     case error
   }
 }

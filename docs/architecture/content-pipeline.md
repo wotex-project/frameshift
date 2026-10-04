@@ -139,6 +139,43 @@ The receiver fetches the body and all missing assets before the first display
 acknowledgement activates the revision. Physical persistence and RTC behavior
 still require validation on exact frame hardware.
 
+## Bounded native preview contract
+
+The authenticated local `preview` read accepts an active `itemID` and either no
+target (source preview) or the selected `targetID`, `profileID` and exact
+`capabilityDigest`. The core reads and verifies the registered master package;
+it accepts no caller pixels, paths or replacement capability documents. Target
+preview uses the same admitted RGB24 profile selection, centered crop, alpha
+background and resize job as Send, including the active binding's profile when
+present. Unsupported palette/packing/color profiles refuse explicitly.
+
+The Zig worker renders a transient RGB24 preview with each dimension at most
+256 pixels and a five-second render deadline. The longest edge is reduced to
+256 without enlarging smaller rasters; integer rounding is explicit, and the
+result retains the original source/target aspect dimensions for native layout.
+The response includes master, target, profile and capability identities, the
+worker build digest, exact RGB byte digest and `approximation: true`. Raw pixels
+are at most 196,608 bytes; the base64 response remains below the existing 1 MiB
+IPC ceiling. No master, recipe, artifact, pin, delivery or frame state changes.
+Preview cannot authorize transfer or claim panel color, palette, brightness,
+physical mounting geometry or confirmed display. Mat-safe/profile controls not
+yet implemented remain explicit requirements of the final rendering contract.
+
+The focused Library and selected compact card share one bounded preview state.
+The shell checks response identity, format, dimensions, byte length and digest
+before constructing a native sRGB image. Selecting another master/frame clears
+the old image immediately; late responses cannot replace the new selection.
+Closing a surface preserves the shared selected preview. Busy, timeout, missing
+master, changed capability/profile and malformed responses show an actionable
+unavailable state with explicit retry; they never become automatic mutation
+replay. Artwork remains local and has no browser/network upload in this path.
+
+Acceptance joins verified package readback, real Zig crop/alpha bytes, source and
+target identity, unsupported/stale/missing refusal and unchanged library/outbox
+state. Native fixtures test bounded digest validation and late-response races;
+the packaged Swift/core probe reads and validates real preview bytes. Optical
+comparison and native installed visual/accessibility evidence remain separate.
+
 ## Cache behavior
 
 - Identical work digests reuse existing artifacts after exact byte verification.

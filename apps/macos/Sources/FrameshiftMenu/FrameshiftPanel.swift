@@ -493,6 +493,7 @@ struct FrameshiftPanel: View {
             ResultCard(
               item: item,
               isSelected: model.selectedItem?.id == item.id,
+              model: model,
               targetName: model.snapshot.selectedTarget?.name ?? "selected target",
               canQueue: model.snapshot.selectedTarget != nil
                 && model.snapshot.selectedTarget?.directDelivery?.status != .pending,
@@ -526,6 +527,7 @@ final class PanelState {
 private struct ResultCard: View {
   let item: FrameshiftShell.LibraryItem
   let isSelected: Bool
+  let model: ShellModel
   let targetName: String
   let canQueue: Bool
   let select: () -> Void
@@ -539,8 +541,16 @@ private struct ResultCard: View {
         .fill(.quaternary)
         .frame(width: 74, height: 58)
         .overlay {
-          Image(systemName: "photo")
-            .foregroundStyle(.secondary)
+          if isSelected, let preview = model.selectedPreview, let image = preview.image() {
+            Image(decorative: image, scale: 1)
+              .resizable()
+              .interpolation(model.snapshot.selectedTarget?.medium == .pixel ? .none : .high)
+              .scaledToFit()
+          } else if isSelected && model.isPreviewLoading {
+            ProgressView().controlSize(.small)
+          } else {
+            Image(systemName: "photo").foregroundStyle(.secondary)
+          }
         }
         .accessibilityHidden(true)
 
@@ -562,6 +572,13 @@ private struct ResultCard: View {
         Text(itemStatus)
           .font(.caption)
           .foregroundStyle(.secondary)
+        if isSelected, let preview = model.selectedPreview {
+          Text(preview.kind == "target" ? "Approximate target crop" : "Source preview")
+            .font(.caption2).foregroundStyle(.secondary)
+        } else if isSelected, let message = model.previewMessage {
+          Button("Retry preview") { Task { await model.retryPreview() } }
+            .font(.caption).help(message)
+        }
       }
 
       Spacer()
@@ -572,7 +589,7 @@ private struct ResultCard: View {
             .frame(width: 30, height: 30)
         }
         .buttonStyle(.borderless)
-        .disabled(!canQueue)
+        .disabled(!canQueue || model.isPreviewLoading)
         .help("Queue this still for \(targetName)")
         .accessibilityLabel("Queue \(item.title)")
 

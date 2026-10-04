@@ -33,6 +33,7 @@ defmodule Frameshift.LocalIPC.Server do
   alias Frameshift.LocalIPC.SocketDirectory
   alias Frameshift.Outbox.Service
   alias Frameshift.Pairing.Admission
+  alias Frameshift.RenderPreview
 
   @maximum_request_bytes 64 * 1024
   @maximum_response_bytes 1024 * 1024
@@ -254,6 +255,9 @@ defmodule Frameshift.LocalIPC.Server do
         "snapshot" ->
           ~w(version requestId operation auth query)
 
+        "preview" ->
+          ~w(version requestId operation auth itemID targetID profileID capabilityDigest)
+
         operation when operation in ["pair", "recoverPair"] ->
           ~w(version requestId operation auth bootstrap discoveredId origin credentialRef)
 
@@ -267,6 +271,7 @@ defmodule Frameshift.LocalIPC.Server do
          :ok <- validate_request_keys(request, allowed, request_id),
          :ok <- validate_command_shape(request, operation, request_id),
          :ok <- validate_query_shape(request, operation, request_id),
+         :ok <- validate_preview_shape(request, operation, request_id),
          :ok <- validate_pairing_shape(request, operation, request_id) do
       {:ok, request}
     end
@@ -286,7 +291,7 @@ defmodule Frameshift.LocalIPC.Server do
     do: {:error, {safe_request_id(request_id), :invalid_request}}
 
   defp validate_operation(operation)
-       when operation in ["snapshot", "command", "pair", "recoverPair", "outboxStatus"],
+       when operation in ["snapshot", "preview", "command", "pair", "recoverPair", "outboxStatus"],
        do: :ok
 
   defp validate_operation(_), do: {:error, :invalid_request}
@@ -320,6 +325,27 @@ defmodule Frameshift.LocalIPC.Server do
   end
 
   defp validate_query_shape(_, _, _), do: :ok
+
+  defp validate_preview_shape(request, "preview", request_id) do
+    target = Map.get(request, "targetID")
+    profile = Map.get(request, "profileID")
+    digest = Map.get(request, "capabilityDigest")
+
+    if Digest.valid_sha256?(request["itemID"]) and preview_target?(target, profile, digest),
+      do: :ok,
+      else: {:error, {request_id, :invalid_request}}
+  end
+
+  defp validate_preview_shape(_, _, _), do: :ok
+
+  defp preview_target?(nil, nil, nil), do: true
+
+  defp preview_target?(target, profile, digest)
+       when is_binary(target) and byte_size(target) in 1..128 and
+              is_binary(profile) and byte_size(profile) in 1..128,
+       do: Digest.valid_sha256?(digest)
+
+  defp preview_target?(_, _, _), do: false
 
   defp validate_pairing_shape(request, operation, request_id)
        when operation in ["pair", "recoverPair"] do
@@ -377,6 +403,23 @@ defmodule Frameshift.LocalIPC.Server do
        ) do
     {:ok,
      success_response(request_id, LocalAPI.snapshot(library, nil, Map.get(request, "query", "")))}
+  end
+
+  defp execute_request(
+         %{"requestId" => request_id, "operation" => "preview", "itemID" => item_id} = request,
+         library,
+         _
+       ) do
+    target =
+      if request["targetID"], do: Map.take(request, ~w(targetID profileID capabilityDigest))
+
+    case RenderPreview.render(library, Frameshift.Renderer, item_id, target) do
+      {:ok, preview} ->
+        {:ok, %{"version" => 1, "requestId" => request_id, "ok" => true, "preview" => preview}}
+
+      {:error, code} ->
+        {:error, {request_id, code}}
+    end
   end
 
   defp execute_request(

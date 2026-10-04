@@ -164,6 +164,15 @@ verification evidence. Hardware measurements, qualified producer behavior,
 live-provider checks and signed installed releases remain attached to the
 specific claims that require them. Optional transactions remain on hold.
 
+The implemented native slices now include the focused Library, preserved
+instruction/selection, ordered playlist drafts, revision-bound saved resume and
+bounded source/target-crop previews. Their software evidence is in the
+[verification ledger](verification.md); they do not complete H3's installed
+accessibility matrix or H2's measured palette/packing profiles. Continue the
+remaining native settings/content operations and H4 adapter contracts alongside
+the documentation/site build. S2's explicit producer refusal still gates its
+dependent composition authority, rather than these independent host surfaces.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

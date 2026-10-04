@@ -83,6 +83,7 @@ public struct FrameTarget: Codable, Equatable, Identifiable, Sendable {
   public let loopInterval: LoopIntervalPreference?
   public let maximumPlaylistLength: Int?
   public let hasQueuedDelivery: Bool?
+  public let capabilityDigest: String?
 
   public init(
     id: String,
@@ -98,7 +99,8 @@ public struct FrameTarget: Codable, Equatable, Identifiable, Sendable {
     playlist: FramePlaylist? = nil,
     loopInterval: LoopIntervalPreference? = nil,
     maximumPlaylistLength: Int? = nil,
-    hasQueuedDelivery: Bool? = nil
+    hasQueuedDelivery: Bool? = nil,
+    capabilityDigest: String? = nil
   ) {
     self.id = id
     self.name = name
@@ -114,6 +116,7 @@ public struct FrameTarget: Codable, Equatable, Identifiable, Sendable {
     self.loopInterval = loopInterval
     self.maximumPlaylistLength = maximumPlaylistLength
     self.hasQueuedDelivery = hasQueuedDelivery
+    self.capabilityDigest = capabilityDigest
   }
 }
 

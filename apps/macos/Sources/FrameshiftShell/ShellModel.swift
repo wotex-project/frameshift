@@ -15,10 +15,15 @@ public final class ShellModel {
   public private(set) var searchItems: [LibraryItem]?
   public private(set) var guideHandoff: GuideHandoff?
   public private(set) var selectedItem: LibraryItem?
+  public private(set) var selectedPreview: ArtworkPreview?
+  public private(set) var previewMessage: String?
+  public private(set) var isPreviewLoading = false
 
   private let client: any CoreClient
   private var searchRevision = 0
   private var playlistDrafts: [String: PlaylistDraft] = [:]
+  private var previewRevision = 0
+  private var previewWorkerActive = false
 
   public init(
     client: any CoreClient,
@@ -38,8 +43,10 @@ public final class ShellModel {
   }
 
   public func selectItem(_ itemID: String?) {
+    let previous = previewScope
     guard let itemID else {
       selectedItem = nil
+      invalidatePreview()
       return
     }
     guard
@@ -47,6 +54,64 @@ public final class ShellModel {
         ?? snapshot.items.first(where: { $0.id == itemID })
     else { return }
     selectedItem = item
+    if previewScope != previous { invalidatePreview() }
+  }
+
+  private var previewScope: PreviewScope? {
+    guard let selectedItem else { return nil }
+    let target = snapshot.selectedTarget
+    return PreviewScope(
+      masterID: selectedItem.id, targetID: target?.id, profileID: target?.profileID,
+      capabilityDigest: target?.capabilityDigest)
+  }
+
+  private func invalidatePreview() {
+    previewRevision += 1
+    selectedPreview = nil
+    previewMessage = nil
+    isPreviewLoading = selectedItem != nil
+    Task { await loadSelectedPreview() }
+  }
+
+  public func retryPreview() async {
+    invalidatePreview()
+    await loadSelectedPreview()
+  }
+
+  public func loadSelectedPreview() async {
+    guard !previewWorkerActive, selectedPreview == nil else { return }
+    previewWorkerActive = true
+    defer {
+      previewWorkerActive = false
+      isPreviewLoading = false
+    }
+    while let scope = previewScope {
+      let revision = previewRevision
+      let target = snapshot.selectedTarget
+      isPreviewLoading = true
+      do {
+        let preview = try await client.preview(masterID: scope.masterID, target: target)
+        guard revision == previewRevision else { continue }
+        try preview.validate(masterID: scope.masterID, target: target)
+        selectedPreview = preview
+        previewMessage = nil
+      } catch {
+        guard revision == previewRevision else { continue }
+        switch error {
+        case CoreClientError.previewBusy:
+          previewMessage = "The renderer is busy. Retry after the current artwork finishes."
+        case CoreClientError.previewProfileChanged:
+          previewMessage = "Frame capabilities changed. Refresh the target and retry."
+        case CoreClientError.itemNotFound:
+          previewMessage = "This master is no longer available. Refresh the library."
+        case CoreClientError.protocolFailure:
+          previewMessage = "Preview identity or bytes could not be verified. Retry the preview."
+        default:
+          previewMessage = "Preview is unavailable for this source or profile. Refresh and retry."
+        }
+      }
+      return
+    }
   }
 
   public var hasUnsavedInstruction: Bool {
@@ -141,7 +206,10 @@ public final class ShellModel {
 
   public func remove(_ itemID: String) async {
     let removed = await send(CoreCommand(kind: .remove, itemID: itemID))
-    if removed, selectedItem?.id == itemID { selectedItem = nil }
+    if removed, selectedItem?.id == itemID {
+      selectedItem = nil
+      invalidatePreview()
+    }
   }
 
   public func queue(_ itemID: String) async {
@@ -347,10 +415,12 @@ public final class ShellModel {
   }
 
   private func apply(_ next: CoreSnapshot) {
+    let previousPreview = previewScope
     let preserveDraft = hasUnsavedInstruction
     snapshot = next
     if !preserveDraft { draftInstruction = next.instruction }
     updateSelection(from: next.items)
+    if previewScope != previousPreview { invalidatePreview() }
   }
 
   private func updateSelection(from items: [LibraryItem]) {
@@ -359,4 +429,11 @@ public final class ShellModel {
     else { return }
     self.selectedItem = current
   }
+}
+
+private struct PreviewScope: Equatable {
+  let masterID: String
+  let targetID: String?
+  let profileID: String?
+  let capabilityDigest: String?
 }

@@ -105,6 +105,7 @@ struct LibraryWindow: View {
   private func artwork(_ item: FrameshiftShell.LibraryItem) -> some View {
     VStack(alignment: .leading, spacing: 12) {
       Text(item.title).font(.title2)
+      ArtworkPreviewView(model: model)
       LabeledContent("Source master") {
         Text(item.digest).font(.caption.monospaced()).textSelection(.enabled)
       }
@@ -117,7 +118,8 @@ struct LibraryWindow: View {
         Button("Queue for frame", systemImage: "paperplane") { Task { await model.queue(item.id) } }
           .disabled(
             model.snapshot.selectedTarget == nil
-              || model.snapshot.selectedTarget?.directDelivery?.status == .pending || model.isBusy)
+              || model.snapshot.selectedTarget?.directDelivery?.status == .pending || model.isBusy
+              || model.isPreviewLoading)
         Button(
           item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "bookmark.fill" : "bookmark"
         ) {

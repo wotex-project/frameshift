@@ -11,6 +11,7 @@ defmodule Frameshift.RenderPipelineTest do
   alias Frameshift.Qualification.Profile
   alias Frameshift.Renderer
   alias Frameshift.RenderPipeline
+  alias Frameshift.RenderPreview
   alias Frameshift.Simulator
   alias Frameshift.Transport.CredentialResolver
   alias Frameshift.Transport.KeychainBroker
@@ -360,6 +361,136 @@ defmodule Frameshift.RenderPipelineTest do
              LocalAPI.execute_with_renderer(context.library, context.renderer, command)
 
     assert {:ok, ^manifest} = Library.outbox_manifest(context.library, @frame_id)
+  end
+
+  test "local previews preserve source alpha and selected target crop without creating intent",
+       context do
+    rgba = <<255, 0, 0, 0, 0, 255, 0, 255, 0, 0, 255, 255, 255, 255, 255, 255>>
+    {:ok, package} = MasterPackage.encode(@original, rgba, 4, 1)
+
+    {:ok, master} =
+      Library.import_master(context.library, package, %{master_attributes() | width: 4, height: 1})
+
+    {:ok, _} =
+      Library.register_paired_frame(
+        context.library,
+        thing_description(),
+        "keychain:preview-frame",
+        "sha256:" <> String.duplicate("d", 64)
+      )
+
+    before = LocalAPI.snapshot(context.library)
+    [target] = before["targets"]
+
+    identity =
+      Map.take(target, ~w(profileID capabilityDigest)) |> Map.put("targetID", target["id"])
+
+    assert {:ok, source} =
+             RenderPreview.render(context.library, context.renderer, master["digest"])
+
+    assert source["kind"] == "source"
+    assert source["width"] == 4
+    assert source["height"] == 1
+    assert source["targetID"] == nil
+    assert Base.decode64!(source["rgb"]) == <<255, 255, 255, 0, 255, 0, 0, 0, 255, 255, 255, 255>>
+    assert source["digest"] == Digest.sha256(Base.decode64!(source["rgb"]))
+
+    assert {:ok, preview} =
+             RenderPreview.render(context.library, context.renderer, master["digest"], identity)
+
+    assert preview["kind"] == "target"
+    assert preview["masterDigest"] == master["digest"]
+    assert preview["approximation"]
+    assert preview["width"] == 2
+    assert preview["height"] == 1
+    assert preview["profileID"] == @profile_id
+    assert preview["rendererBuildDigest"] == Renderer.build_digest(context.renderer)
+    assert Base.decode64!(preview["rgb"]) == <<0, 255, 0, 0, 0, 255>>
+    assert LocalAPI.snapshot(context.library) == before
+    assert :empty = Library.outbox_manifest(context.library, @frame_id)
+
+    {:ok, reader} =
+      Exqlite.start_link(database: Path.join(context.library_dir, "metadata.sqlite"))
+
+    assert [[0, 0]] =
+             Exqlite.query!(
+               reader,
+               "SELECT (SELECT COUNT(*) FROM recipes), (SELECT COUNT(*) FROM artifacts)"
+             ).rows
+
+    GenServer.stop(reader)
+
+    assert {:error, :preview_profile_changed} =
+             RenderPreview.render(
+               context.library,
+               context.renderer,
+               master["digest"],
+               Map.put(identity, "capabilityDigest", Digest.sha256("stale"))
+             )
+
+    assert {:error, :preview_profile_changed} =
+             RenderPreview.render(
+               context.library,
+               context.renderer,
+               master["digest"],
+               Map.put(identity, "profileID", "other-profile")
+             )
+
+    {:ok, frame} = Library.get_paired_frame(context.library, @frame_id)
+    unsupported = put_in(frame["capabilities"], ["color", "transferFunction"], "linear")
+
+    {:ok, injector} =
+      Exqlite.start_link(database: Path.join(context.library_dir, "metadata.sqlite"))
+
+    Exqlite.query!(
+      injector,
+      "UPDATE paired_frames SET capabilities_json = ? WHERE frame_id = ?",
+      [Jason.encode!(unsupported), @frame_id]
+    )
+
+    GenServer.stop(injector)
+
+    unsupported_identity =
+      Map.put(identity, "capabilityDigest", Digest.sha256(RFC8785.encode!(unsupported)))
+
+    assert {:error, :unsupported_profile} =
+             RenderPreview.render(
+               context.library,
+               context.renderer,
+               master["digest"],
+               unsupported_identity
+             )
+
+    :ok = Library.remove_master(context.library, master["digest"])
+
+    assert {:error, :item_not_found} =
+             RenderPreview.render(context.library, context.renderer, master["digest"])
+  end
+
+  test "preview output is bounded and worker loss leaves no partial artifact", context do
+    rgba = :binary.copy(<<10, 20, 30, 255>>, 512 * 256)
+    {:ok, package} = MasterPackage.encode(@original, rgba, 512, 256)
+
+    {:ok, master} =
+      Library.import_master(context.library, package, %{
+        master_attributes()
+        | width: 512,
+          height: 256
+      })
+
+    assert {:ok, preview} =
+             RenderPreview.render(context.library, context.renderer, master["digest"])
+
+    assert {preview["width"], preview["height"]} == {256, 128}
+    assert {preview["aspectWidth"], preview["aspectHeight"]} == {512, 256}
+    assert Base.decode64!(preview["rgb"]) == :binary.copy(<<10, 20, 30>>, 256 * 128)
+    assert byte_size(RFC8785.encode!(preview)) < 512 * 1024
+    GenServer.stop(context.renderer)
+
+    assert {:error, :preview_unavailable} =
+             RenderPreview.render(context.library, context.renderer, master["digest"])
+
+    assert {:ok, _} = Library.read_object(context.library, master["digest"])
   end
 
   defp displayed_ack(manifest) do

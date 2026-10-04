@@ -4,6 +4,13 @@ public protocol CoreClient: Sendable {
   func snapshot() async throws -> CoreSnapshot
   func snapshot(query: String) async throws -> CoreSnapshot
   func send(_ command: CoreCommand) async throws -> CoreSnapshot
+  func preview(masterID: String, target: FrameTarget?) async throws -> ArtworkPreview
+}
+
+extension CoreClient {
+  public func preview(masterID _: String, target _: FrameTarget?) async throws -> ArtworkPreview {
+    throw CoreClientError.previewUnavailable
+  }
 }
 
 public enum CoreClientError: Error, Equatable, Sendable {
@@ -25,6 +32,9 @@ public enum CoreClientError: Error, Equatable, Sendable {
   case loopRevisionConflict
   case loopProfileChanged
   case duplicateLoopArtwork
+  case previewUnavailable
+  case previewBusy
+  case previewProfileChanged
   case itemNotFound
   case protocolFailure
   case pairingIncomplete

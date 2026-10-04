@@ -59,6 +59,11 @@ private struct FrameshiftIPCProbe {
     guard absent.items.isEmpty else { throw ProbeFailure() }
 
     let item = matched.items[0]
+    let preview = try await client.preview(masterID: item.id, target: nil)
+    try preview.validate(masterID: item.id, target: nil)
+    guard preview.width == 2, preview.height == 1,
+      preview.rgb == Data([255, 0, 0, 0, 255, 0]), preview.image() != nil
+    else { throw ProbeFailure() }
     _ = try await client.send(CoreCommand(kind: .setPinned, itemID: item.id, isPinned: true))
     let pinPreview = try await client.snapshot(query: "absent")
     guard pinPreview.items.isEmpty, pinPreview.pinnedItems?.map(\.id) == [item.id],

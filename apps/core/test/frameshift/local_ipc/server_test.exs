@@ -145,6 +145,34 @@ defmodule Frameshift.LocalIPC.ServerTest do
     assert refreshed["snapshot"]["instruction"] == "Stored by the core"
   end
 
+  test "preview reads authenticate and reject paths, forged capabilities and incomplete target identity",
+       context do
+    base = %{
+      "version" => 1,
+      "requestId" => "preview-request",
+      "operation" => "preview",
+      "itemID" => Digest.sha256("missing")
+    }
+
+    assert %{"ok" => false, "error" => %{"code" => "item_not_found"}} =
+             request(context.socket_path, base)
+
+    assert %{"ok" => false, "error" => %{"code" => "authentication_required"}} =
+             request(context.socket_path, Map.put(base, "auth", String.duplicate("b", 64)))
+
+    for fields <- [
+          %{"path" => "/tmp/caller-image"},
+          %{"capabilities" => %{}},
+          %{"targetID" => "frame"},
+          %{"profileID" => "profile"}
+        ] do
+      assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+               request(context.socket_path, Map.merge(base, fields))
+    end
+
+    assert Process.alive?(context.server)
+  end
+
   test "replays a completed command without executing it again and rejects conflicting reuse",
        context do
     command = %{

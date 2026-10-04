@@ -520,13 +520,15 @@ defmodule Frameshift.LocalAPI do
   defp loop_status(_, _), do: nil
 
   defp frame_target(library, frame) do
-    profile_id = selected_profile_id(frame["capabilities"])
+    {:ok, binding} = queue_binding(library, frame["frame_id"])
+    profile_id = binding_profile_id(binding) || selected_profile_id(frame["capabilities"])
 
     %{
       "id" => frame["frame_id"],
       "name" => frame["title"],
       "medium" => frame["medium"],
       "profileID" => profile_id,
+      "capabilityDigest" => Digest.sha256(RFC8785.encode!(frame["capabilities"])),
       "state" => frame["connection_state"],
       "minimumDwellMs" => frame["capabilities"]["refresh"]["minimumDwellMs"],
       "maximumPlaylistLength" =>
