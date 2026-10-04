@@ -76,6 +76,13 @@ struct LibraryWindow: View {
       Button("Refresh", systemImage: "arrow.clockwise") { Task { await model.refresh() } }
         .disabled(model.isBusy)
       Button("Settings", systemImage: "gearshape") { openSettings() }
+      Button("Recently Removed", systemImage: "trash") { model.isRecoveryPresented = true }
+    }
+    .sheet(
+      isPresented: Binding(
+        get: { model.isRecoveryPresented }, set: { model.isRecoveryPresented = $0 })
+    ) {
+      RecentlyRemovedView(model: model)
     }
     .task {
       await model.refresh()
@@ -106,6 +113,7 @@ struct LibraryWindow: View {
     VStack(alignment: .leading, spacing: 12) {
       Text(item.title).font(.title2)
       ArtworkPreviewView(model: model)
+      LibraryMetadataEditor(model: model)
       LabeledContent("Source master") {
         Text(item.digest).font(.caption.monospaced()).textSelection(.enabled)
       }

@@ -81,6 +81,28 @@ defmodule Frameshift.ContentStore do
 
   def read(_, _, _), do: {:error, :invalid_read}
 
+  @doc "Streams verification of a retained object before recovery activates its metadata."
+  @spec verify(String.t(), String.t(), String.t()) :: :ok | {:error, term()}
+  def verify(data_dir, digest, storage_state) when storage_state in ["active", "trash"] do
+    with true <- Digest.valid_sha256?(digest),
+         path =
+           if(storage_state == "active",
+             do: object_path(data_dir, digest),
+             else: trash_path(data_dir, digest)
+           ),
+         {:ok, %File.Stat{type: :regular}} <- File.lstat(path),
+         {:ok, actual} <- hash_file(path),
+         true <- actual == digest do
+      :ok
+    else
+      false -> {:error, :content_address_mismatch}
+      {:ok, _} -> {:error, :object_not_regular}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  def verify(_, _, _), do: {:error, :invalid_read}
+
   @spec move_to_trash(String.t(), String.t()) :: :ok | {:error, term()}
   def move_to_trash(data_dir, digest) do
     source = object_path(data_dir, digest)

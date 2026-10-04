@@ -5,6 +5,7 @@ import SwiftUI
 import UniformTypeIdentifiers
 
 struct SettingsView: View {
+  @Environment(\.openWindow) private var openWindow
   let model: LoginSettingsModel
   let discovery: FrameDiscovery
   let pairing: PairingSettingsModel
@@ -15,6 +16,18 @@ struct SettingsView: View {
       VStack(alignment: .leading, spacing: 24) {
         SettingsSection("Connection") {
           settingsValue("Core connection", value: "Local Unix socket")
+        }
+
+        SettingsSection(
+          "Library",
+          footer:
+            "Removed artwork remains recoverable. Frame and recipe references preserve retained bytes."
+        ) {
+          Button("Manage Library", systemImage: "photo.on.rectangle") { openWindow(id: "library") }
+          Button("Recently Removed", systemImage: "trash") {
+            openWindow(id: "library")
+            shell.isRecoveryPresented = true
+          }
         }
 
         SettingsSection(

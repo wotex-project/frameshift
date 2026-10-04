@@ -195,6 +195,69 @@ stored with provenance and confidence. Vision feature prints support local
 similarity search. Labeling does not upload an image by default and has no role
 in artifact correctness.
 
+## Editable metadata and recovery contract
+
+Artwork bytes, source provenance, dimensions, recipes and variant lineage remain
+immutable. Title and local labels are editable Library metadata; changing them
+MUST NOT rehash the master, render an artifact or alter frame intent. The
+authenticated `libraryMetadata` read names one master digest and returns its
+title, source kind/dimensions, labels with provenance/confidence/model revision,
+and a revision digest over the exact title and ordered labels. It exposes no
+source path, arbitrary provenance document or database handle.
+
+`updateMetadata` accepts the master ID, expected metadata revision, title,
+complete user-label set and explicit machine-label dismissals. The writer
+refuses removed/missing masters and stale revisions before changing anything.
+Titles are NFC-normalized, trimmed, nonempty and at most 256 UTF-8 bytes.
+Labels are NFC-normalized, trimmed, nonempty, at most 128 UTF-8 bytes each, with
+no control characters. Each master holds at most 64 labels, including at most
+32 user labels; machine revision strings are at most 128 bytes. ASCII case
+duplicates within a provenance use the existing SQLite NOCASE identity;
+non-ASCII spelling remains distinct. User labels replace only user rows. A
+dismissal names an existing label and its machine provenance (`vision`,
+`filename` or `metadata`); correction adds the desired user label and dismisses
+the observed machine row. Other machine rows retain confidence and revision.
+New machine observations change the revision and therefore refuse a stale edit.
+Dismissal removes the current observation; it is not a permanent classifier
+suppression preference. Automatic labeling remains a separate adapter feature.
+
+Title/label changes, their FTS projection and a redacted audit fact commit in
+one transaction. Audit details contain no titles, labels or image provenance.
+The successful command returns the committed metadata revision; a lost response
+uses the existing command receipt/unknown-outcome contract, without write replay.
+An already-applied receipt returns current shell state rather than an invented
+original metadata revision; the editor retains its draft and asks for explicit
+reload when that committed revision is absent.
+The native editor preserves per-master drafts across selection, refresh and
+window closure. New edits typed while a save is pending survive its response;
+they retain the revision that was actually committed. Explicit reload discards
+the local draft and reads current metadata. Stale edits show a review/reload
+action and never silently overwrite another writer.
+
+The authenticated `libraryRecovery` read returns at most 50 removed masters per
+page, ordered by digest with an exclusive digest cursor and `nextCursor`.
+Concurrent changes may alter later pages; refresh starts a new listing. Each
+row includes title, removal time, storage state and current retention reasons
+(pin, frame reference, rendered artifact or recipe source). Retention means
+the host bytes cannot be collected; it does not claim that the artwork is
+currently displayed. `restore` names one digest, verifies its retained bytes,
+and atomically restores active metadata and its FTS projection with an audit
+fact. Missing/corrupt bytes or database failure leave the item removed. An
+interrupted filesystem move is reconciled from the recorded storage state;
+restore cannot substitute bytes from another object. Already active restore is
+idempotent. Neither listing nor restore changes pins or frame intent.
+
+Recently Removed offers refresh, pagination and restore with visible retention
+state. There is no permanent-delete action in this contract. Unreferenced
+collection moves bytes to recoverable trash; it is not destruction. Backup and
+offline whole-library restore retain their separate maintenance contract.
+Acceptance covers concurrent metadata edits, transactional FTS/audit rollback,
+bounded Unicode input, machine provenance preservation, pagination beyond one
+page, protected removal, corrupt/missing restore, interrupted moves and restart.
+Native fixtures cover draft/selection/save races and paginated recovery;
+packaged IPC probes join the actual Swift and core commands. Installed visual,
+keyboard and VoiceOver evidence remains a separate acceptance tier.
+
 ## Acceptance criteria
 
 1. A renderer can reproduce a golden artifact byte-for-byte.

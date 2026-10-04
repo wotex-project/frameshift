@@ -39,6 +39,7 @@ defmodule Frameshift.Library do
   alias Frameshift.FrameRegistry
   alias Frameshift.Library.Backup
   alias Frameshift.Library.Identity
+  alias Frameshift.Library.Metadata
   alias Frameshift.Library.Migrations
   alias Frameshift.Library.Writer
   alias Frameshift.Playlist.Store, as: PlaylistStore
@@ -50,7 +51,6 @@ defmodule Frameshift.Library do
   @type digest :: String.t()
   @maximum_read_bytes 128 * 1024 * 1024
 
-  @label_provenance ~w(user vision filename metadata)a
   @frame_roles ["desired", "current", "previous-known-good", "queued", "playlist"]
 
   defmodule State do
@@ -323,15 +323,15 @@ defmodule Frameshift.Library do
   @spec unpin(server(), digest()) :: :ok | {:error, term()}
   def unpin(server \\ __MODULE__, digest), do: GenServer.call(server, {:unpin, digest})
 
-  @doc "Moves a master to recoverable removal when it has no protected frame reference."
+  @doc "Hides a master from the active library while preserving pins and protected bytes."
   @spec remove_master(server(), digest()) :: :ok | {:error, term()}
   def remove_master(server \\ __MODULE__, digest),
     do: GenServer.call(server, {:remove_master, digest})
 
   @doc "Restores a removed master from the recoverable trash area."
-  @spec restore_master(server(), digest()) :: :ok | {:error, term()}
-  def restore_master(server \\ __MODULE__, digest),
-    do: GenServer.call(server, {:restore_master, digest})
+  @spec restore_master(server(), digest(), String.t() | nil) :: :ok | {:error, term()}
+  def restore_master(server \\ __MODULE__, digest, command_id \\ nil),
+    do: GenServer.call(server, {:restore_master, digest, command_id})
 
   @doc "Protects bytes referenced by a frame's desired, current, or fallback role."
   @spec protect_frame_asset(server(), String.t(), String.t(), digest()) :: :ok | {:error, term()}
@@ -345,14 +345,28 @@ defmodule Frameshift.Library do
     GenServer.call(server, {:release_frame_asset, frame_id, role, digest})
   end
 
-  @doc "Permanently collects removed objects that remain unreferenced."
+  @doc "Moves unreferenced removed objects to recoverable trash without destroying bytes."
   @spec collect_removed(server()) :: {:ok, [digest()]}
   def collect_removed(server \\ __MODULE__),
     do: GenServer.call(server, :collect_removed, :infinity)
 
-  @doc "Returns metadata for an active master without reading its content bytes."
+  @doc "Returns master metadata, including removed state, without reading its content bytes."
   @spec get_master(server(), digest()) :: {:ok, map()} | :not_found
   def get_master(server \\ __MODULE__, digest), do: GenServer.call(server, {:get_master, digest})
+
+  @doc "Reads bounded editable metadata and its exact revision without source paths."
+  @spec metadata(server(), digest()) :: {:ok, map()} | {:error, atom()}
+  def metadata(server \\ __MODULE__, digest), do: GenServer.call(server, {:metadata, digest})
+
+  @doc "Atomically edits a title and local labels under an expected metadata revision."
+  @spec update_metadata(server(), digest(), map()) :: {:ok, map()} | {:error, term()}
+  def update_metadata(server \\ __MODULE__, digest, command),
+    do: GenServer.call(server, {:update_metadata, digest, command})
+
+  @doc "Lists 50 removed masters and retention reasons using an exclusive digest cursor."
+  @spec recovery_page(server(), digest() | nil) :: {:ok, map()} | {:error, atom()}
+  def recovery_page(server \\ __MODULE__, after_id \\ nil),
+    do: GenServer.call(server, {:recovery_page, after_id})
 
   @doc "Reads and verifies a content object under an explicit byte ceiling."
   @spec read_object(server(), digest(), pos_integer()) ::
@@ -651,9 +665,18 @@ defmodule Frameshift.Library do
   end
 
   def handle_call({:add_label, digest, label, provenance, confidence, revision}, _, state) do
-    result = add_label_record(state, digest, label, provenance, confidence, revision)
+    result = Metadata.add_label(state.connection, digest, label, provenance, confidence, revision)
     {:reply, result, state}
   end
+
+  def handle_call({:metadata, digest}, _, state),
+    do: {:reply, Metadata.read(state.connection, digest), state}
+
+  def handle_call({:update_metadata, digest, command}, _, state),
+    do: {:reply, Metadata.update(state.connection, digest, command), state}
+
+  def handle_call({:recovery_page, after_id}, _, state),
+    do: {:reply, Metadata.recovery_page(state.connection, after_id), state}
 
   def handle_call({:search, query, options}, _, state) do
     {:reply, search_records(state, query, options), state}
@@ -840,8 +863,8 @@ defmodule Frameshift.Library do
     {:reply, result, state}
   end
 
-  def handle_call({:restore_master, digest}, _, state) do
-    result = restore_master_record(state, digest)
+  def handle_call({:restore_master, digest, command_id}, _, state) do
+    result = restore_master_record(state, digest, command_id)
     {:reply, result, state}
   end
 
@@ -1416,36 +1439,6 @@ defmodule Frameshift.Library do
     )
   end
 
-  defp add_label_record(state, digest, label, provenance, confidence, revision)
-       when provenance in @label_provenance and is_binary(label) do
-    trimmed = String.trim(label)
-
-    cond do
-      trimmed == "" ->
-        {:error, :invalid_label}
-
-      confidence != nil and (not is_number(confidence) or confidence < 0 or confidence > 1) ->
-        {:error, :invalid_confidence}
-
-      true ->
-        write_existing_master(state, digest, fn ->
-          execute(
-            state.connection,
-            """
-            INSERT INTO labels(master_digest, label, provenance, confidence, revision)
-            VALUES (?, ?, ?, ?, ?)
-            ON CONFLICT(master_digest, label, provenance)
-            DO UPDATE SET confidence = excluded.confidence, revision = excluded.revision
-            """,
-            [digest, trimmed, Atom.to_string(provenance), confidence, revision]
-          )
-        end)
-    end
-  end
-
-  defp add_label_record(_, _, _, _, _, _),
-    do: {:error, :invalid_label}
-
   defp search_records(state, query, options) do
     limit = options |> Keyword.get(:limit, 50) |> min(100) |> max(1)
     pinned_only = Keyword.get(options, :pinned, false)
@@ -1883,26 +1876,44 @@ defmodule Frameshift.Library do
     Map.put(frame, "capabilities", JSON.decode!(capabilities_json))
   end
 
-  defp restore_master_record(state, digest) do
-    with {:ok, %{"storage_state" => storage_state}} <-
+  defp restore_master_record(state, digest, command_id) do
+    with true <- Digest.valid_sha256?(digest),
+         {:ok, %{"storage_state" => storage_state}} <-
            query_one(
              state.connection,
              "SELECT o.storage_state FROM masters m JOIN objects o ON o.digest = m.digest WHERE m.digest = ?",
              [digest]
            ),
+         :ok <- ContentStore.reconcile(state.data_dir, digest, storage_state),
+         :ok <- ContentStore.verify(state.data_dir, digest, storage_state),
          :ok <- maybe_restore_file(state, digest, storage_state),
-         :ok <-
-           execute(state.connection, "UPDATE masters SET removed_at_ms = NULL WHERE digest = ?", [
-             digest
-           ]),
-         :ok <-
-           execute(
-             state.connection,
-             "UPDATE objects SET storage_state = 'active', trashed_at_ms = NULL WHERE digest = ?",
-             [digest]
-           ) do
-      :ok
+         :ok <- ContentStore.verify(state.data_dir, digest, "active") do
+      result =
+        transaction(state.connection, fn connection ->
+          Exqlite.query!(connection, "UPDATE masters SET removed_at_ms = NULL WHERE digest = ?", [
+            digest
+          ])
+
+          Exqlite.query!(
+            connection,
+            "UPDATE objects SET storage_state = 'active', trashed_at_ms = NULL WHERE digest = ?",
+            [digest]
+          )
+
+          DiagnosticsStore.record_audit(connection, "master.restored", digest, %{
+            "commandId" => command_id
+          })
+
+          :ok
+        end)
+        |> Writer.unwrap()
+
+      if match?({:error, _}, result),
+        do: ContentStore.reconcile(state.data_dir, digest, storage_state)
+
+      result
     else
+      false -> {:error, :invalid_digest}
       :not_found -> {:error, :not_found}
       {:error, reason} -> {:error, reason}
     end

@@ -82,6 +82,36 @@ private struct FrameshiftIPCProbe {
       throw ProbeFailure()
     } catch CoreClientError.targetNotFound {}
 
+    let metadata = try await client.metadata(itemID: item.id)
+    let metadataResult = try await client.send(
+      CoreCommand(
+        kind: .updateMetadata, itemID: item.id,
+        metadataRevision: metadata.revision, title: "Verified study", userLabels: ["probe-label"],
+        dismissedLabels: []))
+    guard let committed = metadataResult.updatedMetadata, committed.itemID == item.id,
+      committed.revision != metadata.revision, committed.title == "Verified study"
+    else { throw ProbeFailure() }
+    try committed.validate(itemID: item.id)
+    let labelSearch = try await client.snapshot(query: "probe-label")
+    guard labelSearch.items.map(\.id) == [item.id] else { throw ProbeFailure() }
+    do {
+      _ = try await client.send(
+        CoreCommand(
+          kind: .updateMetadata, itemID: item.id,
+          metadataRevision: metadata.revision, title: "Stale", userLabels: [], dismissedLabels: []))
+      throw ProbeFailure()
+    } catch CoreClientError.metadataRevisionConflict {}
+    _ = try await client.send(CoreCommand(kind: .remove, itemID: item.id))
+    let removed = try await client.recovery(afterID: nil)
+    guard removed.items.map(\.id) == [item.id], removed.items[0].retentionReasons == ["pinned"]
+    else { throw ProbeFailure() }
+    let restored = try await client.send(CoreCommand(kind: .restore, itemID: item.id))
+    guard restored.items.first?.id == item.id, restored.items.first?.isPinned == true,
+      restored.items.first?.title == "Verified study"
+    else { throw ProbeFailure() }
+    let retained = try await client.metadata(itemID: item.id)
+    guard retained.revision == committed.revision else { throw ProbeFailure() }
+
     print("Frameshift Swift-to-Elixir IPC probe passed")
   }
 

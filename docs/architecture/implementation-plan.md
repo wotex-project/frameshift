@@ -166,10 +166,13 @@ specific claims that require them. Optional transactions remain on hold.
 
 The implemented native slices now include the focused Library, preserved
 instruction/selection, ordered playlist drafts, revision-bound saved resume and
-bounded source/target-crop previews. Their software evidence is in the
+bounded source/target-crop previews, exact-revision title/user-label editing,
+machine-observation correction and paginated Recently Removed recovery. Their
+software evidence is in the
 [verification ledger](verification.md); they do not complete H3's installed
 accessibility matrix or H2's measured palette/packing profiles. Continue the
-remaining native settings/content operations and H4 adapter contracts alongside
+remaining native labeling/similarity adapters, storage settings and H4 contracts
+alongside
 the documentation/site build. S2's explicit producer refusal still gates its
 dependent composition authority, rather than these independent host surfaces.
 

@@ -18,12 +18,24 @@ public final class ShellModel {
   public private(set) var selectedPreview: ArtworkPreview?
   public private(set) var previewMessage: String?
   public private(set) var isPreviewLoading = false
+  public private(set) var selectedMetadata: LibraryMetadata?
+  public private(set) var metadataMessage: String?
+  public private(set) var isMetadataLoading = false
+  public private(set) var removedItems: [RemovedArtwork] = []
+  public private(set) var recoveryCursor: String?
+  public private(set) var recoveryMessage: String?
+  public private(set) var isRecoveryLoading = false
+  public var isRecoveryPresented = false
 
   private let client: any CoreClient
   private var searchRevision = 0
   private var playlistDrafts: [String: PlaylistDraft] = [:]
   private var previewRevision = 0
   private var previewWorkerActive = false
+  private var metadataDrafts: [String: MetadataDraft] = [:]
+  private var metadataRevision = 0
+  private var metadataLoad: (itemID: String, revision: Int, task: Task<Void, Never>)?
+  private var recoveryRevision = 0
 
   public init(
     client: any CoreClient,
@@ -47,6 +59,7 @@ public final class ShellModel {
     guard let itemID else {
       selectedItem = nil
       invalidatePreview()
+      invalidateMetadata()
       return
     }
     guard
@@ -55,6 +68,169 @@ public final class ShellModel {
     else { return }
     selectedItem = item
     if previewScope != previous { invalidatePreview() }
+    if previous?.masterID != itemID { invalidateMetadata() }
+  }
+
+  private func invalidateMetadata() {
+    metadataRevision += 1
+    metadataLoad = nil
+    selectedMetadata = nil
+    metadataMessage = nil
+    isMetadataLoading = selectedItem != nil
+    Task { await loadSelectedMetadata() }
+  }
+
+  public var metadataDraft: MetadataDraft? {
+    guard let itemID = selectedItem?.id else { return nil }
+    return metadataDrafts[itemID]
+  }
+
+  public var metadataIsStale: Bool {
+    guard let draft = metadataDraft, let selectedMetadata else { return false }
+    return draft.base.revision != selectedMetadata.revision
+  }
+
+  public func loadSelectedMetadata(discardDraft: Bool = false) async {
+    guard let itemID = selectedItem?.id else { return }
+    let load: (itemID: String, revision: Int, task: Task<Void, Never>)
+    if let active = metadataLoad, active.itemID == itemID {
+      load = active
+    } else {
+      metadataRevision += 1
+      let revision = metadataRevision
+      isMetadataLoading = true
+      let task = Task { await fetchMetadata(itemID: itemID, revision: revision) }
+      load = (itemID, revision, task)
+      metadataLoad = load
+    }
+    await load.task.value
+    if discardDraft, load.revision == metadataRevision, selectedItem?.id == itemID,
+      let metadata = selectedMetadata
+    {
+      metadataDrafts[itemID] = MetadataDraft(metadata: metadata)
+    }
+  }
+
+  private func fetchMetadata(itemID: String, revision: Int) async {
+    defer {
+      if revision == metadataRevision {
+        isMetadataLoading = false
+        metadataLoad = nil
+      }
+    }
+    do {
+      let metadata = try await client.metadata(itemID: itemID)
+      guard revision == metadataRevision, selectedItem?.id == itemID else { return }
+      try metadata.validate(itemID: itemID)
+      selectedMetadata = metadata
+      if metadataDrafts[itemID]?.hasChanges != true {
+        metadataDrafts[itemID] = MetadataDraft(metadata: metadata)
+      }
+      metadataMessage = nil
+    } catch {
+      guard revision == metadataRevision else { return }
+      metadataMessage = "Metadata is unavailable. Refresh or retry this artwork."
+    }
+  }
+
+  public func setMetadataTitle(_ title: String) {
+    guard let itemID = selectedItem?.id else { return }
+    metadataDrafts[itemID]?.title = title
+  }
+
+  public func addUserLabel(_ label: String) {
+    guard let itemID = selectedItem?.id, var draft = metadataDrafts[itemID],
+      draft.userLabels.count < 32
+    else { return }
+    let normalized = label.precomposedStringWithCanonicalMapping.trimmingCharacters(
+      in: .whitespacesAndNewlines)
+    guard !normalized.isEmpty, !draft.userLabels.contains(normalized) else { return }
+    draft.userLabels.append(normalized)
+    metadataDrafts[itemID] = draft
+  }
+
+  public func removeUserLabel(at index: Int) {
+    guard let itemID = selectedItem?.id, var draft = metadataDrafts[itemID],
+      draft.userLabels.indices.contains(index)
+    else { return }
+    draft.userLabels.remove(at: index)
+    metadataDrafts[itemID] = draft
+  }
+
+  public func toggleLabelDismissal(_ label: ArtworkLabel) {
+    guard label.provenance != "user", let itemID = selectedItem?.id,
+      var draft = metadataDrafts[itemID], draft.machineLabels.contains(label)
+    else { return }
+    let dismissal = LabelDismissal(label: label.label, provenance: label.provenance)
+    if draft.dismissedLabels.contains(dismissal) {
+      draft.dismissedLabels.removeAll { $0 == dismissal }
+    } else {
+      draft.dismissedLabels.append(dismissal)
+    }
+    metadataDrafts[itemID] = draft
+  }
+
+  public func saveMetadata() async {
+    guard !metadataIsStale, let itemID = selectedItem?.id, let submitted = metadataDraft,
+      submitted.hasChanges, submitted.isValid, !isMetadataLoading
+    else { return }
+    let saved = await send(
+      CoreCommand(
+        kind: .updateMetadata, itemID: itemID,
+        metadataRevision: submitted.base.revision, title: submitted.title,
+        userLabels: submitted.userLabels, dismissedLabels: submitted.dismissedLabels))
+    guard saved else { return }
+    guard let committed = snapshot.updatedMetadata, committed.itemID == itemID,
+      (try? committed.validate(itemID: itemID)) != nil
+    else {
+      metadataMessage = "The edit was applied. Reload current metadata before editing again."
+      return
+    }
+    if metadataDrafts[itemID] == submitted {
+      metadataDrafts[itemID] = MetadataDraft(metadata: committed)
+    } else if var newer = metadataDrafts[itemID] {
+      newer.base = committed
+      newer.dismissedLabels.removeAll { dismissal in
+        !committed.labels.contains {
+          $0.label == dismissal.label && $0.provenance == dismissal.provenance
+        }
+      }
+      metadataDrafts[itemID] = newer
+    }
+    if selectedItem?.id == itemID {
+      selectedMetadata = committed
+      metadataMessage = nil
+    }
+  }
+
+  public func loadRecovery(reset: Bool = false) async {
+    if reset { recoveryRevision += 1 }
+    guard reset || (!isRecoveryLoading && recoveryCursor != nil) else { return }
+    let revision = recoveryRevision
+    let cursor = reset ? nil : recoveryCursor
+    isRecoveryLoading = true
+    defer { if revision == recoveryRevision { isRecoveryLoading = false } }
+    do {
+      let page = try await client.recovery(afterID: cursor)
+      guard revision == recoveryRevision else { return }
+      try page.validate(afterID: cursor)
+      if reset { removedItems = page.items } else { removedItems.append(contentsOf: page.items) }
+      recoveryCursor = page.nextCursor
+      recoveryMessage = nil
+    } catch {
+      guard revision == recoveryRevision else { return }
+      recoveryMessage = "Recently Removed is unavailable. Refresh to retry."
+    }
+  }
+
+  public func restoreArtwork(_ itemID: String) async {
+    guard removedItems.contains(where: { $0.id == itemID }) else { return }
+    if await send(CoreCommand(kind: .restore, itemID: itemID)) {
+      removedItems.removeAll { $0.id == itemID }
+      metadataDrafts.removeValue(forKey: itemID)
+      recoveryRevision += 1
+      isRecoveryLoading = false
+    }
   }
 
   private var previewScope: PreviewScope? {
@@ -209,6 +385,7 @@ public final class ShellModel {
     if removed, selectedItem?.id == itemID {
       selectedItem = nil
       invalidatePreview()
+      invalidateMetadata()
     }
   }
 
@@ -387,6 +564,14 @@ public final class ShellModel {
       errorMessage = "This loop is already queued. Wait for the frame to confirm it."
     } catch CoreClientError.loopAlreadyActive {
       errorMessage = "Loop is already on this frame. Change pins or interval to queue another."
+    } catch CoreClientError.metadataRevisionConflict {
+      errorMessage = "Artwork metadata changed. Reload and review it before saving again."
+      await loadSelectedMetadata()
+    } catch CoreClientError.invalidMetadata {
+      errorMessage = "Use a title up to 256 bytes and at most 32 labels of 128 bytes each."
+    } catch CoreClientError.restoreFailed {
+      errorMessage =
+        "The retained artwork could not be verified or restored. It remains in Recently Removed."
     } catch let error as CoreClientError {
       Self.logger.error("core command failed: \(String(describing: error), privacy: .public)")
       errorMessage = "The core command could not be completed."
@@ -421,6 +606,16 @@ public final class ShellModel {
     if !preserveDraft { draftInstruction = next.instruction }
     updateSelection(from: next.items)
     if previewScope != previousPreview { invalidatePreview() }
+    if let metadata = next.updatedMetadata, metadata.itemID == selectedItem?.id,
+      (try? metadata.validate(itemID: metadata.itemID)) != nil
+    {
+      metadataRevision += 1
+      metadataLoad = nil
+      isMetadataLoading = false
+      selectedMetadata = metadata
+    } else if selectedItem != nil {
+      Task { await loadSelectedMetadata() }
+    }
   }
 
   private func updateSelection(from items: [LibraryItem]) {

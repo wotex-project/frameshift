@@ -30,6 +30,39 @@ public actor LocalCoreClient: CoreClient {
     return try await exchange(operation: "command", command: prepared.command)
   }
 
+  public func metadata(itemID: String) async throws -> LibraryMetadata {
+    guard validLibraryDigest(itemID) else { throw CoreClientError.invalidCommand }
+    let response = try await libraryRead(operation: "libraryMetadata", itemID: itemID)
+    guard let metadata = response.metadata else { throw CoreClientError.protocolFailure }
+    try metadata.validate(itemID: itemID)
+    return metadata
+  }
+
+  public func recovery(afterID: String?) async throws -> LibraryRecoveryPage {
+    guard afterID == nil || validLibraryDigest(afterID!) else {
+      throw CoreClientError.invalidCommand
+    }
+    let response = try await libraryRead(operation: "libraryRecovery", afterID: afterID)
+    guard let page = response.recovery else { throw CoreClientError.protocolFailure }
+    try page.validate(afterID: afterID)
+    return page
+  }
+
+  private func libraryRead(operation: String, itemID: String? = nil, afterID: String? = nil)
+    async throws -> WireResponse
+  {
+    try await BundledCore.shared.ensureRunning(socketPath: socketPath)
+    let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
+    let request = LibraryWireRequest(
+      operation: operation, auth: auth, itemID: itemID, afterID: afterID)
+    let responseData = try await send(encoder.encode(request))
+    guard let response = try? decoder.decode(WireResponse.self, from: responseData),
+      response.version == 1, response.requestID == request.requestID
+    else { throw CoreClientError.protocolFailure }
+    guard response.ok else { throw Self.clientError(for: response.error?.code) }
+    return response
+  }
+
   public func preview(masterID: String, target: FrameTarget?) async throws -> ArtworkPreview {
     try await BundledCore.shared.ensureRunning(socketPath: socketPath)
     let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
@@ -241,6 +274,10 @@ public actor LocalCoreClient: CoreClient {
       .importUnreadable
     case "unsupported_media_type", "media_type_mismatch": .unsupportedMedia
     case "item_not_found": .itemNotFound
+    case "metadata_unavailable": .metadataUnavailable
+    case "metadata_revision_conflict": .metadataRevisionConflict
+    case "invalid_metadata": .invalidMetadata
+    case "restore_failed": .restoreFailed
     case "target_not_found": .targetNotFound
     case "invalid_command", "invalid_dimensions", "invalid_orientation", "invalid_color_profile":
       .invalidCommand
@@ -475,6 +512,20 @@ private struct PreviewWireRequest: Encodable, Sendable {
   }
 }
 
+private struct LibraryWireRequest: Encodable, Sendable {
+  let version = 1
+  let requestID = UUID().uuidString.lowercased()
+  let operation: String
+  let auth: String
+  let itemID: String?
+  let afterID: String?
+
+  private enum CodingKeys: String, CodingKey {
+    case version, operation, auth, itemID, afterID
+    case requestID = "requestId"
+  }
+}
+
 private struct PairingWireRequest: Encodable, Sendable {
   let version = 1
   let requestID = UUID().uuidString.lowercased()
@@ -505,6 +556,8 @@ private struct WireResponse: Decodable, Sendable {
   let frame: PairedFrameResult?
   let outbox: OutboxServiceStatus?
   let preview: ArtworkPreview?
+  let metadata: LibraryMetadata?
+  let recovery: LibraryRecoveryPage?
   let error: WireError?
 
   private enum CodingKeys: String, CodingKey {
@@ -515,6 +568,8 @@ private struct WireResponse: Decodable, Sendable {
     case frame
     case outbox
     case preview
+    case metadata
+    case recovery
     case error
   }
 }

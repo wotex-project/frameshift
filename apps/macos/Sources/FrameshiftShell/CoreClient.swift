@@ -5,9 +5,19 @@ public protocol CoreClient: Sendable {
   func snapshot(query: String) async throws -> CoreSnapshot
   func send(_ command: CoreCommand) async throws -> CoreSnapshot
   func preview(masterID: String, target: FrameTarget?) async throws -> ArtworkPreview
+  func metadata(itemID: String) async throws -> LibraryMetadata
+  func recovery(afterID: String?) async throws -> LibraryRecoveryPage
 }
 
 extension CoreClient {
+  public func metadata(itemID _: String) async throws -> LibraryMetadata {
+    throw CoreClientError.metadataUnavailable
+  }
+
+  public func recovery(afterID _: String?) async throws -> LibraryRecoveryPage {
+    throw CoreClientError.metadataUnavailable
+  }
+
   public func preview(masterID _: String, target _: FrameTarget?) async throws -> ArtworkPreview {
     throw CoreClientError.previewUnavailable
   }
@@ -36,6 +46,10 @@ public enum CoreClientError: Error, Equatable, Sendable {
   case previewBusy
   case previewProfileChanged
   case itemNotFound
+  case metadataUnavailable
+  case metadataRevisionConflict
+  case invalidMetadata
+  case restoreFailed
   case protocolFailure
   case pairingIncomplete
   case pairingOutcomeUnknown

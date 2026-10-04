@@ -27,6 +27,15 @@ defmodule Frameshift.LocalAPI do
   its retained canonical body and artifacts, refusing stale revision, newer intent
   and changed capabilities. It does not use current pins or need a live renderer.
 
+  ## Metadata and recovery
+
+  `updateMetadata` edits a title and user labels against the observed revision,
+  with explicit machine-observation dismissals. It returns the committed metadata
+  in addition to shell state; immutable bytes, recipes and delivery remain intact.
+  `restore` verifies retained bytes before returning removed artwork to search.
+  Metadata and recovery reads use their own bounded authenticated IPC operations
+  so ordinary snapshots never expand to arbitrary source provenance or all labels.
+
   Queue/reconciliation and loop commands preserve delivery/playlist
   semantics. A successful command returns an updated snapshot; input, persistence
   or unsupported-profile failures return finite errors. An unconfirmed send is
@@ -185,6 +194,30 @@ defmodule Frameshift.LocalAPI do
     case Library.remove_master(library, digest) do
       :ok -> {:ok, snapshot(library, "Artwork moved to Recently Removed")}
       {:error, _} -> {:error, :item_not_found}
+    end
+  end
+
+  defp do_execute(library, %{"kind" => "restore", "itemID" => digest} = command)
+       when is_binary(digest) do
+    case Library.restore_master(library, digest, command["id"]) do
+      :ok -> {:ok, snapshot(library, "Artwork restored to the Library")}
+      {:error, :not_found} -> {:error, :item_not_found}
+      {:error, _} -> {:error, :restore_failed}
+    end
+  end
+
+  defp do_execute(library, %{"kind" => "updateMetadata", "itemID" => digest} = command)
+       when is_binary(digest) do
+    case Library.update_metadata(library, digest, command) do
+      {:ok, metadata} ->
+        {:ok, Map.put(snapshot(library, "Artwork metadata saved"), "updatedMetadata", metadata)}
+
+      {:error, reason}
+      when reason in [:metadata_revision_conflict, :invalid_metadata, :item_not_found] ->
+        {:error, reason}
+
+      {:error, _} ->
+        {:error, :metadata_unavailable}
     end
   end
 
@@ -481,6 +514,11 @@ defmodule Frameshift.LocalAPI do
 
   defp allowed_command_keys("setPinned"), do: ~w(id kind itemID isPinned)
   defp allowed_command_keys("remove"), do: ~w(id kind itemID)
+  defp allowed_command_keys("restore"), do: ~w(id kind itemID)
+
+  defp allowed_command_keys("updateMetadata"),
+    do: ~w(id kind itemID metadataRevision title userLabels dismissedLabels)
+
   defp allowed_command_keys("selectTarget"), do: ~w(id kind targetID)
   defp allowed_command_keys("queue"), do: ~w(id kind targetID itemID)
   defp allowed_command_keys("loopPinned"), do: ~w(id kind targetID dwellMs)

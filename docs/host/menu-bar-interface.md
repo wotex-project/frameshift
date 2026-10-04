@@ -195,6 +195,15 @@ mutation, the visible search is refreshed from the core.
 
 Auto-labeling runs in the background and does not interrupt import. Generated
 or machine labels remain editable in the full library/settings view.
+The focused Library edits titles and user labels and shows machine provenance,
+confidence and model revision. A correction explicitly dismisses the observed
+machine label and adds a user label; other machine observations remain intact.
+Per-master drafts survive selection, refresh and closing the window, and a
+changed metadata revision requires review/reload before save. Recently Removed
+provides paginated recovery and shows which references retain bytes; restore
+verifies the exact object before returning it to search. Settings links to these
+same shared Library surfaces. Bounds, transactions and recovery are defined by
+the [content pipeline](../architecture/content-pipeline.md#editable-metadata-and-recovery-contract).
 
 ### Result strip/grid
 

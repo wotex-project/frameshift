@@ -17,7 +17,10 @@ defmodule Frameshift.LocalIPC.Server do
   ID to conceal an uncertain mutation.
 
   `Frameshift.LocalAPI` owns ordinary product actions; physical pairing has its
-  separate transient boundary. The listener monitors its acceptor and removes the
+  separate transient boundary. `libraryMetadata` and `libraryRecovery` are bounded
+  authenticated reads, with digest identities and exclusive recovery cursors;
+  they accept neither paths nor replacement provenance/capability documents.
+  The listener monitors its acceptor and removes the
   socket on termination. The token file is consumed before startup through
   `Frameshift.LocalIPC.Token`; read-only diagnostics use a separate peer-UID
   endpoint and cannot inherit this mutation dispatcher.
@@ -258,6 +261,12 @@ defmodule Frameshift.LocalIPC.Server do
         "preview" ->
           ~w(version requestId operation auth itemID targetID profileID capabilityDigest)
 
+        "libraryMetadata" ->
+          ~w(version requestId operation auth itemID)
+
+        "libraryRecovery" ->
+          ~w(version requestId operation auth afterID)
+
         operation when operation in ["pair", "recoverPair"] ->
           ~w(version requestId operation auth bootstrap discoveredId origin credentialRef)
 
@@ -272,6 +281,7 @@ defmodule Frameshift.LocalIPC.Server do
          :ok <- validate_command_shape(request, operation, request_id),
          :ok <- validate_query_shape(request, operation, request_id),
          :ok <- validate_preview_shape(request, operation, request_id),
+         :ok <- validate_library_read(request, operation, request_id),
          :ok <- validate_pairing_shape(request, operation, request_id) do
       {:ok, request}
     end
@@ -291,7 +301,16 @@ defmodule Frameshift.LocalIPC.Server do
     do: {:error, {safe_request_id(request_id), :invalid_request}}
 
   defp validate_operation(operation)
-       when operation in ["snapshot", "preview", "command", "pair", "recoverPair", "outboxStatus"],
+       when operation in [
+              "snapshot",
+              "preview",
+              "libraryMetadata",
+              "libraryRecovery",
+              "command",
+              "pair",
+              "recoverPair",
+              "outboxStatus"
+            ],
        do: :ok
 
   defp validate_operation(_), do: {:error, :invalid_request}
@@ -337,6 +356,20 @@ defmodule Frameshift.LocalIPC.Server do
   end
 
   defp validate_preview_shape(_, _, _), do: :ok
+
+  defp validate_library_read(request, "libraryMetadata", request_id) do
+    if Digest.valid_sha256?(request["itemID"]),
+      do: :ok,
+      else: {:error, {request_id, :invalid_request}}
+  end
+
+  defp validate_library_read(request, "libraryRecovery", request_id) do
+    if request["afterID"] == nil or Digest.valid_sha256?(request["afterID"]),
+      do: :ok,
+      else: {:error, {request_id, :invalid_request}}
+  end
+
+  defp validate_library_read(_, _, _), do: :ok
 
   defp preview_target?(nil, nil, nil), do: true
 
@@ -420,6 +453,26 @@ defmodule Frameshift.LocalIPC.Server do
       {:error, code} ->
         {:error, {request_id, code}}
     end
+  end
+
+  defp execute_request(
+         %{"requestId" => request_id, "operation" => "libraryMetadata", "itemID" => item_id},
+         library,
+         _
+       ) do
+    library_read_response(request_id, "metadata", Library.metadata(library, item_id))
+  end
+
+  defp execute_request(
+         %{"requestId" => request_id, "operation" => "libraryRecovery"} = request,
+         library,
+         _
+       ) do
+    library_read_response(
+      request_id,
+      "recovery",
+      Library.recovery_page(library, request["afterID"])
+    )
   end
 
   defp execute_request(
@@ -528,6 +581,11 @@ defmodule Frameshift.LocalIPC.Server do
         {:error, {request_id, code}}
     end
   end
+
+  defp library_read_response(request_id, key, {:ok, value}),
+    do: {:ok, %{"version" => 1, "requestId" => request_id, "ok" => true, key => value}}
+
+  defp library_read_response(request_id, _, {:error, code}), do: {:error, {request_id, code}}
 
   defp execute_command(:execute, request_id, command, command_hash, library) do
     outcome = LocalAPI.execute(library, command)

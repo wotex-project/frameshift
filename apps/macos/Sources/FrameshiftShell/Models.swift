@@ -159,6 +159,7 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
   public var statusMessage: String
   public var pinnedItems: [PlaylistItem]?
   public var pinnedSetTooLarge: Bool?
+  public var updatedMetadata: LibraryMetadata?
 
   public init(
     targets: [FrameTarget],
@@ -168,7 +169,8 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
     generationAvailability: GenerationAvailability = .notConfigured,
     statusMessage: String,
     pinnedItems: [PlaylistItem]? = nil,
-    pinnedSetTooLarge: Bool? = nil
+    pinnedSetTooLarge: Bool? = nil,
+    updatedMetadata: LibraryMetadata? = nil
   ) {
     self.targets = targets
     self.selectedTargetID = selectedTargetID
@@ -178,6 +180,7 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
     self.statusMessage = statusMessage
     self.pinnedItems = pinnedItems
     self.pinnedSetTooLarge = pinnedSetTooLarge
+    self.updatedMetadata = updatedMetadata
   }
 
   public var selectedTarget: FrameTarget? {
@@ -202,6 +205,8 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     case importFile
     case setPinned
     case remove
+    case restore
+    case updateMetadata
     case queue
     case loopPinned
     case loopArtwork
@@ -226,6 +231,10 @@ public struct CoreCommand: Codable, Equatable, Sendable {
   public let dwellMs: Int?
   public let itemIDs: [String]?
   public let playlistRevision: String?
+  public let metadataRevision: String?
+  public let title: String?
+  public let userLabels: [String]?
+  public let dismissedLabels: [LabelDismissal]?
 
   public init(
     id: UUID = UUID(),
@@ -244,7 +253,11 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     importCanonicalDigest: String? = nil,
     dwellMs: Int? = nil,
     itemIDs: [String]? = nil,
-    playlistRevision: String? = nil
+    playlistRevision: String? = nil,
+    metadataRevision: String? = nil,
+    title: String? = nil,
+    userLabels: [String]? = nil,
+    dismissedLabels: [LabelDismissal]? = nil
   ) {
     self.id = id
     self.kind = kind
@@ -263,6 +276,10 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     self.dwellMs = dwellMs
     self.itemIDs = itemIDs
     self.playlistRevision = playlistRevision
+    self.metadataRevision = metadataRevision
+    self.title = title
+    self.userLabels = userLabels
+    self.dismissedLabels = dismissedLabels
   }
 
   func withDecodedImport(_ decoded: DecodedImport) -> CoreCommand {

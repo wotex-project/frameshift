@@ -145,6 +145,79 @@ defmodule Frameshift.LocalIPC.ServerTest do
     assert refreshed["snapshot"]["instruction"] == "Stored by the core"
   end
 
+  test "metadata and paginated recovery authenticate, refuse forged reads and replay edits once",
+       context do
+    {:ok, master} =
+      Library.import_master(context.library, "metadata bytes", %{
+        title: "Original",
+        source_kind: :import,
+        width: 2,
+        height: 1,
+        media_type: "image/png",
+        provenance: %{"kind" => "local-import"}
+      })
+
+    digest = master["digest"]
+
+    read = %{
+      "version" => 1,
+      "requestId" => "metadata-read",
+      "operation" => "libraryMetadata",
+      "itemID" => digest
+    }
+
+    assert %{"ok" => false, "error" => %{"code" => "authentication_required"}} =
+             request(context.socket_path, Map.put(read, "auth", String.duplicate("b", 64)))
+
+    assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+             request(context.socket_path, Map.put(read, "path", "arbitrary"))
+
+    assert %{"ok" => true, "metadata" => metadata} = request(context.socket_path, read)
+
+    command = %{
+      "id" => "metadata-edit",
+      "kind" => "updateMetadata",
+      "itemID" => digest,
+      "metadataRevision" => metadata["revision"],
+      "title" => "Saved",
+      "userLabels" => ["quiet"],
+      "dismissedLabels" => []
+    }
+
+    envelope = %{
+      "version" => 1,
+      "requestId" => "metadata-command",
+      "operation" => "command",
+      "command" => command
+    }
+
+    assert %{"ok" => true, "snapshot" => %{"updatedMetadata" => committed}} =
+             request(context.socket_path, envelope)
+
+    assert committed["title"] == "Saved"
+
+    assert %{"ok" => true} =
+             request(context.socket_path, Map.put(envelope, "requestId", "metadata-replay"))
+
+    assert {:ok, ^committed} = Library.metadata(context.library, digest)
+    assert %{"entries" => entries} = Library.audit_page(context.library)
+    assert Enum.count(entries, &(&1["operation"] == "master.metadata-updated")) == 1
+    :ok = Library.remove_master(context.library, digest)
+    recovery = %{"version" => 1, "requestId" => "recovery-read", "operation" => "libraryRecovery"}
+
+    assert %{"ok" => true, "recovery" => %{"items" => [%{"id" => ^digest}], "nextCursor" => nil}} =
+             request(context.socket_path, recovery)
+
+    assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+             request(context.socket_path, Map.put(recovery, "afterID", "path"))
+
+    restore =
+      Map.put(envelope, "command", %{"id" => "restore", "kind" => "restore", "itemID" => digest})
+
+    assert %{"ok" => true, "snapshot" => %{"items" => [%{"id" => ^digest}]}} =
+             request(context.socket_path, restore)
+  end
+
   test "preview reads authenticate and reject paths, forged capabilities and incomplete target identity",
        context do
     base = %{
