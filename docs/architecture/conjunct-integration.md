@@ -278,9 +278,85 @@ The current source mapping uses Conjunct at
 `f6609c5e4c2188626f5e1f345446fec04e78d6c9`, inspected on 2026-10-04.
 The [source record](../research/conjunct-adoption.md#exact-producer-source-cohort)
 identifies the relevant exports, trusted registry and remaining qualification
-limits. Exact discovery ContractRef/schema digests and staged artifacts are
-frozen by [S1](implementation-plan.md#composition-specification-delivery).
+limits. [The consumer cohort](../../scripts/conjunct/cohort.json) freezes the
+exact discovery ContractRef/schema digests and algorithm source digests for
+[S1](implementation-plan.md#composition-specification-delivery).
 Source exports and pure tests do not constitute an installed package or stable
 semantic conformance.
 Generic schema/adapter work belongs upstream; Frameshift defines its profile,
 migration and consumer proof here.
+
+### S1 consumer bundle and acceptance
+
+`./scripts/check conjunct` builds an unsigned consumer bundle from the exact
+GitHub source archive through `gh`, checks its raw SHA-256 before extraction,
+and uses Frameshift's Rust 1.97.1, Node 26.9.0, TypeScript 6.0.3 and
+Elixir 1.20.4/OTP 29.1 toolchains. Install platform frontend dependencies
+first; Rust needs the `wasm32-unknown-unknown` standard library. A local Chrome
+executable is required, with `FRAMESHIFT_CHROME` selecting another path.
+The source archive and telemetry 1.4.2 archive are individually pinned;
+the consumer never selects current upstream `main` implicitly.
+
+The bundle contains the native `conjunct-port`, raw `conjunct_abi.wasm`,
+distributed `@conjunct/kernel`, `@conjunct/data` and `@conjunct/guide` public
+exports, passive `conjunct_kernel`, `conjunct_wire` and `conjunct_data` packages,
+and the locked telemetry runtime. Compilation preserves producer sources;
+the manifest records the actual consumer compiler versions, native target,
+Cargo/runtime license inventory, lockfiles, original discovery bytes and each
+ordinary file's raw digest, byte size and executable permission. These are
+Frameshift-built experiment artifacts, not published producer releases.
+The native C ABI, pack CLI, STEP runtime and operated adapters are outside
+this bundle's claimed scope.
+
+The exact contract is
+`urn:conjunct:contract:unreleased:12f27e6a8f4fa1d12299fead419b9db21785d3308061731741e61207ea116e81`,
+with descriptor digest
+`sha256:e507190774d13621442c423717dc9a490612d34351d06fff362d9af43b0cfc8e`.
+Discovery must advertise `cj/kernel/0.1`, the selected `cj/port/1` or
+`cj/wasm-abi/1` transport, this source revision and exact cohort profiles,
+operations and schema digests. The generated data packages additionally read
+the protocol schemas; that reader capability cannot add an executable kernel
+operation or register a contract.
+
+| Product operation | Public call and wire boundary |
+| --- | --- |
+| Discover/select contract | `Conjunct.Kernel.describe/2`; browser `WorkerKernel.describe`; `cj/kernel/0.1` discovery |
+| Create bounded immutable-input context | `Conjunct.Kernel.create/3`; `WorkerKernel.create`; protocol configuration |
+| Load original domain/geometry bytes | `Conjunct.Kernel.load/3`; `WorkerKernel.load`; `urn:conjunct:schema:domain:0.1` or `urn:conjunct:schema:geometry:0.1` |
+| Normalize, compose, compare, project catalog, validate pack, plan procedure or packaging | `Conjunct.Kernel.call/3`; `WorkerKernel.call`; protocol request `operation` selects respectively `normalize_requirement_set`, `compile_composition`, `compare_compositions`, `project_catalog`, `validate_product_pack`, `plan_procedure`, `plan_packaging` |
+| Release context | `Conjunct.Kernel.destroy/2`; `WorkerKernel.destroy`; no semantic replay |
+| Decode/encode/derive immutable identity | `Conjunct.Data.decode_bytes/2`, `encode_canonical/2`, `artifact_id/2`; corresponding `@conjunct/data` exports |
+| Render portable instructions/manual geometry | `@conjunct/guide` exports `renderGuide`, `prepareGeometry`, `renderGeometry`; source-bound inputs and S4 acceptance remain required |
+
+The experiment lowers kernel limits to 131,072 request bytes, 262,144 document
+and response bytes, 1,024 stored artifacts, 16,777,216 stored bytes and 128
+diagnostics, with eight queued binding requests and a 5,000 ms call deadline.
+These are synthetic consumer budgets, not measured operating capacities.
+The existing v1 input depth of 16 remains a required product adapter check;
+loading the raw producer package alone does not enforce this narrower depth.
+Increasing any product limit still requires the corresponding measured profile.
+
+The checker copies the bundle into a fresh directory outside the repository
+and verifies it against the original manifest digest before executing copied
+bytes. Package dependencies resolve offline from this copied bundle. It
+compiles the distributed declarations with TypeScript 6.0.3 and exercises data,
+raw WASM, a Node Worker, the supervised Elixir port and an actual browser Worker.
+After loading browser assets, it disconnects browser networking. The same
+synthetic scope, unsupported-profile, duplicate-key, oversized-document and
+unknown-contract fixtures must produce identical original protocol responses
+and canonical data identities through all transports. Replacement requires
+explicit context recreation/reload; stale contexts, cancellation, queue
+overflow and executable hash mismatch have separate refusal checks.
+
+Artifact verification refuses changed bytes, sizes, permissions, symlinks,
+undeclared files and a changed manifest. The expected manifest digest is a
+separate caller input, not a digest taken from the file being verified.
+Discovery refuses absent profiles, changed schema/contract identities or a
+wrong transport before composition authority can be considered. Archive paths
+and member types are checked before extraction. Reports under ignored
+`var/conjunct/bundles/` bind each tested bundle hash, target and browser version;
+retain them externally when a durable qualification claim is required.
+Passing these fixtures establishes only the recorded package/data/transport
+consumer scope. Full operation semantics, thirteen frame obligations, v1
+migration, procedure content and physical/current-use admission remain S2–S7
+gates. No existing catalog identity or semantic authority changes in S1.

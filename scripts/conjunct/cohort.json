@@ -1,0 +1,32 @@
+{
+  "version": "frameshift.conjunct-cohort.v1",
+  "repository": "futhr/conjunct",
+  "revision": "f6609c5e4c2188626f5e1f345446fec04e78d6c9",
+  "source_archive_digest": "sha256:82ca2782073ad3addf40fd47d68f08aa0fb6056b19b969765e82c908d724450b",
+  "protocol": "cj/kernel/0.1",
+  "contract": {
+    "id": "urn:conjunct:contract:unreleased:12f27e6a8f4fa1d12299fead419b9db21785d3308061731741e61207ea116e81",
+    "digest": "sha256:e507190774d13621442c423717dc9a490612d34351d06fff362d9af43b0cfc8e"
+  },
+  "profiles": ["cj/core/0.2", "cj/geometry/0.1", "cj/packaging/0.1", "cj/procedures/0.1"],
+  "operations": ["compare_compositions", "compile_composition", "normalize_requirement_set", "plan_packaging", "plan_procedure", "project_catalog", "validate_product_pack"],
+  "readable_schemas": [
+    {"id": "urn:conjunct:schema:domain:0.1", "digest": "sha256:74dbee88c2482df155c7cc50979bb01ffea6a92c9375f56e2c70da8a593ba63f"},
+    {"id": "urn:conjunct:schema:geometry:0.1", "digest": "sha256:2ac0c00b3eecc4d45ba489b4e931a6a0242cfcdf753dece4d2c05a1973652955"}
+  ],
+  "algorithm_sources": {
+    "urn:conjunct:algorithm:cj02:canonical-json:1": {"path": "docs/specs/CJ.02-product-graph.md", "digest": "sha256:2507d3ec8de28478cc1291a5a83dd7b1d9e141a4378233a35703e3cb96e85aab"},
+    "urn:conjunct:algorithm:cj02:compare-compositions:1": {"path": "docs/specs/cj02/domain-operations.md", "digest": "sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82"},
+    "urn:conjunct:algorithm:cj02:compile-composition:1": {"path": "docs/specs/cj02/domain-operations.md", "digest": "sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82"},
+    "urn:conjunct:algorithm:cj02:normalize-requirement-set:1": {"path": "docs/specs/cj02/domain-operations.md", "digest": "sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82"},
+    "urn:conjunct:algorithm:cj02:plan-packaging:1": {"path": "docs/specs/cj02/domain-operations.md", "digest": "sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82"},
+    "urn:conjunct:algorithm:cj02:plan-procedure:1": {"path": "docs/specs/cj02/domain-operations.md", "digest": "sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82"},
+    "urn:conjunct:algorithm:cj02:project-catalog:1": {"path": "docs/specs/cj02/domain-operations.md", "digest": "sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82"},
+    "urn:conjunct:algorithm:cj02:validate-product-pack:1": {"path": "docs/specs/cj02/domain-operations.md", "digest": "sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82"},
+    "urn:conjunct:algorithm:cj04:geometry-assessment:1": {"path": "docs/specs/cj04/geometry-assessments.md", "digest": "sha256:c44d8be1cb1cd943d6cacf67356ec5bed4ba928d3e980009bf83a77159049630"}
+  },
+  "limits": {"request_bytes": 131072, "document_bytes": 262144, "response_bytes": 262144, "store_artifacts": 1024, "store_bytes": 16777216, "diagnostics": 128},
+  "input_depth": 16,
+  "binding": {"max_queue": 8, "timeout_ms": 5000},
+  "telemetry": {"version": "1.4.2", "archive_digest": "sha256:928f6495066506077862c0d1646609eed891a4326bee3126ba54b60af61febb1"}
+}

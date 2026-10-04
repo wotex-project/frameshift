@@ -38,6 +38,7 @@ check_policy() {
   mise exec -- actionlint "$repository_root/.github/workflows/check.yml"
   "$repository_root/scripts/check-elixir-docs"
   "$repository_root/scripts/check-workspace"
+  mise exec -- node --test "$repository_root/scripts/conjunct/artifacts.test.mjs"
 }
 
 check_renderer() {
@@ -208,6 +209,7 @@ case "${1:-all}" in
   renderer) check_renderer ;;
   kernel) check_kernel ;;
   build-spec) "$repository_root/scripts/check-build-spec" ;;
+  conjunct) mise exec -- node "$repository_root/scripts/conjunct/run.mjs" ;;
   guide) check_guide ;;
   guide-browser) check_guide_browser ;;
   core) check_core ;;
@@ -217,7 +219,7 @@ case "${1:-all}" in
   linux-ipc) check_linux_ipc ;;
   keychain-pairing) "$repository_root/scripts/check-keychain-pairing" ;;
   *)
-    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|kernel|build-spec|guide|guide-browser|core|release|macos|container|linux-ipc|keychain-pairing]" >&2
+    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|kernel|build-spec|conjunct|guide|guide-browser|core|release|macos|container|linux-ipc|keychain-pairing]" >&2
     exit 64
     ;;
 esac

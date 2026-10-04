@@ -33,7 +33,7 @@ can support development without qualifying the real producer boundary.
 | BP-07 / public catalog view | Frameshift web UI | Svelte type/lint/build, bounded HTTP profile/source read tests and local Chrome rendering; pagination fault and responsive browser acceptance still required | The page lists three candidate profiles with exact downloads and five source records in the seeded local catalog. Candidate limits are explicit. Manual pagination retains loaded records, deduplicates shifting pages and stops at the server's offset ceiling. This view does not implement composition or build admission |
 | PB-01–PB-06, PB-09 / C | Catalog + pure packages | Three-class sourced fixtures, bounded schemas, canonical hash/parity, valid/invalid/unknown combinations, fact/protocol mapping and export round trips | Thirteen retained v1 checks now run together in a verified-input planning preview with cross-target parity; partial compiler and immutable catalog evidence are recorded [below](#physical-compiler-evidence). This preview is replay/migration evidence, not a successor workbench engine. Qualified Conjunct composition/report and product consumers remain open |
 | PB-07–PB-09, PC-04 / C | Conjunct verification + Frameshift profile + ExMaude P2 | Typed completion/termination, session/worker leases, bounded/exhausted/inconclusive results, mutation detection, compiler replay and invalidation | ExMaude SearchRun and the producer-reported two-predicate formal join exist. Typed cancellation/state limits, full frame coverage and this consumer join remain open; deterministic compiler/viewer work proceeds independently |
-| CI-02–CI-04, PC-02 / C | Conjunct core + product adapter | All five v1 domains replay unchanged; wire/rational/unit/occurrence successor mapping, purpose-bound CheckReport, both-runtime parity, loss refusal and mandatory frame checks | Producer schemas, Rust encoder/kernel and Elixir/browser bindings exist at the inspected cohort. Staged distribution, thirteen-stage frame mapping and consumer migration/parity remain open. Existing v1 evidence is retained |
+| CI-02–CI-04, PC-02 / C | Conjunct core + product adapter | All five v1 domains replay unchanged; wire/rational/unit/occurrence successor mapping, purpose-bound CheckReport, both-runtime parity, loss refusal and mandatory frame checks | S1 staged data/transport consumers pass at the frozen cohort below. Thirteen-stage frame mapping, complete operations and consumer migration/parity remain open. Existing v1 evidence is retained |
 | CI-05–CI-07, BP-04–BP-05, PC-02/PC-05 / C–D | Conjunct evidence/geometry/procedures + DocShell | Source/feature/step binding, offline freshness and retention, exact transforms/loss, evidence-bearing procedure transitions and equivalent accessible outputs | Producer geometry/procedure/guide exports and DocShell collection APIs exist; frame content and joined consumer tests remain open. Synthetic/manual geometry supports the first profile. The selected planar AP214 STEP adapter is narrower than general CAD support and activation remains unqualified; federation qualifies separately |
 | BP-04–BP-05, CI-07 / D | Visual composition and instructions | Conjunct selection/comparison/CheckReport and procedure/output semantics through the Frameshift UI; local save/reload I/O without accounts/checkout; missing facts/prices, private artwork, keyboard, screen reader, reduced motion, low graphics and reconnect checks | Missing; existing static installation lab and v1 planning preview are not this workbench |
 | CI-04, CI-08 / E | Conjunct producer + product consumer | Passive enclosure/fastener/packaging and connected-sensor fixtures use the same core without frame imports; exact frame profile retains required checks | Producer draft vectors include passive/sensor cases; expectations await independent review. Frameshift consumer replay and stable semantic conformance remain open; transport parity is not independent-engine agreement |
@@ -57,6 +57,32 @@ Other upstream join results are attributed source observations. The draft
 50-case suite still awaits independent expectation review. S1–S7 in the
 [implementation plan](implementation-plan.md#composition-specification-delivery)
 assign the next consumer evidence without promoting these source checks.
+
+### Staged Conjunct consumers, 2026-10-04
+
+`scripts/check conjunct` builds the exact pinned source archive and verifies
+the [S1 consumer contract](conjunct-integration.md#s1-consumer-bundle-and-acceptance).
+On macOS arm64, Rust 1.97.1, Node 26.9.0, TypeScript 6.0.3 and
+Elixir 1.20.4/OTP 29.1 built and consumed the native port, raw WASM,
+Elixir kernel/wire/data and JavaScript kernel/data/guide artifacts.
+Fresh consumers outside the repository resolved runtime dependencies offline;
+the distributed declarations compiled without suppressing declaration checks.
+Three Elixir cases and the Node/browser exercises passed. Chrome
+154.0.8037.95 consumed the local Worker artifacts with networking disabled
+after loading them. Canonical scope identity and six original protocol
+responses matched through the Elixir port, raw WASM and Node/browser Workers.
+Unsupported profiles/contracts, escaped duplicate keys, rational overflow,
+oversized documents, stale contexts, canceled dispatched work, bounded queue
+overflow and incorrect executable digest have explicit refusal checks.
+Eight policy tests cover artifact/manifest tamper, symlinks, permissions,
+undeclared files, discovery mismatch and hostile archive entries.
+
+Each run retains the exact bundle manifest digest, target/browser, fixture
+bytes and transport response reports under ignored `var/conjunct/bundles/`.
+This is package/data/transport integration evidence for the recorded target,
+not complete semantic conformance, frame-rule coverage, v1 migration, a joined
+guide procedure, another browser/OS or physical/operated qualification.
+No catalog identity or existing compiler authority changes.
 
 ### Physical compiler evidence
 
