@@ -70,6 +70,20 @@ struct LibraryMetadataTests {
     #expect(model.metadataDraft?.title == "External title")
   }
 
+  @Test("A save acknowledgement updates a selected master outside the returned result page")
+  func updatesHiddenSelection() async {
+    let client = MetadataClient(omitResultsOnSave: true)
+    let model = ShellModel(client: client, initialSnapshot: await client.snapshot())
+    model.selectItem(identity(1))
+    await model.loadSelectedMetadata()
+    model.setMetadataTitle("Renamed artwork")
+    await model.saveMetadata()
+    #expect(model.snapshot.items.isEmpty)
+    #expect(model.selectedItem?.id == identity(1))
+    #expect(model.selectedItem?.title == "Renamed artwork")
+    #expect(model.metadataDraft?.hasChanges == false)
+  }
+
   @Test("Late reads for an old selection cannot replace current metadata")
   func refusesLateRead() async throws {
     let client = MetadataClient(holdMetadata: true)
@@ -159,13 +173,15 @@ private actor MetadataClient: CoreClient {
     ])
   private var sent: [CoreCommand] = []
   private let holdSends: Bool
+  private let omitResultsOnSave: Bool
   private var holdMetadata: Bool
   private var sendContinuation: CheckedContinuation<Void, Never>?
   private var metadataContinuation: CheckedContinuation<Void, Never>?
 
-  init(holdSends: Bool = false, holdMetadata: Bool = false) {
+  init(holdSends: Bool = false, holdMetadata: Bool = false, omitResultsOnSave: Bool = false) {
     self.holdSends = holdSends
     self.holdMetadata = holdMetadata
+    self.omitResultsOnSave = omitResultsOnSave
   }
 
   func snapshot() -> CoreSnapshot { current }
@@ -209,6 +225,7 @@ private actor MetadataClient: CoreClient {
         sourceKind: "import", width: 2, height: 1,
         labels: command.userLabels!.map { ArtworkLabel(label: $0, provenance: "user") })
       current.updatedMetadata = first
+      if omitResultsOnSave { current.items = [] }
     } else if command.kind == .restore {
       current.items.append(
         LibraryItem(id: command.itemID!, title: "Restored", digest: command.itemID!))

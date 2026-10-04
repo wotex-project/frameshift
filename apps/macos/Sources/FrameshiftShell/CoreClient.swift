@@ -3,6 +3,7 @@ import Foundation
 public protocol CoreClient: Sendable {
   func snapshot() async throws -> CoreSnapshot
   func snapshot(query: String) async throws -> CoreSnapshot
+  func snapshot(query: String, filters: LibraryFilters) async throws -> CoreSnapshot
   func send(_ command: CoreCommand) async throws -> CoreSnapshot
   func preview(masterID: String, target: FrameTarget?) async throws -> ArtworkPreview
   func metadata(itemID: String) async throws -> LibraryMetadata
@@ -10,6 +11,11 @@ public protocol CoreClient: Sendable {
 }
 
 extension CoreClient {
+  public func snapshot(query: String, filters: LibraryFilters) async throws -> CoreSnapshot {
+    guard !filters.isActive else { throw CoreClientError.filtersUnavailable }
+    return try await snapshot(query: query)
+  }
+
   public func metadata(itemID _: String) async throws -> LibraryMetadata {
     throw CoreClientError.metadataUnavailable
   }
@@ -50,6 +56,7 @@ public enum CoreClientError: Error, Equatable, Sendable {
   case metadataRevisionConflict
   case invalidMetadata
   case restoreFailed
+  case filtersUnavailable
   case protocolFailure
   case pairingIncomplete
   case pairingOutcomeUnknown

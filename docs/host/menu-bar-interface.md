@@ -184,6 +184,28 @@ never accepted from the search field. Empty search keeps pinned-first library
 ordering. The index is rebuildable from masters and labels and excludes
 removed masters. Frame, source, and pin filters are separate facets of the
 full library view.
+The native facet contract combines literal text with pinned-only, source kind
+(`import` or `generated`) and an optional paired-frame ID. An empty facet means
+all values. Frame membership means a retained master or one of its rendered
+artifacts has a reference for that frame (desired, queued, playlist, current or
+previous-known-good); it is not a claim of currently displayed artwork. Pending
+and suspended saved-playlist references remain included while retained. Removed
+masters remain excluded even when protected. Provider facets require an actual
+configured adapter and recorded provider identity; source kind is not a provider.
+
+Facets are bounded read-only `snapshot` inputs, with an exact-key object
+(`pinnedOnly`, `sourceKind`, `frameID`). Unknown fields/types, unsupported source
+kinds and unpaired frame IDs refuse. Search intersects all supplied facets
+before applying the 100-result ceiling and existing stable ordering. The
+focused Library keeps its facets in the shared shell session, shows a reset
+action and an explicit no-match state, and preserves selection/instruction and
+per-master drafts when a facet hides them. Changing a search term or facet
+invalidates older responses; mutations and refresh reapply the current facets.
+The compact results show the same filtered set. These session controls do not
+change saved target selection, playlist order, pins or delivery intent.
+Acceptance covers source/pin/frame intersections, master and artifact custody,
+removed and unreferenced negatives, hostile facet inputs, older-response races,
+reset and a packaged Swift/core read with active facets.
 The library writer exposes an explicit transactional index rebuild from active
 masters and labels for recovery; a rebuild never changes artwork, pins, or
 frame delivery state.

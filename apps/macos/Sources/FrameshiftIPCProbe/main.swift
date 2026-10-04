@@ -69,6 +69,14 @@ private struct FrameshiftIPCProbe {
     guard pinPreview.items.isEmpty, pinPreview.pinnedItems?.map(\.id) == [item.id],
       pinPreview.pinnedSetTooLarge == false
     else { throw ProbeFailure() }
+    let pinnedImports = try await client.snapshot(
+      query: "installed", filters: LibraryFilters(pinnedOnly: true, sourceKind: .imported))
+    guard pinnedImports.items.map(\.id) == [item.id] else { throw ProbeFailure() }
+    let generatedOnly = try await client.snapshot(
+      query: "", filters: LibraryFilters(sourceKind: .generated))
+    guard generatedOnly.items.isEmpty, generatedOnly.pinnedItems?.map(\.id) == [item.id] else {
+      throw ProbeFailure()
+    }
     do {
       _ = try await client.send(
         CoreCommand(

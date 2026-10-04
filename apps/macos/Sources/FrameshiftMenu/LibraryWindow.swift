@@ -11,6 +11,7 @@ struct LibraryWindow: View {
   var body: some View {
     NavigationSplitView {
       VStack(spacing: 0) {
+        filters
         List(
           selection: Binding(
             get: { model.selectedItem?.id },
@@ -27,7 +28,8 @@ struct LibraryWindow: View {
         .accessibilityIdentifier("focused-library-list")
         if model.visibleItems.isEmpty {
           Text(
-            model.searchQuery.isEmpty ? "Import a still image to begin." : "No matching artwork."
+            model.searchQuery.isEmpty && !model.libraryFilters.isActive
+              ? "Import a still image to begin." : "No artwork matches this search and its filters."
           )
           .foregroundStyle(.secondary)
           .padding()
@@ -89,6 +91,40 @@ struct LibraryWindow: View {
       model.beginPlaylistEdit()
     }
     .onChange(of: model.snapshot.selectedTargetID) { _, _ in model.beginPlaylistEdit() }
+  }
+
+  private var filters: some View {
+    VStack(alignment: .leading, spacing: 10) {
+      Toggle(
+        "Pinned only",
+        isOn: Binding(get: { model.libraryFilters.pinnedOnly }, set: model.setPinnedFilter))
+      Picker(
+        "Source",
+        selection: Binding(get: { model.libraryFilters.sourceKind }, set: model.setSourceFilter)
+      ) {
+        Text("All sources").tag(ArtworkSource?.none)
+        ForEach(ArtworkSource.allCases, id: \.self) { source in
+          Text(source.label).tag(Optional(source))
+        }
+      }
+      Picker(
+        "Frame references",
+        selection: Binding(get: { model.libraryFilters.frameID }, set: model.setFrameFilter)
+      ) {
+        Text("All frames").tag(String?.none)
+        ForEach(model.snapshot.targets) { target in Text(target.name).tag(Optional(target.id)) }
+      }
+      Text("Includes retained queued, loop and fallback references.").font(.caption)
+        .foregroundStyle(.secondary)
+      if model.libraryFilters.isActive {
+        Button("Reset filters", systemImage: "line.3.horizontal.decrease.circle") {
+          model.resetLibraryFilters()
+        }
+      }
+    }
+    .padding(12)
+    .accessibilityElement(children: .contain)
+    .accessibilityIdentifier("library-filters")
   }
 
   @ViewBuilder

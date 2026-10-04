@@ -256,7 +256,7 @@ defmodule Frameshift.LocalIPC.Server do
           ~w(version requestId operation auth command)
 
         "snapshot" ->
-          ~w(version requestId operation auth query)
+          ~w(version requestId operation auth query filters)
 
         "preview" ->
           ~w(version requestId operation auth itemID targetID profileID capabilityDigest)
@@ -338,8 +338,14 @@ defmodule Frameshift.LocalIPC.Server do
 
   defp validate_query_shape(request, "snapshot", request_id) do
     case Map.get(request, "query", "") do
-      query when is_binary(query) and byte_size(query) <= 256 -> :ok
-      _ -> {:error, {request_id, :invalid_request}}
+      query when is_binary(query) and byte_size(query) <= 256 ->
+        case LocalAPI.validate_filters(Map.get(request, "filters", %{})) do
+          :ok -> :ok
+          _ -> {:error, {request_id, :invalid_request}}
+        end
+
+      _ ->
+        {:error, {request_id, :invalid_request}}
     end
   end
 
@@ -434,8 +440,14 @@ defmodule Frameshift.LocalIPC.Server do
          library,
          _
        ) do
-    {:ok,
-     success_response(request_id, LocalAPI.snapshot(library, nil, Map.get(request, "query", "")))}
+    case LocalAPI.filtered_snapshot(
+           library,
+           Map.get(request, "query", ""),
+           Map.get(request, "filters", %{})
+         ) do
+      {:ok, snapshot} -> {:ok, success_response(request_id, snapshot)}
+      {:error, code} -> {:error, {request_id, code}}
+    end
   end
 
   defp execute_request(

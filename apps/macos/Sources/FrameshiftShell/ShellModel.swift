@@ -11,6 +11,7 @@ public final class ShellModel {
   public private(set) var errorMessage: String?
   public var draftInstruction: String
   public private(set) var searchQuery = ""
+  public private(set) var libraryFilters = LibraryFilters()
   public private(set) var searchError: String?
   public private(set) var searchItems: [LibraryItem]?
   public private(set) var guideHandoff: GuideHandoff?
@@ -299,7 +300,7 @@ public final class ShellModel {
     searchRevision += 1
     let revision = searchRevision
 
-    guard !query.isEmpty else {
+    guard !query.isEmpty || libraryFilters.isActive else {
       searchItems = nil
       searchError = nil
       return
@@ -318,19 +319,46 @@ public final class ShellModel {
     }
   }
 
+  public func setLibraryFilters(_ filters: LibraryFilters) {
+    libraryFilters = filters
+    searchItems = filters.isActive || !searchQuery.isEmpty ? [] : nil
+    setSearchQuery(searchQuery)
+  }
+
+  public func setPinnedFilter(_ pinnedOnly: Bool) {
+    var filters = libraryFilters
+    filters.pinnedOnly = pinnedOnly
+    setLibraryFilters(filters)
+  }
+
+  public func setSourceFilter(_ sourceKind: ArtworkSource?) {
+    var filters = libraryFilters
+    filters.sourceKind = sourceKind
+    setLibraryFilters(filters)
+  }
+
+  public func setFrameFilter(_ frameID: String?) {
+    var filters = libraryFilters
+    filters.frameID = frameID
+    setLibraryFilters(filters)
+  }
+
+  public func resetLibraryFilters() { setLibraryFilters(LibraryFilters()) }
+
   public func submitSearch() async {
     await refreshSearch()
   }
 
   private func refreshSearch() async {
-    guard !searchQuery.isEmpty, searchQuery.utf8.count <= 256 else { return }
+    guard !searchQuery.isEmpty || libraryFilters.isActive else { return }
+    guard searchQuery.utf8.count <= 256 else { return }
     searchRevision += 1
     await loadSearch(searchQuery, revision: searchRevision)
   }
 
   private func loadSearch(_ query: String, revision: Int) async {
     do {
-      let result = try await client.snapshot(query: query)
+      let result = try await client.snapshot(query: query, filters: libraryFilters)
       guard revision == searchRevision else { return }
       searchItems = result.items
       updateSelection(from: result.items)
@@ -338,7 +366,10 @@ public final class ShellModel {
     } catch {
       guard revision == searchRevision else { return }
       searchItems = []
-      searchError = "Library search is unavailable."
+      searchError =
+        libraryFilters.isActive
+        ? "Filtered Library search is unavailable. Refresh or reset the filters."
+        : "Library search is unavailable."
     }
   }
 
@@ -613,6 +644,11 @@ public final class ShellModel {
       metadataLoad = nil
       isMetadataLoading = false
       selectedMetadata = metadata
+      if let item = selectedItem {
+        selectedItem = LibraryItem(
+          id: item.id, title: metadata.title, digest: item.digest,
+          isPinned: item.isPinned, queuedTargetID: item.queuedTargetID, loopStatus: item.loopStatus)
+      }
     } else if selectedItem != nil {
       Task { await loadSelectedMetadata() }
     }

@@ -168,7 +168,8 @@ The implemented native slices now include the focused Library, preserved
 instruction/selection, ordered playlist drafts, revision-bound saved resume and
 bounded source/target-crop previews, exact-revision title/user-label editing,
 machine-observation correction and paginated Recently Removed recovery. Their
-software evidence is in the
+shared read-only source/pin/frame facets preserve selection and drafts. Software
+evidence is in the
 [verification ledger](verification.md); they do not complete H3's installed
 accessibility matrix or H2's measured palette/packing profiles. Continue the
 remaining native labeling/similarity adapters, storage settings and H4 contracts

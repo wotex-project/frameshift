@@ -158,7 +158,15 @@ defmodule Frameshift.Library do
     GenServer.call(server, {:add_label, digest, label, provenance, confidence, revision})
   end
 
-  @doc "Searches active library items and returns stable metadata records."
+  @doc """
+  Searches active masters with literal text and intersecting read-only facets.
+
+  Options include `:pinned` (boolean), `:source_kind` (`"import"` or `"generated"`)
+  and `:frame_id` (retained master/artifact custody). `:limit` is capped at 100;
+  ordering remains pinned-first, then title and digest. Removed masters are
+  excluded even when references retain their bytes. Invalid facets return no
+  matches; the native product boundary returns an explicit request refusal.
+  """
   @spec search(server(), String.t(), keyword()) :: [map()]
   def search(server \\ __MODULE__, query, options \\ []) do
     GenServer.call(server, {:search, query, options})
@@ -1441,13 +1449,24 @@ defmodule Frameshift.Library do
 
   defp search_records(state, query, options) do
     limit = options |> Keyword.get(:limit, 50) |> min(100) |> max(1)
-    pinned_only = Keyword.get(options, :pinned, false)
 
-    case search_match(query) do
-      {:ok, match} -> query_search(state, match, pinned_only, limit)
-      :invalid -> []
+    with true <- valid_search_options?(options),
+         {:ok, match} <- search_match(query) do
+      query_search(state, match, options, limit)
+    else
+      _ -> []
     end
   end
+
+  defp valid_search_options?(options) do
+    is_boolean(Keyword.get(options, :pinned, false)) and
+      Keyword.get(options, :source_kind) in [nil, "import", "generated"] and
+      valid_search_frame?(Keyword.get(options, :frame_id))
+  end
+
+  defp valid_search_frame?(nil), do: true
+  defp valid_search_frame?(frame) when is_binary(frame), do: byte_size(frame) in 1..128
+  defp valid_search_frame?(_), do: false
 
   defp search_match(query) when is_binary(query) and byte_size(query) <= 512 do
     trimmed = String.trim(query)
@@ -1473,11 +1492,16 @@ defmodule Frameshift.Library do
     end
   end
 
-  defp query_search(state, match, pinned_only, limit) do
+  defp query_search(state, match, options, limit) do
     join = if match, do: "JOIN master_search ON master_search.rowid = m.rowid", else: ""
     filter = if match, do: "AND master_search MATCH ?", else: ""
-    pin_filter = if pinned_only, do: "AND p.object_digest IS NOT NULL", else: ""
-    parameters = if match, do: [match, limit], else: [limit]
+
+    pin_filter =
+      if Keyword.get(options, :pinned, false), do: "AND p.object_digest IS NOT NULL", else: ""
+
+    source = Keyword.get(options, :source_kind)
+    frame = Keyword.get(options, :frame_id)
+    parameters = if(match, do: [match], else: []) ++ [source, source, frame, frame, limit]
 
     sql = """
     SELECT DISTINCT m.digest, m.title, m.source_kind, m.width, m.height,
@@ -1497,6 +1521,16 @@ defmodule Frameshift.Library do
     WHERE m.removed_at_ms IS NULL
       #{filter}
       #{pin_filter}
+      AND (? IS NULL OR m.source_kind = ?)
+      AND (? IS NULL OR EXISTS (
+        SELECT 1 FROM frame_asset_refs refs
+        WHERE refs.frame_id = ? AND (
+          refs.object_digest = m.digest OR EXISTS (
+            SELECT 1 FROM artifact_recipe_links links
+            WHERE links.master_digest = m.digest AND links.artifact_digest = refs.object_digest
+          )
+        )
+      ))
     ORDER BY pinned DESC, m.title COLLATE NOCASE, m.digest
     LIMIT ?
     """

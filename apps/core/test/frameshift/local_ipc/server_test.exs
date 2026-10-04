@@ -119,6 +119,55 @@ defmodule Frameshift.LocalIPC.ServerTest do
              })
   end
 
+  test "snapshot facets refuse hostile input and intersect source/pins over authenticated IPC",
+       context do
+    {:ok, master} =
+      Library.import_master(context.library, "facet bytes", %{
+        title: "Quiet Forest",
+        source_kind: :import,
+        width: 2,
+        height: 1,
+        media_type: "image/png",
+        provenance: %{}
+      })
+
+    :ok = Library.pin(context.library, master["digest"])
+    digest = master["digest"]
+
+    base = %{
+      "version" => 1,
+      "requestId" => "facet-read",
+      "operation" => "snapshot",
+      "query" => "quiet"
+    }
+
+    assert %{"ok" => true, "snapshot" => %{"items" => [%{"id" => ^digest}]}} =
+             request(
+               context.socket_path,
+               Map.put(base, "filters", %{"pinnedOnly" => true, "sourceKind" => "import"})
+             )
+
+    assert %{"ok" => true, "snapshot" => %{"items" => []}} =
+             request(
+               context.socket_path,
+               Map.put(base, "filters", %{"sourceKind" => "generated"})
+             )
+
+    for filters <- [
+          nil,
+          %{"pinnedOnly" => "true"},
+          %{"sourceKind" => "cloud"},
+          %{"frameID" => "not-paired"},
+          %{"frameID" => %{}},
+          %{"unknown" => true}
+        ] do
+      assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+               request(context.socket_path, Map.put(base, "filters", filters))
+    end
+
+    assert [%{"pinned" => true, "digest" => ^digest}] = Library.search(context.library, "quiet")
+  end
+
   test "executes a command and returns the authoritative snapshot", context do
     response =
       request(context.socket_path, %{

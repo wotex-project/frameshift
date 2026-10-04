@@ -3,8 +3,11 @@ defmodule Frameshift.LocalAPI do
   Executes native product commands and returns authoritative shell snapshots.
 
   The Swift menu process invokes this boundary through authenticated local IPC.
-  `snapshot/3` projects paired targets, selection, settings and searchable items
-  from `Frameshift.Library`; clients cannot supply canonical library state.
+  `snapshot/4` projects paired targets, selection, settings and searchable items
+  from `Frameshift.Library`; `filtered_snapshot/3` admits exact native text and
+  source/pin/frame facets. Frame membership follows retained master/artifact
+  references and cannot claim current display. Clients cannot supply canonical
+  library state or use a facet to change target selection and delivery intent.
   The execute variants route bounded command maps through owned library, renderer
   and explicitly configured direct-delivery services.
 
@@ -64,8 +67,13 @@ defmodule Frameshift.LocalAPI do
   @type result :: {:ok, map()} | {:error, atom()}
 
   @doc "Builds the menu shell's authoritative snapshot from durable library state."
-  @spec snapshot(GenServer.server(), String.t() | nil, String.t()) :: map()
-  def snapshot(library \\ Library, status_message \\ nil, search_query \\ "") do
+  @spec snapshot(GenServer.server(), String.t() | nil, String.t(), keyword()) :: map()
+  def snapshot(
+        library \\ Library,
+        status_message \\ nil,
+        search_query \\ "",
+        search_options \\ []
+      ) do
     targets = Enum.map(Library.list_paired_frames(library), &frame_target(library, &1))
     selected_target_id = selected_target_id(library, targets)
     membership = playlist_membership(library, selected_target_id)
@@ -76,7 +84,10 @@ defmodule Frameshift.LocalAPI do
       "selectedTargetID" => selected_target_id,
       "instruction" => setting(library, @instruction_key, ""),
       "items" =>
-        Enum.map(Library.search(library, search_query, limit: 100), &library_item(&1, membership)),
+        Enum.map(
+          Library.search(library, search_query, Keyword.put(search_options, :limit, 100)),
+          &library_item(&1, membership)
+        ),
       "pinnedItems" =>
         Enum.map(
           Enum.take(pinned, @maximum_loop_items),
@@ -86,6 +97,45 @@ defmodule Frameshift.LocalAPI do
       "generationAvailability" => "notConfigured",
       "statusMessage" => status_message || default_status(targets)
     }
+  end
+
+  @doc "Intersects bounded native search facets without changing selection or intent."
+  @spec filtered_snapshot(GenServer.server(), String.t(), map()) :: result()
+  def filtered_snapshot(library, query, filters) do
+    with :ok <- validate_filters(filters),
+         :ok <- paired_filter(library, filters["frameID"]) do
+      options = [
+        pinned: Map.get(filters, "pinnedOnly", false),
+        source_kind: filters["sourceKind"],
+        frame_id: filters["frameID"]
+      ]
+
+      {:ok, snapshot(library, nil, query, options)}
+    end
+  end
+
+  @doc "Refuses unsupported facet keys, types, source kinds and frame identity bounds."
+  @spec validate_filters(term()) :: :ok | {:error, :invalid_request}
+  def validate_filters(filters) when is_map(filters) do
+    if Enum.all?(Map.keys(filters), &(&1 in ~w(pinnedOnly sourceKind frameID))) and
+         is_boolean(Map.get(filters, "pinnedOnly", false)) and
+         filters["sourceKind"] in [nil, "import", "generated"] and
+         valid_filter_frame?(filters["frameID"]), do: :ok, else: {:error, :invalid_request}
+  end
+
+  def validate_filters(_), do: {:error, :invalid_request}
+
+  defp valid_filter_frame?(nil), do: true
+  defp valid_filter_frame?(frame) when is_binary(frame), do: byte_size(frame) in 1..128
+  defp valid_filter_frame?(_), do: false
+
+  defp paired_filter(_, nil), do: :ok
+
+  defp paired_filter(library, frame_id) do
+    case Library.get_paired_frame(library, frame_id) do
+      {:ok, _} -> :ok
+      _ -> {:error, :invalid_request}
+    end
   end
 
   @doc "Executes a local command that does not require the renderer."
