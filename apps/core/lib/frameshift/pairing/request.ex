@@ -1,10 +1,22 @@
 defmodule Frameshift.Pairing.Request do
   @moduledoc """
-  Parses the universal pre-pair HTTPS request body.
+  Admits bounded commissioning request data separately from TLS identity.
 
-  The peer certificate is never trusted from JSON: it must come from the TLS
-  connection after proof of possession. The body carries only the physical
-  device ID, one-time QR secret, and an idempotency request ID.
+  `parse/1` accepts only the exact versioned device ID, single-use secret and
+  idempotency request ID shape within a 2 KiB body. Encoding, field and schema
+  checks refuse ambiguous or malformed requests. Struct inspection exposes IDs
+  but omits the secret.
+
+  ## Applying admitted input
+
+  `authorize/4` passes the request and the already verified peer DER to
+  `Frameshift.Pairing.Window` with explicit time. JSON never supplies certificate
+  identity or permission to open the physical window. A parsed request has no
+  authority until the window and peer checks pass.
+
+  The frame owner persists the resulting state before acknowledging pairing.
+  Do not retain request structs in ordinary diagnostics or reuse a consumed secret
+  to recover an uncertain network outcome; authenticated observation is separate.
   """
 
   alias Frameshift.Pairing.Window

@@ -1,9 +1,19 @@
 defmodule Frameshift.Qualification.Contract do
   @moduledoc """
-  Software revisions this host can actually execute for a qualified binding.
+  Checks render/transfer qualification against software implemented by this host.
 
-  Changing a renderer protocol, algorithm, or transfer connector requires a
-  deliberate code change and fresh conformance evidence before admission.
+  `validate/1` requires the declared renderer protocol and algorithm revisions
+  to match the local executable contract and selects the connector revision by
+  exact push/pull mode. Unknown modes, malformed inputs and unsupported revisions
+  return `:unsupported_qualification_contract`.
+
+  ## Qualification scope
+
+  This check is one input to `Frameshift.Qualification.Store`, alongside exact
+  frame/profile identity and software evidence. Matching revision labels does not
+  prove a candidate has passed a suite or establish physical hardware safety.
+  A new algorithm, protocol or connector must be implemented and independently
+  qualified before this allowlist changes; data cannot advertise new host code.
   """
 
   @renderer_protocol "fsr1"

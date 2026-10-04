@@ -1,11 +1,24 @@
 defmodule Frameshift.Transport.KeychainBroker do
   @moduledoc """
-  Resolves a macOS Keychain identity through the menu process.
+  Obtains a public certificate and transient signer from the native menu process.
 
-  Only the public certificate crosses this boundary. The private key remains
-  in Keychain; OTP's three-argument signing callback asks the menu process to
-  sign one bounded handshake digest. A one-use bootstrap token authenticates
-  the local broker protocol without exposing it in a command or log.
+  `resolve/2` receives an opaque persistent identity reference plus an explicit
+  Unix-socket path and bootstrap token. A bounded local broker exchange returns
+  the certificate and an OTP three-argument signing callback. Signing requests
+  send only the bounded handshake material required by the broker protocol.
+
+  ## Key custody and failures
+
+  The private key stays in Keychain; this module never extracts it into a file or
+  persists a copy in SQLite. The launch token authenticates the local broker
+  exchange and is excluded from ordinary command/log data. Reference, framing,
+  timeout or broker availability failures return errors before usable credential
+  material is provided.
+
+  `Frameshift.Transport.CredentialResolver` defines the higher-level contract;
+  `Frameshift.Transport.HTTPClient` applies origin and server-pin checks later.
+  A returned signer establishes access to that host identity, not frame pairing
+  or authorization for another advertised origin.
   """
 
   @behaviour Frameshift.Transport.CredentialResolver

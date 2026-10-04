@@ -1,10 +1,5 @@
 defmodule FrameshiftContainerReceiver do
-  @moduledoc """
-  Independent one-contact frame receiver for Docker integration tests.
-
-  Its disk state and TLS peer are separate from the host process. The selected
-  class labels a manufacturer fixture; no physical display is emulated.
-  """
+  @moduledoc false
 
   require Record
 

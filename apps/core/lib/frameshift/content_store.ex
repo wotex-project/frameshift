@@ -1,10 +1,24 @@
 defmodule Frameshift.ContentStore do
   @moduledoc """
-  Stores immutable content-addressed bytes outside the metadata database.
+  Stores immutable digest-addressed payloads outside the metadata database.
 
-  Writes use a bounded work area and verified digest placement. Recovery keeps
-  protected and recently removed objects available rather than silently
-  deleting them after an interrupted filesystem move.
+  `put/2` hashes supplied bytes and reports whether placement created, reused or
+  restored an object. `read/3` applies the caller's byte ceiling and verifies the
+  content identity before returning bytes. Object and trash paths are derived
+  from validated digests rather than accepting caller-chosen storage filenames.
+
+  ## Removal and recovery
+
+  Active objects and recoverable trash are distinct states. Move/restore helpers
+  coordinate with the metadata owner, and `reconcile/3` repairs interrupted
+  placements according to the recorded state. A protected or recently removed
+  object must not disappear merely because a filesystem move was interrupted.
+
+  Use `Frameshift.Library` for domain operations so reference protection and
+  metadata transactions accompany file changes. This module does not decide
+  whether an object is still referenced; low-level deletion helpers are for the
+  owner's verified maintenance path. I/O and invalid-input errors are returned
+  without inventing replacement content for a digest.
   """
 
   alias Frameshift.Digest

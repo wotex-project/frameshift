@@ -1,7 +1,17 @@
 defmodule FrameshiftPlatform.Access.Actor do
   @moduledoc """
-  Trusted actor context supplied by an authenticated boundary, never request JSON.
-  Constructing this value does not authenticate a caller.
+  Carries trusted actor identity and role into platform actions.
+
+  The struct requires `:id` and `:role`. `allowed?/2` accepts only this struct,
+  a UUID-castable binary ID and membership in the caller's explicit role list;
+  other inputs return `false`. It performs no database lookup or authentication.
+
+  ## Supplying an actor
+
+  Authenticated boundaries derive the identity and role before invoking Ash.
+  Request JSON must not choose them. `FrameshiftPlatform.Access.RoleCheck`
+  uses this value for policies, and `FrameshiftPlatform.Access.StampActor`
+  writes the same identity into immutable attribution fields.
   """
 
   @enforce_keys [:id, :role]

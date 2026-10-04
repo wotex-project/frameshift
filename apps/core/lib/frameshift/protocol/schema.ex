@@ -1,14 +1,24 @@
 defmodule Frameshift.Protocol.Schema do
   @moduledoc """
-  Loads and validates Frame Protocol control documents and the Frameshift TD
-  semantic overlay against the canonical JSON Schema Draft 2020-12 files.
+  Validates control documents against the embedded Frame Protocol schemas.
 
-  W3C Thing Description and Thing Model admission is owned by
-  `Frameshift.Protocol.Thing` through Wotex. The local TD schema is only the
-  Frameshift-specific capability and affordance overlay.
+  The module loads canonical Draft 2020-12 schema files at compile time and
+  precompiles validators. `names/0`, `raw/1` and `compiled/1` expose the admitted
+  schema set; `validate/2` checks an already decoded value and returns explicit
+  unknown-schema or validation failures.
 
-  Schemas are embedded at compile time so a release never resolves schema
-  references over the network.
+  ## Admission order
+
+  Use `Frameshift.Protocol.JSON` for untrusted bytes so size, nesting and duplicate
+  key checks happen before schema validation. References resolve only through
+  `Frameshift.Protocol.SchemaResolver`; release validation performs no runtime
+  network fetch and a document cannot install its own schema.
+
+  Wotex owns W3C Thing Description and Thing Model admission.
+  The local `thing-description` schema adds only the Frameshift capability and
+  affordance overlay; `Frameshift.Protocol.Thing` combines those responsibilities.
+  A schema-valid state document is still an observation whose authenticated origin
+  and revision must be checked by the delivery or pairing owner.
   """
 
   @schema_names ~w(

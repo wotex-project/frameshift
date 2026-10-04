@@ -1,10 +1,23 @@
 defmodule Frameshift.Qualification.Identity do
   @moduledoc """
-  Canonical, bounded identities for a reusable binding and its accepted work.
+  Builds canonical identities for bindings, accepted work and rendered results.
 
-  A binding describes one frame/profile, renderer build, and transfer contract.
-  Work adds one immutable master and composition recipe. The final artifact
-  digest is recorded only after rendering and is never an identity input.
+  `binding/1` validates closed, bounded fields tying one frame/profile to the
+  renderer build and transfer contract. `work/3` adds immutable master/recipe
+  references to that binding. `result/4` records the rendered artifact, byte count
+  and media type against frozen work; the output artifact is not a work input.
+
+  ## Canonical custody
+
+  Artifacts use exact schema versions, validated SHA-256 references and RFC 8785
+  canonical bytes. Unknown fields, unsupported values and malformed references
+  refuse rather than being dropped before hashing. `software_evidence/1` validates
+  a bounded suite/scope/outcome record before local admission.
+
+  These functions establish deterministic identity and structural evidence shape.
+  They neither activate a binding nor execute a render/transfer. Persistence and
+  current selection belong to `Frameshift.Qualification.Store`; accepted-work
+  immutability belongs to `Frameshift.Qualification.WorkStore` under the library.
   """
 
   alias Frameshift.Digest

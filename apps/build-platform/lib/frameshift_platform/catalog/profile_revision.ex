@@ -1,5 +1,27 @@
 defmodule FrameshiftPlatform.Catalog.ProfileRevision do
-  @moduledoc "Immutable canonical candidate profiles with derived identity and source bindings."
+  @moduledoc """
+  Stores immutable canonical component profiles and their source bindings.
+
+  The `:record` action accepts only a label and canonical document. Shared v1
+  codec validation derives identity, key, revision, kind and classes; exact source
+  citations resolve to stored source documents. Actor attribution and the audit
+  event are written through the same action transaction.
+
+  ## Reads and identity
+
+  Anonymous reads use required offset pagination, defaulting to 50 records with
+  a maximum page size of 100. `:by_identity` retrieves an exact `sha256:` identity.
+  Both key/revision and content identity are unique; no update or destroy action
+  can silently replace existing bytes. Canonical content and private attribution
+  are separate from the public metadata projection.
+
+  ## Evidence scope
+
+  Every row currently has the non-writable `:candidate` evidence state. Recording
+  valid bytes and resolved citations does not establish manufacturer authenticity,
+  physical compatibility or actual-build admission. Use
+  `FrameshiftPlatform.Catalog` interfaces so all changes and policies run.
+  """
 
   use Ash.Resource,
     domain: FrameshiftPlatform.Catalog,

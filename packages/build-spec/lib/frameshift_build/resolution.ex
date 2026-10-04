@@ -1,5 +1,21 @@
 defmodule FrameshiftBuild.Resolution do
-  @moduledoc "Resolves exact canonical profile bytes through shared budgets and standard cryptography."
+  @moduledoc """
+  Resolves the exact profiles pinned by a retained v1 assembly.
+
+  `resolve/2` accepts assembly bytes and a bounded list of canonical profile
+  bytes. It applies shared count/byte limits, verifies assembly/profile identities
+  with standard SHA-256 and invokes the shared Gleam reference resolver. Success
+  returns the assembly identity and verified resolution; failures keep stable
+  binary refusal codes.
+
+  ## Scope
+
+  No catalog lookup, network fetch or mutable source fallback occurs here.
+  Callers supply the exact pinned bytes; missing, malformed or conflicting inputs
+  cannot be replaced by another revision with a similar label.
+  `FrameshiftBuild.Context` extends resolution with mappings/layouts and their
+  combined identity. Neither path grants physical qualification or build admission.
+  """
 
   alias FrameshiftBuild.Documents
 

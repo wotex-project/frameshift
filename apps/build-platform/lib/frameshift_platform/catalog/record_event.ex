@@ -1,5 +1,19 @@
 defmodule FrameshiftPlatform.Catalog.RecordEvent do
-  @moduledoc "Commits catalog attribution atomically and emits bounded telemetry afterward."
+  @moduledoc """
+  Joins catalog creation to durable audit attribution and bounded telemetry.
+
+  Configure the Ash change with `kind: :source` or `kind: :profile`.
+  Its after-action hook records the corresponding event through
+  `FrameshiftPlatform.Access.AuditEvent`, preserving the action's actor and new
+  subject UUID. Audit errors propagate back to the originating create transaction.
+
+  ## Outcome reporting
+
+  The after-transaction hook emits one catalog stop event with only a count and
+  fixed `:ok`/`:error` outcome. It returns the original result unchanged and does
+  not retain source content, actor IDs or profile digests in metric labels.
+  Telemetry measures action outcomes; it is not a durable audit ledger.
+  """
 
   use Ash.Resource.Change
   alias FrameshiftPlatform.Access.AuditEvent

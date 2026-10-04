@@ -1,5 +1,25 @@
 defmodule Frameshift.Digest do
-  @moduledoc "Content identity helpers for immutable Frameshift objects."
+  @moduledoc """
+  Creates and validates the SHA-256 identity spelling used by Frameshift.
+
+  `sha256/1` hashes content bytes or iodata and returns `sha256:` followed by
+  64 lowercase hexadecimal characters. `valid_sha256?/1` checks that exact
+  spelling and returns `false` for other values. `hex!/1` extracts the hex suffix
+  from an already admitted identifier; validate untrusted input before calling it.
+
+  ## Identity scope
+
+  A digest identifies exact bytes, not their source authenticity, permissions or
+  physical compatibility. Canonical recipe/document owners choose what bytes
+  are hashed; this module does not normalize JSON or add domain separation.
+
+  ## Examples
+
+      iex> Frameshift.Digest.valid_sha256?(Frameshift.Digest.sha256("artwork"))
+      true
+      iex> Frameshift.Digest.valid_sha256?("SHA256:abc")
+      false
+  """
 
   @sha256_pattern ~r/^sha256:[0-9a-f]{64}$/
 

@@ -1,13 +1,24 @@
 defmodule Frameshift.Pairing.Store do
   @moduledoc """
-  Persists the frame's pairing authority as one fail-closed record.
+  Persists commissioning authority in a private fail-closed record.
 
-  Pairing cannot use the display simulator's recover-older-slot strategy: an
-  older slot could resurrect a consumed bootstrap secret. This store replaces
-  one private record atomically and refuses to start when that record is
-  damaged. The simulator cannot prove directory-entry durability on every
-  filesystem. Firmware must provide protected, rollback-resistant storage
-  and prove its own power-loss behavior separately.
+  `load_or_create/3` loads the exact device's protected record or creates it once
+  from a device-owned secret. An absent record and absent secret leave pairing
+  disabled. Invalid permissions, type, checksum or stored authority refuse startup
+  instead of reconstructing a previously consumed bootstrap secret.
+
+  ## Replacement and uncertain commit
+
+  `save/2` writes a private synchronized temporary file, replaces the authority
+  record and attempts directory synchronization before success is acknowledged.
+  An uncertain directory commit remains an error requiring reconciliation.
+  Unlike artwork recovery, this store must not recover an older valid slot that
+  could restore revoked authority or single-use secrets.
+
+  The implementation supports software simulation; it does not prove durability
+  on every filesystem or protected firmware storage. Real frame firmware must
+  qualify atomic, rollback-resistant custody and power-loss behavior for its exact
+  hardware/revision. `Frameshift.Pairing.Window` owns the transition rules.
   """
 
   alias Frameshift.Digest

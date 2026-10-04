@@ -1,19 +1,23 @@
 defmodule Frameshift.Outbox.TLSServer do
   @moduledoc """
-  Runs the reference host outbox on a bounded mutual-TLS socket.
+  Hosts bounded authenticated pull exchanges on the reference TLS listener.
 
-  The listener requires an explicit host certificate and OTP-compatible key
-  handle or signer, an
-  explicit bind address, and a supervised worker pool. During the TLS
-  handshake it accepts only a certificate whose SPKI resolves to exactly one
-  paired pull-capable frame. The DER certificate returned by the established
-  TLS socket is the only identity passed to the HTTP exchange; request fields
-  cannot impersonate another frame.
+  `start_link/1` requires an explicit bind address/port, certificate, OTP-compatible
+  key or signer and task supervisor. TLS handshakes require a certificate whose
+  SPKI resolves to exactly one paired pull-capable frame. Only the established
+  socket's DER peer certificate reaches `Frameshift.Outbox.HTTP1`.
 
-  This module does not obtain or persist the host identity. The macOS
-  credential broker must supply an OTP-compatible identity when background
-  outbox service is enabled; a non-exportable Keychain key needs a compatible
-  signing bridge rather than extraction into a file.
+  ## Connection lifecycle
+
+  Each accepted connection runs one finite exchange in a separately supervised
+  worker with handshake/request deadlines. Strict framing, bounded concurrency
+  and response limits prevent a slow client from becoming unbounded listener
+  work. `port/1` reports the bound port, including an OS-selected test port.
+
+  The owner monitors its acceptor and closes the listener during termination.
+  It does not obtain or persist host identity; non-exportable Keychain keys use
+  the supplied signing bridge. Request fields cannot impersonate a different
+  paired frame, and a successful transfer alone cannot confirm physical display.
   """
 
   use GenServer
@@ -28,10 +32,18 @@ defmodule Frameshift.Outbox.TLSServer do
 
   defmodule State do
     @moduledoc """
-    Owns the TLS listen socket and its supervised accept loop.
+    Owns one pull-outbox TLS listener and its supervised accept loop.
 
-    Every accepted connection is handed to a separate bounded task, so a slow
-    handshake cannot stop other frames from contacting the host.
+    The state requires listener and acceptor handles. The server monitors acceptor
+    loss and closes the listener on termination; separate bounded tasks own accepted
+    connections and one finite HTTP exchange each.
+
+    ## Recovery scope
+
+    `Frameshift.Outbox.TLSServer` constructs this transient value after explicit
+    TLS/bind configuration succeeds. Listener replacement does not reset durable
+    outbox revisions or imply acknowledgement. Those records remain with
+    `Frameshift.Library`, while each new peer must authenticate again through TLS.
     """
 
     @enforce_keys [:acceptor, :listener]

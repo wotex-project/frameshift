@@ -1,12 +1,24 @@
 defmodule Frameshift.DirectDelivery do
   @moduledoc """
-  Connects a rendered durable artifact to the advertised direct Wotex Forms.
+  Joins durable push intent to exact advertised direct-frame interactions.
 
-  Local validation and ephemeral credential resolution finish before the
-  library records a pending push intent. The intent is durable before any
-  network mutation, so a timeout or process crash leaves desired bytes
-  protected for reconciliation. Only an authoritative `:displayed` result
-  advances current and previous-known-good references.
+  `push/6` validates the rendered artifact and selected profile, resolves the
+  paired credential transiently and records pending intent through
+  `Frameshift.Library` before network mutation. The desired bytes stay protected
+  if the call times out or the caller crashes after the frame may have accepted it.
+
+  ## Confirmation and recovery
+
+  `Frameshift.DirectSync` follows admitted Wotex Forms and reads authoritative
+  state. Only its matching `:displayed` outcome advances current and
+  previous-known-good references; transport success or pending display retains
+  unresolved custody. Request identity and payload cannot silently change on replay.
+
+  `reconcile/3` observes the frame's selected read-only state interaction rather
+  than resending an uncertain mutation. Credential resolution, protocol refusal
+  and unresolved observations return errors/pending state without inventing
+  physical completion. The native library owns receipts and immutable artifacts;
+  no companion-platform generation or financial runtime participates in this path.
   """
 
   require Logger

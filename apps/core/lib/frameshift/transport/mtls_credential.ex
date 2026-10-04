@@ -1,10 +1,23 @@
 defmodule Frameshift.Transport.MTLSCredential do
   @moduledoc """
-  Ephemeral mutual-TLS material for one admitted frame authority.
+  Scopes transient TLS identity material to one exact frame HTTPS origin.
 
-  The value is resolved immediately before a transport call. Its custom
-  inspection deliberately omits the client certificate and private key so an
-  exception or diagnostic cannot serialize credential material by accident.
+  `new/4` validates the origin syntax, lowercase SHA-256 server pin, bounded client
+  certificate bytes and supported OTP key representation. It normalizes host and
+  port and retains the binary SPKI digest. Origins cannot contain userinfo, query,
+  fragment or an application path; malformed input returns a typed error.
+
+  ## Lifetime and inspection
+
+  Resolve the certificate/key or signer immediately before an exchange through
+  `Frameshift.Transport.CredentialResolver`. The credential is transient and must
+  not be stored in recipes, TDs, command receipts or ordinary UI results.
+  Its Inspect implementation exposes origin and server pin while omitting both
+  client certificate and private key.
+
+  Construction admits structure only; TLS still proves key possession and the
+  transport checks the request's exact audience and destination policy. Matching
+  a credential origin does not grant physical device or display authority.
   """
 
   @fingerprint_pattern ~r/^sha256:([0-9a-f]{64})$/
@@ -97,10 +110,19 @@ end
 
 defimpl Inspect, for: Frameshift.Transport.MTLSCredential do
   @moduledoc """
-  Redacts mutual-TLS key material from credential inspection.
+  Formats ephemeral TLS credentials without certificate or private-key material.
 
-  Diagnostic formatting includes the origin and server pin only; certificate
-  and private-key values never enter ordinary logs through `inspect/2`.
+  The Inspect implementation emits only the normalized origin, hexadecimal server
+  SPKI pin and a fixed redaction marker. It never traverses the signer/key handle
+  or client certificate, so ordinary inspection cannot serialize those fields
+  into an exception report or local log.
+
+  ## Redaction scope
+
+  This implementation belongs to `Frameshift.Transport.MTLSCredential` and changes
+  presentation only. It does not encrypt memory, sanitize manually constructed
+  maps or authorize a request. Callers must still keep the original credential
+  transient and exclude it from persistent recipes, receipts and UI payloads.
   """
 
   import Inspect.Algebra

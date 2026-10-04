@@ -1,5 +1,5 @@
 defmodule FrameshiftPlatform.Repo.Migrations.CreatePlatformAuditEvents do
-  @moduledoc "Creates the platform audit event ledger."
+  @moduledoc false
 
   use Ecto.Migration
 

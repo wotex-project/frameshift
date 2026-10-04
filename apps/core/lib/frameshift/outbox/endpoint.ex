@@ -1,13 +1,23 @@
 defmodule Frameshift.Outbox.Endpoint do
   @moduledoc """
-  Serves a paired frame's pull outbox after mutual-TLS identity verification.
+  Serves exact pending pull work for the authenticated paired frame.
 
-  The HTTPS listener supplies the verified peer certificate in DER form. This
-  module derives its SPKI pin and resolves exactly one paired frame; no request
-  path, header, or body can select another frame. An asset is served only while
-  its digest is the caller's current desired asset;
-  old content-addressed objects cannot be fetched merely by knowing a digest.
-  This module owns bounded application semantics, not TLS or socket lifetime.
+  `handle/6` receives the verified TLS peer DER certificate plus method, target,
+  content type and body. Its SPKI must resolve to exactly one paired frame; request
+  fields cannot select another frame or bypass ambiguous custody. The handler
+  returns bounded response data and does not own socket or TLS lifetime.
+
+  ## Artifact and acknowledgement scope
+
+  Only the caller frame's current outbox manifest and its exact desired/playlist
+  assets are accessible. Knowing an old content digest does not authorize fetching
+  it. Artifact reads verify immutable bytes and finite limits before serving;
+  acknowledgements validate the schema, current revision and exact expected result.
+
+  `Frameshift.Outbox.HTTP1` supplies strict reference HTTP framing and
+  `Frameshift.Outbox.TLSServer` supplies the proved peer identity. A queued or
+  transferred artifact remains separate from the frame's displayed state;
+  `Frameshift.Library` owns atomic acknowledgement/reference transitions.
   """
 
   alias Frameshift.Digest

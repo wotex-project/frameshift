@@ -1,9 +1,23 @@
 defmodule FrameshiftWorkspace do
   @moduledoc """
-  Checks workspace ownership, static Elixir and frontend imports, and pure Gleam imports.
+  Checks declared component ownership and statically visible workspace imports.
 
-  Reads syntax without evaluating project files. This is an architecture check,
-  not a security sandbox for dynamic code or cross-process communication.
+  `check/1` reads `workspace.json` and the Git-index/untracked file inventory,
+  then validates component names, roots, dependency edges and owned source files.
+  `inspect_files/3` accepts an explicit inventory for fixtures and returns
+  human-readable violations; an empty list means the inspected boundaries pass.
+
+  ## What is inspected
+
+  Elixir syntax, frontend ESM/alias imports and pure Gleam imports are parsed
+  without evaluating project files. Unknown dependencies, cycles, escaped/unowned
+  roots and disallowed static cross-component imports are errors. Unsupported
+  opaque/glob import forms refuse instead of guessing an allowed target.
+
+  This is an architecture-policy check, not a sandbox for dynamic code,
+  cross-process messages, operating-system I/O or credential use. Runtime and
+  installed-release boundaries require their own checks; passing this inventory
+  cannot establish those behaviors.
   """
 
   @spec check(String.t()) :: [String.t()]

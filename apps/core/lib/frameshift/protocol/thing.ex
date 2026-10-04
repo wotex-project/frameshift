@@ -1,15 +1,24 @@
 defmodule Frameshift.Protocol.Thing do
   @moduledoc """
-  Bounded W3C WoT admission and deterministic Form selection for Frameshift.
+  Admits frame/outbox Things and selects exact advertised Wotex Forms.
 
-  Wotex owns TD/TM 1.1 parsing and validation. This module applies the
-  Frameshift semantic role on top: required profiles, affordance names, and
-  the frame capability overlay. It never derives an endpoint from a vendor,
-  hardware revision, or assumed route.
+  `parse_frame/1` and `parse_host_outbox/1` apply bounded Wotex TD admission plus
+  the appropriate Frameshift semantic role and capability overlay. `model/1`
+  returns the embedded validated frame or host-outbox Thing Model. Required
+  profiles and affordances are checked without deriving routes from vendor names.
 
-  Binding profiles are explicit inputs to selection. The included HTTPS
-  profile describes the reference binding's selectable cells; it does not
-  resolve credentials or perform network I/O.
+  ## Selecting an interaction
+
+  `select_frame/5` and `select_host_outbox/5` receive explicit binding profiles.
+  The reference HTTPS JSON/artifact profile constructors declare supported cells;
+  Wotex owns relative-IRI resolution, operation matching and deterministic Form
+  selection. Selection performs no credential resolution or network exchange.
+
+  A selected Form is an advertised interaction, not evidence of pairing or
+  physical display. `Frameshift.Transport.HTTPClient` owns authenticated finite
+  transport, and the delivery owner checks canonical state afterward. Structural
+  Wotex errors and `Frameshift.Protocol.Thing.Error` semantic failures retain
+  separate meaning; unsupported required affordances cannot become guessed URLs.
   """
 
   alias Frameshift.Protocol.Schema
@@ -17,7 +26,22 @@ defmodule Frameshift.Protocol.Thing do
   alias Wotex.{ThingDescription, ThingModel}
 
   defmodule Error do
-    @moduledoc "Stable Frameshift semantic-admission failure."
+    @moduledoc """
+    Describes a located Frameshift semantic-admission refusal.
+
+    The exception requires a stable code, message and document path, with semantic
+    phase and bounded details available to the caller. It describes frame/outbox
+    role failures after generic Wotex admission, keeping structural parser errors
+    and product-semantic errors distinct.
+
+    ## Consumer handling
+
+    `Frameshift.Protocol.Thing` creates these failures when required profiles,
+    affordances or capability semantics cannot be admitted. Callers should use the
+    code/path for recovery and finite diagnostics rather than guessing an endpoint
+    or treating an unsupported role as a valid Thing. This value grants no network
+    or device authority and is not a physical validation report.
+    """
 
     @type t :: %__MODULE__{
             code: atom(),

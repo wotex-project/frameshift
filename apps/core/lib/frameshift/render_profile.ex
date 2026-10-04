@@ -1,11 +1,23 @@
 defmodule Frameshift.RenderProfile do
   @moduledoc """
-  Compiles an advertised artifact-profile instance into a deterministic raster
-  job without consulting vendor or model names.
+  Compiles advertised artifact capabilities into a deterministic raster job.
 
-  The current compiler accepts exact uncompressed, tightly packed RGB24
-  profiles in sRGB. Other valid universal profiles remain discoverable but fail
-  explicitly until their packer/color implementation is present.
+  `compile/3` inspects already admitted master metadata and frame capabilities,
+  selects a supported artifact profile or checks the requested profile ID, and
+  returns the job, artifact attributes and exact selected profile. Selection uses
+  capability structure rather than vendor or model branches.
+
+  ## Supported rendering
+
+  The current path accepts uncompressed tightly packed RGB24 in sRGB and bounded
+  source/target dimensions. It computes a centered crop, bilinear resize, white
+  background and no dithering. Other structurally valid advertised profiles remain
+  discoverable but refuse until their color/packing implementation exists.
+
+  This pure compiler does not read artwork, render bytes, resolve credentials or
+  queue delivery. `Frameshift.RenderPipeline` supplies verified master pixels to
+  the isolated worker and binds its output to the recipe/cache. A compiled job
+  therefore establishes supported software intent, not physical panel acceptance.
   """
 
   @renderer_revision "frameshift-raster-v0.1"

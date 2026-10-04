@@ -1,5 +1,25 @@
 defmodule FrameshiftPlatform.Catalog.SeedImport do
-  @moduledoc "Explicit, retryable administrative import of reviewed public candidate data."
+  @moduledoc """
+  Imports reviewed local source and profile candidates with explicit attribution.
+
+  `run/2` reads a schema-1 `manifest.json`, records source revisions first and
+  then validates each profile file against its pinned metadata. The supplied
+  `FrameshiftPlatform.Access.Actor` must have an admitted catalog-writing role.
+  Success returns source/profile counts; unauthorized input or any conflicting
+  revision stops the import with an error.
+
+  ## Retry and file bounds
+
+  Identical existing sources/profiles are reused, making a partial import
+  retryable. The whole manifest is not one transaction: earlier successful
+  records remain if a later item fails. Each create retains its own atomic audit.
+  Files must be regular and at most 256 KiB; profile paths must match the exact
+  ID/revision naming convention. No remote source is fetched and candidates are
+  not promoted to physical qualification.
+
+  The administrative `Mix.Tasks.Frameshift.SeedCatalog` task supplies the actor
+  and directory explicitly; application startup never imports seeds implicitly.
+  """
 
   alias FrameshiftPlatform.Access.Actor
   alias FrameshiftPlatform.Catalog

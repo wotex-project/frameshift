@@ -1,9 +1,23 @@
 defmodule Frameshift.Qualification.WorkStore do
   @moduledoc """
-  Freezes accepted work and exact rendered results under the Library writer.
+  Freezes accepted artwork work and its exact result under the library writer.
 
-  The active pointer is read in the same transaction as acceptance. Later
-  activation changes therefore cannot rewrite accepted work or its result.
+  `accept/5` checks the frame's active admitted binding in the same transaction
+  that records master/recipe work identity. `record_result/3` binds that immutable
+  work to the exact registered artifact; repeated incompatible results cannot
+  rewrite previously accepted bytes.
+
+  ## Delivery custody
+
+  `delivery_binding/6` checks work, result, frame, artifact, profile and transfer
+  mode before a delivery intent uses qualified output. Reads through `get/2` and
+  `result/2` expose the retained records while connection ownership remains with
+  `Frameshift.Library`.
+
+  A later activation or cohort rollback changes admission for new work, not the
+  identity/result of old work. Accepted work is not proof of a completed network
+  mutation or displayed artwork; delivery confirmation remains a separate
+  revision-bound transition with its own durable intent and recovery.
   """
 
   alias Frameshift.Diagnostics.Store, as: DiagnosticsStore

@@ -1,9 +1,22 @@
 defmodule Frameshift.Diagnostics.LogFormatter do
   @moduledoc """
-  Formats an allowlisted operational record for native and fallback log sinks.
+  Formats finite operational records for native and rotating fallback logs.
 
-  Arbitrary exception messages, paths, and third-party metadata are never
-  forwarded. Unclassified runtime failures retain level and time only.
+  Both Logger and OTP formatter entrypoints emit an `FSLOG|` JSON line containing
+  an allowlisted event, level, timestamp and validated optional outcome/attempt/
+  duration data. Raw messages, paths, exception text and arbitrary third-party
+  metadata are discarded. Unclassified events retain only the permitted fields.
+
+  ## Correlation and privacy
+
+  Bounded command/request identifiers are hashed before becoming correlation
+  values; only valid attempt IDs and finite duration ranges are retained.
+  These values support local investigation without serializing credentials,
+  artwork bytes or source paths through a generic inspect operation.
+
+  The formatter does not own collection, audit storage or authorization to read
+  logs. `Frameshift.Diagnostics.FallbackLog` admits the file boundary, and native
+  release configuration owns the OS/fallback sinks and their lifecycle.
   """
 
   alias Frameshift.Digest

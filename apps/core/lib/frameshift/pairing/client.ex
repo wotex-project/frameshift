@@ -1,12 +1,23 @@
 defmodule Frameshift.Pairing.Client do
   @moduledoc """
-  Sends the physical bootstrap secret only through the QR-pinned HTTPS peer.
+  Performs the fixed pre-pair exchange with the physically pinned HTTPS peer.
 
-  Pairing is intentionally outside private Thing Description Forms. This
-  client uses the fixed pre-pair reference path, the same local-address and
-  mutual-TLS transport controls as ordinary frame traffic, and validates the
-  response against the physical device ID and presented host certificate.
-  It does not register a frame until the authenticated TD is retrieved later.
+  `pair/4` accepts the parsed bootstrap, ephemeral host credential, request ID
+  and explicit transport options. It uses the reference commissioning path
+  outside private TD Forms, with local-address admission, mutual TLS, a bounded
+  deadline/body and server key pin checked before sending the secret.
+
+  ## Receipt scope
+
+  The response must bind the physical device ID and presented host certificate.
+  A successful exchange establishes the returned commissioning receipt, not a
+  stored host frame record. `Frameshift.Pairing.Admission` subsequently fetches
+  the authenticated matching TD and joins it to durable native custody.
+
+  A network failure may leave pairing outcome uncertain. Recovery observes the
+  authenticated TD rather than resending the consumed secret or substituting a
+  new device identifier. Ordinary advertised interactions stay separate from
+  this physical-window protocol.
   """
 
   alias Frameshift.Pairing.Bootstrap

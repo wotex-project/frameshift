@@ -1,12 +1,23 @@
 defmodule Frameshift.Pairing.TLSServer do
   @moduledoc """
-  Hosts the fixed physical-pairing exchange on a bounded TLS 1.3 listener.
+  Hosts bounded commissioning exchanges on a TLS 1.3 listener.
 
-  The TLS handshake requires a client certificate and proves possession of
-  its private key. An untrusted or self-signed commissioning certificate may
-  pass chain validation, but the established peer DER certificate is handed
-  directly to the frame's physical-window state machine. This listener cannot
-  open pair mode and exposes no normal frame operations.
+  `start_link/1` receives an explicit frame TLS identity, bind configuration,
+  simulator owner and supervised task boundary. Handshakes require a client
+  certificate and proof of private-key possession. Explicitly accepted commissioning
+  chain conditions do not themselves grant pairing authority.
+
+  ## Physical-window dispatch
+
+  The established peer DER is passed directly to `Frameshift.Pairing.HTTP1` and
+  the physical-window state machine. This listener cannot open pairing mode and
+  exposes no ordinary frame mutations. Each accepted connection has bounded
+  handshake/request work in a separate supervised task; `port/1` reports its port.
+
+  The owner monitors the accept loop and closes the listener on termination.
+  Successful software TLS/window exchanges do not qualify firmware key storage
+  or the device's physical input. Normal paired operations use their own admitted
+  Thing Forms and authenticated custody after commissioning.
   """
 
   use GenServer
@@ -19,10 +30,18 @@ defmodule Frameshift.Pairing.TLSServer do
 
   defmodule State do
     @moduledoc """
-    Owns the pairing listen socket and its supervised accept loop.
+    Owns the commissioning TLS listener and supervised accept loop.
 
-    Every accepted connection gets a separate bounded worker so a slow
-    handshake cannot monopolize the listener.
+    The listener and acceptor are required process handles; each connection runs
+    in a separate bounded task. Acceptor loss terminates the owner and shutdown
+    closes the listen socket rather than leaving commissioning access orphaned.
+
+    ## Physical authority
+
+    `Frameshift.Pairing.TLSServer` constructs this value during listener startup.
+    It contains no physical-window authority and cannot open pairing mode or restore
+    a consumed secret. Persisted host authorization remains with the frame's
+    separate window/store owner across listener restarts.
     """
 
     @enforce_keys [:acceptor, :listener]

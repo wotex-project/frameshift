@@ -1,5 +1,23 @@
 defmodule FrameshiftBuild.Context do
-  @moduledoc "Resolves exact physical planning inputs under one shared byte budget."
+  @moduledoc """
+  Resolves exact v1 assembly, profiles, signal mappings and artifact layouts.
+
+  `resolve/4` admits each document list, enforces the combined byte budget and
+  checks canonical identities with standard cryptography before the shared Gleam
+  resolver binds references. It returns assembly identity, verified context,
+  canonical combined bytes and a domain-separated compilation identity.
+
+  ## Failure and ownership
+
+  Malformed documents, count/budget excess, missing pins or incompatible references
+  return stable binary refusal codes rather than a partial trusted context.
+  Original bytes remain the identity input; the adapter does not normalize an
+  unaccepted document into a different hash.
+
+  Use `FrameshiftBuild.resolve_context/4` for the public package boundary.
+  Resolution proves exact structural custody under the retained v1 contract, not
+  manufacturer evidence, hardware fit or successor Conjunct conformance.
+  """
 
   alias FrameshiftBuild.Documents
 

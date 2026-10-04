@@ -1,12 +1,24 @@
 defmodule Frameshift.Pairing.Window do
   @moduledoc """
-  Enforces the frame's physical pairing window in the software state machine.
+  Models physical-window commissioning and single-use host authorization.
 
-  Only a local physical adapter should call `open/2`; a network request can
-  never open a window. A successful request needs the one-time QR secret and
-  an already authenticated TLS client certificate. The secret is consumed and
-  the allowed certificate fingerprint is recorded before normal traffic is
-  enabled. Real firmware must persist this transition atomically.
+  `new/2` creates unpaired device-owned secret state. Only a local physical adapter
+  may call `open/2`, which starts a five-minute window; a network request cannot
+  open it. Authorization requires the matching device/request identity, secret
+  and TLS peer certificate within the attempt/time limits.
+
+  ## Authority transition
+
+  `authorize/6` returns the next state or explicit refusal. Successful pairing
+  consumes the secret and records the host certificate fingerprint and request
+  identity. The frame owner must persist that transition before enabling normal
+  traffic or acknowledging success. Inspection omits secret material.
+
+  An already paired device cannot acquire another host through a new physical
+  window in this state machine. Stale time, exhausted attempts and mismatched
+  identities remain refusal paths; real firmware separately supplies protected,
+  rollback-resistant storage and the physical trigger. No function here performs
+  network I/O or proves that the modeled button/secret exists on hardware.
   """
 
   @window_ms 5 * 60 * 1_000

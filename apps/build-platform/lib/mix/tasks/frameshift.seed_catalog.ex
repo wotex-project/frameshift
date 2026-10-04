@@ -1,5 +1,20 @@
 defmodule Mix.Tasks.Frameshift.SeedCatalog do
-  @moduledoc "Imports reviewed candidate data using an explicit local administrator attribution."
+  @moduledoc """
+  Imports reviewed local candidates under an explicitly supplied editor identity.
+
+  Run from the platform application with `--actor UUID --directory PATH`.
+  Both arguments are required; positional or unknown options refuse. The task
+  loads application configuration, disables HTTP serving and starts the application
+  before invoking `FrameshiftPlatform.Catalog.SeedImport.run/2`.
+
+  ## Attribution and retries
+
+  The actor UUID attributes this local administrative operation; it is not proof
+  of an authenticated browser session. Seed import reuses identical revisions,
+  stops on conflicts and preserves earlier committed records if a later item
+  fails. Successful completion prints counts; refused input raises a Mix error.
+  No seed import occurs implicitly at normal application startup.
+  """
 
   use Mix.Task
   alias FrameshiftPlatform.Access.Actor

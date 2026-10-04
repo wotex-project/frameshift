@@ -1,9 +1,23 @@
 defmodule Frameshift.Qualification.Store do
   @moduledoc """
-  Persists local qualification decisions through the Library's single writer.
+  Persists candidate, admitted and active render/transfer bindings.
 
-  Candidate custody, software evidence, and active selection are distinct.
-  A candidate cannot become active without an explicit admission transition.
+  `register/2` checks canonical binding identity, executable software contract and
+  matching paired frame/profile before retaining a candidate. `admit/3` adds exact
+  bounded software evidence; `activate/3` selects an admitted binding for new work
+  on its frame. Those are separate transitions, never implicit promotion.
+
+  ## Atomic selection
+
+  `activate_cohort/2` validates and promotes an exact set in one transaction;
+  a failure leaves every active pointer unchanged. `get/2` and `active/2` read
+  candidate/current records without returning a writable connection to callers.
+  Existing accepted work keeps its original binding when active selection changes.
+
+  This module is invoked through `Frameshift.Library` and shares its writer and
+  audit transaction. It qualifies the recorded software binding scope, not the
+  frame's physical installation. Unsupported revisions, mismatched frame/profile
+  custody and missing admission evidence refuse before activation.
   """
 
   alias Frameshift.Diagnostics.Store, as: DiagnosticsStore

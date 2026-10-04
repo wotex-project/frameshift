@@ -1,9 +1,24 @@
 defmodule Frameshift.Library.Backup do
   @moduledoc """
-  Consistent, private directory backups and offline restore validation.
+  Creates verified private library snapshots and validates offline restores.
 
-  Creation runs inside the Library GenServer, which serializes object changes
-  for the full copy. Restore is called only for an absent, stopped data root.
+  `create/3` is called by `Frameshift.Library` while its GenServer serializes
+  object changes. It snapshots SQLite, copies referenced objects and writes an
+  exact digest manifest in a private staging directory. Verification completes
+  before the staged directory is published to an absent destination outside the
+  live data root.
+
+  ## Restore boundary
+
+  `verify/1` checks the manifest, database and object closure, including expected
+  bytes and digests. `restore/2` requires an absent destination and a stopped
+  library, copies only admitted files, verifies the staged result and rebuilds
+  search before publication. It does not merge into a running or existing store.
+
+  Use `Frameshift.Library.Maintenance` for the packaged offline entrypoint.
+  Corrupt/missing objects or unsafe destinations return errors; failed staging
+  is cleaned up rather than presenting a partial backup as a completed snapshot.
+  A valid backup proves retained local custody, not live frame or provider state.
   """
 
   alias Frameshift.ContentStore

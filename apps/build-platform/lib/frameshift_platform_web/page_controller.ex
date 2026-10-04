@@ -1,5 +1,19 @@
 defmodule FrameshiftPlatformWeb.PageController do
-  @moduledoc "Serves the SvelteKit static application with its exact script hashes."
+  @moduledoc """
+  Serves the built SvelteKit application's HTML with matching script policy.
+
+  `show/2` reads `priv/static/index.html` from the installed platform application.
+  The response computes SHA-256 allowances from that HTML's inline script bodies,
+  sets a same-origin content security policy and disables stale HTML caching.
+  Static application assets are served separately by the endpoint.
+
+  ## Build and failure behavior
+
+  The controller never invokes a frontend compiler or fetches assets remotely.
+  A missing/unreadable index returns 503 with a public availability message.
+  The installed HTML and hashed assets must therefore come from the same qualified
+  asset build; a running endpoint alone does not establish that the UI is present.
+  """
 
   use Phoenix.Controller, formats: [:html]
 

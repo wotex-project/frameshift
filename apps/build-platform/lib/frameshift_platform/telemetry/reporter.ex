@@ -1,7 +1,23 @@
 defmodule FrameshiftPlatform.Telemetry.Reporter do
   @moduledoc """
-  Fixed-bucket Prometheus reporting without per-event messages or retained samples.
-  Raw metadata is read only to project catalog tags; it is never stored.
+  Aggregates the platform metric catalog into fixed Prometheus buckets.
+
+  The supervised reporter owns a named registry and telemetry attachment.
+  Handlers project finite catalog dimensions directly into counters, gauges and
+  histograms without sending one process message per event or retaining samples.
+  Raw event metadata is examined for tags and then discarded.
+
+  ## Lifecycle and failure
+
+  Startup clears the process-local registry, declares the current catalog and
+  samples VM state. Sampling repeats every ten seconds; restart resets aggregates
+  and the start timestamp. `scrape/0` returns text or `{:error, :unavailable}` if
+  the owner cannot answer within its bounded call.
+
+  Invalid, nonfinite, negative or oversized observations increment a rejection
+  counter rather than escaping into new labels. Termination detaches the handler.
+  The registry is operational telemetry and never owns catalog receipts or audit
+  truth; `FrameshiftPlatformWeb.MetricsController` independently protects export.
   """
 
   use GenServer

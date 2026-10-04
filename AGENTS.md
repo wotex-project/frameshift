@@ -74,6 +74,13 @@ instruction discovery must read this file explicitly.
   citations, and uncertainty; remove marketing language, filler, and repeated
   conclusions. Check claims in context rather than treating word searches as
   evidence of correctness.
+- Give non-test, non-migration Elixir modules helpful, extensive `@moduledoc`
+  content describing usage, ownership, inputs/results and relevant limits or
+  failure/recovery behavior. Follow the [Elixir documentation guidance](https://hexdocs.pm/elixir/writing-documentation.html):
+  a concise opening summary, `##` sections, fully qualified module references,
+  function names with arity, and checked examples where useful. Keep exactly
+  one blank line after the module documentation attribute. Migration and test
+  modules, including test-support modules, use `@moduledoc false`.
 
 Put maintained content beside its owner and link new specifications from
 [docs/README.md](docs/README.md). Do not create a parallel `docs/specs/` tree.

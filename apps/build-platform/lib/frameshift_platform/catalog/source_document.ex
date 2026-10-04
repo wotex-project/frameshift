@@ -1,5 +1,23 @@
 defmodule FrameshiftPlatform.Catalog.SourceDocument do
-  @moduledoc "Immutable public source metadata, distinct from physical admission evidence."
+  @moduledoc """
+  Stores immutable public source locators and revision metadata.
+
+  The `:record` action accepts title, HTTPS URI, revision, content digest, evidence
+  kind and observation time. The digest is 64 lowercase hexadecimal characters;
+  source URI/revision and content-digest/revision pairs are unique. Trusted action
+  context supplies private actor attribution and a transactional audit event.
+
+  ## Reading and recording
+
+  Anonymous reads use required offset pagination with a default of 50 and maximum
+  of 100 records. Only catalog editors and research workers may record revisions.
+  There are no update or destroy actions; changed source content needs a distinct
+  revision instead of overwriting the old observation.
+
+  The resource stores metadata, not downloaded document bytes or permission to
+  redistribute them. `FrameshiftPlatform.Catalog.SourceURI` validates locator
+  syntax without fetching, resolving or authenticating the source.
+  """
 
   use Ash.Resource,
     domain: FrameshiftPlatform.Catalog,

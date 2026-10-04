@@ -1,10 +1,24 @@
 defmodule Frameshift.Pairing.Admission do
   @moduledoc """
-  Completes a transient physical pairing exchange before durable frame admission.
+  Joins a transient physical pairing exchange to durable native frame custody.
 
-  The bootstrap secret is used only in this call. The single writer receives
-  the authenticated Thing Description, opaque credential reference, and pin;
-  it never receives the bootstrap source or secret.
+  `pair/6` parses the physical bootstrap, matches discovery's device ID, resolves
+  the explicit host identity and performs a pinned commissioning exchange. It
+  then retrieves and validates the authenticated TD for that same device before
+  admitting a paired record through `Frameshift.Library`.
+
+  ## Secret and recovery boundaries
+
+  The QR secret and bootstrap source remain transient; the writer receives only
+  the authenticated TD, opaque credential reference and server pin. A discovery
+  origin is a candidate endpoint, never permission to send a secret before the
+  physical key pin matches.
+
+  `recover/5` reconciles an uncertain pairing by reading the authenticated TD
+  without reposting the one-time secret. Invalid discovery, identity, TD or
+  exchange evidence refuses durable admission. Successful admission refreshes
+  the pull outbox service; it does not imply hardware key-storage qualification
+  or authorize a different frame with similar capabilities.
   """
 
   alias Frameshift.Library

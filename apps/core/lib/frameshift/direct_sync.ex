@@ -1,17 +1,25 @@
 defmodule Frameshift.DirectSync do
   @moduledoc """
-  Reconciles one rendered still with an awake frame through advertised Forms.
+  Synchronizes an immutable still through admitted frame Forms and state checks.
 
-  Wotex owns Thing Description admission, relative-IRI resolution, operation
-  matching, and deterministic binding-profile selection. This module supplies
-  the Frameshift reference HTTPS semantics that are intentionally outside the
-  generic JSON binding: strict artifact URI-template expansion, binary digest
-  fields, conditional desired-state writes, bounded problem decoding, and
-  canonical state reconciliation.
+  `sync/5` receives a validated Wotex Thing Description, artifact, ephemeral
+  credential, binding configuration and explicit execution context. It selects
+  advertised Forms, reads current state, installs missing binary bytes and writes
+  desired state under the strong revision ETag before observing the state again.
 
-  A transport success is never treated as physical display success. The
-  selected `state` Property is read after `setDesired`; only a matching
-  `currentAsset` with `displayState: displayed` yields `:displayed`.
+  ## Reference-binding semantics
+
+  Wotex owns TD admission, relative-IRI resolution, operation matching and Form
+  selection. This module supplies exact artifact URI-template expansion, binary
+  digest fields, bounded problem decoding and reference desired/state semantics.
+  Retries are limited to explicitly supported safe cases; an uncertain mutation
+  is not an invitation to mint another request ID.
+
+  Only matching `currentAsset` and `displayState: displayed` yield `:displayed`.
+  An accepted request without that evidence remains `:pending`. `observe/6`
+  performs read-only reconciliation for an existing digest/request ID and never
+  reposts desired state. `Frameshift.DirectDelivery` owns durable intent/reference
+  updates; this synchronizer keeps only transient session and transport context.
   """
 
   alias Frameshift.Digest
@@ -52,10 +60,19 @@ defmodule Frameshift.DirectSync do
 
   defmodule Session do
     @moduledoc """
-    Short-lived context for one direct synchronization attempt.
+    Holds the transient inputs and selected Forms for one direct synchronization.
 
-    It holds the credential only while selected Forms are being executed and
-    omits all fields from inspection to avoid accidental diagnostic exposure.
+    The session binds immutable artifact, target profile, binding configuration,
+    execution context, selected interactions and resolved credential. Installation
+    status tracks only the current attempt; authoritative displayed state is read
+    through the selected frame Property.
+
+    ## Credential lifetime
+
+    `Frameshift.DirectSync` constructs and consumes this value during a call.
+    Inspection omits all fields because both artwork and credentials are present.
+    It is not persisted as a command receipt, durable intent or recovery snapshot;
+    `Frameshift.DirectDelivery` owns those references without copying key material.
     """
 
     @type t :: %__MODULE__{

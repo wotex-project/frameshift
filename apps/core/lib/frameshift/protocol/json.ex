@@ -1,10 +1,22 @@
 defmodule Frameshift.Protocol.JSON do
   @moduledoc """
-  Bounded JSON decoding for Frame Protocol control documents.
+  Decodes bounded Frame Protocol JSON before schema admission.
 
-  The byte and nesting limits are checked before materializing an Elixir term.
-  RFC 8785 decoding rejects duplicate object names, unsafe numeric forms, and
-  malformed UTF-8. Schema validation happens only after those parser checks.
+  `decode_control/2` applies a 64 KiB byte ceiling; `decode_thing_description/1`
+  permits the separate 256 KiB TD ceiling. Both enforce nesting depth 32 before
+  materializing the document. RFC 8785 decoding refuses duplicate keys, unsafe
+  numeric forms and malformed UTF-8 rather than accepting ambiguous input.
+
+  ## Schema and result boundary
+
+  After parser admission, `Frameshift.Protocol.Schema` validates the named
+  embedded schema. Results retain distinct parser/limit/schema errors so callers
+  can refuse malformed wire input without dispatching it. TD/TM semantic admission
+  still belongs to `Frameshift.Protocol.Thing` through Wotex.
+
+  `encode/1` returns deterministic RFC 8785 JSON for a value; encoding alone does
+  not validate a protocol schema, authenticate a peer or authorize a mutation.
+  No decode path fetches external schemas or interprets document strings as code.
   """
 
   alias Frameshift.Protocol.Schema

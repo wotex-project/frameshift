@@ -1,9 +1,23 @@
 defmodule Frameshift.Diagnostics.Catalog do
   @moduledoc """
-  Versioned, bounded metric definitions for the portable host.
+  Defines versioned native telemetry events, measurements and finite dimensions.
 
-  Correlation IDs and dynamic frame or content identifiers are deliberately
-  absent from dimensions. Unknown enum values collapse to `other`.
+  `events/0` lists owned events and `metrics/0` exposes their Telemetry.Metrics
+  representations. `samples/3` accepts bounded finite observations and reduces
+  enum values to declared dimensions, with unknown values collapsed to `other`.
+  Dynamic frame/content/correlation identifiers are not metric labels.
+
+  ## Persistent meaning
+
+  `describe/0` supplies the machine-readable catalog used to interpret rollups;
+  `valid_rollup?/1` checks a completed aggregate before storage. Units, bounds,
+  aggregation and schema revision belong to this catalog, not an emitter-chosen
+  metadata map. Invalid input produces no admitted samples.
+
+  `Frameshift.Diagnostics.Metrics` owns collection and aggregation, and
+  `Frameshift.Diagnostics.Store` writes validated rollups under the library
+  writer. Metrics establish reported coverage/loss and observed operation counts;
+  they do not replace durable command/audit receipts or prove display completion.
   """
 
   @duration_buckets [5, 10, 25, 50, 100, 250, 500, 1_000, 2_500, 5_000, 10_000, 30_000]

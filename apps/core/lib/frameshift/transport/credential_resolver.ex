@@ -1,11 +1,20 @@
 defmodule Frameshift.Transport.CredentialResolver do
   @moduledoc """
-  Resolves an opaque paired-frame reference immediately before direct TLS I/O.
+  Defines transient resolution of an opaque paired-frame credential reference.
 
-  A macOS implementation must use Keychain-backed identity access. It returns
-  the certificate and an OTP-compatible private-key signer or key handle; the
-  reference, certificate, and signer never appear in a local UI command,
-  recipe, Thing Description, audit entry, or response.
+  Implement `c:resolve/2` to return a public certificate and OTP-compatible private
+  key, signer callback or supported key handle, or an explicit error. The context
+  may contain local process configuration; neither it nor resolved key material
+  belongs in library recipes, Thing Descriptions, UI commands or audit responses.
+
+  ## Native identity ownership
+
+  macOS implementations use Keychain-backed access and keep non-exportable keys
+  in the owning Apple process. `Frameshift.Transport.KeychainBroker` provides the
+  local certificate/signing bridge; callers resolve immediately before TLS I/O.
+  The stored reference is opaque custody metadata, not a serializable credential
+  or permission to contact arbitrary origins. Transport audience/pin checks apply
+  separately through `Frameshift.Transport.MTLSCredential`.
   """
 
   @type identity :: %{certificate: binary(), private_key: term()}

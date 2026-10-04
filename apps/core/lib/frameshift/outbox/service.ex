@@ -1,7 +1,23 @@
 defmodule Frameshift.Outbox.Service do
   @moduledoc """
-  Owns the local-network outbox listener only while one host identity serves
-  paired pull-capable frames. Listener failure never changes durable custody.
+  Maintains the host listener for paired pull-capable frames.
+
+  The supervised service inspects durable paired-frame records and resolves the
+  single host identity reference used by enabled pull frames. It starts or stops
+  `Frameshift.Outbox.TLSServer` as that set changes, with an injected credential
+  resolver, task supervisor and explicit bind configuration.
+
+  ## Availability and custody
+
+  `refresh/1` requests reconciliation after pairing/removal; a periodic recheck
+  also runs every 30 seconds. `status/1` exposes only listener availability and
+  bound port. Conflicting identity references or unavailable credential material
+  leave the service unavailable rather than selecting arbitrary custody.
+
+  Listener failure does not clear outboxes, rotate current artwork or delete
+  paired records. The service owns network lifecycle only; `Frameshift.Library`
+  retains pending intent for a later authenticated contact. Keychain/private-key
+  ownership stays with the native resolver and signer boundary.
   """
 
   use GenServer

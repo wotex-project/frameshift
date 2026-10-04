@@ -1,5 +1,19 @@
 defmodule FrameshiftPlatform.Catalog do
-  @moduledoc "Sourced component evidence and catalog admission ownership."
+  @moduledoc """
+  Exposes immutable source documents and candidate component profiles.
+
+  The Ash domain provides source/profile list and record interfaces plus lookup
+  by exact profile identity. Reads expose catalog evidence without an account;
+  record actions require a trusted catalog-editor or research-worker actor.
+
+  ## Recording evidence
+
+  Record `FrameshiftPlatform.Catalog.SourceDocument` revisions before profiles
+  that cite them. Profile creation validates canonical bytes, derives identity
+  and metadata, resolves exact citations and records attribution atomically.
+  Neither a stored source nor a structurally valid profile proves physical fit;
+  `FrameshiftPlatform.Catalog.ProfileRevision` currently retains candidate status.
+  """
 
   use Ash.Domain
 

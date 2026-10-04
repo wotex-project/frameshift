@@ -1,10 +1,24 @@
 defmodule Frameshift.Diagnostics.Metrics do
   @moduledoc """
-  Bounded local reporter for Frameshift telemetry events.
+  Collects bounded native telemetry and persists aggregate rollups.
 
-  The synchronous telemetry handler projects events to bounded catalog samples
-  before sending a message. Aggregation and SQLite writes happen in this
-  supervised process, never in the emitter.
+  Start the reporter after `Frameshift.Library`. Its synchronous telemetry
+  callback projects events through `Frameshift.Diagnostics.Catalog` before enqueueing
+  bounded samples; aggregation and SQLite writes occur in the supervised reporter,
+  not the event emitter. Queue and pending-series limits prevent unbounded growth.
+
+  ## Coverage, flush and restart
+
+  `status/1` exposes start/event/flush times, queue/pending counts, dropped events
+  and flush failures without waiting for storage. `flush/1` attempts a bounded
+  batch through the library writer; periodic flush and retention maintenance use
+  the same path. Failed flushes remain visible rather than pretending collection
+  was complete or discarding authoritative domain records.
+
+  Collector restart begins a new observation interval; persisted minute/hour
+  rollups retain their catalog meaning. Telemetry loss must remain explicit.
+  The reporter is not a domain receipt journal, and disabled or unavailable
+  collection cannot grant or revoke frame control authority.
   """
 
   use GenServer
@@ -17,7 +31,21 @@ defmodule Frameshift.Diagnostics.Metrics do
   @flush_interval_ms 10_000
 
   defmodule State do
-    @moduledoc "Mutable aggregate buckets retained until the next committed flush."
+    @moduledoc """
+    Holds transient metric buckets and collector coverage for one reporter.
+
+    The state keeps the attached handler ID, library server, atomic queue/loss
+    counters, pending series and event/flush timestamps. Failed flushes remain
+    visible alongside uncommitted buckets; a pending observation is not durable
+    until the library confirms its rollup transaction.
+
+    ## Owner and lifetime
+
+    Only `Frameshift.Diagnostics.Metrics` manages this value. Reporter restart
+    creates a new collection interval while already committed database rollups
+    retain their catalog meaning. Raw event metadata and private frame/artwork
+    identifiers do not belong in these aggregates.
+    """
 
     @type t :: %__MODULE__{
             handler_id: String.t(),

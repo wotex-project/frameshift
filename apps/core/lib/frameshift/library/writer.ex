@@ -1,10 +1,22 @@
 defmodule Frameshift.Library.Writer do
   @moduledoc """
-  Runs durable mutations through the Library's single SQLite owner.
+  Runs SQLite mutations through the library's single transaction owner.
 
-  A SQLite statement failure rolls back the transaction and becomes a returned
-  error. Other exceptions still surface as programming faults. Every attempt
-  emits the same bounded transaction metric after its outcome is known.
+  `transaction/2` invokes one immediate Exqlite transaction on the connection
+  already owned by `Frameshift.Library`. The function receives that same
+  connection; it must not open a second writer or release database handles to IPC.
+  Domain and audit changes belong inside the originating transaction.
+
+  ## Outcomes and diagnostics
+
+  SQLite statement failures roll back and return an error. `unwrap/1` maps
+  completed transactions and database failures to the public storage result;
+  other programming exceptions retain their normal fault behavior.
+  Every attempt emits bounded transaction duration/outcome telemetry after the
+  result is known. Metrics are operational observations, not a transaction receipt.
+
+  Filesystem placement and external network effects have their own recovery
+  owners; a SQLite rollback is not an atomic rollback of those other systems.
   """
 
   @doc "Runs one immediate transaction and reports its storage outcome."

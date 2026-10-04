@@ -1,9 +1,25 @@
 defmodule FrameshiftBuild do
   @moduledoc """
-  Canonical physical planning identities shared with the browser's Gleam codecs.
+  Exposes retained v1 physical-planning codecs and preview to Elixir consumers.
 
-  A valid document preserves claims and provenance. It does not grant assembly
-  compatibility, source authenticity, safety qualification or purchasing rights.
+  Profile, assembly, signal-mapping and artifact-layout identity functions validate
+  exact canonical bytes through the shared Gleam codecs, then hash the specified
+  domain-separated payload with standard SHA-256. Inspection exposes validated
+  metadata and exact citations without admitting source authenticity.
+
+  ## Resolution and preview
+
+  `resolve_build/2` verifies pinned profiles; `resolve_context/4` also binds exact
+  mappings and layouts under a shared budget. `planning_preview/4` runs all thirteen
+  ordered v1 checks on that verified context and reports stage outcomes and the
+  combined identity. Missing/conflicting facts remain explicit rather than being
+  invented during conversion.
+
+  This is retained replay, migration and frame-rule regression support. A valid
+  codec or preview does not grant physical compatibility, safety qualification,
+  purchasing permission or actual-build admission. The successor generic
+  workbench belongs to qualified Conjunct exports; this package must not grow
+  into a competing compiler, procedure planner or check-aggregation engine.
   """
 
   @doc "Validates canonical bytes and returns their versioned SHA-256 identity."

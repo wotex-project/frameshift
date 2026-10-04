@@ -1,5 +1,19 @@
 defmodule FrameshiftBuild.MixProject do
-  @moduledoc false
+  @moduledoc """
+  Configures the retained physical-planning package and its shared-code build.
+
+  The project compiles Gleam before Elixir and the application artifact so Elixir
+  adapters call the same codecs and checks as the browser path. It depends on the
+  shared decision package and uses standard OTP cryptography for exact identities.
+  This project configuration does not start a compiler service or product host.
+
+  ## Build ownership
+
+  `Mix.Tasks.Compile.GleamBuildSpec` copies admitted generated BEAM modules from
+  the package sources plus its JSON runtime. Test modules remain outside the
+  installed application. The package retains v1 replay/migration behavior;
+  qualified Conjunct integration is a separate consumer delivery gate.
+  """
 
   use Mix.Project
 
@@ -21,7 +35,21 @@ defmodule FrameshiftBuild.MixProject do
 end
 
 defmodule Mix.Tasks.Compile.GleamBuildSpec do
-  @moduledoc false
+  @moduledoc """
+  Builds and installs the retained BuildSpec Gleam modules for Mix consumers.
+
+  The compiler requires the selected `gleam` executable and runs an Erlang-target
+  build with warnings treated as errors. Nonzero exit status raises a Mix error
+  with the compiler output rather than publishing partially generated modules.
+
+  ## Installed modules
+
+  The task removes previously generated non-Elixir BEAM files, copies modules
+  corresponding to current package sources and includes the required Gleam JSON
+  runtime. It preserves the Elixir adapter modules in the compile directory.
+  Source-path naming determines generated module names; test-only modules are not
+  copied into the product artifact. This is build-time tooling, not runtime I/O.
+  """
 
   use Mix.Task
 

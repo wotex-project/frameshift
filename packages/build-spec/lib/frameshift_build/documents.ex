@@ -1,5 +1,22 @@
 defmodule FrameshiftBuild.Documents do
-  @moduledoc "Validates exact document inputs and normalizes Gleam refusals for Elixir callers."
+  @moduledoc """
+  Admits document lists and translates shared Gleam results for Elixir adapters.
+
+  `input_types/1` requires binary documents and bounds each list to 64 entries.
+  `hash/2` applies the supplied identity function to every exact byte document,
+  returns digest/byte pairs and stops at the first refusal. Full byte-budget and
+  reference checks remain with the relevant resolution owner.
+
+  ## Result vocabulary
+
+  `normalize/1` preserves successful values and maps a typed Gleam refusal to its
+  stable binary code. It does not rescue arbitrary programming exceptions or
+  invent a successful fallback for unrecognized content.
+
+  `FrameshiftBuild.Context` and `FrameshiftBuild.Resolution` reuse these helpers
+  before shared-codec resolution. Hashing a document establishes identity only;
+  source claims and physical/current-use admission retain separate owners.
+  """
 
   @spec input_types(term()) :: :ok | {:error, binary()}
   def input_types(documents) when length(documents) <= 64 do

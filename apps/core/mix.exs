@@ -1,5 +1,20 @@
 defmodule FrameshiftCore.MixProject do
-  @moduledoc false
+  @moduledoc """
+  Configures the native core's dependencies, release application and quality tools.
+
+  The Mix project pins the supported Elixir/Wotex contract and declares the shared
+  decision package plus storage, schema and transport dependencies. Application
+  startup delegates to `Frameshift.Application`; loading project configuration
+  does not start the library, renderer or IPC listeners.
+
+  ## Development and documentation
+
+  Aliases and preferred environments select the existing formatter, compiler,
+  Credo, audit, Doctor, ExDoc, coverage and Dialyzer checks. Documentation includes
+  owned architecture/research guides alongside the core API. Exact dependency
+  constraints and operated-release qualification remain distinct from generated
+  reference documentation; project metadata is build configuration, not a runtime API.
+  """
 
   use Mix.Project
 

@@ -1,5 +1,23 @@
 defmodule FrameshiftPlatform.Telemetry do
-  @moduledoc "Server metric catalog v3: fixed dimensions, units, bounds and event ownership."
+  @moduledoc """
+  Defines versioned platform metrics with fixed units and finite dimensions.
+
+  `metrics/0` declares catalog outcomes, endpoint responses, transport exceptions,
+  Repo timings and periodic VM/collector gauges. HTTP tags reduce paths and status
+  codes to finite route/outcome sets; catalog tags reduce outcomes to fixed atoms.
+  Raw URLs, source digests, actor IDs and request contents are never label values.
+
+  ## Measurement meaning
+
+  Duration distributions convert native time to seconds using fixed buckets and
+  reject observations above one day. HTTP counters describe prepared responses,
+  not proof of transmission; catalog counters describe transaction outcomes,
+  not durable audit totals. Collector timestamps expose gauge freshness.
+
+  `FrameshiftPlatform.Telemetry.Reporter` owns aggregation and scrape lifecycle.
+  Changing event semantics, units or dimensions needs a catalog revision and
+  updated fixtures; application code should emit the documented events.
+  """
 
   import Telemetry.Metrics
 

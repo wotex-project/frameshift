@@ -1,10 +1,23 @@
 defmodule Frameshift.Transport.SPKIPin do
   @moduledoc """
-  Pins a frame's TLS public key independently of hostname and CA selection.
+  Derives and verifies frame identity from X.509 public-key information.
 
-  The same DER-to-SPKI calculation identifies a frame when it calls the host
-  outbox. TLS still has to verify that the peer possesses the corresponding
-  private key before handing its certificate to the outbox handler.
+  `fingerprint/1` hashes the SubjectPublicKeyInfo of a decoded certificate;
+  `fingerprint_der/1` admits bounded DER bytes and returns the protocol SHA-256
+  spelling. The identity follows the public key, not a certificate's presentation
+  fields or filename. Malformed certificate input returns an error.
+
+  ## TLS use
+
+  The verification callback compares the established peer's key with the expected
+  pin while TLS proves possession. Explicitly handled self-signed/unknown-CA path
+  conditions do not bypass that pin; unrelated certificate failures remain errors.
+  The outbox also uses the same calculation to resolve a verified caller to one
+  paired frame.
+
+  Hashing a certificate alone is not authentication. Callers must supply the peer
+  certificate from the TLS connection, never JSON/header fields, and separately
+  check the exact interaction audience and durable paired custody.
   """
 
   require Record

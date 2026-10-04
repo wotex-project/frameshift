@@ -1,5 +1,20 @@
 defmodule FrameshiftPlatform.Application do
-  @moduledoc "Supervises the companion platform independently of the computer app."
+  @moduledoc """
+  Starts the companion platform and its owned infrastructure.
+
+  The supervisor starts the PostgreSQL Repo, named PubSub service and metric
+  reporter, followed by enabled Refpath child specifications, phoenix-assets
+  children and the Phoenix endpoint. A `:one_for_one` strategy restarts failed
+  children independently; dependency configuration is supplied by the host.
+
+  ## Application boundary
+
+  The companion platform has its own lifecycle and persistence, separate from
+  the native artwork application. Optional runtime startup is selected by
+  `FrameshiftPlatform.Orchestration.child_specs/0`; loading this module does not
+  activate additional producer profiles. `config_change/3` forwards relevant
+  configuration changes to the endpoint during release changes.
+  """
 
   use Application
 

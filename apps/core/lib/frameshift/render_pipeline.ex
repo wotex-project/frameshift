@@ -1,11 +1,25 @@
 defmodule Frameshift.RenderPipeline do
   @moduledoc """
-  Connects a durable, verified master package to the isolated renderer and
-  immutable artifact cache.
+  Renders verified stored masters and records exact immutable target artifacts.
 
-  Image decoding remains an Apple-system boundary. The renderer receives only
-  canonical RGBA8 bytes extracted from the content-addressed master; callers
-  cannot inject replacement pixels for a registered digest.
+  `render_stored_master/5` reads a registered master through
+  `Frameshift.Library`, decodes its verified `Frameshift.MasterPackage`, validates
+  the job and registers a canonical composition recipe. It checks the exact cache
+  identity before invoking `Frameshift.Renderer` and stores the resulting bytes
+  with profile and renderer revision metadata.
+
+  ## Qualified work
+
+  `render_qualified_stored_master/7` additionally checks the active frame/profile/
+  transfer binding, executable build identity and supported software contract.
+  Accepted work freezes those inputs before its immutable result is recorded;
+  a later active-pointer change cannot rewrite earlier work or cached bytes.
+
+  The renderer receives only canonical RGBA8 extracted from the durable package.
+  Caller-provided replacement pixels, mismatched dimensions or stale qualification
+  refuse. Apple-system decoding remains outside this module. Successful rendering
+  means exact artifact custody, not transport completion or physical display;
+  delivery owners perform those later steps and preserve uncertain outcomes.
   """
 
   alias Frameshift.Digest

@@ -1,5 +1,21 @@
 defmodule FrameshiftPlatformWeb.ProfileController do
-  @moduledoc "Anonymous bounded profile metadata and immutable canonical downloads."
+  @moduledoc """
+  Lists candidate profile metadata and downloads exact canonical revisions.
+
+  `index/2` returns public Ash attributes in pages of 50, sorted by profile key
+  and revision, with the offset and continuation indicator. Offset validation
+  is shared with `FrameshiftPlatformWeb.CatalogProjection`; malformed input
+  returns 400 and unavailable catalog reads return 503.
+
+  ## Immutable download
+
+  `show/2` accepts 64 lowercase hexadecimal characters, looks up the corresponding
+  `sha256:` identity and serves the stored canonical bytes as an attachment.
+  Invalid digests return 400 and missing profiles 404. Downloads carry an exact
+  identity ETag and immutable public cache policy; matching conditional requests
+  return 304. Knowing an identity selects catalog evidence, not a physically
+  approved composition or access to private native artwork.
+  """
 
   use Phoenix.Controller, formats: [:json]
   alias FrameshiftPlatform.Catalog

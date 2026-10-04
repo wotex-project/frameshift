@@ -1,5 +1,19 @@
 defmodule FrameshiftPlatformWeb.MetricsController do
-  @moduledoc "A token-protected Prometheus scrape, independent of model diagnostics."
+  @moduledoc """
+  Serves the protected platform Prometheus scrape endpoint.
+
+  `show/2` requires exactly one bearer authorization value matching the configured
+  `:metrics_token`, which must contain at least 32 bytes. Comparison uses hashed
+  values and constant-time comparison. Missing or invalid authorization returns
+  401; responses always carry `cache-control: no-store`.
+
+  ## Collector availability
+
+  An authorized request exports `FrameshiftPlatform.Telemetry.Reporter` text.
+  A missing or failed reporter returns 503 rather than an empty successful scrape.
+  This endpoint supplies observations only: it does not enable model diagnostics,
+  modify domain records or substitute metric counters for durable audit evidence.
+  """
 
   use Phoenix.Controller, formats: [:text]
 

@@ -1,9 +1,23 @@
 defmodule Frameshift.LocalIPC.DiagnosticsServer do
   @moduledoc """
-  Peer-authenticated, read-only diagnostics over a private Unix socket.
+  Serves peer-authenticated read-only diagnostics over a private Unix socket.
 
-  This endpoint has no mutation dispatch and accepts no shell bootstrap token.
-  Each connection handles one bounded length-framed JSON request.
+  `start_link/1` receives the path and owned library/metrics/task boundaries.
+  The containing directory is private, the socket is owner-only and each peer's
+  kernel-reported UID must match the directory owner. Unsupported peer-identity
+  mechanisms fail closed; the shell command bootstrap token is not accepted here.
+
+  ## Requests and lifecycle
+
+  One connection carries a length-framed JSON request of at most 8 KiB and a
+  response of at most 256 KiB, with a five-second deadline and at most 16 clients.
+  The finite query set reads catalog/health/metric/redacted-audit projections;
+  there is no generic SQL, library mutation or network-effect dispatch.
+
+  The process monitors its acceptor and closes/unlinks its socket during shutdown.
+  `Frameshift.LocalIPC.Server` is a different command endpoint with its own token
+  and receipt contract. Diagnostics availability does not establish full collector
+  coverage or grant access to private artwork and credential material.
   """
 
   use GenServer
@@ -19,7 +33,21 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
   @maximum_clients 16
 
   defmodule State do
-    @moduledoc "Owns the listener and its supervised acceptor."
+    @moduledoc """
+    Tracks the diagnostic listener, private path and supervised acceptor.
+
+    The owner monitors the acceptor and retains the socket handle so shutdown can
+    close it and unlink the endpoint. Individual client workers receive bounded
+    read-only dependencies, not ownership of the listener or permission to dispatch
+    native commands.
+
+    ## Process lifetime
+
+    `Frameshift.LocalIPC.DiagnosticsServer` constructs this state after directory,
+    socket and peer policy setup. It is transient and not a persisted diagnostic
+    record. Restart must re-establish the endpoint's permissions and authentication
+    rather than reviving an old socket handle.
+    """
 
     @type t :: %__MODULE__{listener: :socket.socket(), path: String.t(), acceptor: pid()}
 

@@ -1,9 +1,18 @@
 defmodule Frameshift.Transport.SystemResolver do
   @moduledoc """
-  Resolves all address families for a frame's advertised HTTPS authority.
+  Returns resolved IPv4 and IPv6 addresses for an advertised frame host.
 
-  The transport admits every returned address against local-network policy
-  before connecting, rather than trusting a hostname or one DNS answer.
+  `resolve/2` accepts a binary hostname and gathers address-family results without
+  opening a frame connection. Invalid destinations or failed resolution return
+  an explicit error rather than an invented loopback or fallback address.
+
+  ## Consumer policy
+
+  The resolver supplies candidates, not network authorization.
+  `Frameshift.Transport.HTTPClient` admits every returned address against its
+  configured local-network policy before connecting; one acceptable answer does
+  not excuse another forbidden address. Resolution does not authenticate the
+  host or establish the TLS pin, which belongs to the transport credential.
   """
 
   @spec resolve(String.t(), term()) :: {:ok, [:inet.ip_address()]} | {:error, atom()}

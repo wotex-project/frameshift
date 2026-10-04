@@ -1,5 +1,20 @@
 defmodule FrameshiftPlatform.MixProject do
-  @moduledoc false
+  @moduledoc """
+  Configures the independent Phoenix/Ash companion application's build.
+
+  The project selects product/shared-package paths, the exact Refpath and
+  AshPostgres source pins and their compatible numerical/native dependencies.
+  Application startup delegates to `FrameshiftPlatform.Application`; the platform
+  owns its PostgreSQL database separately from native artwork SQLite custody.
+
+  ## Quality and environments
+
+  Test compilation includes support modules and the test alias creates/migrates
+  its isolated database before ExUnit. The check alias runs format, warning-free
+  compilation, tests and strict Credo. Narrow dependency-advisory exceptions retain
+  their explicit reachability record; they do not suppress unrelated findings.
+  Frontend contract/build checks remain in the repository's platform lane.
+  """
 
   use Mix.Project
 

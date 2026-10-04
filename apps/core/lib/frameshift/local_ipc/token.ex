@@ -1,9 +1,22 @@
 defmodule Frameshift.LocalIPC.Token do
   @moduledoc """
-  Consumes the shell-to-core bootstrap challenge exactly once.
+  Consumes the private shell-to-core launch challenge file.
 
-  The token file must be a bounded, user-only regular file. After reading, the
-  core removes it before accepting local commands.
+  `consume/1` accepts a bounded path, checks the opened file is a user-only regular
+  file of exactly 64 bytes and reads the lowercase hexadecimal token. It closes
+  and removes the file before returning the admitted value; malformed encoding,
+  unsafe permissions, file type and I/O failures are explicit errors.
+
+  ## One-use bootstrap, launch-long authentication
+
+  The file is one-use bootstrap custody, not a persistent credential record.
+  The returned token authenticates local command requests for that core launch;
+  it must not enter recipes, snapshots or ordinary logs. Application startup
+  consumes it before opening `Frameshift.LocalIPC.Server`.
+
+  This module does not generate the random challenge, start a listener or authorize
+  read-only diagnostics. The launching shell owns creation and the diagnostics
+  endpoint independently checks operating-system peer credentials.
   """
 
   @token_pattern ~r/^[0-9a-f]{64}$/

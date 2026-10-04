@@ -1,5 +1,19 @@
 defmodule FrameshiftPlatform.Catalog.PrepareProfile do
-  @moduledoc "Derives immutable profile metadata solely from the shared validated codec."
+  @moduledoc """
+  Derives candidate profile metadata from validated canonical bytes.
+
+  The Ash create change calls `FrameshiftBuild.inspect_profile/1` and copies only
+  its derived identity, key, revision, kind and classes. It resets source bindings
+  and places the exact citations in action context for
+  `FrameshiftPlatform.Catalog.BindProfileSources` to resolve before insertion.
+
+  ## Input ownership
+
+  Callers supply the canonical document and label, not derived identifiers.
+  A codec refusal becomes a `:canonical` field error and prevents creation.
+  Valid encoding establishes structural and content identity only; it does not
+  promote candidate evidence to a physically qualified configuration.
+  """
 
   use Ash.Resource.Change
 

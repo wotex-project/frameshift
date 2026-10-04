@@ -1,10 +1,22 @@
 defmodule Frameshift.Renderer.Protocol do
   @moduledoc """
-  Encodes the bounded binary request and response contract with the Zig worker.
+  Encodes and validates the bounded binary raster-worker protocol.
 
-  Source dimensions, palette size, wire length, and output ceilings are checked
-  before the native process receives a job, isolating malformed work from the
-  BEAM supervisor.
+  `encode_request/1` checks source/target geometry, crop, output format, palette,
+  RGBA length and declared limits before building the length-prefixed request.
+  `maximum_frame_bytes/0` and `maximum_source_pixels/0` expose the current software
+  ceilings so upstream package/import code can use the same bounds.
+
+  ## Incremental responses
+
+  `take_response/1` consumes a complete frame from fragmented port bytes or
+  returns a request for more data. Declared lengths are bounded before response
+  allocation. `decode_response/1` checks the versioned worker body and returns
+  pixels/metadata or a typed error instead of interpreting malformed bytes.
+
+  This module performs no port, filesystem or library I/O.
+  `Frameshift.Renderer` owns deadlines, single-flight state and replacement after
+  protocol loss; renderer wire limits do not establish physical frame capacity.
   """
 
   @maximum_frame_bytes 64 * 1024 * 1024

@@ -1,9 +1,22 @@
 defmodule Frameshift.Generation.Provider do
   @moduledoc """
-  Contract for one explicitly selected still-image generation provider.
+  Defines the adapter contract for an explicitly selected still-image provider.
 
-  Provider context may contain credentials or process handles. The generation
-  coordinator never persists or logs that context.
+  Implement `c:id/0`, `c:preflight/1` and `c:generate/2`. Preflight identifies the
+  provider/model, local or cloud destination, supported capabilities and required
+  disclosures. Generation returns still bytes, dimensions, media type and the
+  provider's result identifier, or an explicit error.
+
+  ## Coordinator relationship
+
+  `Frameshift.Generation` validates requests and results, owns canonical cache
+  lookup and runs the selected adapter under a deadline. An adapter must not
+  silently substitute providers or destinations when preflight fails.
+
+  `t:context/0` may hold credentials or process handles and is transient;
+  the coordinator does not persist or log it. Persisted request/result provenance
+  must describe reproducibility and source lineage without embedding secrets.
+  The callback contract does not authorize frame delivery or physical acceptance.
   """
 
   @type request :: map()

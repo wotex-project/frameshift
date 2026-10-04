@@ -1,10 +1,27 @@
 defmodule Frameshift.Simulator do
   @moduledoc """
-  Persistent in-process simulator for Frame Protocol conformance work.
+  Models persistent frame protocol behavior with explicit fault injection.
 
-  The simulator models verified immutable storage, desired/current separation,
-  physical display completion, still playlists, and injected interruption
-  points. It is not evidence for a physical panel or production TLS stack.
+  `start_link/1` receives advertised capabilities and a data directory. The frame
+  verifies immutable artifacts within declared storage/profile limits and retains
+  separate desired, current and previous-known-good assets. State exposes a strong
+  revision ETag; desired/playlist changes require the corresponding precondition.
+
+  ## Exercising receiver behavior
+
+  Asset, desired, retry, playlist and pull-outbox operations model bounded transfer,
+  activation and receiver-owned dwell. `set_faults/2` injects contact, storage,
+  transfer, display and power interruptions. Restart loads checksummed artwork
+  state rather than treating an interrupted display as newly completed.
+
+  Pairing is separately modeled with a physical-only window and fail-closed
+  single-use authority; an older artwork slot cannot restore a consumed secret.
+  The authenticated TD is available only to the admitted host certificate.
+
+  Use this process for deterministic protocol/recovery fixtures. It does not prove
+  physical panel timing, optics, flash durability or an independent production TLS
+  stack. The container receiver exercises a separate process/transport profile;
+  exact hardware still requires its own measurements and firmware qualification.
   """
 
   use GenServer

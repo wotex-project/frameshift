@@ -1,9 +1,25 @@
 defmodule Frameshift.Generation do
   @moduledoc """
-  Runs one explicit still-image provider request with canonical caching.
+  Coordinates one explicit still-image provider request and canonical cache.
 
-  There is no provider fallback or retry. Provider work runs outside the caller
-  under the core task supervisor and is terminated at the requested deadline.
+  `generate/4` validates the selected provider, bounded request and timeout,
+  registers a provenance-bearing recipe, then reuses a completed cached result or
+  runs the provider. `Frameshift.Generation.Provider` defines preflight and image
+  result callbacks; provider context is supplied explicitly and is not persisted
+  as recipe data.
+
+  ## Execution and result custody
+
+  Provider work runs under the core task supervisor with a finite deadline.
+  Timeout terminates the task; there is no automatic retry, alternate provider or
+  silent cloud fallback. Returned still bytes and dimensions are bounded before
+  the library records a master or parent-linked variant with its recipe.
+
+  Provider/model/adapter revisions, target profile, instructions, disclosures and
+  reproducibility remain part of the request's recorded meaning. Cache reuse is
+  for the canonical recipe, not proof that a provider is available or that a
+  best-effort model can regenerate identical bytes. Credentials remain outside
+  persistent provenance and diagnostic output.
   """
 
   alias Frameshift.Digest

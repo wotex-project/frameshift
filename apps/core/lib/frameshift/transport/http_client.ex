@@ -1,16 +1,25 @@
 defmodule Frameshift.Transport.HTTPClient do
   @moduledoc """
-  One-shot reference HTTPS client for the Wotex HTTP binding.
+  Performs one finite authenticated HTTPS exchange for the Wotex binding.
 
-  The adapter owns every network policy the binding intentionally leaves to
-  its consumer: exact credential audience, DNS/IP admission, mutual TLS,
-  pinned frame identity, absolute deadlines, response limits, and redirect
-  refusal. Connections are never pooled, so client credentials exist only for
-  the duration of the immediate callback.
+  `request/3` accepts a typed binding request, ephemeral
+  `Frameshift.Transport.MTLSCredential` and explicit configuration. It checks the
+  exact credential audience, all resolved addresses, header/body bounds and the
+  remaining absolute deadline before connecting. Mutual TLS verifies the pinned
+  frame key; redirects and connection pooling are refused.
 
-  This client currently implements finite Property and Action exchanges. SSE
-  subscription lifecycle is rejected explicitly until a separately supervised,
-  bounded stream owner is installed.
+  ## Network and lifecycle limits
+
+  `Frameshift.Transport.SystemResolver` is the default DNS resolver. Local-network
+  address policy applies to every result, with loopback disabled by default and
+  only explicitly enabled in the configured scope. Each connection closes after
+  its bounded response; credentials do not enter a shared pool or redirect target.
+
+  The client supports finite Property/Action requests, not an SSE subscription
+  lifecycle. Subscription/close callbacks return explicit unsupported/unknown
+  outcomes. Failures remain transport errors: a successful HTTP reply does not
+  establish that desired artwork is physically displayed. Delivery callers must
+  reconcile state through the advertised interaction.
   """
 
   @behaviour Wotex.Binding.HTTP.Client

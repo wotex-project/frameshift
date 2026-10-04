@@ -1,9 +1,23 @@
 defmodule Frameshift.Playlist.Plan do
   @moduledoc """
-  Builds a complete still playlist from an ordered, already rendered artifact set.
+  Builds an exact still-image cycle from already rendered artifact identities.
 
-  The host prepares immutable artifacts before asking a receiver to install the
-  plan. This pure boundary never treats a library pin as an active playlist.
+  `build/3` validates the ordered artifact list against admitted frame capabilities
+  and selects a dwell interval. The complete entry list and mode are canonically
+  hashed into the playlist revision; reordering assets or changing dwell changes
+  that revision. No live library or network state is consulted.
+
+  ## Interval and installation
+
+  `resolve_dwell/2` uses an explicit operator interval or a complete source-qualified
+  profile recommendation. Without either it refuses; receiver minimums remain
+  hard limits through `Frameshift.DisplayTiming`. A library pin is not itself an
+  active playlist or permission to fabricate a default interval.
+
+  The host must retain/render all artifacts before queueing the complete plan.
+  `Frameshift.Playlist.Store` owns durable pending/active references and receiver
+  acknowledgement. This module creates still-image intent, not motion/video or
+  proof that the receiver installed and displayed a cycle.
   """
 
   alias Frameshift.Digest

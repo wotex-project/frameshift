@@ -1,9 +1,33 @@
 defmodule Frameshift.Library do
   @moduledoc """
-  Single owner of Frameshift library metadata and content relationships.
+  Serializes native library metadata and immutable content relationships.
 
-  Public calls are serialized through this process. The SQLite connection is
-  never returned to callers.
+  The GenServer owns the SQLite connection and data root. Public operations
+  import masters, register canonical recipes and rendered artifacts, retain
+  source lineage, manage labels/search/pins and apply recoverable removal.
+  Callers receive records and verified bytes, never the writable connection.
+
+  ## Using the owner
+
+  Start with `start_link/1` and a private `:data_dir`; a `:name` of `nil` allows
+  an explicitly addressed isolated instance. Pass that server to library APIs
+  when operating outside the application-owned default. Storage changes run
+  through `Frameshift.Library.Writer`; payload placement is delegated to
+  `Frameshift.ContentStore` and startup reconciles interrupted file moves.
+
+  Paired-frame custody, qualification/work records, command receipts, outboxes
+  and playlists use this same writer so reference protection and state changes
+  share authoritative transactions. Exact revisions and acknowledgements govern
+  delivery: desired bytes are distinct from current and previous-known-good art.
+
+  ## Maintenance and diagnostics
+
+  Removal preserves protected/recoverable objects rather than deleting referenced
+  content. Backup creation serializes changes for its full copy; offline restore
+  requires the stopped-library maintenance path. Bounded audit/metric projections
+  remain read-only and omit private credentials and source paths. Database errors
+  return through the storage boundary; programming faults are not fabricated as
+  successful writes. The web platform owns a separate database and lifecycle.
   """
 
   use GenServer
@@ -31,9 +55,19 @@ defmodule Frameshift.Library do
 
   defmodule State do
     @moduledoc """
-    Holds the library's private SQLite connection and content root.
+    Keeps the private SQLite connection and content root for one library owner.
 
-    Callers receive records and verified bytes, never the writable connection.
+    Both fields are required and remain inside `Frameshift.Library` callbacks.
+    Public library calls return metadata, verified bytes or bounded projections,
+    never this writable connection. Transaction helpers receive it only while
+    executing under the same serialized owner.
+
+    ## Restart and storage
+
+    The content root names durable filesystem custody, while the connection is a
+    process-lifetime handle reopened during startup. Passing this struct to IPC,
+    the web platform or another writer would violate ownership; callers select
+    the library server rather than constructing replacement state.
     """
 
     @type t :: %__MODULE__{connection: term(), data_dir: String.t()}

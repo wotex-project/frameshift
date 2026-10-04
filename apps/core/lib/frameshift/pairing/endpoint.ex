@@ -1,11 +1,22 @@
 defmodule Frameshift.Pairing.Endpoint do
   @moduledoc """
-  Applies one pre-pair HTTPS body to the frame's physical window state.
+  Returns the pairing response and next physical-window state together.
 
-  The TLS owner supplies the authenticated peer DER certificate; this module
-  never accepts certificate bytes from JSON. It returns a bounded response
-  and the next state together so the frame can persist successful authorization
-  before acknowledging it on the wire.
+  `handle/4` accepts an existing `Frameshift.Pairing.Window`, verified peer DER,
+  bounded request body and explicit current time. Parsing and authorization check
+  the physical device/secret/request ID against the TLS-authenticated peer, then
+  produce a finite success/problem response and corresponding next state.
+
+  ## Commit before acknowledgement
+
+  The caller must persist successful authorization before releasing the response.
+  This module performs no socket or disk I/O and cannot make that transition
+  durable by returning it. Failed attempts may also change window state and must
+  be retained according to the owner contract.
+
+  Certificate identity comes exclusively from TLS, never JSON. The endpoint cannot
+  open pair mode or accept ordinary frame control; physical adapters and later
+  paired interactions retain their separate authority.
   """
 
   alias Frameshift.Pairing.{Request, Window}

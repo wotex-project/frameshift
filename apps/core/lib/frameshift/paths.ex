@@ -1,9 +1,19 @@
 defmodule Frameshift.Paths do
   @moduledoc """
-  Resolves relocatable core data and local IPC paths on macOS.
+  Resolves relocatable native data and local IPC locations.
 
-  Release configuration may override the Apple user-data default without
-  embedding a build-machine or developer-home path in the application.
+  `data_dir/0` defaults to the operating system's user-data directory for
+  Frameshift and accepts an expanded `FRAMESHIFT_DATA_DIR` override.
+  `socket_path/0` defaults to `core.sock` beneath that root, with an explicit
+  `FRAMESHIFT_SOCKET_PATH` override. Paths do not embed a build-machine home.
+
+  ## Diagnostics and admission
+
+  `diagnostics_socket_path/0` defaults to `d.sock` beside the command socket or
+  uses `FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH`. Resolution alone creates no directory
+  or listener and does not establish permissions. The IPC owners separately
+  admit private directories, bounded socket names and authenticated peers before
+  serving commands or read-only diagnostics.
   """
 
   @spec data_dir() :: String.t()

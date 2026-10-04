@@ -1,9 +1,22 @@
 defmodule Frameshift.Qualification.Profile do
   @moduledoc """
-  Identifies the byte-affecting part of one admitted frame capability profile.
+  Identifies the exact byte-affecting frame profile and transfer binding.
 
-  Available storage and health are intentionally excluded because they may
-  change without changing the bytes a frame accepts or displays.
+  `digest/2` selects an artifact profile by ID and canonically hashes that profile
+  with its color and geometry contract. Storage availability and health are
+  excluded because they can change without changing accepted artifact bytes.
+  Missing or unsupported profile structure returns `:unsupported_profile`.
+
+  ## Transfer identity
+
+  `binding_digest/3` joins the exact admitted TD with push/pull mode and connector
+  revision. Changed Forms or connector semantics therefore cannot borrow an older
+  qualification merely because the profile ID matches. Hashing performs no live
+  TD fetch or network interaction.
+
+  The caller supplies already admitted capabilities and TD bytes; structural
+  identity alone is not a passing conformance report or authorization to activate.
+  `Frameshift.Qualification.Store` checks those references against paired custody.
   """
 
   alias Frameshift.Digest

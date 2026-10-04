@@ -1,5 +1,20 @@
 defmodule Frameshift.Diagnostics.FallbackLog do
-  @moduledoc "Admits the local rotating fallback log path before OTP opens it."
+  @moduledoc """
+  Admits the native fallback log path before an OTP handler opens it.
+
+  `prepare/1` creates or checks a directory, requires the final directory to be
+  real rather than a symlink and restricts access to the owner. Existing targets
+  must be regular files; unsafe file/directory types and permission failures
+  return `:unsafe_fallback_log`.
+
+  ## Handler lifecycle
+
+  The OTP rotating handler creates the actual file. Call `secure_file/1` afterward
+  to restrict that regular file to mode `0600`; directory access is mode `0700`.
+  This module admits local paths and permissions, not the log message payload or
+  rotation policy. `Frameshift.Diagnostics.LogFormatter` separately emits only
+  allowlisted operational fields rather than arbitrary exception text or paths.
+  """
 
   @doc "Creates a private diagnostics directory and refuses unsafe existing targets."
   @spec prepare(String.t()) :: :ok | {:error, :unsafe_fallback_log}

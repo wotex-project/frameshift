@@ -1,9 +1,23 @@
 defmodule Frameshift.Library.Maintenance do
   @moduledoc """
-  Fixed entrypoint for packaged, offline library maintenance.
+  Runs fixed packaged backup, verification and offline restore operations.
 
-  The shell passes paths through environment variables. It never builds Elixir
-  source from a path supplied on the command line.
+  `run/0` reads the selected operation/source/destination from the dedicated
+  maintenance environment variables and the data root from `Frameshift.Paths`.
+  It prints a finite success/error result and exits with status 0 or 1; supplied
+  paths never become evaluated Elixir source.
+
+  ## Operation lifecycle
+
+  `execute/4` validates the operation's argument combination. Backup checks for
+  an existing stopped library, starts a temporary unnamed owner and stops it
+  after creation. Verification opens the backup validation path; restore requires
+  the destination library to be stopped before copying into an absent root.
+
+  Live command sockets prevent offline operations from proceeding. Invalid
+  arguments, unsafe stores or unavailable state return errors instead of resetting
+  or merging data. `Frameshift.Library.Backup` owns content/manifest verification
+  and staged publication; this module owns the packaged invocation and exit code.
   """
 
   alias Frameshift.Library

@@ -1,10 +1,22 @@
 defmodule Frameshift.Simulator.Persistence do
   @moduledoc """
-  Recovers simulated frame state from redundant, checksummed records.
+  Recovers simulated artwork state from alternating checksummed slots.
 
-  A damaged latest slot does not erase an older valid state. This models the
-  frame's power-loss recovery rules without treating the simulator as proof of
-  physical flash or panel behavior.
+  `save/1` canonically encodes `Frameshift.Simulator.State` payload, records its
+  SHA-256 checksum and writes/synchronizes a temporary file before replacing the
+  revision-selected slot. `load/1` validates both slots and chooses the highest
+  valid nonnegative revision.
+
+  ## Recovery meaning
+
+  No existing slots yields `:empty`; existing slots without a valid record return
+  `:corrupt_state`. A damaged latest slot may recover an older valid artwork state
+  rather than losing the last known image. Missing/corrupt artifact bytes still
+  need the simulator's separate validation path.
+
+  These files model software recovery, not proven physical flash durability.
+  Pairing authority deliberately uses `Frameshift.Pairing.Store` instead: recovering
+  an older commissioning record could resurrect a consumed secret or revoked host.
   """
 
   alias Frameshift.Digest

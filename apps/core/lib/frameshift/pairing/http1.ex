@@ -1,11 +1,22 @@
 defmodule Frameshift.Pairing.HTTP1 do
   @moduledoc """
-  Serves the fixed pre-pair route over one bounded HTTP/1.1 exchange.
+  Dispatches the fixed pairing and authenticated TD routes over strict HTTP/1.1.
 
-  Framing comes from the shared strict parser. Only the authenticated TLS
-  peer certificate supplied by the listener can authorize a host; neither
-  headers nor JSON can supply that identity. Pair mode itself is opened only
-  through the frame's physical adapter.
+  `exchange/4` uses the shared `Frameshift.Outbox.HTTP1` parser with tighter
+  pairing wire/body limits. It returns more-data, refusal or one finite response
+  for the fixed commissioning route or authenticated TD read, using the TLS
+  listener's peer DER and explicit time.
+
+  ## Authority and persistence
+
+  Headers and JSON cannot choose the peer certificate. Pair mode is opened only
+  through the frame's physical adapter; network traffic can merely attempt the
+  already-open window. The simulator owner persists authorization before the
+  success response is released.
+
+  `maximum_wire_bytes/0` exposes the pairing exchange ceiling so a reader can
+  bound accumulation before dispatch. This reference binding is not evidence of
+  real firmware key protection, flash durability or a physical input mechanism.
   """
 
   alias Frameshift.Outbox.HTTP1, as: RequestParser

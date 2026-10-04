@@ -1,10 +1,22 @@
 defmodule Frameshift.LocalIPC.PeerIdentity do
   @moduledoc """
-  Reads the kernel-reported effective user ID of a connected local socket.
+  Reads local socket peer identity from operating-system credentials.
 
-  Darwin uses `LOCAL_PEERCRED` (`struct xucred`). Linux uses `SO_PEERCRED`.
-  Unsupported systems fail closed. The numeric constants come from each OS's
-  socket headers and are covered by platform contract tests.
+  `uid/1` returns the effective peer UID for a connected Unix-domain socket.
+  Darwin uses `LOCAL_PEERCRED`/`struct xucred`; Linux uses `SO_PEERCRED` with a
+  native fallback when the OTP representation is unavailable. Invalid credential
+  layout or unsupported operating systems return errors rather than a default UID.
+
+  ## Consumer authorization
+
+  `credentials/1` exposes Linux PID, UID and primary GID where supported.
+  Callers compare these kernel-reported values with their admitted endpoint policy;
+  request JSON and filesystem path ownership cannot choose a peer's identity.
+  `Frameshift.LocalIPC.DiagnosticsServer` uses the UID boundary for read-only access.
+
+  Peer identity proves the local connection's OS credential, not the application's
+  role, launch token or payload validity. Protocol parsing and any additional
+  command authorization remain the consuming server's responsibility.
   """
 
   @doc "Returns the peer's effective UID or an error."

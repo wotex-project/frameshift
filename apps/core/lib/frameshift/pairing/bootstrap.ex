@@ -1,11 +1,22 @@
 defmodule Frameshift.Pairing.Bootstrap do
   @moduledoc """
-  Admits the physical bootstrap record before any pairing network request.
+  Parses physical commissioning data before any pairing network request.
 
-  The record carries a device identifier, its pinned TLS public-key digest,
-  and a one-time secret with at least 128 bits of entropy. It contains no
-  network address, binding route, or vendor identifier: discovery supplies a
-  candidate endpoint, and the pin must match before the secret is sent.
+  `parse/1` admits a bounded QR/bootstrap record containing only device ID,
+  server SPKI digest and a canonical URL-safe secret with at least 16 decoded
+  bytes. Network address and route come from discovery, not the physical record.
+  The secret is excluded from struct inspection.
+
+  ## Matching the physical device
+
+  `verify_peer/2` compares the TLS certificate with the physical public-key pin
+  before secret transmission. `verify_thing_description/2` checks that the later
+  authenticated TD has the same device ID. Either mismatch refuses the operation.
+
+  A parser can check secret length/encoding, not prove its random entropy.
+  The device owns secure secret generation and protected single-use custody.
+  `Frameshift.Pairing.Admission` keeps the parsed secret transient and records
+  only admitted pairing outputs in the host library.
   """
 
   @maximum_bytes 2_048

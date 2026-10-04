@@ -1,10 +1,24 @@
 defmodule Frameshift.Application do
   @moduledoc """
-  Starts the durable core and its supervised local boundaries.
+  Starts the durable native core and its configured local boundaries.
 
-  Library, renderer, and local IPC children are selected by release
-  configuration. The IPC bootstrap challenge is consumed before the listener
-  starts, so no unauthenticated command window is opened during boot.
+  The application supervises library state, the bounded task supervisor and the
+  configured renderer, telemetry, outbox and IPC services. Release configuration
+  selects optional children; the independent companion web platform is not started
+  by this application. Services receive the owned library and process boundaries
+  rather than opening additional writers.
+
+  ## Startup and custody
+
+  `Frameshift.Paths` supplies relocatable data/socket locations. The shell's
+  bootstrap challenge is consumed through `Frameshift.LocalIPC.Token` before the
+  command listener starts. Invalid bootstrap or listener configuration prevents
+  that boundary from opening instead of accepting unauthenticated commands.
+
+  Renderer and service failures are handled by their supervisors without treating
+  unconfirmed delivery as displayed artwork. Durable recovery remains the library
+  and frame owners' responsibility; restarting a process is not a new external
+  command or permission to discard a pending outcome.
   """
 
   use Application

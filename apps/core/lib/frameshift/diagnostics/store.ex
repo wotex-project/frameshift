@@ -1,9 +1,23 @@
 defmodule Frameshift.Diagnostics.Store do
   @moduledoc """
-  Audit persistence, read projections, and bounded metric rollups.
+  Persists audit facts and bounded metric rollups through the library owner.
 
-  Called only by the library's single SQLite owner. This module does not own
-  a connection or expose it to IPC clients.
+  `record_audit/4` joins redacted attribution to the caller's domain transaction.
+  `audit_page/3`, `metric_page/3` and `health/1` return bounded read projections,
+  with stable pagination and identifier-free health gauges rather than the raw
+  SQLite connection or arbitrary SQL access.
+
+  ## Metric retention
+
+  `validate_rollups/1` checks batch shape/count and the versioned catalog before
+  writes. `merge_rollups/3` combines completed buckets under the caller's transaction.
+  Page-allocation measurement and budget enforcement include table/index storage
+  and prune oldest metric rows to keep the declared retention boundary.
+
+  Only `Frameshift.Library` supplies the private connection and writer context.
+  This module owns neither an independent pool nor IPC mutation dispatch.
+  Audit custody and metric aggregation have different semantics: missing metrics
+  cannot erase an audit fact, and telemetry cannot manufacture domain success.
   """
 
   @audit_detail_keys ~w(kind outcome revision sourceKind)

@@ -1,5 +1,5 @@
 defmodule FrameshiftPlatform.Repo.Migrations.InstallRefpath do
-  @moduledoc "Installs the pinned runtime schema through its public migration boundary."
+  @moduledoc false
 
   use Ecto.Migration
   @disable_ddl_transaction true

@@ -1,9 +1,24 @@
 defmodule Frameshift.Renderer do
   @moduledoc """
-  Owns and bounds the isolated `frameshift-raster` executable.
+  Supervises one bounded isolated Zig raster worker.
 
-  The worker handles one render at a time. A timeout, worker exit, or malformed
-  response terminates this owner so its supervisor starts a clean process.
+  Start with `start_link/1` and an explicit executable `:path`. The owner stages
+  and fingerprints the executable, opens its port and accepts one render at a
+  time; a concurrent request returns `:busy`. `Frameshift.Renderer.Protocol`
+  checks jobs and incrementally validates framed responses before returning pixels.
+
+  ## Deadlines and executable identity
+
+  `render/3` accepts a `:deadline_ms` option, defaulting to 30 seconds.
+  `render_qualified/4` also requires the expected executable digest, refusing a
+  build mismatch before sending the job. `build_digest/1` reports the digest
+  captured for this worker instance rather than a mutable path's current bytes.
+
+  Timeout, worker exit or malformed framing stops the owner so supervision starts
+  a clean worker. Pending calls fail; they are not automatically replayed into
+  replacement process state. Job pixels and credentials do not belong in process
+  diagnostics. `Frameshift.RenderPipeline` owns durable master/cache relationships;
+  the worker owns only bounded raster computation and transient response state.
   """
 
   use GenServer
@@ -17,10 +32,19 @@ defmodule Frameshift.Renderer do
 
   defmodule State do
     @moduledoc """
-    Tracks one supervised Zig port and the bounded response in flight.
+    Tracks one staged renderer build and bounded in-flight response.
 
-    The worker is replaced after a timeout or malformed frame so no subsequent
-    render can inherit an ambiguous native-process state.
+    The state owns the port, executable build digest/staging path, pending caller,
+    expected response and accumulated prefix/chunks/byte count. Its counters enforce
+    the worker-frame ceiling before a completed response is exposed.
+
+    ## Replacement boundary
+
+    `Frameshift.Renderer` creates the state during startup and discards it after
+    worker loss, deadline or malformed framing. A subsequent process cannot inherit
+    an ambiguous old response or numeric port identity. Process-status formatting
+    redacts job/response material; durable recipes and artifacts belong to
+    `Frameshift.Library`, not this transient worker value.
     """
 
     @type t :: %__MODULE__{

@@ -1,11 +1,23 @@
 defmodule Frameshift.MasterPackage do
   @moduledoc """
-  Bounded immutable container for an imported source and its canonical RGBA8
-  representation.
+  Packages exact source bytes with their canonical RGBA8 master representation.
 
-  The package is internal durable storage, not a frame artifact. Integer fields
-  are unsigned big-endian. The canonical representation is normalized to sRGB,
-  top-left row order, straight alpha, and orientation 1 before packaging.
+  `encode/4` validates original bytes, dimensions and tightly packed RGBA length,
+  then returns the versioned FSM1 container as iodata. `decode/1` verifies magic,
+  version, reserved fields, lengths and complete body before returning dimensions,
+  original bytes and canonical pixels. Both paths reject malformed/oversized data.
+
+  ## Representation and limits
+
+  The 32-byte header uses unsigned big-endian fields. Canonical pixels are sRGB,
+  top-left row order, straight alpha and orientation 1; the Apple decoding boundary
+  must normalize them before packaging. Dimension, source-byte and pixel ceilings
+  are enforced by this module and `Frameshift.Renderer.Protocol`.
+
+  `media_type/0` identifies this internal durable format. It is a master container,
+  not a frame artifact or a network control document. `Frameshift.RenderPipeline`
+  uses its verified pixels to render exact target bytes while retaining the
+  unchanged original for future recipes and derivatives.
   """
 
   @magic "FSM1"

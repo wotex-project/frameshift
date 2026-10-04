@@ -1,9 +1,19 @@
 defmodule Frameshift.DirectSync.Artifact do
   @moduledoc """
-  Immutable rendered artifact admitted for one direct frame synchronization.
+  Carries verified immutable artifact bytes for a direct synchronization attempt.
 
-  Inspection deliberately omits the artwork bytes. Construction verifies the
-  content address before any Form is selected or credential is resolved.
+  `new/4` accepts nonempty bytes, their exact SHA-256 digest, profile ID and media
+  type. It verifies the content address, bounds metadata strings and derives the
+  byte count. Invalid metadata or a mismatched digest returns `:invalid_artifact`
+  before Form selection or credential resolution.
+
+  ## Artifact scope
+
+  The struct's inspection includes metadata but omits artwork bytes. Construction
+  does not prove that a receiver supports the media type/profile or has enough
+  storage; `Frameshift.DirectSync` checks the selected target and applicable
+  transfer limits. `Frameshift.DirectDelivery` obtains registered durable artwork
+  and owns pending intent, while this value remains immutable call input.
   """
 
   alias Frameshift.Digest

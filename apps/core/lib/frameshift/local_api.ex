@@ -1,10 +1,25 @@
 defmodule Frameshift.LocalAPI do
   @moduledoc """
-  Product-facing local command boundary owned by the Elixir core.
+  Executes native product commands and returns authoritative shell snapshots.
 
-  The Swift menu process is a client of this module through bounded local IPC;
-  canonical library and setting state remain in the core. Import paths are
-  copied immediately into content-addressed storage and are never persisted.
+  The Swift menu process invokes this boundary through authenticated local IPC.
+  `snapshot/3` projects paired targets, selection, settings and searchable items
+  from `Frameshift.Library`; clients cannot supply canonical library state.
+  The execute variants route bounded command maps through owned library, renderer
+  and explicitly configured direct-delivery services.
+
+  ## Import and artwork custody
+
+  Import validates source/canonical files, media type, dimensions and pixel
+  identity, then copies exact bytes into `Frameshift.MasterPackage` storage.
+  Source paths are temporary input and are not durable master references.
+  Rendering later reads registered master bytes rather than caller-provided pixels.
+
+  Queue/reconciliation and pinned-loop commands preserve delivery/playlist
+  semantics. A successful command returns an updated snapshot; input, persistence
+  or unsupported-profile failures return finite errors. An unconfirmed send is
+  not displayed artwork. Pairing secrets and credential material belong to the
+  separate commissioning/transport boundaries, not ordinary shell snapshots.
   """
 
   alias Frameshift.Digest

@@ -1,11 +1,23 @@
 defmodule Frameshift.FrameRegistry do
   @moduledoc """
-  Admission boundary for durable paired-frame records.
+  Admits exact paired-frame records for durable native custody.
 
-  A record is derived from a bounded Frameshift/W3C Thing Description and
-  explicit pairing outputs. The credential reference is opaque metadata (for
-  example a Keychain persistent reference); private key material never enters
-  this boundary.
+  `admit/3` validates a bounded frame Thing Description, an opaque credential
+  reference and the pinned server SPKI fingerprint. It derives frame identity,
+  medium, canonical TD and capability bytes from that admitted description.
+  Private keys never enter the record; the reference resolves later at transport.
+
+  ## Admission versus authentication
+
+  This module validates record structure and ownership conflicts. The pairing
+  boundary must first prove the physical device identity and TLS peer possession;
+  a valid TD or pin string alone does not establish pairing.
+  `Frameshift.Pairing.Admission` joins that evidence to library persistence.
+
+  `admission_decision/4` distinguishes insertion, identical reuse and conflicts
+  with existing frame, Thing or pin custody. Call through `Frameshift.Library`
+  to apply the decision under its single writer; do not replace paired identities
+  by rewriting the stored TD or copying another frame's credential reference.
   """
 
   alias Frameshift.Protocol.Thing

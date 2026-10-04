@@ -1,12 +1,23 @@
 defmodule Frameshift.Outbox.HTTP1 do
   @moduledoc """
-  Parses one finite HTTP/1.1 request for the reference host outbox binding.
+  Parses one strict finite HTTP/1.1 exchange for the pull outbox.
 
-  The parser accepts only origin-form GET and POST requests, exact content
-  lengths, a single value per header, and ASCII header fields. It rejects
-  transfer coding, pipelining, ambiguous framing, control characters, and
-  oversized input before the outbox can access library state. A caller may
-  feed successive TLS records until `:more` becomes a complete request.
+  `decode/1` consumes origin-form GET/POST requests with exact content lengths,
+  single header values and bounded ASCII fields. It returns a complete request,
+  `:more` for an incomplete bounded buffer, or an input/size error. The parser
+  rejects transfer coding, pipelining, ambiguous lengths and control characters.
+
+  ## Feeding and dispatch
+
+  A TLS worker may accumulate records only up to `maximum_wire_bytes/0` and its
+  absolute request deadline. Both header and body ceilings are 64 KiB; target and
+  header counts/values have separate limits. Framing completes before any library
+  access or request dispatch.
+
+  `exchange/3` joins a complete parsed request to
+  `Frameshift.Outbox.Endpoint` using the listener's verified peer certificate.
+  The parser authenticates no peer and performs no network I/O; callers cannot
+  replace that certificate with request-body identity.
   """
 
   @maximum_header_bytes 64 * 1024

@@ -1,10 +1,24 @@
 defmodule Frameshift.Playlist.Store do
   @moduledoc """
-  Single-writer SQLite operations for a frame's active and pending still playlists.
+  Persists complete pending and active still playlists under the library writer.
 
-  The pending manifest, every referenced artifact, and the old active playlist
-  share one transaction. The old references remain protected until the frame
-  confirms installation of the complete replacement.
+  `queue/6` validates paired-frame/profile capability, exact playlist/entry bytes,
+  capacity and command intent before atomically retaining the replacement manifest
+  and every required artifact. The prior active cycle stays protected while a
+  replacement is pending; a timeout cannot erase known-good references.
+
+  ## Serving and confirmation
+
+  `pending_body/3` and `pending_asset?/3` expose only the caller frame's current
+  outbox revision. `confirm/3` activates the exact acknowledged replacement;
+  a stale/mismatched acknowledgement cannot install another revision.
+  `cancel_pending/2` and `suspend/2` handle supersession by a single-image send
+  without inventing receiver completion.
+
+  `status/2` and `members/2` provide bounded local presentation of loop state.
+  All writes use the connection owned by `Frameshift.Library`, including audit
+  and qualified-work custody. Library pinning, queued intent, installed playlist
+  and the physically displayed still retain distinct meanings.
   """
 
   alias Frameshift.Diagnostics.Store, as: DiagnosticsStore

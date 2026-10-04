@@ -1,10 +1,26 @@
 defmodule Frameshift.LocalIPC.Server do
   @moduledoc """
-  Bounded Unix-domain socket server for the local macOS shell.
+  Hosts authenticated finite shell commands on the native Unix socket.
 
-  Each connection carries exactly one four-byte-length-prefixed JSON request
-  and response. The containing directory is private to the user and the socket
-  is mode `0600`. This boundary does not expose a TCP listener.
+  `start_link/1` requires a private path and validated per-launch token, with
+  explicit or application-owned library/task/pairing dependencies. Each connection
+  carries one four-byte-length-prefixed JSON request/response; the request ceiling
+  is 64 KiB, the response ceiling 1 MiB and the request deadline five seconds.
+  There is no TCP listener.
+
+  ## Command custody
+
+  The request authenticates with the launch challenge before dispatch. Mutating
+  commands carry stable bounded IDs and canonical payload digests; completed
+  receipts suppress duplicate effects, changed payloads conflict and unresolved
+  crash-window outcomes require reconciliation. The server never invents a new
+  ID to conceal an uncertain mutation.
+
+  `Frameshift.LocalAPI` owns ordinary product actions; physical pairing has its
+  separate transient boundary. The listener monitors its acceptor and removes the
+  socket on termination. The token file is consumed before startup through
+  `Frameshift.LocalIPC.Token`; read-only diagnostics use a separate peer-UID
+  endpoint and cannot inherit this mutation dispatcher.
   """
 
   use GenServer
@@ -25,10 +41,19 @@ defmodule Frameshift.LocalIPC.Server do
 
   defmodule State do
     @moduledoc """
-    Owns the local listener and its acceptor task for one core process.
+    Tracks the command listener and acceptor for one native core process.
 
-    Keeping both handles together lets shutdown close the socket before the
-    process exits and prevents an orphaned command endpoint.
+    The required listener, acceptor and private path remain owned by
+    `Frameshift.LocalIPC.Server`. Acceptor termination stops the server; owner
+    termination closes the listener and removes the endpoint, avoiding an orphaned
+    command socket with ambiguous launch authority.
+
+    ## Custody boundary
+
+    This value is transient process state, not a command receipt or token store.
+    Completed/pending commands retain their durable library records independently.
+    External clients address the socket protocol and must not receive listener
+    handles or construct a replacement state to bypass startup admission.
     """
 
     @type t :: %__MODULE__{acceptor: term(), listener: term(), path: String.t()}

@@ -5,11 +5,19 @@ repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 
 # The single-quoted AWK programs intentionally contain regular expressions.
 # shellcheck disable=SC2016
-find "$repository_root/apps/core/lib" "$repository_root/apps/core/test" \
-  "$repository_root/apps/build-platform/lib" "$repository_root/apps/build-platform/test" \
-  "$repository_root/packages/build-spec/lib" "$repository_root/packages/build-spec/test" \
+find "$repository_root/apps" "$repository_root/packages" \
+  "$repository_root/scripts" "$repository_root/simulator" \
+  -type d \( -name deps -o -name _build -o -name build -o -name node_modules \) -prune -o \
   -type f \( -name '*.ex' -o -name '*.exs' \) -print0 |
   xargs -0 awk '
+    expect_content {
+      if ($0 ~ /^[[:space:]]*$/) {
+        print location ": expected exactly one blank line after @moduledoc" > "/dev/stderr"
+        failed = 1
+      }
+      expect_content = 0
+    }
+
     /^[[:space:]]*(defmodule|defimpl)[[:space:]]/ {
       location = FILENAME ":" FNR
 
@@ -19,12 +27,15 @@ find "$repository_root/apps/core/lib" "$repository_root/apps/core/test" \
         next
       }
 
-      if (FILENAME ~ /\/test\// && $0 !~ /^[[:space:]]*@moduledoc false[[:space:]]*$/) {
-        print location ": test modules require @moduledoc false" > "/dev/stderr"
+      hidden = FILENAME ~ /\/test\// || FILENAME ~ /_test\.exs$/ || \
+        FILENAME ~ /\/migrations[\/.]/ || FILENAME ~ /\/simulator\/container\/receiver\.exs$/
+
+      if (hidden && $0 !~ /^[[:space:]]*@moduledoc false[[:space:]]*$/) {
+        print location ": migration and test modules require @moduledoc false" > "/dev/stderr"
         failed = 1
       }
 
-      if (FILENAME ~ /\/lib\// && $0 ~ /^[[:space:]]*@moduledoc false[[:space:]]*$/) {
+      if (!hidden && $0 ~ /^[[:space:]]*@moduledoc false[[:space:]]*$/) {
         print location ": production modules require a useful @moduledoc" > "/dev/stderr"
         failed = 1
       }
@@ -40,14 +51,10 @@ find "$repository_root/apps/core/lib" "$repository_root/apps/core/test" \
       if (getline <= 0 || $0 !~ /^[[:space:]]*$/) {
         print location ": expected one blank line after @moduledoc" > "/dev/stderr"
         failed = 1
+      } else {
+        expect_content = 1
       }
     }
 
     END { exit failed }
   '
-
-awk '
-  NR == 1 && $0 !~ /^defmodule / { exit 1 }
-  NR == 2 && $0 !~ /^  @moduledoc false$/ { exit 1 }
-  NR == 3 && $0 !~ /^$/ { exit 1 }
-' "$repository_root/apps/core/mix.exs"

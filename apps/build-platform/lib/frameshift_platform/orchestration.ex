@@ -1,5 +1,23 @@
 defmodule FrameshiftPlatform.Orchestration do
-  @moduledoc "Embeds one pinned Refpath runtime without a second database or public API."
+  @moduledoc """
+  Configures the platform's single embedded Refpath runtime.
+
+  `contract/0` binds the pinned producer revision to
+  `FrameshiftPlatform.Repo` and the platform PubSub service. Refpath uses durable
+  storage while the host owns the database pool and infrastructure. Embedded
+  process deployment and self-hosted infrastructure are explicit separate settings.
+
+  ## Startup and readiness
+
+  `child_specs/0` returns the producer child only when `:orchestration_enabled`
+  is configured. `readiness/0` invokes Refpath's public boot-contract probe; it
+  is not proof that additional operator, effect or Conjunct profiles are qualified.
+
+  The contract disables autonomous/model-serving processes, native embeddings,
+  plugins, producer log handlers and Beamlens. It reuses host PubSub and supplies
+  sandbox configuration explicitly. Extending enabled capability scope requires
+  separate consumer evidence rather than copying upstream development defaults.
+  """
 
   alias Refpath.BootConfig.Contract
   alias Refpath.BootConfig.Readiness

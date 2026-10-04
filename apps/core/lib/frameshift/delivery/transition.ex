@@ -1,10 +1,22 @@
 defmodule Frameshift.Delivery.Transition do
   @moduledoc """
-  Pure delivery decisions shared by the SQLite transaction owner.
+  Decides delivery transitions without performing storage or network I/O.
 
-  An accepted transport call is not display confirmation. These decisions
-  preserve one pending direct intent and require exact revision and digest
-  matches before current state may advance.
+  `direct_request/4` chooses insertion, reuse or conflict for an existing push
+  intent. `direct_confirmation/5` checks that the pending intent and observed
+  artifact/profile identity match. `pull_confirmation/2` compares an outbox
+  acknowledgement with the exact manifest revision and expected display result.
+
+  ## Applying a decision
+
+  The library's SQLite transaction owner reads authoritative records, invokes
+  these pure rules and commits any resulting reference rotation. An accepted
+  transport exchange alone cannot advance current or previous-known-good state.
+  A mismatch or unresolved result retains the pending custody for reconciliation.
+
+  Keeping decisions separate from I/O lets independent fixtures exercise stale
+  revisions, duplicate requests and wrong digests without a live frame. Those
+  fixtures establish transition semantics, not physical display completion.
   """
 
   @type direct_intent :: %{

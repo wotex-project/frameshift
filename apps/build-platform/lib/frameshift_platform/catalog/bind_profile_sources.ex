@@ -1,5 +1,21 @@
 defmodule FrameshiftPlatform.Catalog.BindProfileSources do
-  @moduledoc "Resolves canonical citations to immutable source revisions before profile insertion."
+  @moduledoc """
+  Binds canonical profile citations to exact stored source revisions.
+
+  This Ash change installs a before-action hook after
+  `FrameshiftPlatform.Catalog.PrepareProfile` has supplied validated citations.
+  It resolves each digest/revision pair in bounded batches and checks that the
+  stored evidence kind matches the citation. Repeated citations reuse the same
+  resolved source record.
+
+  ## Refusal and custody
+
+  Missing revisions, kind mismatches or failed lookups add
+  `unresolved_source_revision` on `:canonical` and prevent insertion. Successful
+  bindings include the stored source UUID; caller input cannot choose that field.
+  Resolution uses immutable catalog metadata and performs no network fetch or
+  source-authenticity assessment.
+  """
 
   use Ash.Resource.Change
   alias FrameshiftPlatform.Catalog

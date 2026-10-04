@@ -1,9 +1,23 @@
 defmodule Frameshift.Simulator.State do
   @moduledoc """
-  Explicit frame state used by the persistent fault-injection simulator.
+  Represents persistent artwork state and transient simulator dependencies.
 
-  Desired and current assets remain separate so an interrupted refresh cannot
-  claim that the new still is already on the display.
+  The struct requires capabilities and data directory, and keeps desired/current/
+  previous-known-good assets, request identity, display errors, verified asset
+  metadata and playlist timing as distinct fields. `bump/1` advances the state
+  revision and `etag/1` derives the corresponding strong reference ETag.
+
+  ## Stored and public projections
+
+  `persisted/1` selects artwork/playlist fields for checksummed disk records;
+  `from_persisted/3` restores those fields with explicitly supplied capabilities
+  and root. `public/1` exposes protocol state and bounded storage summary rather
+  than transient faults, secret pairing state or injected Thing source.
+
+  Desired and current must not be collapsed: verified bytes can exist while
+  physical activation is interrupted. This struct performs no transition,
+  authentication or I/O; `Frameshift.Simulator` and its separate persistence and
+  pairing owners decide those behaviors.
   """
 
   @enforce_keys [:capabilities, :data_dir]

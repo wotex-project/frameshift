@@ -1,11 +1,5 @@
 defmodule Frameshift.Library.Migrations do
-  @moduledoc """
-  Versioned SQLite schema for content, frame, and command-replay records.
-
-  Migrations run under the library's single-owner connection before runtime
-  commands are accepted. Before the first release, schema changes are folded
-  into the original table definitions; no public upgrade path is maintained.
-  """
+  @moduledoc false
 
   @search_backfill """
   INSERT INTO master_search(rowid, title, labels)

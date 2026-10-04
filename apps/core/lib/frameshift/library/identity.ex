@@ -1,9 +1,22 @@
 defmodule Frameshift.Library.Identity do
   @moduledoc """
-  Pure admission and identity rules for Library masters and recipes.
+  Validates master lineage and computes canonical recipe identities.
 
-  The caller resolves source existence and commits files and rows under the
-  single writer. This module never observes persistence or platform state.
+  `validate_master/3` checks required attributes and permitted import/generation
+  relationships. `validate_recipe_input/3` admits generation or composition
+  parameters and correctly spelled source digests before persistence lookup.
+  These checks are pure and do not confirm that referenced masters exist.
+
+  ## Recipe bytes
+
+  `recipe_identity/3` canonicalizes parameters with RFC 8785 and hashes the recipe
+  kind, canonical bytes and ordered source digests with explicit separators.
+  Changing parameters, kind or source order changes the identity. It returns the
+  persistable canonical representation or a canonicalization error.
+
+  `Frameshift.Library` resolves source existence and commits records/files under
+  its single writer. Structural admission and deterministic identity are not
+  source-authenticity, generation-quality or frame-compatibility assessments.
   """
 
   alias Frameshift.Digest
