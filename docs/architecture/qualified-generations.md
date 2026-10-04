@@ -89,7 +89,7 @@ previous-known-good. Both accepted pending work and last-good bytes remain
 protected from collection. Rollback changes the pointer for future work; it
 never reassigns an in-flight intent or claims that a frame changed display.
 
-Existing pre-qualification work is preserved by migration with an explicit
+Existing pre-qualification work is preserved across restart with an explicit
 legacy/unqualified marker. It can be reconciled using its original identity
 and digest, but must not be reported as having passed new qualification. Once a
 frame has an active admitted binding, a new pull or push intent must carry an
@@ -110,6 +110,6 @@ The software conformance suite must cover incompatible geometry/color,
 changed profile content under the same display name, renderer build change and
 rollback, exact byte replay, unsupported connector substitution, duplicate
 transfer, power-off timeout, candidate switch during pending work, restart
-recovery, last-good retention, and migration of old pending work. Physical
-panel refresh, certificate custody, signing, packaging, and independent device
-interoperability remain separate release evidence gates.
+recovery, last-good retention, and reconciliation of pre-qualification pending
+work. Physical panel refresh, certificate custody, signing, packaging, and
+independent device interoperability remain separate release evidence gates.

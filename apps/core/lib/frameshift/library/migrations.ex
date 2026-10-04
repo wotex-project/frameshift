@@ -3,7 +3,8 @@ defmodule Frameshift.Library.Migrations do
   Versioned SQLite schema for content, frame, and command-replay records.
 
   Migrations run under the library's single-owner connection before runtime
-  commands are accepted. New versions retain content and reference history.
+  commands are accepted. Before the first release, schema changes are folded
+  into the original table definitions; no public upgrade path is maintained.
   """
 
   @search_backfill """
@@ -97,8 +98,20 @@ defmodule Frameshift.Library.Migrations do
          frame_id TEXT NOT NULL,
          role TEXT NOT NULL CHECK (role IN ('desired', 'current', 'previous-known-good', 'queued', 'playlist')),
          object_digest TEXT NOT NULL REFERENCES objects(digest) ON DELETE RESTRICT,
+         work_digest TEXT REFERENCES qualified_work(digest) ON DELETE RESTRICT,
+         qualification_digest TEXT REFERENCES qualified_bindings(digest) ON DELETE RESTRICT,
          PRIMARY KEY (frame_id, role, object_digest)
        ) STRICT
+       """,
+       """
+       CREATE TRIGGER frame_asset_custody_insert BEFORE INSERT ON frame_asset_refs
+       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
+       BEGIN SELECT RAISE(ABORT, 'incomplete frame asset qualification custody'); END
+       """,
+       """
+       CREATE TRIGGER frame_asset_custody_update BEFORE UPDATE ON frame_asset_refs
+       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
+       BEGIN SELECT RAISE(ABORT, 'incomplete frame asset qualification custody'); END
        """,
        """
        CREATE TABLE audit_entries (
@@ -106,12 +119,16 @@ defmodule Frameshift.Library.Migrations do
          operation TEXT NOT NULL,
          subject_digest TEXT,
          detail_json TEXT NOT NULL,
-         occurred_at_ms INTEGER NOT NULL
+         occurred_at_ms INTEGER NOT NULL,
+         correlation_id TEXT,
+         attempt_id TEXT
        ) STRICT
        """,
        "CREATE INDEX masters_active_title ON masters(removed_at_ms, title)",
        "CREATE INDEX labels_lookup ON labels(label, master_digest)",
-       "CREATE INDEX frame_asset_refs_digest ON frame_asset_refs(object_digest)"
+       "CREATE INDEX frame_asset_refs_digest ON frame_asset_refs(object_digest)",
+       "CREATE INDEX audit_entries_recent ON audit_entries(id DESC)",
+       "CREATE INDEX audit_entries_correlation ON audit_entries(correlation_id, id DESC)"
      ]},
     {2,
      [
@@ -128,8 +145,21 @@ defmodule Frameshift.Library.Migrations do
          desired_digest TEXT NOT NULL REFERENCES objects(digest) ON DELETE RESTRICT,
          profile_id TEXT NOT NULL,
          playlist_revision TEXT,
-         queued_at_ms INTEGER NOT NULL
+         queued_at_ms INTEGER NOT NULL,
+         command_id TEXT,
+         work_digest TEXT REFERENCES qualified_work(digest) ON DELETE RESTRICT,
+         qualification_digest TEXT REFERENCES qualified_bindings(digest) ON DELETE RESTRICT
        ) STRICT
+       """,
+       """
+       CREATE TRIGGER frame_outbox_custody_insert BEFORE INSERT ON frame_outboxes
+       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
+       BEGIN SELECT RAISE(ABORT, 'incomplete outbox qualification custody'); END
+       """,
+       """
+       CREATE TRIGGER frame_outbox_custody_update BEFORE UPDATE ON frame_outboxes
+       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
+       BEGIN SELECT RAISE(ABORT, 'incomplete outbox qualification custody'); END
        """
      ]},
     {3,
@@ -188,7 +218,8 @@ defmodule Frameshift.Library.Migrations do
          updated_at_ms INTEGER NOT NULL
        ) STRICT
        """,
-       "CREATE INDEX paired_frames_title ON paired_frames(title COLLATE NOCASE, frame_id)"
+       "CREATE INDEX paired_frames_title ON paired_frames(title COLLATE NOCASE, frame_id)",
+       "CREATE UNIQUE INDEX paired_frames_server_spki_unique ON paired_frames(server_spki_fingerprint)"
      ]},
     {6,
      [
@@ -228,17 +259,24 @@ defmodule Frameshift.Library.Migrations do
          profile_id TEXT NOT NULL,
          request_id TEXT NOT NULL CHECK (length(request_id) BETWEEN 1 AND 64),
          status TEXT NOT NULL CHECK (status IN ('pending', 'displayed')),
-         updated_at_ms INTEGER NOT NULL
+         updated_at_ms INTEGER NOT NULL,
+         work_digest TEXT REFERENCES qualified_work(digest) ON DELETE RESTRICT,
+         qualification_digest TEXT REFERENCES qualified_bindings(digest) ON DELETE RESTRICT
        ) STRICT
+       """,
+       """
+       CREATE TRIGGER frame_direct_custody_insert BEFORE INSERT ON frame_direct_deliveries
+       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
+       BEGIN SELECT RAISE(ABORT, 'incomplete direct qualification custody'); END
+       """,
+       """
+       CREATE TRIGGER frame_direct_custody_update BEFORE UPDATE ON frame_direct_deliveries
+       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
+       BEGIN SELECT RAISE(ABORT, 'incomplete direct qualification custody'); END
        """
      ]},
     {8,
      [
-       "ALTER TABLE audit_entries ADD COLUMN correlation_id TEXT",
-       "ALTER TABLE audit_entries ADD COLUMN attempt_id TEXT",
-       "CREATE INDEX audit_entries_recent ON audit_entries(id DESC)",
-       "CREATE INDEX audit_entries_correlation ON audit_entries(correlation_id, id DESC)",
-       "ALTER TABLE frame_outboxes ADD COLUMN command_id TEXT",
        """
        CREATE TABLE metric_rollups (
          metric TEXT NOT NULL CHECK (length(metric) BETWEEN 1 AND 96),
@@ -254,10 +292,6 @@ defmodule Frameshift.Library.Migrations do
        ) STRICT
        """,
        "CREATE INDEX metric_rollups_recent ON metric_rollups(bucket_ms DESC, granularity)"
-     ]},
-    {9,
-     [
-       "CREATE UNIQUE INDEX paired_frames_server_spki_unique ON paired_frames(server_spki_fingerprint)"
      ]},
     {10,
      [
@@ -314,45 +348,6 @@ defmodule Frameshift.Library.Migrations do
          manifest_json TEXT NOT NULL,
          created_at_ms INTEGER NOT NULL
        ) STRICT
-       """
-     ]},
-    {12,
-     [
-       "ALTER TABLE frame_outboxes ADD COLUMN work_digest TEXT REFERENCES qualified_work(digest) ON DELETE RESTRICT",
-       "ALTER TABLE frame_outboxes ADD COLUMN qualification_digest TEXT REFERENCES qualified_bindings(digest) ON DELETE RESTRICT",
-       "ALTER TABLE frame_direct_deliveries ADD COLUMN work_digest TEXT REFERENCES qualified_work(digest) ON DELETE RESTRICT",
-       "ALTER TABLE frame_direct_deliveries ADD COLUMN qualification_digest TEXT REFERENCES qualified_bindings(digest) ON DELETE RESTRICT",
-       "ALTER TABLE frame_asset_refs ADD COLUMN work_digest TEXT REFERENCES qualified_work(digest) ON DELETE RESTRICT",
-       "ALTER TABLE frame_asset_refs ADD COLUMN qualification_digest TEXT REFERENCES qualified_bindings(digest) ON DELETE RESTRICT",
-       """
-       CREATE TRIGGER frame_outbox_custody_insert BEFORE INSERT ON frame_outboxes
-       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
-       BEGIN SELECT RAISE(ABORT, 'incomplete outbox qualification custody'); END
-       """,
-       """
-       CREATE TRIGGER frame_outbox_custody_update BEFORE UPDATE ON frame_outboxes
-       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
-       BEGIN SELECT RAISE(ABORT, 'incomplete outbox qualification custody'); END
-       """,
-       """
-       CREATE TRIGGER frame_direct_custody_insert BEFORE INSERT ON frame_direct_deliveries
-       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
-       BEGIN SELECT RAISE(ABORT, 'incomplete direct qualification custody'); END
-       """,
-       """
-       CREATE TRIGGER frame_direct_custody_update BEFORE UPDATE ON frame_direct_deliveries
-       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
-       BEGIN SELECT RAISE(ABORT, 'incomplete direct qualification custody'); END
-       """,
-       """
-       CREATE TRIGGER frame_asset_custody_insert BEFORE INSERT ON frame_asset_refs
-       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
-       BEGIN SELECT RAISE(ABORT, 'incomplete frame asset qualification custody'); END
-       """,
-       """
-       CREATE TRIGGER frame_asset_custody_update BEFORE UPDATE ON frame_asset_refs
-       WHEN (NEW.work_digest IS NULL) != (NEW.qualification_digest IS NULL)
-       BEGIN SELECT RAISE(ABORT, 'incomplete frame asset qualification custody'); END
        """
      ]},
     {13,

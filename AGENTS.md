@@ -99,6 +99,11 @@ Put maintained content beside its owner and link new specifications from
 - Extend the existing owner rather than creating parallel documentation or
   generic engines. Do not add abstractions, services, plugins, caches, or
   configuration systems for hypothetical future use.
+- Before the first release, edit original schema migrations directly instead
+  of adding alteration migrations. Name integration migrations
+  `<timestamp>_install_<integration>.exs` and table migrations
+  `<timestamp>_create_<table>.exs`, with matching module names. Keep a table's
+  columns, indexes, and constraints in its creation migration.
 - Canonical skills live in `.agents/skills/`. Automatically select and apply
   matching skills from their descriptions as the task, changed mechanism, or
   delivery stage requires. Do not ask the user to invoke a skill or choose a

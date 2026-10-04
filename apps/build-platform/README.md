@@ -42,6 +42,14 @@ The lane checks Svelte types/lint/build, dependency advisories, Elixir format/co
 generated-contract drift, phoenix-assets production checks and migration drift.
 Tests use a separate database and sandbox transactions. CI provisions the same
 pinned PostgreSQL image. No provider credentials or frame hardware are needed.
+
+Before the first release, edit original migrations instead of adding alteration
+migrations. Use `<timestamp>_install_<integration>.exs` for dependency installers
+and `<timestamp>_create_<table>.exs` for tables; keep each table's indexes and
+constraints with its creation. Existing development databases may need an
+explicit reset after schema edits; setup does not rewrite already-applied
+migrations. Preserve needed data before resetting a fixture.
+
 `./scripts/check policy` also resolves frontend ESM imports and declared aliases
 through the workspace component graph. Dynamic imports need literal paths;
 glob imports refuse at this boundary.

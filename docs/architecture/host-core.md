@@ -79,11 +79,12 @@ activation. Text search begins with SQLite FTS5 after target-build support is
 verified. Search indexes are rebuildable projections, never display or custody
 truth.
 
-Because no product release has shipped, the persistence refactor may replace
-the existing schema and APIs rather than maintain a public upgrade path.
-Development data is still user data: test migrations and document any
-deliberate reset; never silently discard a working library. The refactor must
-keep observable product behavior and crash-safety tests intact.
+Because no product release has shipped, edit original table definitions,
+indexes, and constraints directly rather than add alteration migrations or
+maintain a public upgrade path. Development data is still user data: verify
+fresh schema creation and restart behavior, and document any deliberate reset;
+never silently discard a working library. Schema changes must keep observable
+product behavior and crash-safety tests intact.
 
 ## Platform ports
 

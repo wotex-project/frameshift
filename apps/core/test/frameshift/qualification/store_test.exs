@@ -584,54 +584,21 @@ defmodule Frameshift.Qualification.StoreTest do
     GenServer.stop(restarted)
   end
 
-  test "pre-qualification schema upgrade retains pending legacy outbox custody", context do
+  test "restart retains pending legacy outbox custody", context do
     %{library: library, frame: frame, data_dir: data_dir} = context
     artifact = legacy_artifact(library, manifest(frame, "pull"))
     frame_id = frame["frame_id"]
     {:ok, queued} = Library.queue_outbox(library, frame_id, artifact, @profile_id)
     GenServer.stop(library)
 
-    {:ok, database} =
-      Exqlite.start_link(database: Path.join(data_dir, "metadata.sqlite"), foreign_keys: :off)
-
-    Exqlite.query!(database, "DROP TABLE artifact_recipe_links")
-
-    for trigger <- [
-          "frame_outbox_custody_insert",
-          "frame_outbox_custody_update",
-          "frame_direct_custody_insert",
-          "frame_direct_custody_update",
-          "frame_asset_custody_insert",
-          "frame_asset_custody_update"
-        ] do
-      Exqlite.query!(database, "DROP TRIGGER #{trigger}")
-    end
-
-    for table <- ["frame_outboxes", "frame_direct_deliveries", "frame_asset_refs"] do
-      Exqlite.query!(database, "ALTER TABLE #{table} DROP COLUMN work_digest")
-      Exqlite.query!(database, "ALTER TABLE #{table} DROP COLUMN qualification_digest")
-    end
-
-    for table <- [
-          "qualified_results",
-          "qualified_work",
-          "active_qualifications",
-          "qualified_bindings"
-        ] do
-      Exqlite.query!(database, "DROP TABLE #{table}")
-    end
-
-    Exqlite.query!(database, "DELETE FROM schema_migrations WHERE version IN (10, 11, 12, 13)")
-    GenServer.stop(database)
-
-    {:ok, upgraded} = Library.start_link(data_dir: data_dir, name: nil)
-    assert {:ok, ^queued} = Library.outbox_manifest(upgraded, frame_id)
+    {:ok, restarted} = Library.start_link(data_dir: data_dir, name: nil)
+    assert {:ok, ^queued} = Library.outbox_manifest(restarted, frame_id)
 
     assert %{"queued" => [%{"status" => "legacy_unqualified"}]} =
-             Library.delivery_custody(upgraded, frame_id)
+             Library.delivery_custody(restarted, frame_id)
 
     assert :ok =
-             Library.acknowledge_outbox(upgraded, frame_id, %{
+             Library.acknowledge_outbox(restarted, frame_id, %{
                "manifestRevision" => queued["revision"],
                "storage" => "verified",
                "refresh" => "displayed",
@@ -640,9 +607,9 @@ defmodule Frameshift.Qualification.StoreTest do
              })
 
     assert %{"current" => [%{"status" => "legacy_unqualified"}]} =
-             Library.delivery_custody(upgraded, frame_id)
+             Library.delivery_custody(restarted, frame_id)
 
-    GenServer.stop(upgraded)
+    GenServer.stop(restarted)
   end
 
   test "push pending and confirmation retain exact work after active switch", context do
