@@ -125,6 +125,28 @@ defmodule Frameshift.LocalAPITest do
              |> then(&LocalAPI.execute(context.library, &1))
   end
 
+  test "pin-set preview is independent of search and refuses truncation beyond the local limit",
+       context do
+    for index <- 1..65 do
+      {:ok, master} =
+        Library.import_master(context.library, "pinned-fixture-#{index}", %{
+          title: "Pinned #{index}",
+          source_kind: :import,
+          width: 1,
+          height: 1,
+          media_type: "application/octet-stream",
+          provenance: %{"fixture" => true}
+        })
+
+      :ok = Library.pin(context.library, master["digest"])
+    end
+
+    snapshot = LocalAPI.snapshot(context.library, nil, "no-matching-title")
+    assert snapshot["items"] == []
+    assert length(snapshot["pinnedItems"]) == 64
+    assert snapshot["pinnedSetTooLarge"]
+  end
+
   test "remove is recoverable library state and unavailable target commands fail explicitly",
        context do
     assert {:ok, imported} =

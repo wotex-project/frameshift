@@ -47,5 +47,15 @@ defmodule Frameshift.Playlist.PlanTest do
     assert {:error, :playlist_too_long} = Plan.build(limited, [@first, @second], 1_000)
   end
 
+  test "operator intervals retain millisecond precision within the one-year bound" do
+    capabilities = photo_capabilities()
+    assert {:ok, %{dwell_ms: 1_501}} = Plan.build(capabilities, [@first], 1_501)
+    assert {:ok, %{dwell_ms: 31_536_000_000}} = Plan.build(capabilities, [@first], 31_536_000_000)
+
+    for invalid <- [0, -1, 1.5, "1500", 31_536_000_001] do
+      assert {:error, :invalid_interval} = Plan.build(capabilities, [@first], invalid)
+    end
+  end
+
   defp photo_capabilities, do: @fixture |> File.read!() |> JSON.decode!()
 end

@@ -59,7 +59,7 @@ defmodule Frameshift.Outbox.EndpointTest do
                context.pin
              )
 
-    %{library: library}
+    %{library: library, library_dir: Path.join(root, "library")}
   end
 
   test "serves only the authenticated frame's current manifest and exact bytes", context do
@@ -401,6 +401,184 @@ defmodule Frameshift.Outbox.EndpointTest do
              )
 
     assert {:ok, %{status: 204}} = request(context, "GET", manifest_path())
+  end
+
+  test "resume refuses stale revision, newer delivery and changed capabilities", context do
+    {plan, first, second} = suspended_playlist(context)
+    revision = plan.playlist["revision"]
+
+    assert {:error, :playlist_revision_conflict} =
+             Library.resume_playlist(context.library, @frame_id, Digest.sha256("stale"))
+
+    {:ok, single} =
+      Library.queue_outbox(context.library, @frame_id, first["artifactDigest"], @profile_id)
+
+    assert {:error, :playlist_pending} =
+             Library.resume_playlist(context.library, @frame_id, revision)
+
+    assert {:ok, ^single} = Library.outbox_manifest(context.library, @frame_id)
+
+    assert {:ok, %{status: 200}} =
+             post_ack(context, displayed_ack(single, first["artifactDigest"]))
+
+    {:ok, injector} =
+      Exqlite.start_link(database: Path.join(context.library_dir, "metadata.sqlite"))
+
+    {:ok, frame} = Library.get_paired_frame(context.library, @frame_id)
+    changed = put_in(frame["capabilities"], ["refresh", "minimumDwellMs"], 2_000)
+
+    Exqlite.query!(
+      injector,
+      "UPDATE paired_frames SET capabilities_json = ? WHERE frame_id = ?",
+      [Jason.encode!(changed), @frame_id]
+    )
+
+    GenServer.stop(injector)
+
+    assert {:error, :playlist_profile_changed} =
+             Library.resume_playlist(context.library, @frame_id, revision)
+
+    assert %{"status" => "suspended", "requiresRevalidation" => true} =
+             Library.frame_playlist_status(context.library, @frame_id)
+
+    assert %{"requiresReview" => true} =
+             Library.frame_playlist_interval(context.library, @frame_id)
+
+    assert :empty = Library.outbox_manifest(context.library, @frame_id)
+    assert :ok = Library.remove_master(context.library, second["masterDigest"])
+    assert {:ok, []} = Library.collect_removed(context.library)
+  end
+
+  test "failed resume or replacement rolls back body, preferences, outbox revision and references",
+       context do
+    {plan, first, second} = suspended_playlist(context)
+    revision = plan.playlist["revision"]
+    preference = Library.frame_playlist_interval(context.library, @frame_id)
+
+    {:ok, injector} =
+      Exqlite.start_link(database: Path.join(context.library_dir, "metadata.sqlite"))
+
+    Exqlite.query!(
+      injector,
+      "CREATE TRIGGER fail_playlist_outbox BEFORE INSERT ON frame_outboxes BEGIN SELECT RAISE(ABORT, 'injected playlist failure'); END"
+    )
+
+    assert {:error, {:database, "injected playlist failure"}} =
+             Library.resume_playlist(context.library, @frame_id, revision)
+
+    assert %{"status" => "suspended", "revision" => ^revision} =
+             Library.frame_playlist_status(context.library, @frame_id)
+
+    assert :empty = Library.outbox_manifest(context.library, @frame_id)
+    {:ok, frame} = Library.get_paired_frame(context.library, @frame_id)
+
+    {:ok, replacement} =
+      Plan.build(
+        frame["capabilities"],
+        [second["artifactDigest"], first["artifactDigest"]],
+        2_000
+      )
+
+    assert {:error, {:database, "injected playlist failure"}} =
+             Library.queue_playlist(
+               context.library,
+               @frame_id,
+               @profile_id,
+               replacement.playlist,
+               [second, first],
+               "replacement-failed",
+               {:override, 2_000}
+             )
+
+    assert Library.frame_playlist_interval(context.library, @frame_id) == preference
+
+    assert %{"status" => "suspended", "revision" => ^revision} =
+             Library.frame_playlist_status(context.library, @frame_id)
+
+    assert :empty = Library.outbox_manifest(context.library, @frame_id)
+    Exqlite.query!(injector, "DROP TRIGGER fail_playlist_outbox")
+    GenServer.stop(injector)
+
+    assert {:ok, resumed} =
+             Library.resume_playlist(context.library, @frame_id, revision, "resume-after-failure")
+
+    assert resumed["revision"] == 3
+    assert {:ok, body} = Library.outbox_playlist(context.library, @frame_id, revision)
+    assert body == RFC8785.encode!(plan.playlist)
+
+    assert {:error, :playlist_revision_conflict} =
+             Library.resume_playlist(context.library, @frame_id, revision)
+
+    assert Process.alive?(context.library)
+  end
+
+  test "an unresolved push on a dual-mode frame refuses both playlist writers", context do
+    {plan, first, second} = suspended_playlist(context)
+
+    assert {:ok, _} =
+             Library.begin_direct_delivery(
+               context.library,
+               @frame_id,
+               first["artifactDigest"],
+               @profile_id,
+               "unresolved-push"
+             )
+
+    assert {:error, :direct_delivery_pending} =
+             Library.resume_playlist(context.library, @frame_id, plan.playlist["revision"])
+
+    {:ok, frame} = Library.get_paired_frame(context.library, @frame_id)
+
+    {:ok, replacement} =
+      Plan.build(
+        frame["capabilities"],
+        [first["artifactDigest"], second["artifactDigest"]],
+        2_000
+      )
+
+    assert {:error, :direct_delivery_pending} =
+             Library.queue_playlist(
+               context.library,
+               @frame_id,
+               @profile_id,
+               replacement.playlist,
+               [first, second]
+             )
+
+    assert %{"status" => "suspended"} = Library.frame_playlist_status(context.library, @frame_id)
+    assert :empty = Library.outbox_manifest(context.library, @frame_id)
+  end
+
+  defp suspended_playlist(context) do
+    first = register_playlist_entry!(context.library, @bytes)
+    second = register_playlist_entry!(context.library, @next_bytes)
+    {:ok, frame} = Library.get_paired_frame(context.library, @frame_id)
+
+    {:ok, plan} =
+      Plan.build(
+        frame["capabilities"],
+        [second["artifactDigest"], first["artifactDigest"]],
+        1_501
+      )
+
+    {:ok, initial} =
+      Library.queue_playlist(
+        context.library,
+        @frame_id,
+        @profile_id,
+        plan.playlist,
+        [second, first],
+        "ordered-fixture",
+        {:override, 1_501}
+      )
+
+    {:ok, %{status: 200}} = post_ack(context, displayed_ack(initial, second["artifactDigest"]))
+
+    {:ok, single} =
+      Library.queue_outbox(context.library, @frame_id, first["artifactDigest"], @profile_id)
+
+    {:ok, %{status: 200}} = post_ack(context, displayed_ack(single, first["artifactDigest"]))
+    {plan, first, second}
   end
 
   test "the bounded HTTP exchange frames authenticated content and safe problems", context do

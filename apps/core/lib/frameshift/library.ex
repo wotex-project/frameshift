@@ -394,7 +394,7 @@ defmodule Frameshift.Library do
   end
 
   @doc "Queues a complete pre-rendered still playlist and its outbox manifest atomically."
-  @spec queue_playlist(server(), String.t(), String.t(), map(), [map()], String.t() | nil) ::
+  @spec queue_playlist(server(), String.t(), String.t(), map(), [map()], String.t() | nil, term()) ::
           {:ok, map()} | {:error, term()}
   def queue_playlist(
         server \\ __MODULE__,
@@ -402,13 +402,27 @@ defmodule Frameshift.Library do
         profile_id,
         playlist,
         entries,
-        command_id \\ nil
+        command_id \\ nil,
+        interval_choice \\ nil
       ) do
     GenServer.call(
       server,
-      {:queue_playlist, frame_id, profile_id, playlist, entries, command_id},
+      {:queue_playlist, frame_id, profile_id, playlist, entries, command_id, interval_choice},
       :infinity
     )
+  end
+
+  @doc "Queues the exact saved suspended cycle, refusing stale revision or newer delivery intent."
+  @spec resume_playlist(server(), String.t(), digest(), String.t() | nil) ::
+          {:ok, map()} | {:error, term()}
+  def resume_playlist(server \\ __MODULE__, frame_id, revision, command_id \\ nil) do
+    GenServer.call(server, {:resume_playlist, frame_id, revision, command_id}, :infinity)
+  end
+
+  @doc "Reads the interval preference committed with the last successful queue for this frame."
+  @spec frame_playlist_interval(server(), String.t()) :: map() | nil
+  def frame_playlist_interval(server \\ __MODULE__, frame_id) do
+    GenServer.call(server, {:frame_playlist_interval, frame_id})
   end
 
   @doc "Returns the exact current pending playlist for a paired outbox caller."
@@ -890,17 +904,45 @@ defmodule Frameshift.Library do
   end
 
   def handle_call(
-        {:queue_playlist, frame_id, profile_id, playlist, entries, command_id},
+        {:queue_playlist, frame_id, profile_id, playlist, entries, command_id, interval_choice},
         _,
         state
       ) do
     result =
       case get_paired_frame_record(state, frame_id) do
         {:ok, frame} ->
-          PlaylistStore.queue(state.connection, frame, profile_id, playlist, entries, command_id)
+          PlaylistStore.queue(
+            state.connection,
+            frame,
+            profile_id,
+            playlist,
+            entries,
+            command_id,
+            interval_choice
+          )
 
         :not_found ->
           {:error, :frame_not_paired}
+      end
+
+    {:reply, result, state}
+  end
+
+  def handle_call({:resume_playlist, frame_id, revision, command_id}, _, state) do
+    result =
+      case get_paired_frame_record(state, frame_id) do
+        {:ok, frame} -> PlaylistStore.resume(state.connection, frame, revision, command_id)
+        :not_found -> {:error, :frame_not_paired}
+      end
+
+    {:reply, result, state}
+  end
+
+  def handle_call({:frame_playlist_interval, frame_id}, _, state) do
+    result =
+      case get_paired_frame_record(state, frame_id) do
+        {:ok, frame} -> PlaylistStore.interval(state.connection, frame)
+        :not_found -> nil
       end
 
     {:reply, result, state}
@@ -1819,6 +1861,10 @@ defmodule Frameshift.Library do
           "DELETE FROM app_settings WHERE key = 'frame.selected' AND value = ?",
           [frame_id]
         )
+
+        Exqlite.query!(connection, "DELETE FROM app_settings WHERE key = ?", [
+          "playlist.interval." <> frame_id
+        ])
 
         DiagnosticsStore.record_audit(connection, "frame.forgotten", nil, %{"frameId" => frame_id})
 

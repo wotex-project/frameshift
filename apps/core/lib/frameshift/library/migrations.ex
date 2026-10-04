@@ -376,6 +376,7 @@ defmodule Frameshift.Library.Migrations do
          ),
          status TEXT NOT NULL CHECK (status IN ('pending', 'active', 'suspended')),
          profile_id TEXT NOT NULL,
+         capability_digest TEXT NOT NULL,
          canonical_json TEXT NOT NULL,
          command_id TEXT,
          created_at_ms INTEGER NOT NULL,

@@ -23,6 +23,8 @@ defmodule Frameshift.Playlist.Plan do
   alias Frameshift.Digest
   alias Frameshift.DisplayTiming
 
+  @maximum_dwell_ms 31_536_000_000
+
   @type plan :: %{
           playlist: map(),
           dwell_ms: pos_integer(),
@@ -74,7 +76,8 @@ defmodule Frameshift.Playlist.Plan do
     end
   end
 
-  def resolve_dwell(capabilities, dwell) when is_integer(dwell) and dwell > 0 do
+  def resolve_dwell(capabilities, dwell)
+      when is_integer(dwell) and dwell > 0 and dwell <= @maximum_dwell_ms do
     clamped = DisplayTiming.clamp_dwell(capabilities, dwell)
     {:ok, clamped, :override, nil}
   end

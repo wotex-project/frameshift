@@ -15,7 +15,19 @@ defmodule Frameshift.LocalAPI do
   Source paths are temporary input and are not durable master references.
   Rendering later reads registered master bytes rather than caller-provided pixels.
 
-  Queue/reconciliation and pinned-loop commands preserve delivery/playlist
+  ## Still playlists
+
+  `loopPinned` snapshots library pins; `loopArtwork` accepts 1–64 distinct active
+  master IDs in explicit order. Both render before atomically queueing the complete
+  cycle and its per-frame interval preference. Unsupported transfer/profile,
+  missing masters and invalid intervals refuse before delivery. Pins changing
+  later never rewrite an accepted set.
+
+  `resumePlaylist` names an exact suspended revision. The library writer reuses
+  its retained canonical body and artifacts, refusing stale revision, newer intent
+  and changed capabilities. It does not use current pins or need a live renderer.
+
+  Queue/reconciliation and loop commands preserve delivery/playlist
   semantics. A successful command returns an updated snapshot; input, persistence
   or unsupported-profile failures return finite errors. An unconfirmed send is
   not displayed artwork. Pairing secrets and credential material belong to the
@@ -48,6 +60,7 @@ defmodule Frameshift.LocalAPI do
     targets = Enum.map(Library.list_paired_frames(library), &frame_target(library, &1))
     selected_target_id = selected_target_id(library, targets)
     membership = playlist_membership(library, selected_target_id)
+    pinned = Library.list_pinned_masters(library, @maximum_loop_items + 1)
 
     %{
       "targets" => targets,
@@ -55,6 +68,12 @@ defmodule Frameshift.LocalAPI do
       "instruction" => setting(library, @instruction_key, ""),
       "items" =>
         Enum.map(Library.search(library, search_query, limit: 100), &library_item(&1, membership)),
+      "pinnedItems" =>
+        Enum.map(
+          Enum.take(pinned, @maximum_loop_items),
+          &Map.take(library_item(&1, nil), ~w(id title digest))
+        ),
+      "pinnedSetTooLarge" => length(pinned) > @maximum_loop_items,
       "generationAvailability" => "notConfigured",
       "statusMessage" => status_message || default_status(targets)
     }
@@ -81,6 +100,8 @@ defmodule Frameshift.LocalAPI do
       case command do
         %{"kind" => "queue"} -> do_queue(library, renderer, command, options)
         %{"kind" => "loopPinned"} -> do_loop_pinned(library, renderer, command)
+        %{"kind" => "loopArtwork"} -> do_loop_artwork(library, renderer, command)
+        %{"kind" => "resumePlaylist"} -> do_resume_playlist(library, command)
         %{"kind" => "reconcileDelivery"} -> do_reconcile_delivery(library, command, options)
         _ -> do_execute(library, command)
       end
@@ -213,30 +234,97 @@ defmodule Frameshift.LocalAPI do
          {:ok, binding} <- queue_binding(library, target_id),
          :ok <- require_pull_binding(binding),
          {:ok, pinned} <- pinned_for_loop(library, frame),
-         {:ok, _, _, _} <- Plan.resolve_dwell(frame["capabilities"], Map.get(command, "dwellMs")),
-         {:ok, rendered} <- render_pinned(library, renderer, frame, binding, pinned),
-         {:ok, plan} <-
-           Plan.build(
-             frame["capabilities"],
-             Enum.map(rendered, & &1["artifactDigest"]),
-             Map.get(command, "dwellMs")
-           ),
-         {:ok, _} <-
-           Library.queue_playlist(
-             library,
-             target_id,
-             binding_profile_id(binding) || selected_profile_id(frame["capabilities"]),
-             plan.playlist,
-             rendered,
-             Map.get(command, "id")
-           ) do
-      {:ok, snapshot(library, "Pinned artwork loop queued for #{frame["title"]}")}
+         {:ok, result} <- prepare_loop(library, renderer, frame, binding, pinned, command) do
+      {:ok, result}
     else
       {:error, reason} -> {:error, normalize_queue_error(reason)}
     end
   end
 
   defp do_loop_pinned(_, _, _), do: {:error, :invalid_command}
+
+  defp do_loop_artwork(library, renderer, %{"targetID" => target_id, "itemIDs" => ids} = command)
+       when is_binary(target_id) and is_list(ids) do
+    with :ok <- validate_loop_ids(ids),
+         {:ok, frame} <- fetch_target(library, target_id),
+         :ok <- require_pull_loop(frame),
+         true <- length(ids) <= frame["capabilities"]["storage"]["maximumPlaylistLength"],
+         {:ok, binding} <- queue_binding(library, target_id),
+         :ok <- require_pull_binding(binding),
+         {:ok, masters} <- masters_for_loop(library, ids),
+         {:ok, result} <- prepare_loop(library, renderer, frame, binding, masters, command) do
+      {:ok, result}
+    else
+      false -> {:error, :playlist_too_long}
+      {:error, reason} -> {:error, normalize_queue_error(reason)}
+    end
+  end
+
+  defp do_loop_artwork(_, _, _), do: {:error, :invalid_command}
+
+  defp validate_loop_ids(ids) do
+    if length(ids) in 1..@maximum_loop_items and
+         length(Enum.uniq(ids)) == length(ids) and Enum.all?(ids, &Digest.valid_sha256?/1),
+       do: :ok,
+       else: {:error, :invalid_command}
+  end
+
+  defp masters_for_loop(library, ids) do
+    Enum.reduce_while(ids, {:ok, []}, fn id, {:ok, masters} ->
+      case fetch_master(library, id) do
+        {:ok, %{"removed_at_ms" => nil} = master} -> {:cont, {:ok, [master | masters]}}
+        _ -> {:halt, {:error, :item_not_found}}
+      end
+    end)
+    |> then(fn
+      {:ok, masters} -> {:ok, Enum.reverse(masters)}
+      error -> error
+    end)
+  end
+
+  defp prepare_loop(library, renderer, frame, binding, masters, command) do
+    requested = Map.get(command, "dwellMs")
+
+    with {:ok, _, _, _} <- Plan.resolve_dwell(frame["capabilities"], requested),
+         {:ok, rendered} <- render_pinned(library, renderer, frame, binding, masters),
+         {:ok, plan} <-
+           Plan.build(
+             frame["capabilities"],
+             Enum.map(rendered, & &1["artifactDigest"]),
+             requested
+           ),
+         {:ok, _} <-
+           Library.queue_playlist(
+             library,
+             frame["frame_id"],
+             binding_profile_id(binding) || selected_profile_id(frame["capabilities"]),
+             plan.playlist,
+             rendered,
+             Map.get(command, "id"),
+             if(requested == nil, do: :profile, else: {:override, requested})
+           ) do
+      {:ok, snapshot(library, "Artwork loop queued for #{frame["title"]}")}
+    else
+      {:error, reason} -> {:error, normalize_queue_error(reason)}
+    end
+  end
+
+  defp do_resume_playlist(
+         library,
+         %{"targetID" => target_id, "playlistRevision" => revision} = command
+       )
+       when is_binary(target_id) and is_binary(revision) do
+    with true <- Digest.valid_sha256?(revision),
+         {:ok, frame} <- fetch_target(library, target_id),
+         {:ok, _} <- Library.resume_playlist(library, target_id, revision, command["id"]) do
+      {:ok, snapshot(library, "Saved loop queued for #{frame["title"]} • waiting for frame")}
+    else
+      false -> {:error, :invalid_command}
+      {:error, reason} -> {:error, normalize_queue_error(reason)}
+    end
+  end
+
+  defp do_resume_playlist(_, _), do: {:error, :invalid_command}
 
   defp require_pull_loop(%{"capabilities" => %{"transferModes" => modes}}) do
     if "pull" in modes, do: :ok, else: {:error, :pull_not_supported}
@@ -396,6 +484,8 @@ defmodule Frameshift.LocalAPI do
   defp allowed_command_keys("selectTarget"), do: ~w(id kind targetID)
   defp allowed_command_keys("queue"), do: ~w(id kind targetID itemID)
   defp allowed_command_keys("loopPinned"), do: ~w(id kind targetID dwellMs)
+  defp allowed_command_keys("loopArtwork"), do: ~w(id kind targetID itemIDs dwellMs)
+  defp allowed_command_keys("resumePlaylist"), do: ~w(id kind targetID playlistRevision)
   defp allowed_command_keys("reconcileDelivery"), do: ~w(id kind targetID)
   defp allowed_command_keys(_), do: ~w(id kind)
 
@@ -439,10 +529,14 @@ defmodule Frameshift.LocalAPI do
       "profileID" => profile_id,
       "state" => frame["connection_state"],
       "minimumDwellMs" => frame["capabilities"]["refresh"]["minimumDwellMs"],
+      "maximumPlaylistLength" =>
+        min(frame["capabilities"]["storage"]["maximumPlaylistLength"], @maximum_loop_items),
       "recommendedDwellMs" => frame["capabilities"]["refresh"]["recommendedDwellMs"],
       "recommendationBasis" => frame["capabilities"]["refresh"]["recommendationBasis"],
       "recommendationRevision" => frame["capabilities"]["refresh"]["recommendationRevision"],
       "playlist" => Library.frame_playlist_status(library, frame["frame_id"]),
+      "loopInterval" => Library.frame_playlist_interval(library, frame["frame_id"]),
+      "hasQueuedDelivery" => Library.outbox_manifest(library, frame["frame_id"]) != :empty,
       "directDelivery" => direct_delivery_summary(library, frame["frame_id"])
     }
   end
@@ -542,6 +636,7 @@ defmodule Frameshift.LocalAPI do
   defp normalize_queue_error(reason)
        when reason in [
               :target_not_found,
+              :invalid_command,
               :item_not_found,
               :unsupported_profile,
               :compatible_binding_unavailable,
@@ -565,7 +660,10 @@ defmodule Frameshift.LocalAPI do
               :frame_not_paired,
               :storage_full,
               :already_active,
-              :playlist_pending
+              :playlist_pending,
+              :playlist_revision_conflict,
+              :playlist_profile_changed,
+              :duplicate_artifact
             ],
        do: reason
 

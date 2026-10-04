@@ -90,7 +90,12 @@ defmodule Frameshift.RenderPipelineTest do
       Enum.each([library, renderer, simulator], &stop_if_alive/1)
     end)
 
-    %{library: library, renderer: renderer, simulator: simulator}
+    %{
+      library: library,
+      library_dir: Path.join(root, "library"),
+      renderer: renderer,
+      simulator: simulator
+    }
   end
 
   test "a queued core command renders, caches, and converges through a universal target",
@@ -213,6 +218,158 @@ defmodule Frameshift.RenderPipelineTest do
              })
 
     assert :empty = Library.outbox_manifest(context.library, @frame_id)
+  end
+
+  test "ordered artwork resumes its exact saved body after pin changes and host restart",
+       context do
+    {:ok, package} = MasterPackage.encode(@original, @rgba, 2, 1)
+    {:ok, first} = Library.import_master(context.library, package, master_attributes())
+
+    {:ok, other_package} =
+      MasterPackage.encode(@original <> "-other", <<10, 20, 30, 255, 40, 50, 60, 255>>, 2, 1)
+
+    {:ok, second} =
+      Library.import_master(context.library, other_package, %{
+        master_attributes()
+        | title: "Second fixture"
+      })
+
+    {:ok, _} =
+      Library.register_paired_frame(
+        context.library,
+        thing_description(),
+        "keychain:ordered-loop",
+        "sha256:" <> String.duplicate("d", 64)
+      )
+
+    ids = [second["digest"], first["digest"]]
+
+    command = %{
+      "id" => "ordered-set",
+      "kind" => "loopArtwork",
+      "targetID" => @frame_id,
+      "itemIDs" => ids,
+      "dwellMs" => 1_501
+    }
+
+    assert {:ok, snapshot} =
+             LocalAPI.execute_with_renderer(context.library, context.renderer, command)
+
+    [target] = snapshot["targets"]
+    assert Enum.map(target["playlist"]["items"], & &1["id"]) == ids
+    assert target["loopInterval"]["requestedDwellMs"] == 1_501
+    assert target["loopInterval"]["appliedDwellMs"] == 1_501
+    assert target["loopInterval"]["requiresReview"] == false
+    {:ok, initial} = Library.outbox_manifest(context.library, @frame_id)
+    revision = initial["playlistRevision"]
+    {:ok, body} = Library.outbox_playlist(context.library, @frame_id, revision)
+    playlist = Jason.decode!(body)
+
+    assert Enum.map(playlist["entries"], & &1["assetDigest"]) == [
+             Digest.sha256(<<10, 20, 30, 40, 50, 60>>),
+             Digest.sha256(@rgb)
+           ]
+
+    assert :ok = Library.acknowledge_outbox(context.library, @frame_id, displayed_ack(initial))
+
+    assert {:ok, _} =
+             LocalAPI.execute_with_renderer(context.library, context.renderer, %{
+               "kind" => "queue",
+               "targetID" => @frame_id,
+               "itemID" => first["digest"]
+             })
+
+    {:ok, single} = Library.outbox_manifest(context.library, @frame_id)
+    assert :ok = Library.acknowledge_outbox(context.library, @frame_id, displayed_ack(single))
+    :ok = Library.pin(context.library, first["digest"])
+    :ok = Library.remove_master(context.library, second["digest"])
+    GenServer.stop(context.library)
+    GenServer.stop(context.renderer)
+    {:ok, restarted} = Library.start_link(data_dir: context.library_dir, name: nil)
+    on_exit(fn -> stop_if_alive(restarted) end)
+
+    assert {:ok, resumed} =
+             LocalAPI.execute(restarted, %{
+               "id" => "resume-saved-set",
+               "kind" => "resumePlaylist",
+               "targetID" => @frame_id,
+               "playlistRevision" => revision
+             })
+
+    assert hd(resumed["targets"])["playlist"]["status"] == "pending"
+    assert {:ok, manifest} = Library.outbox_manifest(restarted, @frame_id)
+    assert manifest["revision"] > single["revision"]
+    assert manifest["playlistRevision"] == revision
+    assert {:ok, ^body} = Library.outbox_playlist(restarted, @frame_id, revision)
+    assert Enum.map(hd(resumed["targets"])["playlist"]["items"], & &1["id"]) == ids
+    assert {:ok, []} = Library.collect_removed(restarted)
+  end
+
+  test "invalid or removed ordered masters fail before rendering and preserve pending intent",
+       context do
+    {:ok, package} = MasterPackage.encode(@original, @rgba, 2, 1)
+    {:ok, master} = Library.import_master(context.library, package, master_attributes())
+
+    {:ok, _} =
+      Library.register_paired_frame(
+        context.library,
+        thing_description(),
+        "keychain:ordered-loop",
+        "sha256:" <> String.duplicate("d", 64)
+      )
+
+    command = %{
+      "kind" => "loopArtwork",
+      "targetID" => @frame_id,
+      "itemIDs" => [master["digest"]],
+      "dwellMs" => 1
+    }
+
+    assert {:ok, _} = LocalAPI.execute_with_renderer(context.library, context.renderer, command)
+    {:ok, manifest} = Library.outbox_manifest(context.library, @frame_id)
+
+    assert %{"requestedDwellMs" => 1, "appliedDwellMs" => 1_000} =
+             Library.frame_playlist_interval(context.library, @frame_id)
+
+    GenServer.stop(context.renderer)
+
+    for ids <- [
+          [],
+          [master["digest"], master["digest"]],
+          ["bad"],
+          List.duplicate(master["digest"], 65)
+        ] do
+      assert {:error, :invalid_command} =
+               LocalAPI.execute_with_renderer(
+                 context.library,
+                 context.renderer,
+                 Map.put(command, "itemIDs", ids)
+               )
+    end
+
+    assert {:error, :invalid_interval} =
+             LocalAPI.execute_with_renderer(
+               context.library,
+               context.renderer,
+               Map.put(command, "dwellMs", 31_536_000_001)
+             )
+
+    :ok = Library.remove_master(context.library, master["digest"])
+
+    assert {:error, :item_not_found} =
+             LocalAPI.execute_with_renderer(context.library, context.renderer, command)
+
+    assert {:ok, ^manifest} = Library.outbox_manifest(context.library, @frame_id)
+  end
+
+  defp displayed_ack(manifest) do
+    %{
+      "manifestRevision" => manifest["revision"],
+      "storage" => "verified",
+      "refresh" => "displayed",
+      "currentAsset" => manifest["desiredAsset"],
+      "lastError" => nil
+    }
   end
 
   test "metadata that disagrees with the durable canonical representation is rejected", context do

@@ -76,11 +76,55 @@ the manifest's first `desiredAsset`.
 The compact panel shows the selected revision's still count and dwell interval
 beside its pending, active, or suspended state. A pending replacement labels
 the previous active loop as continuing until the frame confirms the new one.
-The compact menu offers fixed intervals and a whole-minute custom interval
-above the receiver minimum, bounded to one year. Review and reordering of the
-included set, per-frame interval persistence, a dedicated resume action, and
-profile-change warnings remain implementation work. Physical RTC
-and whole-frame energy qualification remain hardware release gates.
+The compact menu offers fixed intervals and custom intervals above the receiver
+minimum, bounded to one year. The focused Library owns the ordered-set editor.
+Physical RTC and whole-frame energy qualification remain hardware release gates.
+
+## Local ordered-set and resume contract
+
+The authenticated local `loopArtwork` command accepts `targetID`, an ordered
+`itemIDs` list and optional integer `dwellMs`. It snapshots 1–64 distinct active
+master identities, within the selected receiver's playlist capacity; pins are
+not required. Missing/removed masters, duplicate identities, unsupported pull
+mode or invalid intervals fail before rendering. The host renders in that exact
+order and uses the existing single-writer playlist/outbox transaction. Preparation
+failure leaves the previous active/pending intent intact. Rendered artifacts
+must also be distinct: two masters producing identical bytes cannot manufacture
+two distinct receiver entries.
+
+An explicit override is 1–31,536,000,000 ms and is clamped to the current minimum.
+Native input offers milliseconds, seconds, minutes and hours as whole positive
+integers; unit conversion uses checked multiplication and validates the same
+bound. Successful queueing atomically saves the interval choice per frame,
+including requested/applied dwell, profile recommendation revision and the exact
+capability digest. Failed preparation or storage cannot replace this preference.
+The editor uses the saved override as its default; a separately selected profile
+suggestion resets it to that suggestion. A changed minimum or recommendation is
+shown for review, rather than described as measured energy improvement.
+
+Snapshots expose the selected revision's ordered master identities and titles,
+independently of search pagination and later pin changes. An editor draft is
+shared between native surfaces, scoped to one frame, and survives refresh and
+surface dismissal. Changing targets retains each target's draft. Add/remove and
+move-up/down actions are available from keyboard controls; queuing submits an
+immutable copy so further local edits cannot rewrite an in-flight command.
+
+`resumePlaylist` accepts only `targetID` and the exact `playlistRevision` shown
+as suspended. Under the library writer it refuses a stale/non-suspended revision,
+any newer queued delivery, or changed capability digest. Otherwise it revalidates
+the protected artifact/profile/work custody and atomically queues the saved
+canonical body with a fresh outbox intent. It preserves order, dwell, source
+identities and playlist revision without consulting current pins or re-rendering.
+Missing artifacts, capacity/profile failures and database errors leave the paused
+record and references intact. Resume starts the saved cycle from its first entry
+after receiver confirmation; it does not promise the previous device index or
+deadline. Pending/active truth still comes only from the receiver acknowledgement.
+
+Acceptance uses native state fixtures and a real Zig-renderer/core/outbox joined
+test for ordered masters, clamping, changed pins, restart, exact saved-body resume,
+stale revision, pending-delivery refusal and injected transaction rollback.
+These establish software intent/custody behavior; installed native accessibility,
+receiver timing and physical display/energy acceptance remain separate gates.
 
 ## Receiver clock and failure behavior
 
