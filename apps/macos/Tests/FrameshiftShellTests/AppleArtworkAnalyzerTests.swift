@@ -11,6 +11,7 @@ struct AppleArtworkAnalyzerTests {
     let analyzer = AppleArtworkAnalyzer()
     let input = try fixture()
     let first = try await analyzer.analyze(input)
+    try await analyzer.validateFeaturePrint(first.featurePrint)
     let second = try await analyzer.analyze(input)
     #expect(first.masterDigest == input.masterDigest)
     #expect(first.inputDigest == input.digest)

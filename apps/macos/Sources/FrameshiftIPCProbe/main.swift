@@ -79,6 +79,24 @@ private struct FrameshiftIPCProbe {
     guard try await client.analysis(itemID: item.id).featurePrint == observation.featurePrint else {
       throw ProbeFailure()
     }
+    let emptySimilar = try await client.similarArtwork(itemID: item.id, filters: LibraryFilters())
+    guard emptySimilar.scannedCount == 0, emptySimilar.matches.isEmpty else { throw ProbeFailure() }
+    let pairedURL = fixtureDirectory.appendingPathComponent("visual-pair.png")
+    try writeFixture(to: pairedURL, description: "distinct original bytes")
+    let secondImport = try await client.send(
+      CoreCommand(kind: .importFile, importPath: pairedURL.path))
+    guard let secondID = secondImport.importedItemID, secondID != item.id else {
+      throw ProbeFailure()
+    }
+    _ = try await client.analyzeArtwork(itemID: secondID, force: true)
+    let similar = try await client.similarArtwork(itemID: item.id, filters: LibraryFilters())
+    try similar.validate(itemID: item.id)
+    guard similar.scannedCount == 1, similar.matches.first?.item.id == secondID,
+      similar.matches.first?.distance == 0, !similar.isPartial
+    else { throw ProbeFailure() }
+    let noPinned = try await client.similarArtwork(
+      itemID: item.id, filters: LibraryFilters(pinnedOnly: true))
+    guard noPinned.matches.isEmpty else { throw ProbeFailure() }
     _ = try await client.send(CoreCommand(kind: .setPinned, itemID: item.id, isPinned: true))
     let pinPreview = try await client.snapshot(query: "absent")
     guard pinPreview.items.isEmpty, pinPreview.pinnedItems?.map(\.id) == [item.id],
@@ -136,7 +154,7 @@ private struct FrameshiftIPCProbe {
     guard retained.revision == committed.revision else { throw ProbeFailure() }
 
     let storage = try await client.storage()
-    guard storage.totalBytes > 0, storage.objectCount == 1 else { throw ProbeFailure() }
+    guard storage.totalBytes > 0, storage.objectCount == 2 else { throw ProbeFailure() }
     let budgetResult = try await client.send(
       CoreCommand(
         kind: .updateStorage, storageRevision: storage.revision,
@@ -158,7 +176,7 @@ private struct FrameshiftIPCProbe {
     print("Frameshift Swift-to-Elixir IPC probe passed")
   }
 
-  private static func writeFixture(to url: URL) throws {
+  private static func writeFixture(to url: URL, description: String? = nil) throws {
     let pixels = Data([255, 0, 0, 255, 0, 255, 0, 255])
     let info = CGBitmapInfo(
       rawValue: CGBitmapInfo.byteOrder32Big.rawValue | CGImageAlphaInfo.last.rawValue
@@ -188,7 +206,10 @@ private struct FrameshiftIPCProbe {
       throw ProbeFailure()
     }
 
-    CGImageDestinationAddImage(destination, image, nil)
+    let properties = description.map {
+      [kCGImagePropertyPNGDictionary: [kCGImagePropertyPNGDescription: $0]] as CFDictionary
+    }
+    CGImageDestinationAddImage(destination, image, properties)
     guard CGImageDestinationFinalize(destination) else { throw ProbeFailure() }
   }
 }

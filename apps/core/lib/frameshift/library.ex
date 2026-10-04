@@ -394,6 +394,11 @@ defmodule Frameshift.Library do
   def analysis_pending(server \\ __MODULE__, cohort),
     do: GenServer.call(server, {:analysis_pending, cohort})
 
+  @doc "Reads verified same-cohort similarity candidates without changing Library state."
+  @spec similarity_candidates(server(), map()) :: {:ok, map()} | {:error, atom()}
+  def similarity_candidates(server \\ __MODULE__, request),
+    do: GenServer.call(server, {:similarity_candidates, request})
+
   @doc "Replaces Vision observations and their archive against an exact metadata revision."
   @spec record_vision(server(), digest(), map()) :: {:ok, map()} | {:error, term()}
   def record_vision(server \\ __MODULE__, digest, command),
@@ -716,6 +721,9 @@ defmodule Frameshift.Library do
 
   def handle_call({:analysis_pending, cohort}, _, state),
     do: {:reply, Metadata.analysis_pending(state.connection, cohort), state}
+
+  def handle_call({:similarity_candidates, request}, _, state),
+    do: {:reply, Frameshift.Library.Similarity.page(state.connection, request), state}
 
   def handle_call({:record_vision, digest, command}, _, state),
     do: {:reply, Metadata.record_vision(state.connection, digest, command), state}

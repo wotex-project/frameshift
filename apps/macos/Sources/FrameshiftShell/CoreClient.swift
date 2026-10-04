@@ -12,9 +12,37 @@ public protocol CoreClient: Sendable {
   func analysis(itemID: String) async throws -> LibraryAnalysis
   func analysisPending() async throws -> PendingLibraryAnalysis
   func analyzeArtwork(itemID: String, force: Bool) async throws -> CoreSnapshot
+  func similarityCandidates(source: LibraryAnalysis, afterID: String?, filters: LibraryFilters)
+    async throws -> SimilarityCandidatesPage
+  func similarArtwork(itemID: String, filters: LibraryFilters) async throws
+    -> VisualSimilarityResult
 }
 
 extension CoreClient {
+  public func similarityCandidates(
+    source _: LibraryAnalysis, afterID _: String?, filters _: LibraryFilters
+  ) async throws -> SimilarityCandidatesPage {
+    throw CoreClientError.analysisUnavailable
+  }
+
+  public func similarArtwork(itemID: String, filters: LibraryFilters) async throws
+    -> VisualSimilarityResult
+  {
+    try filters.validate()
+    let source = try await analysis(itemID: itemID)
+    guard source.cohort == AppleArtworkAnalyzer.cohort else {
+      throw CoreClientError.analysisUnavailable
+    }
+    try await AppleArtworkAnalyzer.shared.validateFeaturePrint(source.featurePrint)
+    return try await VisualSimilarity.scan(
+      source: source,
+      load: { try await self.similarityCandidates(source: source, afterID: $0, filters: filters) },
+      compare: {
+        try await AppleArtworkAnalyzer.shared.compare(source.featurePrint, candidates: $0)
+      },
+      verifySource: { try await self.analysis(itemID: itemID) })
+  }
+
   public func analysis(itemID _: String) async throws -> LibraryAnalysis {
     throw CoreClientError.analysisUnavailable
   }
@@ -52,6 +80,7 @@ extension CoreClient {
 public enum CoreClientError: Error, Equatable, Sendable {
   case commandIDConflict
   case analysisUnavailable
+  case analysisChanged
   case invalidAnalysis
   case libraryStorageFull
   case storageUnavailable

@@ -11,7 +11,9 @@ struct LibraryMetadataEditor: View {
       Button("Analyze artwork locally", systemImage: "sparkle.magnifyingglass") {
         model.analyzeSelectedArtwork()
       }
-      .disabled(model.isAnalysisBusy || model.isMetadataLoading || model.isBusy)
+      .disabled(
+        model.isAnalysisBusy || model.similarity.isBusy || model.isMetadataLoading || model.isBusy
+      )
       .help("Refresh Apple Vision observations. Your title and labels are preserved.")
       .accessibilityIdentifier("library-analyze-artwork")
       if let draft = model.metadataDraft {

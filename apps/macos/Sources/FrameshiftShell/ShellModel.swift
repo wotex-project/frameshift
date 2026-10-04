@@ -8,6 +8,7 @@ public final class ShellModel {
   private static let logger = Logger(subsystem: "io.frameshift.app", category: "shell")
   public private(set) var snapshot: CoreSnapshot
   public let storageSettings: StorageSettingsModel
+  public let similarity: VisualSimilarityModel
   public private(set) var isBusy = false
   public private(set) var errorMessage: String?
   public var draftInstruction: String
@@ -45,6 +46,7 @@ public final class ShellModel {
   private var analysisAttempted: Set<String> = []
   private var analysisRemaining = 16
   private var automaticAnalysisStopped = false
+  private var analysisOverflow = false
 
   public init(
     client: any CoreClient,
@@ -52,19 +54,21 @@ public final class ShellModel {
   ) {
     self.client = client
     storageSettings = StorageSettingsModel(client: client)
+    similarity = VisualSimilarityModel(client: client)
     snapshot = initialSnapshot
     draftInstruction = initialSnapshot.instruction
   }
 
   public func refresh() async {
     if await perform({ try await client.snapshot() }) {
+      similarity.invalidate()
       automaticAnalysisStopped = false
       startAnalysis(discoverPending: true)
     }
   }
 
   public func analyzeSelectedArtwork() {
-    guard let itemID = selectedItem?.id else { return }
+    guard !similarity.isBusy, let itemID = selectedItem?.id else { return }
     automaticAnalysisStopped = false
     enqueueAnalysis(itemID, force: true)
   }
@@ -77,6 +81,10 @@ public final class ShellModel {
   }
 
   private func enqueueAnalysis(_ itemID: String, force: Bool) {
+    guard !similarity.isBusy else {
+      analysisMessage = "Artwork saved. Refresh after local comparison to resume labeling."
+      return
+    }
     guard validLibraryDigest(itemID), !automaticAnalysisStopped else { return }
     if analysisTask == nil {
       analysisRemaining = 16
@@ -87,14 +95,17 @@ public final class ShellModel {
       analysisQueue[index].force = analysisQueue[index].force || force
     } else if analysisQueue.count < analysisRemaining {
       analysisQueue.append((itemID, force))
+    } else {
+      analysisOverflow = true
     }
     startAnalysis(discoverPending: false)
   }
 
   private func startAnalysis(discoverPending: Bool) {
-    guard analysisTask == nil, !automaticAnalysisStopped else { return }
+    guard analysisTask == nil, !automaticAnalysisStopped, !similarity.isBusy else { return }
     analysisRemaining = 16
     analysisAttempted.removeAll()
+    analysisOverflow = false
     isAnalysisBusy = true
     analysisMessage = "Labeling artwork locally…"
     analysisTask = Task { await runAnalysisBatch(discoverPending: discoverPending) }
@@ -165,7 +176,7 @@ public final class ShellModel {
         saved > 0 ? "Local analysis saved; background labeling stopped." : "Local labeling stopped."
     } else if failed > 0 {
       analysisMessage = "Some artwork could not be labeled. Refresh or analyze it to retry."
-    } else if hasMore {
+    } else if hasMore || analysisOverflow {
       analysisMessage = "Local labeling batch finished. Refresh to label more artwork."
     } else {
       analysisMessage =
@@ -181,6 +192,7 @@ public final class ShellModel {
     let previous = previewScope
     guard let itemID else {
       selectedItem = nil
+      similarity.invalidate()
       invalidatePreview()
       invalidateMetadata()
       return
@@ -188,8 +200,10 @@ public final class ShellModel {
     guard
       let item = visibleItems.first(where: { $0.id == itemID })
         ?? snapshot.items.first(where: { $0.id == itemID })
+        ?? similarity.result?.matches.first(where: { $0.item.id == itemID })?.item
     else { return }
     selectedItem = item
+    if previous?.masterID != itemID { similarity.invalidate() }
     if previewScope != previous { invalidatePreview() }
     if previous?.masterID != itemID { invalidateMetadata() }
   }
@@ -418,6 +432,7 @@ public final class ShellModel {
   }
 
   public func setSearchQuery(_ query: String) {
+    similarity.invalidate()
     searchQuery = query
     searchRevision += 1
     let revision = searchRevision
@@ -528,6 +543,11 @@ public final class ShellModel {
     }
   }
 
+  public func findSimilarArtwork() {
+    guard !isAnalysisBusy, let itemID = selectedItem?.id else { return }
+    similarity.start(itemID: itemID, filters: libraryFilters)
+  }
+
   public func togglePin(_ itemID: String) async {
     guard
       let item = visibleItems.first(where: { $0.id == itemID })
@@ -541,6 +561,7 @@ public final class ShellModel {
     let removed = await send(CoreCommand(kind: .remove, itemID: itemID))
     if removed, selectedItem?.id == itemID {
       selectedItem = nil
+      similarity.invalidate()
       invalidatePreview()
       invalidateMetadata()
     }
@@ -675,6 +696,11 @@ public final class ShellModel {
 
     do {
       apply(try await client.send(command))
+      if [.importFile, .setPinned, .remove, .restore, .updateMetadata, .recordVision].contains(
+        command.kind)
+      {
+        similarity.invalidate()
+      }
       errorMessage = nil
       succeeded = true
     } catch CoreClientError.commandOutcomeUnknown {

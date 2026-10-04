@@ -334,6 +334,76 @@ defmodule Frameshift.LocalIPC.ServerTest do
     assert %{"ok" => false} = request(c.socket_path, Map.put(envelope, "command", oversized))
   end
 
+  test "similarity pages authenticate exact source and scope without mutation", c do
+    cohort = "apple-vision-v1:c2:f2:macos27.0.1:arm64:source256-fit"
+    archive = "bounded opaque fixture"
+
+    ids =
+      for text <- ["source", "candidate"] do
+        {:ok, master} =
+          Library.import_master(c.library, text, %{
+            title: text,
+            source_kind: :import,
+            width: 2,
+            height: 1,
+            media_type: "image/png",
+            provenance: %{"kind" => "local-import"}
+          })
+
+        digest = master["digest"]
+        {:ok, metadata} = Library.metadata(c.library, digest)
+
+        {:ok, _} =
+          Library.record_vision(c.library, digest, %{
+            "cohort" => cohort,
+            "metadataRevision" => metadata["revision"],
+            "inputDigest" => Digest.sha256("preview"),
+            "rendererBuildDigest" => Digest.sha256("renderer"),
+            "visionLabels" => [],
+            "featureDigest" => Digest.sha256(archive),
+            "featureArchiveChunks" => [Base.encode64(archive)]
+          })
+
+        digest
+      end
+
+    [source, candidate] = ids
+
+    read = %{
+      "version" => 1,
+      "requestId" => "similarity-read",
+      "operation" => "librarySimilarityCandidates",
+      "itemID" => source,
+      "cohort" => cohort,
+      "featureDigest" => Digest.sha256(archive),
+      "filters" => %{}
+    }
+
+    before = Library.audit_page(c.library)
+
+    assert %{"ok" => false, "error" => %{"code" => "authentication_required"}} =
+             request(c.socket_path, Map.put(read, "auth", String.duplicate("b", 64)))
+
+    assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+             request(c.socket_path, Map.put(read, "path", "/caller"))
+
+    assert %{
+             "ok" => true,
+             "similarityCandidates" => %{
+               "items" => [%{"item" => %{"id" => ^candidate}}],
+               "nextCursor" => nil
+             }
+           } = request(c.socket_path, read)
+
+    assert %{"ok" => false, "error" => %{"code" => "analysis_changed"}} =
+             request(c.socket_path, Map.put(read, "featureDigest", Digest.sha256("replaced")))
+
+    assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+             request(c.socket_path, Map.put(read, "filters", %{"frameID" => "unpaired"}))
+
+    assert Library.audit_page(c.library) == before
+  end
+
   test "metadata and paginated recovery authenticate, refuse forged reads and replay edits once",
        context do
     {:ok, master} =

@@ -25,6 +25,8 @@ defmodule Frameshift.LocalIPC.Server do
   `libraryAnalysis` verifies one bounded archive and `libraryAnalysisPending`
   lists at most sixteen active IDs for an exact native cohort. Neither operation
   changes state; chunked observation commands keep the existing JSON limits.
+  `librarySimilarityCandidates` checks exact source feature identity and bounded
+  facets on each digest-cursor page; Swift owns secure decoding and ranking.
   The listener monitors its acceptor and removes the
   socket on termination. The token file is consumed before startup through
   `Frameshift.LocalIPC.Token`; read-only diagnostics use a separate peer-UID
@@ -47,6 +49,20 @@ defmodule Frameshift.LocalIPC.Server do
   @maximum_response_bytes 1024 * 1024
   @request_timeout_ms 5_000
   @token_pattern ~r/^[0-9a-f]{64}$/
+  @request_keys %{
+    "command" => ~w(version requestId operation auth command),
+    "snapshot" => ~w(version requestId operation auth query filters),
+    "preview" => ~w(version requestId operation auth itemID targetID profileID capabilityDigest),
+    "libraryMetadata" => ~w(version requestId operation auth itemID),
+    "libraryRecovery" => ~w(version requestId operation auth afterID),
+    "libraryAnalysis" => ~w(version requestId operation auth itemID),
+    "libraryAnalysisPending" => ~w(version requestId operation auth cohort),
+    "librarySimilarityCandidates" =>
+      ~w(version requestId operation auth itemID cohort featureDigest afterID filters),
+    "pair" => ~w(version requestId operation auth bootstrap discoveredId origin credentialRef),
+    "recoverPair" =>
+      ~w(version requestId operation auth bootstrap discoveredId origin credentialRef)
+  }
 
   defmodule State do
     @moduledoc """
@@ -255,32 +271,7 @@ defmodule Frameshift.LocalIPC.Server do
            "auth" => auth
          } = request
        ) do
-    allowed =
-      case operation do
-        "command" ->
-          ~w(version requestId operation auth command)
-
-        "snapshot" ->
-          ~w(version requestId operation auth query filters)
-
-        "preview" ->
-          ~w(version requestId operation auth itemID targetID profileID capabilityDigest)
-
-        operation when operation in ["libraryMetadata", "libraryAnalysis"] ->
-          ~w(version requestId operation auth itemID)
-
-        "libraryRecovery" ->
-          ~w(version requestId operation auth afterID)
-
-        "libraryAnalysisPending" ->
-          ~w(version requestId operation auth cohort)
-
-        operation when operation in ["pair", "recoverPair"] ->
-          ~w(version requestId operation auth bootstrap discoveredId origin credentialRef)
-
-        _ ->
-          ~w(version requestId operation auth)
-      end
+    allowed = Map.get(@request_keys, operation, ~w(version requestId operation auth))
 
     with :ok <- validate_request_id(request_id),
          :ok <- validate_operation(operation),
@@ -317,6 +308,7 @@ defmodule Frameshift.LocalIPC.Server do
               "libraryStorage",
               "libraryAnalysis",
               "libraryAnalysisPending",
+              "librarySimilarityCandidates",
               "command",
               "pair",
               "recoverPair",
@@ -391,6 +383,18 @@ defmodule Frameshift.LocalIPC.Server do
     if Frameshift.Library.Metadata.vision_cohort?(request["cohort"]),
       do: :ok,
       else: {:error, {request_id, :invalid_request}}
+  end
+
+  defp validate_library_read(request, "librarySimilarityCandidates", request_id) do
+    with true <- Digest.valid_sha256?(request["itemID"]),
+         true <- Digest.valid_sha256?(request["featureDigest"]),
+         true <- Frameshift.Library.Metadata.vision_cohort?(request["cohort"]),
+         true <- request["afterID"] == nil or Digest.valid_sha256?(request["afterID"]),
+         :ok <- LocalAPI.validate_filters(request["filters"]) do
+      :ok
+    else
+      _ -> {:error, {request_id, :invalid_request}}
+    end
   end
 
   defp validate_library_read(_, _, _), do: :ok
@@ -642,6 +646,18 @@ defmodule Frameshift.LocalIPC.Server do
       {:error, code} ->
         {:error, {request_id, code}}
     end
+  end
+
+  defp execute_request(
+         %{"requestId" => request_id, "operation" => "librarySimilarityCandidates"} = request,
+         library,
+         _
+       ) do
+    library_read_response(
+      request_id,
+      "similarityCandidates",
+      Library.similarity_candidates(library, request)
+    )
   end
 
   defp library_read_response(request_id, key, {:ok, value}),

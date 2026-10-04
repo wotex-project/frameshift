@@ -77,6 +77,23 @@ public actor LocalCoreClient: CoreClient {
     return pending
   }
 
+  public func similarityCandidates(
+    source: LibraryAnalysis, afterID: String?, filters: LibraryFilters
+  ) async throws -> SimilarityCandidatesPage {
+    try source.validate(itemID: source.itemID)
+    try filters.validate()
+    guard afterID == nil || validLibraryDigest(afterID!) else {
+      throw CoreClientError.invalidCommand
+    }
+    let response = try await libraryRead(
+      operation: "librarySimilarityCandidates", itemID: source.itemID,
+      afterID: afterID, cohort: source.cohort, featureDigest: source.featurePrint.digest,
+      filters: filters)
+    guard let page = response.similarityCandidates else { throw CoreClientError.protocolFailure }
+    try page.validate(source: source, afterID: afterID)
+    return page
+  }
+
   public func analyzeArtwork(itemID: String, force: Bool) async throws -> CoreSnapshot {
     guard validLibraryDigest(itemID) else { throw CoreClientError.invalidCommand }
     if !force {
@@ -104,14 +121,15 @@ public actor LocalCoreClient: CoreClient {
 
   private func libraryRead(
     operation: String, itemID: String? = nil, afterID: String? = nil,
-    cohort: String? = nil
+    cohort: String? = nil, featureDigest: String? = nil, filters: LibraryFilters? = nil
   )
     async throws -> WireResponse
   {
     try await BundledCore.shared.ensureRunning(socketPath: socketPath)
     let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
     let request = LibraryWireRequest(
-      operation: operation, auth: auth, itemID: itemID, afterID: afterID, cohort: cohort)
+      operation: operation, auth: auth, itemID: itemID, afterID: afterID, cohort: cohort,
+      featureDigest: featureDigest, filters: filters)
     let responseData = try await send(encoder.encode(request))
     guard let response = try? decoder.decode(WireResponse.self, from: responseData),
       response.version == 1, response.requestID == request.requestID
@@ -312,6 +330,7 @@ public actor LocalCoreClient: CoreClient {
   private static func clientError(for code: String?) -> CoreClientError {
     switch code {
     case "analysis_unavailable": .analysisUnavailable
+    case "analysis_changed": .analysisChanged
     case "invalid_analysis": .invalidAnalysis
     case "library_storage_full": .libraryStorageFull
     case "storage_revision_conflict": .storageRevisionConflict
@@ -593,9 +612,11 @@ private struct LibraryWireRequest: Encodable, Sendable {
   let itemID: String?
   let afterID: String?
   let cohort: String?
+  let featureDigest: String?
+  let filters: LibraryFilters?
 
   private enum CodingKeys: String, CodingKey {
-    case version, operation, auth, itemID, afterID, cohort
+    case version, operation, auth, itemID, afterID, cohort, featureDigest, filters
     case requestID = "requestId"
   }
 }
@@ -635,6 +656,7 @@ private struct WireResponse: Decodable, Sendable {
   let storage: LibraryStorage?
   let analysis: LibraryAnalysis?
   let analysisPending: PendingLibraryAnalysis?
+  let similarityCandidates: SimilarityCandidatesPage?
   let error: WireError?
 
   private enum CodingKeys: String, CodingKey {
@@ -650,6 +672,7 @@ private struct WireResponse: Decodable, Sendable {
     case storage
     case analysis
     case analysisPending
+    case similarityCandidates
     case error
   }
 }

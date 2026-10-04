@@ -38,6 +38,11 @@ public struct NativeArtworkAnalysis: Sendable {
 public struct VisualDistance: Equatable, Sendable {
   public let masterDigest: String
   public let distance: Float
+
+  public init(masterDigest: String, distance: Float) {
+    self.masterDigest = masterDigest
+    self.distance = distance
+  }
 }
 
 /// Owns one bounded Vision worker. Caller cancellation never releases a still-running worker.
@@ -103,6 +108,14 @@ public actor AppleArtworkAnalyzer {
         masterDigest: preview.masterDigest, inputDigest: preview.digest,
         rendererBuildDigest: preview.rendererBuildDigest, cohort: Self.cohort,
         labels: try labels(observations), featurePrint: featurePrint)
+    }
+  }
+
+  /// Verifies a source even when the Library has no other comparable candidates.
+  public func validateFeaturePrint(_ print: NativeFeaturePrint) async throws {
+    try await run { control in
+      try control.checkCancellation()
+      _ = try decode(print)
     }
   }
 

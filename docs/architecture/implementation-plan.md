@@ -172,7 +172,7 @@ shared read-only source/pin/frame facets preserve selection and drafts. Software
 evidence is in the
 [verification ledger](verification.md); they do not complete H3's installed
 accessibility matrix or H2's measured palette/packing profiles. Continue the
-remaining native labeling/similarity adapters, retention/model-download settings
+remaining retention/model-download settings
 and H4 contracts
 alongside release-version documentation and publication work. S2's explicit
 producer refusal still gates its dependent composition authority, rather than
@@ -204,8 +204,13 @@ and archive transactionally with FTS/audit, retaining them across restart and
 backup. Authenticated reads and chunked writes preserve IPC limits and receipts;
 sixteen-item native batches return after import, preserve drafts and refuse stale
 edits. Stop pauses import labeling until refresh or explicit analysis, with an
-accepted-save caveat. Next build explicitly identified visual similarity results
-from same-cohort archives without changing literal search or frame intent.
+accepted-save caveat. The Library's separate local similarity view now consumes
+sixteen-candidate authenticated pages, verifies source identity through the final
+read, compares secure same-cohort prints and retains up to 100 nearest matches
+within a 512-candidate scan. Partial scans are explicit; facets, text, refresh and
+source changes invalidate results, and timeout/stop retain worker custody. Actual
+packaged prints compare through IPC. Semantic quality, installed accessibility
+and other supported OS/CPU execution remain separate evidence dependencies.
 
 ## Shared contracts
 

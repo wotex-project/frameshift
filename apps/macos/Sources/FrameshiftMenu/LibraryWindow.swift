@@ -162,6 +162,7 @@ struct LibraryWindow: View {
       Text(item.title).font(.title2)
       ArtworkPreviewView(model: model)
       LibraryMetadataEditor(model: model)
+      VisualSimilarityView(model: model)
       LabeledContent("Source master") {
         Text(item.digest).font(.caption.monospaced()).textSelection(.enabled)
       }

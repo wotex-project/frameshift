@@ -373,6 +373,56 @@ rollback, empty classifier results, independent user labels, pending bounds,
 background scheduling/selection/draft races and cancellation. Visual similarity
 pagination/ranking/UI remains a separate read-only consumer of these archives.
 
+### Local visual similarity
+
+Similarity is an explicit Library action on one selected active master. It uses
+that master's saved feature print from the current native cohort; missing or
+incompatible observations ask for local analysis instead of changing source or
+calling a generation provider. Results occupy a separate named section, leaving
+literal title/label search, selection, pins, drafts and frame intent intact.
+The current source/pin/paired-frame facets constrain candidates. A facet or source
+selection change clears results and invalidates pending responses; entering text
+also clears similarity. Selecting a result selects its exact master normally.
+
+`librarySimilarityCandidates` is an authenticated read with exact source item ID,
+cohort, source feature digest, optional exclusive digest cursor and the existing
+bounded facet object. The Library checks active source/archive identity on every
+page and refuses a replaced source, unknown frame or malformed cursor/facet. It
+returns at most 16 active same-cohort candidates in digest order, excluding the
+source, with verified bounded archives and title/pin projections. Frame filtering
+uses retained master or artifact-recipe custody, never physically displayed art.
+Corrupt candidate archives refuse the page rather than silently dropping records.
+The page and its source identity remain below the existing 1 MiB response ceiling.
+Reads do not create commands, render pixels, mutate metadata or qualify a profile.
+
+The native consumer reads at most 32 pages (512 candidates), compares one page at
+a time with the existing secure Vision adapter, and retains at most 100 nearest
+results sorted by finite nonnegative distance then master ID. It verifies source
+identity again after scanning. Distances express Apple feature-print difference,
+not match probabilities or semantic accuracy. If candidates remain after the
+ceiling, the UI explicitly identifies a partial scan; it cannot claim the nearest
+artwork in the whole Library. Results cover observed pages, not an atomic catalog
+snapshot: concurrent candidate edits/removal can change subsequent reads.
+
+One shared native worker still covers classification and comparison. Similarity
+and background labeling cannot overlap in the shared shell; controls explain the
+busy state. A scan has a thirty-second caller deadline, cooperative cancellation
+which resolves visible status without admitting a replacement scan until the
+current scan owner returns. IPC reads retain
+their finite socket deadlines; cancellation never promises to kill a native thread
+or undo accepted work. Timeout, malformed/non-comparable archive or stale source
+clears the result and returns a readable retry/reanalysis state. No automatic
+retry, upload, ANN service or new generic search engine is introduced.
+
+Acceptance covers multi-page exact ordering and facets before limits, source
+replacement/removal, incompatible/corrupt archives, bounded response bytes and
+unchanged Library/intent/audit state. Native tests cover full/partial scans, finite
+ranking, the 100-result ceiling, deadline/cancellation, changing facets/selection,
+late responses and draft preservation. The packaged join compares actual persisted
+Vision prints from distinct masters through real authenticated IPC. Synthetic
+same-input distances establish this join, not a semantic-quality threshold or
+installed accessibility acceptance.
+
 ## Editable metadata and recovery contract
 
 Artwork bytes, source provenance, dimensions, recipes and variant lineage remain
