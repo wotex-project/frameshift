@@ -369,6 +369,25 @@ defmodule Frameshift.LocalIPC.LinuxCommandContract do
 
     assert {unavailable_pair, 0} = client(path, pairing)
     assert unavailable_pair =~ ~s("code":"operation_unavailable")
+
+    bootstrap =
+      RFC8785.encode!(%{
+        "version" => 1,
+        "deviceId" => "sim-photo-00000001",
+        "serverSpki" => "sha256:" <> String.duplicate("b", 64),
+        "secret" => Base.url_encode64(:binary.copy(<<17>>, 16), padding: false)
+      })
+
+    physical =
+      Map.merge(pairing, %{
+        "requestId" => "pair-connection",
+        "commandId" => "pair-command",
+        "bootstrap" => bootstrap,
+        "credentialRef" => "linux-pem-v1:" <> String.duplicate("c", 64)
+      })
+
+    assert {refused, 0} = client(path, physical)
+    assert refused =~ ~s("code":"pairing_preflight_failed")
     # Control membership alone cannot read the distinct observer endpoint.
     assert {observer_denied, 0} =
              client(observer_path, %{

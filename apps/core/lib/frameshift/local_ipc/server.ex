@@ -36,8 +36,9 @@ defmodule Frameshift.LocalIPC.Server do
   endpoint and cannot inherit this mutation dispatcher. Linux group access checks
   final inode custody and kernel PID/UID/GID before request decoding. Its public
   `auth: "peer"` marker carries no secret; durable claims/completions retain the
-  authenticated UID. Caller-path imports, Apple observations and standalone
-  pairing refuse in that policy until their platform joins are implemented.
+  authenticated UID. Caller-path imports and Apple observations refuse in that
+  policy. Physical pairing uses a caller-retained command ID and actor-bound receipt;
+  pending or completed replay never repeats the physical secret exchange.
   """
 
   use GenServer
@@ -68,9 +69,10 @@ defmodule Frameshift.LocalIPC.Server do
     "libraryAnalysisPending" => ~w(version requestId operation auth cohort),
     "librarySimilarityCandidates" =>
       ~w(version requestId operation auth itemID cohort featureDigest afterID filters),
-    "pair" => ~w(version requestId operation auth bootstrap discoveredId origin credentialRef),
+    "pair" =>
+      ~w(version requestId operation auth commandId bootstrap discoveredId origin credentialRef),
     "recoverPair" =>
-      ~w(version requestId operation auth bootstrap discoveredId origin credentialRef)
+      ~w(version requestId operation auth commandId bootstrap discoveredId origin credentialRef)
   }
 
   defmodule State do
@@ -532,7 +534,20 @@ defmodule Frameshift.LocalIPC.Server do
   defp authenticate(%{"requestId" => request_id}, {:group, _, _, _}),
     do: {:error, {request_id, :authentication_required}}
 
+  defp authorize_operation(
+         %{"requestId" => id, "commandId" => _, "operation" => operation},
+         {:token, _}
+       )
+       when operation in ["pair", "recoverPair"], do: {:error, {id, :invalid_request}}
+
   defp authorize_operation(_, {:token, _}), do: :ok
+
+  defp authorize_operation(
+         %{"operation" => operation, "commandId" => id, "credentialRef" => "linux-pem-v1:" <> _},
+         {:group, _, _, _}
+       )
+       when operation in ["pair", "recoverPair"] and is_binary(id) and byte_size(id) in 1..64,
+       do: :ok
 
   defp authorize_operation(%{"requestId" => id, "operation" => operation}, {:group, _, _, _})
        when operation in ["pair", "recoverPair"],
@@ -663,6 +678,18 @@ defmodule Frameshift.LocalIPC.Server do
       "analysisPending",
       Library.analysis_pending(library, cohort)
     )
+  end
+
+  defp execute_request(
+         %{"requestId" => id, "operation" => operation, :actor_uid => actor} = request,
+         library,
+         pairing
+       )
+       when operation in ["pair", "recoverPair"] and is_integer(actor) do
+    case Admission.execute_as(request, actor, Keyword.put(pairing, :library, library)) do
+      {:ok, frame} -> {:ok, %{"version" => 1, "requestId" => id, "ok" => true, "frame" => frame}}
+      {:error, code} -> {:error, {id, code}}
+    end
   end
 
   defp execute_request(

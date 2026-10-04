@@ -242,7 +242,13 @@ an actual nonroot service-owned directory, proves bounded RSA/ECDSA key agreemen
 and joins a loaded identity to pinned mutual TLS. Real Linux fixtures cover
 permissions, wrong owner, missing/oversized/malformed bytes, symlink refusal and
 application resolver/pull-service wiring; artwork backup excludes private keys.
-Linux database/NIF qualification, streamed import, discovery/pairing actor/receipts,
+Linux physical pair/recovery commands now bind a caller-retained commissioning ID
+and exact request digest to the kernel actor's durable receipt. SQLite fixtures
+exercise completed/pending/unknown replay, changed actor/payload refusal, restart,
+secret exclusion and failure between paired admission and receipt completion. A
+nonroot dispatcher fixture traces UID 1 through a missing-key pair claim/refusal
+and completion; no fixture proves a received frame or supported Ubuntu NIF.
+Linux database/NIF qualification, streamed import, discovery and pairing CLI intake,
 systemd ACL/credential mounts and encrypted provisioning, package wiring, installed
 lifecycle and physical power-loss measurements remain open gates.
 

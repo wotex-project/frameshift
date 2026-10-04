@@ -141,9 +141,11 @@ Ordinary bounded product commands (settings, pin/removal/restore, metadata,
 playlists, queue/reconciliation) and existing finite reads use this endpoint.
 Group-mode `importFile` and `recordVision` refuse before a claim: caller paths
 must not reach the service, and Apple observations require their native adapter.
-The standalone pair/recover operations still refuse until their Linux actor and
-receipt join is defined. Streamed import, pairing, protected signing
-credentials, discovery, the CLI and installed packages remain required work;
+Standalone pair/recover use the actor-bound physical-command contract below;
+missing command identity or unsupported reference policy refuses before claims.
+Missing protected keys on first execution yield a retained preflight refusal.
+Streamed import, credential provisioning, discovery, the full CLI and installed
+packages remain required work;
 this admission slice does not qualify a complete Linux application.
 
 Acceptance combines real nonroot Linux sockets and supplementary control-group
@@ -291,6 +293,46 @@ on 2026-10-04. PEM/PKCS#8 support is checked against [OTP 29.1 `public_key`](htt
 nonroot Linux file custody and a PEM-resolved pinned mutual-TLS exchange, alongside
 malformed/mismatched/encrypted/oversized/symlink/owner/mode refusal. Installed
 systemd, TPM, amd64 closure and physical identity recovery remain open.
+
+### Actor-bound physical pairing commands
+
+Linux `pair` and `recoverPair` use the existing standalone IPC operations and
+require a caller-retained `commandId` matching `[A-Za-z0-9._~-]{1,64}` in addition
+to the transport `requestId`. The command ID is also the frame commissioning
+request ID for `pair`; changing a connection's request ID never changes that
+physical idempotency key. Linux accepts only the protected-file reference
+namespace and the service-configured resolver. Mac token pairing retains its
+existing transient contract and refuses this Linux-only command field.
+
+Before claiming, parse the bounded physical record, require its discovered ID to
+match, admit a HTTPS origin without userinfo/query/fragment/application path, and
+validate the protected-file reference and actual kernel actor UID. The receipt
+hash is SHA-256 of RFC8785 encoding of `{domain: "frameshift-linux-pairing-v1",
+request: {operation, bootstrap, discoveredId, origin, credentialRef}}`; bootstrap
+is the exact supplied string. Receipt storage contains that hash, command ID,
+actor UID and terminal code only. It never stores the physical secret, request
+body or private key. Bootstrap secrets need the existing entropy/encoding policy;
+a digest is not a substitute for protecting transient input or logs.
+
+Claim/completion use the existing global actor-bound command receipts. Changed
+payload/operation or actor conflicts. A pending claim refuses with
+`command_outcome_unknown` without resolving a key or sending the secret again.
+Completed failure replays its code. Completed success reads the retained paired
+record and returns its bounded frame ID only if device, credential reference,
+server pin and TD origin still match. Missing or changed custody refuses with
+`pairing_receipt_unavailable`; replay never creates a new physical exchange.
+Pairing admission and receipt completion are separate transactions. Interruption
+between them remains pending/unknown; no receipt asserts a lost external outcome.
+
+First execution calls the existing pinned pairing/TD admission using the command
+ID, then completes the receipt under the same actor. Unknown exchange/incomplete
+admission remains explicit. Recovery with its own deliberate command ID reads
+only the authenticated TD and never posts the secret. It cannot silently rotate
+an identity or reuse a pair ID as a recovery command. Linux CLI bootstrap intake
+and discovery remain separate work until their bounded input contracts land.
+Acceptance joins actual SQLite success/failure/pending/conflict/restart and
+secret-exclusion checks to nonroot kernel attribution and dispatcher tests; live
+protected-PEM TLS is separate from physical-window and exact-frame qualification.
 
 ## Nerves Pi 5 bridge
 

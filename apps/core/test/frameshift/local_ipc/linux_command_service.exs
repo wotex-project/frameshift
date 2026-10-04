@@ -26,6 +26,8 @@ defmodule Frameshift.LinuxCommandFixtureStore do
 
   def handle_call({:get_setting, "frame.selected"}, _, state), do: {:reply, :not_found, state}
   def handle_call(:list_paired_frames, _, state), do: {:reply, [], state}
+  def handle_call({:get_paired_frame, _}, _, state), do: {:reply, :not_found, state}
+  def handle_call({:get_paired_frame_by_spki, _}, _, state), do: {:reply, :not_found, state}
   def handle_call({:list_pinned_masters, _}, _, state), do: {:reply, [], state}
   def handle_call({:search, _, _}, _, state), do: {:reply, [], state}
 
@@ -95,6 +97,8 @@ wait.(wait, "stop", 3_000)
 
 %{
   calls: [
+    {:complete, "pair-command", pair_hash, 1, {:error, :pairing_preflight_failed}},
+    {:claim, "pair-command", pair_hash, 1},
     {:complete, "cli-command", cli_hash, 1, :ok},
     {:claim, "cli-command", cli_hash, 1},
     {:complete, "actor-command", hash, 1, :ok},
@@ -106,6 +110,7 @@ wait.(wait, "stop", 3_000)
 
 true = Frameshift.Digest.valid_sha256?(hash)
 true = Frameshift.Digest.valid_sha256?(cli_hash)
+true = Frameshift.Digest.valid_sha256?(pair_hash)
 Supervisor.stop(application)
 {:error, :enoent} = File.lstat(path)
 GenServer.stop(store)

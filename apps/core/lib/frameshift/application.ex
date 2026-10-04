@@ -197,6 +197,7 @@ defmodule Frameshift.Application do
              {:ok, %{uid: ^uid} = config} <- ProtectedFile.configure(directory) do
           resolver = {ProtectedFile, config}
           Application.put_env(:frameshift_core, :direct_delivery, credential_resolver: resolver)
+          Application.put_env(:frameshift_core, :pairing, resolver: resolver)
           resolver
         else
           _ -> raise "protected Linux credential directory failed local admission"

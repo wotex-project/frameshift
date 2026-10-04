@@ -728,6 +728,20 @@ defmodule Frameshift.LocalIPC.ServerTest do
 
     assert_receive {:physical_pair, @pairing_device_id, "pair-physical-1"}
 
+    assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+             request(path, %{
+               "version" => 1,
+               "requestId" => "mixed-policy",
+               "operation" => "pair",
+               "commandId" => "linux-only",
+               "bootstrap" => bootstrap,
+               "discoveredId" => @pairing_device_id,
+               "origin" => "https://frame.local",
+               "credentialRef" => "keychain:pair-test"
+             })
+
+    refute_receive {:physical_pair, _, _}
+
     assert %{"ok" => true, "snapshot" => %{"targets" => [%{"id" => @pairing_device_id}]}} =
              request(path, %{
                "version" => 1,

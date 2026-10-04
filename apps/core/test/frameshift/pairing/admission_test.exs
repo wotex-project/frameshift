@@ -3,6 +3,7 @@ defmodule Frameshift.Pairing.AdmissionTest do
 
   use ExUnit.Case, async: true
 
+  alias Frameshift.Digest
   alias Frameshift.Library
   alias Frameshift.Pairing.Admission
 
@@ -38,6 +39,133 @@ defmodule Frameshift.Pairing.AdmissionTest do
     {:ok, library} = Library.start_link(data_dir: root, name: nil)
     on_exit(fn -> File.rm_rf!(root) end)
     %{library: library, root: root}
+  end
+
+  test "Linux successful receipts preserve actor/payload custody across restart without another pair",
+       c do
+    request = physical_request("pair-success")
+    options = physical_options(c)
+    assert {:ok, %{"frameId" => @device_id}} = Admission.execute_as(request, 7, options)
+    assert_receive :resolved_identity
+    assert_receive {:physical_pair, "pair-success"}
+    assert_receive :physical_td
+    replay = Map.put(request, "requestId", "different-connection")
+    assert {:ok, %{"frameId" => @device_id}} = Admission.execute_as(replay, 7, options)
+    assert {:error, :command_id_conflict} = Admission.execute_as(request, 8, options)
+
+    assert {:error, :command_id_conflict} =
+             Admission.execute_as(Map.put(request, "origin", "https://other.local"), 7, options)
+
+    refute_receive :resolved_identity
+    refute_receive {:physical_pair, _}
+    refute_receive :physical_td
+    GenServer.stop(c.library)
+    {:ok, restarted} = Library.start_link(data_dir: c.root, name: nil)
+
+    try do
+      options = Keyword.put(options, :library, restarted)
+      assert {:ok, %{"frameId" => @device_id}} = Admission.execute_as(request, 7, options)
+      :ok = Library.forget_paired_frame(restarted, @device_id)
+      assert {:error, :pairing_receipt_unavailable} = Admission.execute_as(request, 7, options)
+    after
+      GenServer.stop(restarted)
+    end
+
+    for path <- Path.wildcard(Path.join(c.root, "**/*")), File.regular?(path) do
+      assert :binary.match(File.read!(path), @encoded_secret) == :nomatch
+      assert :binary.match(File.read!(path), @secret) == :nomatch
+    end
+  end
+
+  test "Linux pending/unknown receipts never post again; explicit recovery only reads the TD",
+       c do
+    pending = physical_request("pending-pair")
+    hash = physical_hash(pending)
+    assert {:ok, :execute} = Library.claim_command_as(c.library, "pending-pair", hash, 7)
+
+    assert {:error, :command_outcome_unknown} =
+             Admission.execute_as(pending, 7, physical_options(c))
+
+    refute_receive :resolved_identity
+
+    owner = self()
+
+    options =
+      Keyword.put(physical_options(c), :pairer, fn _, _, id ->
+        send(owner, {:unknown_pair, id})
+        {:error, :pairing_transport_failure}
+      end)
+
+    request = physical_request("unknown-pair")
+    assert {:error, :pairing_outcome_unknown} = Admission.execute_as(request, 7, options)
+    assert_receive :resolved_identity
+    assert_receive {:unknown_pair, "unknown-pair"}
+    assert {:error, :pairing_outcome_unknown} = Admission.execute_as(request, 7, options)
+    refute_receive :resolved_identity
+    refute_receive :physical_td
+    recover = Map.put(request, "operation", "recoverPair")
+    assert {:error, :command_id_conflict} = Admission.execute_as(recover, 7, options)
+    recover = Map.put(recover, "commandId", "explicit-recovery")
+    assert {:ok, %{"frameId" => @device_id}} = Admission.execute_as(recover, 7, options)
+    assert_receive :resolved_identity
+    assert_receive :physical_td
+    refute_receive {:unknown_pair, _}
+    assert {:ok, %{"frameId" => @device_id}} = Admission.execute_as(recover, 7, options)
+    refute_receive :physical_td
+  end
+
+  test "Linux malformed physical commands refuse before receipts or key resolution", c do
+    original = physical_request("admitted-id")
+    audit = Library.audit_page(c.library)
+
+    for {request, actor} <- [
+          {original, nil},
+          {original, -1},
+          {original, 4_294_967_295},
+          {Map.put(original, "commandId", "id/secret"), 7},
+          {Map.put(original, "commandId", String.duplicate("x", 65)), 7},
+          {Map.put(original, "bootstrap", "invalid"), 7},
+          {Map.put(original, "discoveredId", "other-device-00001"), 7},
+          {Map.put(original, "credentialRef", "keychain:wrong-policy"), 7},
+          {Map.put(original, "origin", "https://user:pass@frame.local"), 7},
+          {Map.put(original, "origin", "https://frame.local/private"), 7},
+          {Map.put(original, "operation", "arbitrary"), 7}
+        ] do
+      assert {:error, :invalid_pairing_request} =
+               Admission.execute_as(request, actor, physical_options(c))
+    end
+
+    assert Library.audit_page(c.library) == audit
+    refute_receive :resolved_identity
+    refute_receive {:physical_pair, _}
+    refute_receive :physical_td
+  end
+
+  test "Linux completion failure keeps an admitted physical result pending without reposting",
+       c do
+    connection = :sys.get_state(c.library).connection
+
+    Exqlite.query!(
+      connection,
+      "CREATE TRIGGER refuse_pair_completion BEFORE INSERT ON audit_entries WHEN NEW.operation = 'command.completed' BEGIN SELECT RAISE(ABORT, 'fixture'); END"
+    )
+
+    request = physical_request("completion-lost")
+
+    assert {:error, :command_outcome_unknown} =
+             Admission.execute_as(request, 7, physical_options(c))
+
+    assert_receive :resolved_identity
+    assert_receive {:physical_pair, "completion-lost"}
+    assert_receive :physical_td
+    assert {:ok, _} = Library.get_paired_frame(c.library, @device_id)
+    Exqlite.query!(connection, "DROP TRIGGER refuse_pair_completion")
+
+    assert {:error, :command_outcome_unknown} =
+             Admission.execute_as(request, 7, physical_options(c))
+
+    refute_receive :resolved_identity
+    refute_receive {:physical_pair, _}
   end
 
   test "admits only the authenticated TD and never stores the bootstrap secret", context do
@@ -194,6 +322,42 @@ defmodule Frameshift.Pairing.AdmissionTest do
       "serverSpki" => @pin,
       "secret" => @encoded_secret
     })
+  end
+
+  defp physical_request(id),
+    do: %{
+      "operation" => "pair",
+      "commandId" => id,
+      "bootstrap" => bootstrap(),
+      "discoveredId" => @device_id,
+      "origin" => "https://frame.local",
+      "credentialRef" => "linux-pem-v1:" <> String.duplicate("c", 64)
+    }
+
+  defp physical_hash(request),
+    do:
+      Digest.sha256(
+        RFC8785.encode!(%{
+          "domain" => "frameshift-linux-pairing-v1",
+          "request" =>
+            Map.take(request, ~w(operation bootstrap discoveredId origin credentialRef))
+        })
+      )
+
+  defp physical_options(c) do
+    owner = self()
+
+    options(
+      c,
+      fn bootstrap, _, id ->
+        send(owner, {:physical_pair, id})
+        {:ok, %{device_id: bootstrap.device_id}}
+      end,
+      fn _, "/.well-known/wot" ->
+        send(owner, :physical_td)
+        {:ok, @thing_source}
+      end
+    )
   end
 
   defp options(context, pairer, fetcher) do
