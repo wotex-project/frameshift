@@ -100,6 +100,28 @@ failed, cancelled or outcome-unknown state. Opening a larger surface preserves
 that envelope. Dismissing or resizing a surface cannot reinterpret a send,
 discard an acknowledged draft or describe transferred bytes as displayed.
 
+The first focused surface is one native **Library** window, opened from the
+popover or Command-L. It uses the same `ShellModel` instance as the popover
+and Settings. Selection names the exact master identity; search changes the
+visible result set without discarding that selection. A successful removal
+clears a selected master, while a failed/unknown command retains it for review.
+The core snapshot remains authoritative for target, pins and delivery state.
+Search and draft instruction are presentation state shared across surfaces.
+A refresh adopts a changed core instruction only when the local draft is clean;
+unsaved text, including edits made while a save is awaiting acknowledgement,
+survives refresh, pin/remove/target commands and opening/closing the window.
+The window displays source-master identity and queued/loop state explicitly;
+it cannot infer a rendered preview or physical display from that identity.
+Target previews, comparison and the complete playlist editor remain separate
+software acceptance slices.
+
+Use SwiftUI's native [window scenes and open-window action](https://developer.apple.com/documentation/swiftui/windows)
+with a 700 × 520 point minimum and an initial 860 × 640 point size for this
+Library surface. List selection, search, instruction editing and toolbar
+actions remain keyboard accessible. Automated state tests establish shared
+selection/draft behavior; manual VoiceOver, focus return and layout/settings
+acceptance retain their separate evidence requirements.
+
 The compact popover must not hide the selected target, still-artwork identity,
 provider destination, required confirmation, current failure or relevant
 recovery action. Artwork cards remain appropriate because each result is an

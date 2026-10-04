@@ -124,6 +124,106 @@ struct ShellModelTests {
     model.setSearchQuery("")
     #expect(model.visibleItems.map(\.id) == ["blue"])
   }
+
+  @Test("Refresh and unrelated commands preserve unsaved text and selected master")
+  func preservesSharedPresentationState() async {
+    let item = LibraryItem(id: "blue", title: "Blue study", digest: "sha256:blue")
+    let initial = CoreSnapshot(
+      targets: [], selectedTargetID: nil, instruction: "Saved",
+      items: [item], statusMessage: "Ready")
+    let model = ShellModel(client: SearchClient(snapshot: initial), initialSnapshot: initial)
+    model.selectItem(item.id)
+    model.draftInstruction = "Unsaved\nSecond paragraph"
+
+    await model.refresh()
+    await model.togglePin(item.id)
+
+    #expect(model.selectedItem?.id == item.id)
+    #expect(model.selectedItem?.isPinned == true)
+    #expect(model.draftInstruction == "Unsaved\nSecond paragraph")
+    #expect(model.hasUnsavedInstruction)
+  }
+
+  @Test("Filtering retains selection; successful removal clears it")
+  func selectionSurvivesFiltering() async {
+    let initial = CoreSnapshot(
+      targets: [], selectedTargetID: nil,
+      items: [
+        LibraryItem(id: "blue", title: "Blue study", digest: "blue"),
+        LibraryItem(id: "warm", title: "Warm study", digest: "warm"),
+      ], statusMessage: "Ready")
+    let model = ShellModel(client: SearchClient(snapshot: initial), initialSnapshot: initial)
+    model.selectItem("blue")
+    model.setSearchQuery("Warm")
+    await model.submitSearch()
+    #expect(model.visibleItems.map(\.id) == ["warm"])
+    #expect(model.selectedItem?.id == "blue")
+    model.selectItem("forged-master")
+    #expect(model.selectedItem?.id == "blue")
+    await model.remove("blue")
+    #expect(model.selectedItem == nil)
+  }
+
+  @Test("Failed removal retains the selected artwork for recovery")
+  func retainsSelectionAfterFailure() async {
+    let initial = CoreSnapshot(
+      targets: [], selectedTargetID: nil,
+      items: [LibraryItem(id: "blue", title: "Blue study", digest: "blue")], statusMessage: "Ready")
+    let model = ShellModel(client: FailingClient(), initialSnapshot: initial)
+    model.selectItem("blue")
+    await model.remove("blue")
+    #expect(model.selectedItem?.id == "blue")
+    #expect(model.errorMessage != nil)
+  }
+
+  @Test("A clean draft adopts an authoritative changed instruction")
+  func refreshesCleanInstruction() async {
+    let model = ShellModel(client: UnknownOutcomeClient())
+    await model.refresh()
+    #expect(model.draftInstruction == "Reconciled state")
+    #expect(!model.hasUnsavedInstruction)
+  }
+
+  @Test("Typing during a save keeps the newer draft after acknowledgement")
+  func preservesEditsDuringSave() async {
+    let client = DelayedSaveClient()
+    let model = ShellModel(client: client)
+    model.draftInstruction = "Submitted text"
+    let save = Task { await model.saveInstruction() }
+    await client.waitForSave()
+    model.draftInstruction = "Newer draft\nStill editing"
+    await client.completeSave()
+    await save.value
+    #expect(model.snapshot.instruction == "Submitted text")
+    #expect(model.draftInstruction == "Newer draft\nStill editing")
+    #expect(model.hasUnsavedInstruction)
+  }
+}
+
+private actor DelayedSaveClient: CoreClient {
+  private var current = CoreSnapshot.disconnected
+  private var waiting: CheckedContinuation<Void, Never>?
+  private var response: CheckedContinuation<CoreSnapshot, Never>?
+
+  func snapshot() -> CoreSnapshot { current }
+  func snapshot(query _: String) -> CoreSnapshot { current }
+
+  func send(_ command: CoreCommand) async -> CoreSnapshot {
+    current.instruction = command.instruction ?? ""
+    waiting?.resume()
+    waiting = nil
+    return await withCheckedContinuation { response = $0 }
+  }
+
+  func waitForSave() async {
+    if response != nil { return }
+    await withCheckedContinuation { waiting = $0 }
+  }
+
+  func completeSave() {
+    response?.resume(returning: current)
+    response = nil
+  }
 }
 
 private actor SearchClient: CoreClient {
@@ -144,6 +244,11 @@ private actor SearchClient: CoreClient {
   func send(_ command: CoreCommand) -> CoreSnapshot {
     if command.kind == .remove {
       current.items.removeAll { $0.id == command.itemID }
+    }
+    if command.kind == .setPinned,
+      let index = current.items.firstIndex(where: { $0.id == command.itemID })
+    {
+      current.items[index].isPinned = command.isPinned ?? false
     }
     return current
   }

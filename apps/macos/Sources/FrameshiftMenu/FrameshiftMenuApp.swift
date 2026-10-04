@@ -25,6 +25,14 @@ struct FrameshiftMenuApp: App {
     }
     .menuBarExtraStyle(.window)
 
+    Window("Frameshift Library", id: "library") {
+      LibraryWindow(model: ShellSession.model)
+        .modifier(AppIconAppearance())
+    }
+    .defaultSize(width: 860, height: 640)
+    .windowResizability(.contentMinSize)
+    .commands { LibraryCommands() }
+
     Settings {
       SettingsView(
         model: ShellSession.loginSettings,
@@ -35,6 +43,17 @@ struct FrameshiftMenuApp: App {
     }
     .defaultSize(width: 580, height: 620)
     .windowResizability(.contentMinSize)
+  }
+}
+
+private struct LibraryCommands: Commands {
+  @Environment(\.openWindow) private var openWindow
+
+  var body: some Commands {
+    CommandGroup(after: .newItem) {
+      Button("Open Library") { openWindow(id: "library") }
+        .keyboardShortcut("l", modifiers: .command)
+    }
   }
 }
 

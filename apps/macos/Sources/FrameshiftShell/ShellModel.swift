@@ -14,6 +14,7 @@ public final class ShellModel {
   public private(set) var searchError: String?
   public private(set) var searchItems: [LibraryItem]?
   public private(set) var guideHandoff: GuideHandoff?
+  public private(set) var selectedItem: LibraryItem?
 
   private let client: any CoreClient
   private var searchRevision = 0
@@ -33,6 +34,22 @@ public final class ShellModel {
 
   public var visibleItems: [LibraryItem] {
     searchItems ?? snapshot.items
+  }
+
+  public func selectItem(_ itemID: String?) {
+    guard let itemID else {
+      selectedItem = nil
+      return
+    }
+    guard
+      let item = visibleItems.first(where: { $0.id == itemID })
+        ?? snapshot.items.first(where: { $0.id == itemID })
+    else { return }
+    selectedItem = item
+  }
+
+  public var hasUnsavedInstruction: Bool {
+    draftInstruction != snapshot.instruction
   }
 
   public func setSearchQuery(_ query: String) {
@@ -74,6 +91,7 @@ public final class ShellModel {
       let result = try await client.snapshot(query: query)
       guard revision == searchRevision else { return }
       searchItems = result.items
+      updateSelection(from: result.items)
       searchError = nil
     } catch {
       guard revision == searchRevision else { return }
@@ -112,12 +130,17 @@ public final class ShellModel {
   }
 
   public func togglePin(_ itemID: String) async {
-    guard let item = snapshot.items.first(where: { $0.id == itemID }) else { return }
+    guard
+      let item = visibleItems.first(where: { $0.id == itemID })
+        ?? snapshot.items.first(where: { $0.id == itemID })
+        ?? (selectedItem?.id == itemID ? selectedItem : nil)
+    else { return }
     await send(CoreCommand(kind: .setPinned, itemID: itemID, isPinned: !item.isPinned))
   }
 
   public func remove(_ itemID: String) async {
-    await send(CoreCommand(kind: .remove, itemID: itemID))
+    let removed = await send(CoreCommand(kind: .remove, itemID: itemID))
+    if removed, selectedItem?.id == itemID { selectedItem = nil }
   }
 
   public func queue(_ itemID: String) async {
@@ -145,14 +168,17 @@ public final class ShellModel {
     errorMessage = nil
   }
 
-  private func send(_ command: CoreCommand) async {
-    guard !isBusy else { return }
+  @discardableResult
+  private func send(_ command: CoreCommand) async -> Bool {
+    guard !isBusy else { return false }
     isBusy = true
     defer { isBusy = false }
+    var succeeded = false
 
     do {
       apply(try await client.send(command))
       errorMessage = nil
+      succeeded = true
     } catch CoreClientError.commandOutcomeUnknown {
       do {
         apply(try await client.snapshot())
@@ -198,6 +224,7 @@ public final class ShellModel {
       errorMessage = "The core command could not be completed."
     }
     await refreshSearch()
+    return succeeded
   }
 
   private func perform(_ operation: () async throws -> CoreSnapshot) async {
@@ -218,7 +245,16 @@ public final class ShellModel {
   }
 
   private func apply(_ next: CoreSnapshot) {
+    let preserveDraft = hasUnsavedInstruction
     snapshot = next
-    draftInstruction = next.instruction
+    if !preserveDraft { draftInstruction = next.instruction }
+    updateSelection(from: next.items)
+  }
+
+  private func updateSelection(from items: [LibraryItem]) {
+    guard let selectedItem,
+      let current = items.first(where: { $0.id == selectedItem.id })
+    else { return }
+    self.selectedItem = current
   }
 }

@@ -7,6 +7,7 @@ import UniformTypeIdentifiers
 struct FrameshiftPanel: View {
   @Environment(\.colorScheme) private var colorScheme
   @Environment(\.openSettings) private var openSettings
+  @Environment(\.openWindow) private var openWindow
   let model: ShellModel
   let panelState: PanelState
 
@@ -62,6 +63,17 @@ struct FrameshiftPanel: View {
       }
 
       Spacer()
+
+      Button {
+        openWindow(id: "library")
+      } label: {
+        Image(systemName: "books.vertical")
+          .frame(width: 28, height: 28)
+      }
+      .buttonStyle(.plain)
+      .help("Open Library")
+      .accessibilityLabel("Open Library")
+      .accessibilityIdentifier("open-library")
 
       Button {
         openSettings()
@@ -468,9 +480,11 @@ struct FrameshiftPanel: View {
           ForEach(model.visibleItems) { item in
             ResultCard(
               item: item,
+              isSelected: model.selectedItem?.id == item.id,
               targetName: model.snapshot.selectedTarget?.name ?? "selected target",
               canQueue: model.snapshot.selectedTarget != nil
                 && model.snapshot.selectedTarget?.directDelivery?.status != .pending,
+              select: { model.selectItem(item.id) },
               queue: { Task { await model.queue(item.id) } },
               togglePin: { Task { await model.togglePin(item.id) } },
               remove: { Task { await model.remove(item.id) } }
@@ -499,8 +513,10 @@ final class PanelState {
 
 private struct ResultCard: View {
   let item: FrameshiftShell.LibraryItem
+  let isSelected: Bool
   let targetName: String
   let canQueue: Bool
+  let select: () -> Void
   let queue: () -> Void
   let togglePin: () -> Void
   let remove: () -> Void
@@ -517,9 +533,20 @@ private struct ResultCard: View {
         .accessibilityHidden(true)
 
       VStack(alignment: .leading, spacing: 4) {
-        Text(item.title)
-          .font(.headline)
-          .lineLimit(1)
+        Button(action: select) {
+          HStack(spacing: 5) {
+            Text(item.title)
+              .font(.headline)
+              .lineLimit(1)
+            if isSelected {
+              Image(systemName: "checkmark.circle.fill")
+                .accessibilityHidden(true)
+            }
+          }
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Select \(item.title)")
+        .accessibilityValue(isSelected ? "Selected" : "")
         Text(itemStatus)
           .font(.caption)
           .foregroundStyle(.secondary)
