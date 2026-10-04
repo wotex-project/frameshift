@@ -40,6 +40,15 @@ requires clean `main`; `--preview` permits uncommitted inspection and records
 that its output cannot be published. Neither command deploys or promotes a
 release. See the [development documentation contract](../../docs/architecture/install-and-guide.md#development-documentation-build).
 
+`./scripts/build-site --release-docs vX.Y.Z COMMIT` requires a clean checkout at
+that exact stable tag and application version. It builds `var/site-vX.Y.Z` with
+an immutable version directory, source/file inventory and a shared ExDoc menu.
+The candidate keeps no-release global pages and cannot be deployed as a
+qualified release. The docs checks also build an isolated test-only tagged
+fixture and verify refusal/rerun custody; the browser lane tests actual version
+changes with preserved API anchors. See the
+[versioned documentation contract](../../docs/architecture/install-and-guide.md#versioned-documentation-builds).
+
 The three compressed frame illustrations come from the maintainer's desktop
 `Frameshift.html` visual draft. The Frameshift SVG is the existing macOS mark.
 No externally loaded fonts, scripts, trackers, or image hosts are required.

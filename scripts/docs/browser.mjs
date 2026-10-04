@@ -8,7 +8,8 @@ import { fileURLToPath } from 'node:url';
 import { headersForPath, resolveRoute } from './site.mjs';
 
 const repository = resolve(fileURLToPath(new URL('../..', import.meta.url)));
-const output = join(repository, 'var/site-preview');
+const output = process.env.FRAMESHIFT_DOCS_SITE || join(repository, 'var/site-preview');
+const manifest = JSON.parse(readFileSync(join(output, 'site-manifest.json'), 'utf8'));
 const chromePath = process.env.FRAMESHIFT_CHROME || (process.platform === 'darwin'
   ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : '/usr/bin/google-chrome');
 if (!existsSync(chromePath)) throw new Error('Set FRAMESHIFT_CHROME to an installed Chrome executable');
@@ -95,7 +96,7 @@ try {
   await command('Network.enable');
   await command('Emulation.setDeviceMetricsOverride', { width: 390, height: 844, deviceScaleFactor: 1, mobile: true });
   await navigate('/docs/dev/docs--readme.html');
-  assert.match(await evaluate('document.body.innerText'), /Unreleased preview/);
+  assert.match(await evaluate('document.body.innerText'), manifest.dirty ? /Unreleased preview/ : /Unreleased development/);
   await waitFor(() => evaluate('document.querySelector("#sidebar-list-nav")'), 'ExDoc navigation');
   assert.deepEqual(await evaluate('({viewport:innerWidth,document:document.documentElement.scrollWidth})'), { viewport: 390, document: 390 });
   const ax = await command('Accessibility.getFullAXTree');
@@ -109,7 +110,23 @@ try {
   await navigate('/docs/dev/Frameshift.Library.html#restore_master/3');
   assert.equal(await evaluate('!!document.getElementById("restore_master/3")'), true);
   assert.equal(await evaluate('document.documentElement.scrollWidth === innerWidth'), true);
-  assert.equal(await evaluate('versionNodes[0].url'), '/docs/dev/');
+  assert.equal(await evaluate('versionNodes[0].url'), '/docs/dev');
+  assert.equal(await evaluate('document.querySelector(".sidebar-projectVersion select").selectedOptions[0].textContent.trim()'), 'v0.1.0-dev (unreleased)');
+  if (manifest.documentation) {
+    const route = `/docs/${manifest.documentation.tag}`;
+    await navigate(`${route}/Frameshift.Library.html#restore_master/3`);
+    assert.equal(await evaluate('!!document.getElementById("restore_master/3")'), true);
+    assert.match(await evaluate('document.body.innerText'), new RegExp(`Versioned documentation ${manifest.documentation.version.replaceAll('.', '\\.')}`));
+    assert.equal(await evaluate('document.body.innerText.includes("Unreleased development")'), false);
+    assert.equal(await evaluate('document.body.innerText.includes(' + JSON.stringify(manifest.commit) + ')'), true);
+    assert.equal(await evaluate('document.querySelector(".sidebar-projectVersion select").selectedOptions[0].textContent.trim()'), manifest.documentation.tag);
+    const changeVersion = async url => {
+      await evaluate(`(() => { const select = document.querySelector('.sidebar-projectVersion select'); select.value = ${JSON.stringify(url)}; select.dispatchEvent(new Event('change')); })()`);
+      await waitFor(() => evaluate(`location.pathname === ${JSON.stringify(url + '/Frameshift.Library.html')} && location.hash === '#restore_master/3' && document.readyState === 'complete'`), 'version navigation preserves API anchor');
+    };
+    await changeVersion('/docs/dev');
+    await changeVersion(route);
+  }
   if (process.env.FRAMESHIFT_DOCS_SCREENSHOT) {
     const screenshot = await command('Page.captureScreenshot', { format: 'png', captureBeyondViewport: false });
     writeFileSync(process.env.FRAMESHIFT_DOCS_SCREENSHOT, Buffer.from(screenshot.data, 'base64'));
@@ -117,6 +134,10 @@ try {
   await command('Emulation.setScriptExecutionDisabled', { value: true });
   await navigate('/docs/dev/docs--architecture--library-backup.html');
   assert.match(await evaluate('document.querySelector("main").innerText'), /Restore/);
+  if (manifest.documentation) {
+    await navigate(`/docs/${manifest.documentation.tag}/docs--architecture--library-backup.html`);
+    assert.match(await evaluate('document.querySelector("main").innerText'), /Restore/);
+  }
   await navigate('/download/');
   assert.match(await evaluate('document.querySelector("main").innerText'), /No qualified release or installer/);
   await command('Emulation.setScriptExecutionDisabled', { value: false });

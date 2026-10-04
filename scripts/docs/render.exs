@@ -2,7 +2,7 @@ Code.require_file("markdown.exs", __DIR__)
 
 defmodule Frameshift.Documentation.Render do
   @moduledoc """
-  Builds development Markdown and core API pages with the locked ExDoc toolchain.
+  Builds source-bound Markdown and core API pages with the locked ExDoc toolchain.
 
   `run/1` consumes the local build coordinator's bounded source/page inventory.
   Original Markdown stays beside its owner; unique repository-path page IDs and
@@ -11,9 +11,10 @@ defmodule Frameshift.Documentation.Render do
 
   ## Evidence boundary
 
-  Every page names an unreleased development or dirty preview build and its
-  selected source commit. The coordinator records exact input digests and checks
-  Git cleanliness before a development build can be eligible for publication.
+  Every page names its versioned documentation, unreleased development or dirty
+  preview identity and selected source commit. Versioned input must match the
+  actual application version. The coordinator owns exact tag/source checks,
+  input digests, immutable version inventories and publication eligibility.
   Rendering does not grant installer, physical-profile or public-site authority.
   ExDoc warnings refuse the build rather than hiding missing reference evidence.
   """
@@ -27,7 +28,20 @@ defmodule Frameshift.Documentation.Render do
     commit = input["commit"]
     source_url = "https://github.com/wotex-project/frameshift"
     pages = Map.new(input["pages"], &{&1["source"], &1["id"]})
-    label = if input["preview"], do: "Unreleased preview", else: "Unreleased development"
+    release? = input["channel"] == "release-documentation"
+    version = if release?, do: input["version"], else: "0.1.0-dev (unreleased)"
+
+    if release? and Mix.Project.config()[:version] != version,
+      do: raise("release documentation version differs from the application")
+
+    label =
+      cond do
+        release? -> "Versioned documentation #{version}"
+        input["preview"] -> "Unreleased preview"
+        true -> "Unreleased development"
+      end
+
+    route = input["route"] || "/docs/dev/"
 
     context = %{
       root: root,
@@ -35,7 +49,7 @@ defmodule Frameshift.Documentation.Render do
       commit: commit,
       source_url: source_url,
       pages: pages,
-      route: "/docs/dev/"
+      route: route
     }
 
     extras =
@@ -53,14 +67,14 @@ defmodule Frameshift.Documentation.Render do
     end
 
     results =
-      ExDoc.generate("Frameshift · #{label}", "0.1.0-dev", [Mix.Project.compile_path()],
+      ExDoc.generate("Frameshift · #{label}", version, [Mix.Project.compile_path()],
         output: output,
         extras: extras,
         main: pages["docs/README.md"],
         formatters: ["html"],
         homepage_url: "/",
         source_url_pattern: source_link,
-        canonical: "https://frameshift.wotex.io/docs/dev",
+        canonical: "https://frameshift.wotex.io" <> String.trim_trailing(route, "/"),
         markdown_processor: {Frameshift.Documentation.Markdown, frameshift: context},
         before_closing_footer_tag: fn :html ->
           "<p><strong>#{label}</strong> · source <code>#{commit}</code>. " <>
@@ -69,11 +83,6 @@ defmodule Frameshift.Documentation.Render do
       )
 
     if Enum.any?(results, & &1.warned?), do: raise("documentation rendering emitted warnings")
-
-    File.write!(
-      Path.join(output, "docs_config.js"),
-      "var versionNodes = [{version: 'Unreleased development', url: '/docs/dev/'}];\n"
-    )
 
     :ok
   end

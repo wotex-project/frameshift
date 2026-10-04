@@ -121,11 +121,17 @@ check_docs() {
   mise exec -- node --test "$repository_root/scripts/docs/site.test.mjs"
   mise exec -- node --check "$repository_root/scripts/docs/build.mjs"
   mise exec -- node --check "$repository_root/scripts/docs/browser.mjs"
+  mise exec -- node --check "$repository_root/scripts/docs/release-build.mjs"
   "$repository_root/scripts/build-site" --preview
+  if [ "${1:-}" = '--browser' ]; then
+    mise exec -- node "$repository_root/scripts/docs/release-build.mjs" --browser
+  else
+    mise exec -- node "$repository_root/scripts/docs/release-build.mjs"
+  fi
 }
 
 check_docs_browser() {
-  check_docs
+  check_docs --browser
   mise exec -- node "$repository_root/scripts/docs/browser.mjs"
 }
 

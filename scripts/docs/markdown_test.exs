@@ -54,6 +54,18 @@ defmodule Frameshift.Documentation.MarkdownTest do
     assert html =~ ~s(id="same-heading-1")
   end
 
+  test "versioned links and source images remain within their exact documentation route", c do
+    context = %{c | context: %{c.context | route: "/docs/v1.2.3/"}}
+    File.write!(Path.join(c.context.root, "docs/picture.svg"), "<svg/>")
+
+    html =
+      render(context, "[Core](../apps/core/README.md#storage) ![Fixture](picture.svg)")
+
+    assert html =~ ~s(href="/docs/v1.2.3/apps--core--readme.html#storage")
+    assert html =~ ~s(src="/docs/v1.2.3/source-assets/docs/picture.svg")
+    refute html =~ "/docs/dev/"
+  end
+
   test "code links bind the exact commit and embedded images are copied locally", c do
     File.write!(Path.join(c.context.root, "apps/core/sample.ex"), "fixture source")
     File.write!(Path.join(c.context.root, "docs/picture.svg"), "<svg/>")

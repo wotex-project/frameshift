@@ -219,6 +219,19 @@ text and the generated security policies. Release docs retention/assembly,
 public hostname/readback and deployment automation remain separate open work;
 the development builder refuses to replace retained release directories.
 
+The same renderer now builds a separate versioned documentation candidate from
+clean exact tag/commit source, refusing an application-version mismatch. Its
+version directory records source/toolchain/input and final file digests; a rerun
+verifies identical retained bytes or refuses a conflict without replacement.
+Generated pages load a shared revalidated ExDoc version menu outside immutable
+directories. An isolated clean-source fixture renders the complete corpus,
+checks real Chrome version changes with retained API anchors, search, CSP/cache
+separation and no-JavaScript recovery text. The candidate keeps no-release
+global pages and is explicitly ineligible for deployment. The next R4 boundary
+is serialized assembly that verifies retained versions, isolates development
+updates and reconciles interrupted local swaps; stable promotion still requires
+R5's signed/public artifacts and source/build provenance.
+
 The local storage budget slice enforces unique registered object bytes under
 the Library writer and exposes active/trash accounting with a native
 revision-bound editor. Over-budget state preserves retained bytes and permits

@@ -15,6 +15,21 @@ export function sourceIdentity(repository, preview = false) {
   return { commit, branch, dirty, publishableDevelopment: !preview && !dirty && branch === 'main' };
 }
 
+export function releaseSourceIdentity(repository, tag, expectedCommit) {
+  if (typeof tag !== 'string' || tag.length > 33 ||
+      !/^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/.test(tag) ||
+      typeof expectedCommit !== 'string' || !/^[0-9a-f]{40}$/.test(expectedCommit)) {
+    throw new Error('Release documentation requires a stable tag and exact source commit');
+  }
+  const git = args => execFileSync('git', args, { cwd: repository, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
+  const commit = git(['rev-parse', 'HEAD']);
+  const tagged = git(['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]);
+  if (commit !== expectedCommit || tagged !== expectedCommit || git(['status', '--porcelain'])) {
+    throw new Error('Release documentation requires clean exact tag/commit source');
+  }
+  return { commit, tag, version: tag.slice(1), dirty: false, publishableDevelopment: false };
+}
+
 export function headersForPath(text, pathname) {
   const headers = {};
   let matched = false;
@@ -34,13 +49,15 @@ export function headersForPath(text, pathname) {
   return headers;
 }
 
-export function siteHeaders(guideHeaders, policy) {
+export function siteHeaders(guideHeaders, policy, releases = []) {
   const guidePolicy = guideHeaders.match(/^\s+Content-Security-Policy: (.+)$/m)?.[1];
   if (!guidePolicy) throw new Error('Guide security policy missing');
   const common = guideHeaders.replace(/^\s+Content-Security-Policy: .+\n/m, '\n');
   const paths = ['/', '/index.html', '/404.html', '/download/*', '/docs/', '/docs/index.html'];
   return common + '\n' + paths.map(path => `${path}\n  Content-Security-Policy: ${guidePolicy}\n`).join('\n') +
-    `\n/docs/dev/*\n  Content-Security-Policy: ${policy}\n  Cache-Control: no-cache\n\n/docs/\n  Cache-Control: no-cache\n\n/docs/index.html\n  Cache-Control: no-cache\n\n/download/*\n  Cache-Control: no-cache\n`;
+    `\n/docs/dev/*\n  Content-Security-Policy: ${policy}\n  Cache-Control: no-cache\n` +
+    releases.map(release => `\n/docs/v${release.version}/*\n  Content-Security-Policy: ${release.policy}\n  Cache-Control: public, max-age=31536000, immutable\n`).join('') +
+    '\n/docs/docs_config.js\n  Cache-Control: no-cache\n\n/docs/\n  Cache-Control: no-cache\n\n/docs/index.html\n  Cache-Control: no-cache\n\n/download/*\n  Cache-Control: no-cache\n';
 }
 
 export function inventory(directory) {
@@ -115,11 +132,30 @@ export function checkLinks(directory) {
   return { pages: documents.length, links: checked };
 }
 
-export function checkDocumentationIndex(directory, pages) {
-  const html = readFileSync(join(directory, 'docs/dev/docs--readme.html'), 'utf8');
-  const linked = new Set([...html.matchAll(/href="\/docs\/dev\/([^"#]+)\.html/g)].map(match => match[1]));
+export function checkDocumentationIndex(directory, pages, route = '/docs/dev/') {
+  const html = readFileSync(join(directory, route.slice(1), 'docs--readme.html'), 'utf8');
+  const linked = new Set([...html.matchAll(/href="([^"#]+)\.html/g)]
+    .filter(match => match[1].startsWith(route)).map(match => match[1].slice(route.length)));
   const missing = pages.filter(page => page.source.startsWith('docs/') && page.source !== 'docs/README.md' && !linked.has(page.id));
   if (missing.length) throw new Error(`Documentation index omits: ${missing.map(page => page.source).join(', ')}`);
+}
+
+export function sharedVersionMenu(html) {
+  return html.replaceAll('src="docs_config.js"', 'src="/docs/docs_config.js"');
+}
+
+export function validateReleaseDocumentationOutput(directory, identity) {
+  if (!lstatSync(directory).isDirectory()) throw new Error('Existing release docs must be a real directory');
+  const manifest = JSON.parse(readFileSync(join(directory, 'site-manifest.json'), 'utf8'));
+  const files = inventory(directory).filter(file => file.path !== 'site-manifest.json');
+  if (manifest.schemaVersion !== 1 || manifest.channel !== 'release-documentation' ||
+      manifest.publishable !== false || manifest.release !== null ||
+      manifest.commit !== identity.commit || manifest.documentation?.tag !== identity.tag ||
+      manifest.documentation?.version !== identity.version ||
+      JSON.stringify(manifest.files) !== JSON.stringify(files)) {
+    throw new Error('Existing release documentation is conflicting, unowned or changed');
+  }
+  return manifest;
 }
 
 export function documentationPolicy(directory) {

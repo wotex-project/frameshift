@@ -73,6 +73,48 @@ navigation, narrow-viewport keyboard access, essential text without JavaScript
 and HTTP 404 behavior. Installed/public Cloudflare and release-version evidence
 remain separate.
 
+### Versioned documentation builds
+
+`./scripts/build-site --release-docs vX.Y.Z COMMIT` builds a local documentation
+candidate from a clean checkout at that exact stable tag and 40-hex commit. The
+tag must resolve to the current commit, the application version must equal
+`X.Y.Z`, and both source bytes and tag identity must remain unchanged through
+publication of the local output. Dirty, moved, mismatched, prerelease or missing
+tags refuse. No remote ref, release asset or deployment is changed.
+
+Use the same renderer and source inventory as development docs, placing the
+version's Markdown, API/search assets and source images under `/docs/vX.Y.Z/`.
+Each page names its documentation version and exact source commit. Its
+`build.json` records tag/version/commit, toolchains, input digests, page inventory
+and the final version-directory file digests excluding that record itself.
+Retained bytes are immutable: an identical rerun may verify them, while any
+conflicting content or changed/unowned output refuses without replacing it.
+
+The complete local candidate at `var/site-vX.Y.Z` includes same-source labelled
+development docs so global links can be checked. It keeps the no-release
+download and stable docs pages; a documentation tag is not an accepted installer
+or publication claim. Its manifest explicitly records that it is a release
+documentation candidate and is not eligible for deployment. The later qualified
+assembler consumes the verified version subtree, not that candidate's
+development/global pages.
+
+Use one revalidated `/docs/docs_config.js` for the ExDoc version menu, referenced
+from generated HTML before the version directory's inventory is frozen. It
+lists retained versions and labelled development docs. Adding a version updates
+that shared file rather than rewriting old documentation directories. Keep
+per-version CSP hashes scoped to their own routes; immutable version assets
+must not inherit the development cache policy. The locked ExDoc 0.40.4
+[`versionNodes` contract](https://github.com/elixir-lang/ex_doc/blob/80270f3a4c4fe0d85c4b86029128e50995fcc21a/lib/ex_doc.ex#L483)
+and [generated head](https://github.com/elixir-lang/ex_doc/blob/80270f3a4c4fe0d85c4b86029128e50995fcc21a/lib/ex_doc/formatter/html/templates/head_template.eex#L24)
+were checked locally and through `gh` on 2026-10-04.
+
+Acceptance covers exact tag/application/source matching, tag movement during
+build, rendered version/source/links/search, shared menu loading, independent
+CSP/cache rules and byte-preserving identical/conflicting reruns. Stable
+promotion still requires the separately pinned signed manifest, exact local
+artifacts, public readback and source/build provenance; this candidate grants
+none of those qualifications.
+
 ## Composition and independent instructions
 
 The [build platform](build-platform.md) extends the public experience with

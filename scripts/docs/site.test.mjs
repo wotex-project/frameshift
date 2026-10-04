@@ -4,7 +4,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSyn
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { checkDocumentationIndex, checkLinks, documentationPolicy, headersForPath, inventory, labelHeadingAnchors, resolveRoute, siteHeaders, sourceIdentity, validateDevelopmentOutput } from './site.mjs';
+import { checkDocumentationIndex, checkLinks, documentationPolicy, headersForPath, inventory, labelHeadingAnchors, releaseSourceIdentity, resolveRoute, sharedVersionMenu, siteHeaders, sourceIdentity, validateDevelopmentOutput, validateReleaseDocumentationOutput } from './site.mjs';
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'frameshift-site-test-'));
@@ -103,4 +103,65 @@ test('changed or unowned output and retained release docs refuse replacement wit
   writeFileSync(join(root, 'docs/v1.2.3/index.html'), 'keep released bytes');
   assert.throws(() => validateDevelopmentOutput(root), /Retained release docs/);
   assert.equal(readFileSync(join(root, 'docs/v1.2.3/index.html'), 'utf8'), 'keep released bytes');
+});
+
+test('release docs require the clean exact stable tag; dirty, missing, moved and mismatched source refuses', t => {
+  const root = fixture(t);
+  const git = args => execFileSync('git', args, { cwd: root, encoding: 'utf8', stdio: 'pipe' }).trim();
+  git(['init', '-b', 'main']);
+  writeFileSync(join(root, 'README.md'), 'first exact source');
+  git(['add', 'README.md']);
+  git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'docs: fixture']);
+  const commit = git(['rev-parse', 'HEAD']);
+  git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'tag', '-a', 'v1.2.3', '-m', 'fixture']);
+  const expected = { commit, tag: 'v1.2.3', version: '1.2.3', dirty: false, publishableDevelopment: false };
+  assert.deepEqual(releaseSourceIdentity(root, 'v1.2.3', commit), expected);
+  git(['checkout', '--detach', commit]);
+  assert.deepEqual(releaseSourceIdentity(root, 'v1.2.3', commit), expected);
+  for (const tag of ['v1.2.3-rc.1', 'v01.2.3', '1.2.3', '--help', 'v1.2.4']) {
+    assert.throws(() => releaseSourceIdentity(root, tag, commit));
+  }
+  assert.throws(() => releaseSourceIdentity(root, 'v1.2.3', 'a'.repeat(40)), /clean exact/);
+  assert.throws(() => releaseSourceIdentity(root, 'v1.2.3', 'HEAD'), /exact source commit/);
+  writeFileSync(join(root, 'README.md'), 'changed source');
+  assert.throws(() => releaseSourceIdentity(root, 'v1.2.3', commit), /clean exact/);
+  git(['add', 'README.md']);
+  git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'docs: successor']);
+  git(['tag', '-f', 'v1.2.3']);
+  assert.throws(() => releaseSourceIdentity(root, 'v1.2.3', commit), /clean exact/);
+});
+
+test('version menu stays outside immutable docs; per-version policies and cache rules stay separate', t => {
+  const root = fixture(t);
+  const html = '<script defer src="docs_config.js"></script><script src="dist/search.js"></script>';
+  assert.equal(sharedVersionMenu(html), '<script defer src="/docs/docs_config.js"></script><script src="dist/search.js"></script>');
+  const headers = siteHeaders("/*\n  Content-Security-Policy: default-src 'none'; script-src 'self'\n", 'development-policy',
+    [{ version: '1.2.3', policy: 'release-policy' }]);
+  assert.deepEqual(headersForPath(headers, '/docs/v1.2.3/Frameshift.Library.html'), {
+    'content-security-policy': 'release-policy', 'cache-control': 'public, max-age=31536000, immutable' });
+  assert.equal(headersForPath(headers, '/docs/dev/Frameshift.Library.html')['cache-control'], 'no-cache');
+  assert.deepEqual(headersForPath(headers, '/docs/docs_config.js'), { 'cache-control': 'no-cache' });
+  mkdirSync(join(root, 'docs/v1.2.3'), { recursive: true });
+  writeFileSync(join(root, 'docs/v1.2.3/docs--readme.html'), '<a href="/docs/v1.2.3/docs--owner.html">Owner</a>');
+  assert.doesNotThrow(() => checkDocumentationIndex(root,
+    [{ source: 'docs/owner.md', id: 'docs--owner' }], '/docs/v1.2.3/'));
+  assert.throws(() => checkDocumentationIndex(root,
+    [{ source: 'docs/missing.md', id: 'docs--missing' }], '/docs/v1.2.3/'), /omits/);
+});
+
+test('retained candidate identity and complete inventory refuse unowned or changed bytes without replacement', t => {
+  const root = fixture(t);
+  const identity = { tag: 'v1.2.3', version: '1.2.3', commit: 'a'.repeat(40) };
+  writeFileSync(join(root, 'index.html'), 'immutable candidate');
+  const manifest = { schemaVersion: 1, channel: 'release-documentation', publishable: false, release: null,
+    commit: identity.commit, documentation: { tag: identity.tag, version: identity.version }, files: inventory(root) };
+  const record = join(root, 'site-manifest.json');
+  writeFileSync(record, JSON.stringify(manifest));
+  assert.deepEqual(validateReleaseDocumentationOutput(root, identity), manifest);
+  assert.throws(() => validateReleaseDocumentationOutput(root, { ...identity, commit: 'b'.repeat(40) }), /conflicting/);
+  writeFileSync(join(root, 'index.html'), 'external retained change');
+  assert.throws(() => validateReleaseDocumentationOutput(root, identity), /changed/);
+  assert.equal(readFileSync(join(root, 'index.html'), 'utf8'), 'external retained change');
+  writeFileSync(record, JSON.stringify({ ...manifest, publishable: true, files: inventory(root).filter(file => file.path !== 'site-manifest.json') }));
+  assert.throws(() => validateReleaseDocumentationOutput(root, identity), /unowned/);
 });
