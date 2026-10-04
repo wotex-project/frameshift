@@ -61,6 +61,51 @@ interface.
   upgrade, downgrade rejection, database migration, full-disk, power-loss, and
   backup/restore tests run on amd64 and arm64.
 
+### Group-owned diagnostic endpoint
+
+The initial group boundary is read-only diagnostics. Configure an explicit numeric
+observer GID (canonical decimal, 1–4294967294) with `FRAMESHIFT_DIAGNOSTICS_GID`
+and a diagnostic socket directory
+separate from the command directory. Omitted configuration retains the private
+same-UID endpoint. An invalid GID, unsupported OS, root/changed service identity,
+wrong directory owner or unsafe final target refuses before endpoint admission;
+there is no automatic switch from group access to private access.
+
+The Linux service verifies its real/effective/saved/filesystem UID fields from
+a bounded `/proc/self/status` read, requiring one nonzero identity. It owns the
+final directory, changes only its group to the configured GID and admits exact
+mode `0710`; a bound pathname socket must have that owner/GID and mode `0660`.
+Final symlinks and non-socket placeholders are refused before permission changes.
+The service remains unprivileged and must already have permission to assign the
+configured group. Provisioning the user/group is a package/operator action,
+not an IPC request or a runtime call to `useradd`.
+
+Linux pathname connect permission enforces primary or supplementary membership
+in the observer group. The server also requires valid kernel `SO_PEERCRED`
+PID/UID/primary-GID data and never treats primary GID as the supplementary-group
+list. A connected descriptor retains its connection-time identity; this finite,
+one-request endpoint cannot promise to revoke a connection after group changes.
+Root remains an OS administrator able to bypass filesystem discretionary access;
+this boundary does not claim isolation from root or a compromised service owner.
+Caller JSON cannot select its UID, GID, group policy or mutation authority.
+
+Acceptance runs as a nonroot service in the pinned Linux/OTP container. It checks
+exact inode modes/ownership, supplementary-group access with a different primary
+GID, denied group access, unavailable peer credentials, live socket custody and
+root/wrong-owner/symlink refusal without changing target permissions. Native Mac
+checks retain the private endpoint. The joined dispatcher uses a finite fixture
+store without loading host-built SQLite NIFs: this establishes socket admission
+and read-only dispatch, not Linux database/release qualification. The credential
+adapter validates native layout in code; malformed kernel-layout injection has
+not been exercised. Installed systemd/group provisioning, the
+Linux mutation endpoint, full CLI, streamed import, credentials and DEBs remain
+separate software and installation work.
+
+Source checks on 2026-10-04: [Linux pathname socket permissions and peer credentials](https://man7.org/linux/man-pages/man7/unix.7.html)
+and [proc status identity fields](https://man7.org/linux/man-pages/man5/proc_pid_status.5.html).
+These define the OS boundary; the joined kernel fixtures establish its consumer
+behavior rather than inferred compatibility with a supported Ubuntu release.
+
 ## Nerves Pi 5 bridge
 
 Use the official `nerves_system_rpi5` as the base when a dedicated appliance

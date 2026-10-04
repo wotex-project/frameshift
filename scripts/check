@@ -204,6 +204,13 @@ check_linux_ipc() {
     return 1
   fi
 
+  # Portable BEAM consumers are reused without starting a host-native SQLite
+  # NIF. The Linux fixture owns a finite diagnostic store process instead.
+  (
+    cd "$repository_root/apps/core"
+    mise exec -- env MIX_ENV=test mix compile --warnings-as-errors
+  )
+
   docker run --rm --network none --read-only \
     --mount "type=bind,src=$repository_root/apps/core,dst=/src,readonly" \
     --tmpfs /tmp:mode=1777,size=16m \

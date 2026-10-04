@@ -88,6 +88,8 @@ defmodule Frameshift.Application do
 
   defp local_ipc_children do
     if Application.fetch_env!(:frameshift_core, :start_local_ipc) do
+      diagnostics = diagnostics_options()
+
       token_path =
         System.get_env("FRAMESHIFT_IPC_TOKEN_FILE") ||
           raise "FRAMESHIFT_IPC_TOKEN_FILE is required when local IPC is enabled"
@@ -106,12 +108,31 @@ defmodule Frameshift.Application do
           id: Frameshift.DiagnosticsTaskSupervisor
         ),
         {Frameshift.LocalIPC.Server, path: Frameshift.Paths.socket_path(), token: token},
-        {DiagnosticsServer,
-         path: Frameshift.Paths.diagnostics_socket_path(),
-         task_supervisor: Frameshift.DiagnosticsTaskSupervisor}
+        {DiagnosticsServer, diagnostics}
       ] ++ outbox_children(broker)
     else
       []
+    end
+  end
+
+  defp diagnostics_options do
+    path = Frameshift.Paths.diagnostics_socket_path()
+
+    options = [path: path, task_supervisor: Frameshift.DiagnosticsTaskSupervisor]
+
+    case System.get_env("FRAMESHIFT_DIAGNOSTICS_GID") do
+      nil ->
+        options
+
+      value ->
+        with {:unix, :linux} <- :os.type(),
+             {gid, ""} when gid in 1..4_294_967_294 <- Integer.parse(value),
+             true <- value == Integer.to_string(gid),
+             true <- Path.dirname(path) != Path.dirname(Frameshift.Paths.socket_path()) do
+          Keyword.put(options, :group_gid, gid)
+        else
+          _ -> raise "Linux diagnostics group requires a valid GID and separate socket directory"
+        end
     end
   end
 

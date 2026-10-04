@@ -217,8 +217,14 @@ at sixteen, with a sixty-four-child ordinary task budget and a separate
 seventeen-child diagnostic supervisor. Unix-socket fixtures exercise overflow
 without a receipt, saturated-task diagnostic reads, partial-read deadlines and
 capacity recovery after actual worker exit. This supplies implementable S7 host
-refusal behavior; whole-workload RSS, downstream deadlines, storage failure,
-Linux groups and physical power-loss measurements remain their own open gates.
+refusal behavior. Whole-workload RSS, downstream deadlines and storage failures
+still require qualification.
+
+Linux observer-group admission now has nonroot kernel/dispatcher fixtures for
+exact ownership/modes, supplementary-group access, denied users, unsafe targets,
+live socket custody and changed-permission refusal. Its group policy is explicit
+and diagnostic-only; command-group attribution, installed provisioning and
+physical power-loss measurements remain open gates.
 
 ## Shared contracts
 

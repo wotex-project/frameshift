@@ -1,11 +1,15 @@
 defmodule Frameshift.LocalIPC.DiagnosticsServer do
   @moduledoc """
-  Serves peer-authenticated read-only diagnostics over a private Unix socket.
+  Serves peer-authenticated read-only diagnostics over an owned Unix socket.
 
   `start_link/1` receives the path and owned library/metrics/task boundaries.
-  The containing directory is private, the socket is owner-only and each peer's
-  kernel-reported UID must match the directory owner. Unsupported peer-identity
-  mechanisms fail closed; the shell command bootstrap token is not accepted here.
+  By default the directory/socket are private and the kernel-reported peer UID
+  must match the directory owner. Linux may explicitly select `:group_gid`: an
+  unprivileged service owns a `0710` directory and `0660` socket, pathname
+  permissions enforce primary/supplementary group access, and each connection
+  must supply valid kernel PID/UID/GID credentials. Final inode custody is checked
+  again before dispatch. Unsupported or invalid policy fails closed; the shell
+  command bootstrap token is not accepted here.
 
   ## Requests and lifecycle
 
@@ -55,7 +59,7 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
     defstruct [:listener, :path, :acceptor]
   end
 
-  @doc "Starts a read-only local socket in a private user directory."
+  @doc "Starts an owned read-only socket with private or explicit Linux observer access."
   @spec start_link(keyword()) :: GenServer.on_start()
   def start_link(options) do
     case Keyword.get(options, :name, __MODULE__) do
@@ -71,20 +75,26 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
     metrics = Keyword.get(options, :metrics, Metrics)
     task_supervisor = Keyword.get(options, :task_supervisor, Frameshift.DiagnosticsTaskSupervisor)
 
-    with :ok <- prepare_path(path),
-         {:ok, listener} <- :socket.open(:local, :stream, :default),
-         :ok <- :socket.bind(listener, %{family: :local, path: path}),
-         :ok <- :socket.listen(listener, 16),
-         :ok <- File.chmod(path, 0o600),
-         {:ok, directory} <- File.lstat(Path.dirname(path)),
-         {:ok, acceptor} <-
-           Task.Supervisor.start_child(task_supervisor, fn ->
-             accept_loop(listener, directory.uid, library, metrics, task_supervisor, [])
-           end) do
-      Process.monitor(acceptor)
-      {:ok, %State{listener: listener, path: path, acceptor: acceptor}}
+    with {:ok, policy} <- prepare_path(path, Keyword.get(options, :group_gid)),
+         {:ok, listener} <- open_listener(path, policy) do
+      start_acceptor(listener, path, policy, library, metrics, task_supervisor)
     else
       {:error, reason} -> {:stop, reason}
+    end
+  end
+
+  defp start_acceptor(listener, path, policy, library, metrics, tasks) do
+    case Task.Supervisor.start_child(tasks, fn ->
+           accept_loop(listener, policy, library, metrics, tasks, [])
+         end) do
+      {:ok, acceptor} ->
+        Process.monitor(acceptor)
+        {:ok, %State{listener: listener, path: path, acceptor: acceptor}}
+
+      {:error, reason} ->
+        :socket.close(listener)
+        File.rm(path)
+        {:stop, reason}
     end
   end
 
@@ -103,13 +113,52 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
     :ok
   end
 
-  defp prepare_path(path) do
-    case SocketDirectory.prepare(path) do
-      :ok -> remove_stale_socket(path)
+  defp prepare_path(path, nil) do
+    with :ok <- SocketDirectory.prepare(path),
+         :ok <- remove_stale_socket(path),
+         {:ok, directory} <- File.lstat(Path.dirname(path)) do
+      {:ok, {:private, directory.uid}}
+    else
       {:error, :unsafe_socket_directory} -> {:error, :unsafe_diagnostics_directory}
       error -> error
     end
   end
+
+  defp prepare_path(path, gid) do
+    with {:ok, uid} <- SocketDirectory.prepare_group(path, gid) do
+      {:ok, {:group, path, gid, uid}}
+    end
+  end
+
+  defp open_listener(path, policy) do
+    with {:ok, listener} <- :socket.open(:local, :stream, :default) do
+      case :socket.bind(listener, %{family: :local, path: path}) do
+        :ok ->
+          finish_listener(listener, path, policy)
+
+        {:error, reason} ->
+          :socket.close(listener)
+          {:error, reason}
+      end
+    end
+  end
+
+  defp finish_listener(listener, path, policy) do
+    with :ok <- restrict_socket(path, policy),
+         :ok <- :socket.listen(listener, 16) do
+      {:ok, listener}
+    else
+      {:error, reason} ->
+        :socket.close(listener)
+        File.rm(path)
+        {:error, reason}
+    end
+  end
+
+  defp restrict_socket(path, {:private, _}), do: File.chmod(path, 0o600)
+
+  defp restrict_socket(path, {:group, _, gid, uid}),
+    do: SocketDirectory.restrict_group_socket(path, gid, uid)
 
   defp remove_stale_socket(path) do
     case File.lstat(path) do
@@ -137,15 +186,15 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
     end
   end
 
-  defp accept_loop(listener, owner_uid, library, metrics, task_supervisor, workers) do
+  defp accept_loop(listener, policy, library, metrics, task_supervisor, workers) do
     case :socket.accept(listener) do
       {:ok, socket} ->
         live_workers = Enum.filter(workers, &Process.alive?/1)
 
         next_workers =
-          dispatch_client(socket, owner_uid, library, metrics, task_supervisor, live_workers)
+          dispatch_client(socket, policy, library, metrics, task_supervisor, live_workers)
 
-        accept_loop(listener, owner_uid, library, metrics, task_supervisor, next_workers)
+        accept_loop(listener, policy, library, metrics, task_supervisor, next_workers)
 
       {:error, :closed} ->
         :ok
@@ -161,8 +210,8 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
     workers
   end
 
-  defp dispatch_client(socket, owner_uid, library, metrics, tasks, workers) do
-    case Task.Supervisor.start_child(tasks, fn -> serve(socket, owner_uid, library, metrics) end) do
+  defp dispatch_client(socket, policy, library, metrics, tasks, workers) do
+    case Task.Supervisor.start_child(tasks, fn -> serve(socket, policy, library, metrics) end) do
       {:ok, worker} ->
         [worker | workers]
 
@@ -172,14 +221,14 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
     end
   end
 
-  defp serve(socket, owner_uid, library, metrics) do
+  defp serve(socket, policy, library, metrics) do
     response =
-      with {:ok, ^owner_uid} <- PeerIdentity.uid(socket),
+      with :ok <- authorize(socket, policy),
            {:ok, payload} <- read_request(socket),
            {:ok, request} <- decode_request(payload) do
         dispatch(request, library, metrics)
       else
-        {:ok, _} -> error_response(nil, :authentication_required)
+        {:error, :authentication_required} -> error_response(nil, :authentication_required)
         {:error, _} -> error_response(nil, :invalid_request)
       end
 
@@ -193,6 +242,22 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
   catch
     _, _ ->
       :socket.close(socket)
+  end
+
+  defp authorize(socket, {:private, owner_uid}) do
+    case PeerIdentity.uid(socket) do
+      {:ok, ^owner_uid} -> :ok
+      _ -> {:error, :authentication_required}
+    end
+  end
+
+  defp authorize(socket, {:group, path, gid, uid}) do
+    with :ok <- SocketDirectory.validate_group_socket(path, gid, uid),
+         {:ok, _} <- PeerIdentity.credentials(socket) do
+      :ok
+    else
+      _ -> {:error, :authentication_required}
+    end
   end
 
   defp read_request(socket) do
