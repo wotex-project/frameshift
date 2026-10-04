@@ -65,8 +65,7 @@ interface.
 
 The initial group boundary is read-only diagnostics. Configure an explicit numeric
 observer GID (canonical decimal, 1–4294967294) with `FRAMESHIFT_DIAGNOSTICS_GID`
-and a diagnostic socket directory
-separate from the command directory. Omitted configuration retains the private
+and a diagnostic socket directory separate from the command directory. Omitted configuration retains the private
 same-UID endpoint. An invalid GID, unsupported OS, root/changed service identity,
 wrong directory owner or unsafe final target refuses before endpoint admission;
 there is no automatic switch from group access to private access.
@@ -96,15 +95,64 @@ root/wrong-owner/symlink refusal without changing target permissions. Native Mac
 checks retain the private endpoint. The joined dispatcher uses a finite fixture
 store without loading host-built SQLite NIFs: this establishes socket admission
 and read-only dispatch, not Linux database/release qualification. The credential
-adapter validates native layout in code; malformed kernel-layout injection has
-not been exercised. Installed systemd/group provisioning, the
-Linux mutation endpoint, full CLI, streamed import, credentials and DEBs remain
+adapter shares malformed/truncated/sentinel byte fixtures with the command
+transport; they establish decoder refusal rather than altered kernel credentials.
+Installed systemd/group provisioning, the complete Linux command surface, full
+CLI, streamed import, credentials and DEBs remain
 separate software and installation work.
 
 Source checks on 2026-10-04: [Linux pathname socket permissions and peer credentials](https://man7.org/linux/man-pages/man7/unix.7.html)
 and [proc status identity fields](https://man7.org/linux/man-pages/man5/proc_pid_status.5.html).
 These define the OS boundary; the joined kernel fixtures establish its consumer
 behavior rather than inferred compatibility with a supported Ubuntu release.
+
+### Group-owned command endpoint and receipts
+
+`FRAMESHIFT_CONTROL_GID` explicitly selects the Linux command policy. It requires
+an admitted observer GID with a different numeric value and a separate socket
+directory. Both groups follow the same nonroot service ownership, final inode,
+`0710` directory and `0660` socket checks. An omitted control GID retains the
+Mac/private launch-token policy; group access never shares that token. Invalid
+or mixed policy refuses before consuming bootstrap input or opening listeners.
+The group request identifies the policy with the exact public `auth: "peer"`
+marker. It supplies no secret and cannot select an actor identity.
+
+For the existing packet-framed command transport, the service reads Linux
+`SO_PEERCRED` through the public OTP `inet:getopts/2` raw option and requires the
+exact twelve-byte native PID/UID/GID structure. The request is dispatched only
+after final directory/socket custody and kernel credential checks. PID and
+primary GID are connection-time context; the UID is the persisted local actor.
+Linux UID attribution identifies an OS account, not a person or stable identity
+after administrator reassignment of that numeric UID. Root remains an OS
+administrator and may connect; the service itself must remain nonroot.
+
+The global bounded command ID, canonical payload digest and actor UID jointly
+identify a receipt. The original unreleased CREATE definition adds nullable
+`actor_uid`; null is the existing launch-token authority and is distinct from
+any Linux UID, including zero. Another actor reusing an ID refuses with
+`command_id_conflict` before execution or completion. Same-actor completed
+receipts replay their terminal outcome; pending claims remain unknown and never
+execute again automatically. Claim/completion and their audit facts remain
+single-writer transactions. UID is retained in the private receipt; diagnostic
+audit exposes a bounded hash of the policy/UID as `actorId`, with no username,
+PID, group list or raw UID. This is correlated attribution, not anonymization.
+
+Ordinary bounded product commands (settings, pin/removal/restore, metadata,
+playlists, queue/reconciliation) and existing finite reads use this endpoint.
+Group-mode `importFile` and `recordVision` refuse before a claim: caller paths
+must not reach the service, and Apple observations require their native adapter.
+The standalone pair/recover operations also refuse until their Linux credential
+and actor/receipt join is defined. Streamed import, pairing, protected signing
+credentials, discovery, the CLI and installed packages remain required work;
+this admission slice does not qualify a complete Linux application.
+
+Acceptance combines real nonroot Linux sockets and supplementary control-group
+clients with fresh-schema SQLite tests for actor conflicts, pending/failed/success
+replay, identity-checked completion, restart/backup retention and atomic audit.
+Malformed native credential bytes, unsupported OS and closed descriptors refuse.
+Mac token authentication and packaged IPC keep their existing contract.
+The public raw option was checked in [OTP 29.1 `inet:getopts/2`](https://github.com/erlang/otp/blob/OTP-29.1/lib/kernel/src/inet.erl)
+on 2026-10-04 (source blob `97d826a2d240b42ab8c7dedffb35607a1cb50e04`).
 
 ## Nerves Pi 5 bridge
 

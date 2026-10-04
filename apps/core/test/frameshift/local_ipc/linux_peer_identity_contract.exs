@@ -2,6 +2,7 @@ Code.prepend_paths(Path.wildcard("/src/_build/test/lib/*/ebin"))
 
 ExUnit.start()
 Code.require_file(Path.join(__DIR__, "group_configuration_test.exs"))
+Code.require_file(Path.join(__DIR__, "peer_identity_test.exs"))
 
 defmodule Frameshift.LocalIPC.LinuxPeerIdentityContract do
   @moduledoc false
@@ -177,6 +178,207 @@ defmodule Frameshift.LocalIPC.LinuxDiagnosticsContract do
       {:error, reason} -> IO.puts(Atom.to_string(reason))
     end
     :socket.close(socket)
+    """
+
+    groups = if observer, do: ["-G", "staff"], else: []
+
+    System.cmd(
+      "runuser",
+      ["-u", "daemon", "-g", "daemon"] ++ groups ++ ["--", "elixir", "-e", code],
+      stderr_to_stdout: true
+    )
+  end
+
+  defp await_file(root, name, service, attempts \\ 1_000)
+  defp await_file(_, _, service, 0), do: flunk("service timeout: #{inspect(Task.yield(service))}")
+
+  defp await_file(root, name, service, attempts) do
+    cond do
+      File.exists?(Path.join(root, name)) ->
+        :ok
+
+      result = Task.yield(service) ->
+        flunk("service stopped: #{inspect(result)}")
+
+      true ->
+        Process.sleep(10)
+        await_file(root, name, service, attempts - 1)
+    end
+  end
+end
+
+defmodule Frameshift.LocalIPC.LinuxCommandContract do
+  @moduledoc false
+
+  use ExUnit.Case, async: false
+
+  test "distinct Linux application groups hand the connected UID to command claims and completions" do
+    root = "/tmp/fg-cmd-#{System.unique_integer([:positive])}"
+    path = root <> "-service/c.sock"
+    File.mkdir_p!(root)
+    File.chmod!(root, 0o777)
+
+    on_exit(fn ->
+      for directory <- [
+            root,
+            Path.dirname(path),
+            Path.dirname(path) <> "-observer",
+            Path.dirname(path) <> "-data"
+          ] do
+        File.rm_rf(directory)
+      end
+    end)
+
+    service =
+      Task.async(fn ->
+        System.cmd(
+          "runuser",
+          [
+            "-u",
+            "nobody",
+            "-g",
+            "nogroup",
+            "-G",
+            "staff",
+            "--",
+            "elixir",
+            "/src/test/frameshift/local_ipc/linux_command_service.exs",
+            path,
+            root
+          ],
+          stderr_to_stdout: true
+        )
+      end)
+
+    await_file(root, "ready", service)
+    assert :ok = Frameshift.LocalIPC.SocketDirectory.validate_group_socket(path, 50, 65_534)
+    observer_path = Path.join(Path.dirname(path) <> "-observer", "d.sock")
+
+    assert :ok =
+             Frameshift.LocalIPC.SocketDirectory.validate_group_socket(
+               observer_path,
+               65_534,
+               65_534
+             )
+
+    command = %{
+      "id" => "actor-command",
+      "kind" => "updateInstruction",
+      "instruction" => "Linux local setting"
+    }
+
+    request = %{
+      "version" => 1,
+      "requestId" => "linux-command",
+      "operation" => "command",
+      "auth" => "peer",
+      "command" => command
+    }
+
+    assert {denied, 0} = client(path, request, false)
+    assert denied =~ "eacces"
+    assert {accepted, 0} = client(path, request)
+    assert accepted =~ ~s("ok":true)
+    assert accepted =~ ~s("instruction":"Linux local setting")
+
+    assert {token, 0} = client(path, %{request | "auth" => String.duplicate("a", 64)})
+    assert token =~ ~s("code":"authentication_required")
+    assert {forged, 0} = client(path, Map.put(request, "actor_uid", 0))
+    assert forged =~ ~s("code":"invalid_request")
+
+    for kind <- ["importFile", "recordVision"] do
+      assert {unavailable, 0} =
+               client(path, %{
+                 request
+                 | "command" => %{
+                     "id" => kind,
+                     "kind" => kind,
+                     "importPath" => "/home/caller/private.png"
+                   }
+               })
+
+      assert unavailable =~ ~s("code":"operation_unavailable")
+    end
+
+    pairing = %{
+      "version" => 1,
+      "requestId" => "no-pair",
+      "operation" => "pair",
+      "auth" => "peer",
+      "bootstrap" => "invalid",
+      "discoveredId" => "sim-photo-00000001",
+      "origin" => "https://frame.invalid",
+      "credentialRef" => "unavailable"
+    }
+
+    assert {unavailable_pair, 0} = client(path, pairing)
+    assert unavailable_pair =~ ~s("code":"operation_unavailable")
+    # Control membership alone cannot read the distinct observer endpoint.
+    assert {observer_denied, 0} =
+             client(observer_path, %{
+               "version" => 1,
+               "requestId" => "observer-denied",
+               "operation" => "health"
+             })
+
+    assert observer_denied =~ "eacces"
+
+    File.write!(Path.join(root, "loosen"), "go")
+    await_file(root, "loosened", service)
+    assert {changed, 0} = client(path, request)
+    assert changed =~ ~s("code":"authentication_required")
+    File.write!(Path.join(root, "restore"), "go")
+    await_file(root, "restored", service)
+    File.write!(Path.join(root, "stop"), "go")
+    assert {_, 0} = Task.await(service, 10_000)
+    assert {:error, :enoent} = File.lstat(path)
+  end
+
+  test "public inet raw credentials report the actual connected UID and primary GID" do
+    path = "/tmp/fg-inet-#{System.unique_integer([:positive])}.sock"
+    {:ok, listener} = :gen_tcp.listen(0, [:binary, active: false, ifaddr: {:local, path}])
+    File.chmod!(path, 0o777)
+
+    on_exit(fn ->
+      :gen_tcp.close(listener)
+      File.rm(path)
+    end)
+
+    client =
+      Task.async(fn ->
+        code =
+          "{:ok, socket} = :gen_tcp.connect({:local, #{inspect(path)}}, 0, [:binary, active: false]); Process.sleep(250); :gen_tcp.close(socket)"
+
+        System.cmd(
+          "runuser",
+          ["-u", "daemon", "-g", "daemon", "-G", "staff", "--", "elixir", "-e", code],
+          stderr_to_stdout: true
+        )
+      end)
+
+    {:ok, socket} = :gen_tcp.accept(listener, 10_000)
+
+    assert {:ok, %{pid: pid, uid: 1, gid: 1}} =
+             Frameshift.LocalIPC.PeerIdentity.inet_credentials(socket)
+
+    assert pid > 0
+    :gen_tcp.close(socket)
+    assert {:error, _} = Frameshift.LocalIPC.PeerIdentity.inet_credentials(socket)
+    assert {_, 0} = Task.await(client, 10_000)
+  end
+
+  defp client(path, request, observer \\ true) do
+    payload = RFC8785.encode!(request)
+
+    code = """
+    case :gen_tcp.connect({:local, #{inspect(path)}}, 0, [:binary, packet: 4, active: false], 2_000) do
+      {:ok, socket} ->
+        :ok = :gen_tcp.send(socket, #{inspect(payload)})
+        {:ok, response} = :gen_tcp.recv(socket, 0, 5_000)
+        IO.puts(response)
+        :gen_tcp.close(socket)
+      {:error, reason} -> IO.puts(Atom.to_string(reason))
+    end
     """
 
     groups = if observer, do: ["-G", "staff"], else: []

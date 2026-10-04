@@ -2,7 +2,8 @@ defmodule Frameshift.LocalIPC.Server do
   @moduledoc """
   Hosts authenticated finite shell commands on the native Unix socket.
 
-  `start_link/1` requires a private path and validated per-launch token, with
+  `start_link/1` requires a private path and validated per-launch token, or an
+  explicit Linux `:group_gid` policy without a token, with
   explicit or application-owned library/task/pairing dependencies. Each connection
   carries one four-byte-length-prefixed JSON request/response; the request ceiling
   is 64 KiB, the response ceiling 1 MiB and the request deadline five seconds.
@@ -32,7 +33,11 @@ defmodule Frameshift.LocalIPC.Server do
   The listener monitors its acceptor and removes the
   socket on termination. The token file is consumed before startup through
   `Frameshift.LocalIPC.Token`; read-only diagnostics use a separate peer-UID
-  endpoint and cannot inherit this mutation dispatcher.
+  endpoint and cannot inherit this mutation dispatcher. Linux group access checks
+  final inode custody and kernel PID/UID/GID before request decoding. Its public
+  `auth: "peer"` marker carries no secret; durable claims/completions retain the
+  authenticated UID. Caller-path imports, Apple observations and standalone
+  pairing refuse in that policy until their platform joins are implemented.
   """
 
   use GenServer
@@ -42,6 +47,7 @@ defmodule Frameshift.LocalIPC.Server do
   alias Frameshift.Digest
   alias Frameshift.Library
   alias Frameshift.LocalAPI
+  alias Frameshift.LocalIPC.PeerIdentity
   alias Frameshift.LocalIPC.SocketDirectory
   alias Frameshift.Outbox.Service
   alias Frameshift.Pairing.Admission
@@ -100,23 +106,67 @@ defmodule Frameshift.LocalIPC.Server do
 
   @impl true
   def init(options) do
+    Process.flag(:trap_exit, true)
     path = options |> Keyword.fetch!(:path) |> Path.expand()
-    token = Keyword.fetch!(options, :token)
+    token = Keyword.get(options, :token)
     library = Keyword.get(options, :library, Frameshift.Library)
     task_supervisor = Keyword.get(options, :task_supervisor, Frameshift.TaskSupervisor)
     pairing = Keyword.get(options, :pairing, Application.get_env(:frameshift_core, :pairing, []))
 
-    with :ok <- validate_token(token),
-         :ok <- prepare_path(path),
-         {:ok, listener} <- listen(path),
-         :ok <- File.chmod(path, 0o600),
-         {:ok, acceptor} <- start_acceptor(task_supervisor, listener, library, token, pairing) do
-      Process.monitor(acceptor)
-      {:ok, %State{acceptor: acceptor, listener: listener, path: path}}
+    with {:ok, policy} <- prepare_policy(path, token, Keyword.get(options, :group_gid)),
+         {:ok, listener} <- listen_owned(path, policy) do
+      start_listener(task_supervisor, listener, path, library, policy, pairing)
     else
       {:error, reason} -> {:stop, reason}
     end
   end
+
+  defp start_listener(tasks, listener, path, library, policy, pairing) do
+    case start_acceptor(tasks, listener, library, policy, pairing) do
+      {:ok, acceptor} ->
+        Process.monitor(acceptor)
+        {:ok, %State{acceptor: acceptor, listener: listener, path: path}}
+
+      {:error, reason} ->
+        :gen_tcp.close(listener)
+        File.rm(path)
+        {:stop, reason}
+    end
+  end
+
+  defp prepare_policy(path, token, nil) do
+    with :ok <- validate_token(token),
+         :ok <- prepare_path(path) do
+      {:ok, {:token, token}}
+    end
+  end
+
+  defp prepare_policy(path, nil, gid) do
+    with {:ok, uid} <- SocketDirectory.prepare_group(path, gid) do
+      {:ok, {:group, path, gid, uid}}
+    end
+  end
+
+  defp prepare_policy(_, _, _), do: {:error, :ambiguous_ipc_authentication}
+
+  defp listen_owned(path, policy) do
+    with {:ok, listener} <- listen(path) do
+      case restrict_socket(path, policy) do
+        :ok ->
+          {:ok, listener}
+
+        {:error, reason} ->
+          :gen_tcp.close(listener)
+          File.rm(path)
+          {:error, reason}
+      end
+    end
+  end
+
+  defp restrict_socket(path, {:token, _}), do: File.chmod(path, 0o600)
+
+  defp restrict_socket(path, {:group, _, gid, uid}),
+    do: SocketDirectory.restrict_group_socket(path, gid, uid)
 
   @impl true
   def handle_info(
@@ -179,18 +229,18 @@ defmodule Frameshift.LocalIPC.Server do
     ])
   end
 
-  defp start_acceptor(task_supervisor, listener, library, token, pairing) do
+  defp start_acceptor(task_supervisor, listener, library, policy, pairing) do
     Task.Supervisor.start_child(task_supervisor, fn ->
-      accept_loop(task_supervisor, listener, library, token, pairing, [])
+      accept_loop(task_supervisor, listener, library, policy, pairing, [])
     end)
   end
 
-  defp accept_loop(task_supervisor, listener, library, token, pairing, workers) do
+  defp accept_loop(task_supervisor, listener, library, policy, pairing, workers) do
     case :gen_tcp.accept(listener) do
       {:ok, socket} ->
         live_workers = Enum.filter(workers, &Process.alive?/1)
-        next_workers = hand_off(task_supervisor, socket, library, token, pairing, live_workers)
-        accept_loop(task_supervisor, listener, library, token, pairing, next_workers)
+        next_workers = hand_off(task_supervisor, socket, library, policy, pairing, live_workers)
+        accept_loop(task_supervisor, listener, library, policy, pairing, next_workers)
 
       {:error, :closed} ->
         :ok
@@ -205,10 +255,10 @@ defmodule Frameshift.LocalIPC.Server do
     workers
   end
 
-  defp hand_off(task_supervisor, socket, library, token, pairing, workers) do
+  defp hand_off(task_supervisor, socket, library, policy, pairing, workers) do
     case Task.Supervisor.start_child(task_supervisor, fn ->
            receive do
-             {:serve, ^socket} -> serve(socket, library, token, pairing)
+             {:serve, ^socket} -> serve(socket, library, policy, pairing)
            after
              @request_timeout_ms -> :gen_tcp.close(socket)
            end
@@ -231,11 +281,14 @@ defmodule Frameshift.LocalIPC.Server do
     end
   end
 
-  defp serve(socket, library, token, pairing) do
+  defp serve(socket, library, policy, pairing) do
     response =
-      case :gen_tcp.recv(socket, 0, @request_timeout_ms) do
-        {:ok, payload} -> dispatch(payload, library, token, pairing)
+      with {:ok, actor_uid} <- authorize_connection(socket, policy),
+           {:ok, payload} <- :gen_tcp.recv(socket, 0, @request_timeout_ms) do
+        dispatch(payload, library, policy, pairing, actor_uid)
+      else
         {:error, :timeout} -> error_response(nil, :request_timeout)
+        {:error, :authentication_required} -> error_response(nil, :authentication_required)
         {:error, _} -> error_response(nil, :invalid_request)
       end
 
@@ -254,10 +307,12 @@ defmodule Frameshift.LocalIPC.Server do
       :gen_tcp.close(socket)
   end
 
-  defp dispatch(payload, library, token, pairing) do
+  defp dispatch(payload, library, policy, pairing, actor_uid) do
     with {:ok, request} <- decode_request(payload),
-         :ok <- authenticate(request, token),
-         {:ok, response} <- execute_request(request, library, pairing) do
+         :ok <- authenticate(request, policy),
+         :ok <- authorize_operation(request, policy),
+         {:ok, response} <-
+           execute_request(Map.put(request, :actor_uid, actor_uid), library, pairing) do
       response
     else
       {:error, {request_id, code}} -> error_response(request_id, code)
@@ -335,6 +390,7 @@ defmodule Frameshift.LocalIPC.Server do
   defp validate_operation(_), do: {:error, :invalid_request}
 
   defp validate_auth_shape(auth) when is_binary(auth) and byte_size(auth) == 64, do: :ok
+  defp validate_auth_shape("peer"), do: :ok
   defp validate_auth_shape(_), do: {:error, :invalid_request}
 
   defp validate_request_keys(request, allowed, request_id) do
@@ -454,11 +510,42 @@ defmodule Frameshift.LocalIPC.Server do
 
   defp validate_token(_), do: {:error, :invalid_ipc_token}
 
-  defp authenticate(%{"requestId" => request_id, "auth" => candidate}, token) do
+  defp authorize_connection(_, {:token, _}), do: {:ok, nil}
+
+  defp authorize_connection(socket, {:group, path, gid, uid}) do
+    with :ok <- SocketDirectory.validate_group_socket(path, gid, uid),
+         {:ok, %{uid: actor_uid}} <- PeerIdentity.inet_credentials(socket) do
+      {:ok, actor_uid}
+    else
+      _ -> {:error, :authentication_required}
+    end
+  end
+
+  defp authenticate(%{"requestId" => request_id, "auth" => candidate}, {:token, token}) do
     if secure_equal?(candidate, token),
       do: :ok,
       else: {:error, {request_id, :authentication_required}}
   end
+
+  defp authenticate(%{"auth" => "peer"}, {:group, _, _, _}), do: :ok
+
+  defp authenticate(%{"requestId" => request_id}, {:group, _, _, _}),
+    do: {:error, {request_id, :authentication_required}}
+
+  defp authorize_operation(_, {:token, _}), do: :ok
+
+  defp authorize_operation(%{"requestId" => id, "operation" => operation}, {:group, _, _, _})
+       when operation in ["pair", "recoverPair"],
+       do: {:error, {id, :operation_unavailable}}
+
+  defp authorize_operation(
+         %{"requestId" => id, "operation" => "command", "command" => %{"kind" => kind}},
+         {:group, _, _, _}
+       )
+       when kind in ["importFile", "recordVision"],
+       do: {:error, {id, :operation_unavailable}}
+
+  defp authorize_operation(_, {:group, _, _, _}), do: :ok
 
   defp secure_equal?(left, right)
        when is_binary(left) and is_binary(right) and byte_size(left) == byte_size(right) do
@@ -602,7 +689,7 @@ defmodule Frameshift.LocalIPC.Server do
   end
 
   defp execute_request(
-         %{"requestId" => request_id, "operation" => "command", "command" => command},
+         %{"requestId" => request_id, "operation" => "command", "command" => command} = request,
          library,
          _
        ) do
@@ -611,8 +698,16 @@ defmodule Frameshift.LocalIPC.Server do
 
     result =
       with {:ok, command_hash} <- command_hash(command),
-           {:ok, disposition} <- Library.claim_command(library, command["id"], command_hash) do
-        execute_command(disposition, request_id, command, command_hash, library)
+           {:ok, disposition} <-
+             Library.claim_command_as(library, command["id"], command_hash, request[:actor_uid]) do
+        execute_command(
+          disposition,
+          request_id,
+          command,
+          command_hash,
+          library,
+          request[:actor_uid]
+        )
       else
         {:error, code} -> {:error, {request_id, code}}
       end
@@ -681,7 +776,7 @@ defmodule Frameshift.LocalIPC.Server do
 
   defp library_read_response(request_id, _, {:error, code}), do: {:error, {request_id, code}}
 
-  defp execute_command(:execute, request_id, command, command_hash, library) do
+  defp execute_command(:execute, request_id, command, command_hash, library, actor_uid) do
     outcome = LocalAPI.execute(library, command)
 
     receipt_outcome =
@@ -690,13 +785,19 @@ defmodule Frameshift.LocalIPC.Server do
         {:error, code} -> {:error, code}
       end
 
-    case Library.complete_command(library, command["id"], command_hash, receipt_outcome) do
+    case Library.complete_command_as(
+           library,
+           command["id"],
+           command_hash,
+           actor_uid,
+           receipt_outcome
+         ) do
       :ok -> command_response(request_id, outcome)
       {:error, _} -> {:error, {request_id, :command_outcome_unknown}}
     end
   end
 
-  defp execute_command({:replay, :ok}, request_id, _, _, library) do
+  defp execute_command({:replay, :ok}, request_id, _, _, library, _) do
     {:ok, success_response(request_id, LocalAPI.snapshot(library, "Command already applied"))}
   end
 
@@ -705,12 +806,13 @@ defmodule Frameshift.LocalIPC.Server do
          request_id,
          _,
          _,
+         _,
          _
        ) do
     {:error, {request_id, error_code}}
   end
 
-  defp execute_command(:pending, request_id, _, _, _),
+  defp execute_command(:pending, request_id, _, _, _, _),
     do: {:error, {request_id, :command_outcome_unknown}}
 
   defp command_response(request_id, {:ok, snapshot}),

@@ -70,6 +70,7 @@ defmodule Frameshift.LocalIPC.DiagnosticsServer do
 
   @impl true
   def init(options) do
+    Process.flag(:trap_exit, true)
     path = options |> Keyword.fetch!(:path) |> Path.expand()
     library = Keyword.get(options, :library, Library)
     metrics = Keyword.get(options, :metrics, Metrics)

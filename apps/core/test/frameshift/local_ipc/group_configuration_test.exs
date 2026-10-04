@@ -19,15 +19,35 @@ defmodule Frameshift.LocalIPC.GroupConfigurationTest do
     end
 
     for key <-
-          ~w(FRAMESHIFT_DIAGNOSTICS_GID FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH FRAMESHIFT_SOCKET_PATH FRAMESHIFT_IPC_TOKEN_FILE) do
+          ~w(FRAMESHIFT_CONTROL_GID FRAMESHIFT_CREDENTIAL_SOCKET FRAMESHIFT_DIAGNOSTICS_GID FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH FRAMESHIFT_SOCKET_PATH FRAMESHIFT_IPC_TOKEN_FILE) do
       previous = System.get_env(key)
 
       on_exit(fn ->
         if previous, do: System.put_env(key, previous), else: System.delete_env(key)
       end)
+
+      System.delete_env(key)
     end
 
     :ok
+  end
+
+  test "control access cannot silently use a missing observer policy or private bootstrap token" do
+    token_path = "/tmp/fs-control-config-#{System.unique_integer([:positive])}"
+    File.write!(token_path, "unchanged control bootstrap")
+    on_exit(fn -> File.rm(token_path) end)
+    System.put_env("FRAMESHIFT_IPC_TOKEN_FILE", token_path)
+    System.delete_env("FRAMESHIFT_DIAGNOSTICS_GID")
+
+    for gid <- ["50", "", "0", "050", "-1", "4294967295"] do
+      System.put_env("FRAMESHIFT_CONTROL_GID", gid)
+
+      assert_raise RuntimeError,
+                   "Linux control group requires distinct observer access and no token broker",
+                   fn -> Frameshift.Application.start(:normal, []) end
+
+      assert File.read!(token_path) == "unchanged control bootstrap"
+    end
   end
 
   test "invalid or unsupported group configuration refuses before consuming bootstrap credentials" do

@@ -20,6 +20,11 @@ defmodule Frameshift.Library do
   share authoritative transactions. Exact revisions and acknowledgements govern
   delivery: desired bytes are distinct from current and previous-known-good art.
 
+  Command receipts bind the global ID and payload digest to their authenticated
+  local actor UID, or null for private launch-token authority. Another actor
+  cannot replay or complete that receipt. Claims/completions retain redacted actor
+  hashes in audit; pending outcomes require reconciliation rather than blind retry.
+
   ## Maintenance and diagnostics
 
   New master/artifact bytes are admitted under the durable registered-object
@@ -55,6 +60,9 @@ defmodule Frameshift.Library do
   @type server :: GenServer.server()
   @type digest :: String.t()
   @maximum_read_bytes 128 * 1024 * 1024
+
+  defguardp local_actor?(uid)
+            when is_nil(uid) or (is_integer(uid) and uid in 0..4_294_967_294)
 
   @frame_roles ["desired", "current", "previous-known-good", "queued", "playlist"]
 
@@ -217,14 +225,42 @@ defmodule Frameshift.Library do
           {:ok, :execute | :pending | {:replay, :ok | {:error, String.t()}}}
           | {:error, term()}
   def claim_command(server \\ __MODULE__, command_id, command_hash) do
-    GenServer.call(server, {:claim_command, command_id, command_hash})
+    claim_command_as(server, command_id, command_hash, nil)
+  end
+
+  @doc """
+  Claims a global command ID under its authenticated local actor UID.
+
+  The IPC owner supplies the kernel UID; clients cannot select it in JSON.
+  A null UID retains launch-token authority and never matches a Linux UID.
+  Changed payload or actor conflicts, while a matching unresolved claim remains
+  pending. Numeric UID reuse by an OS administrator does not preserve a person's
+  identity. This writer API does not itself authenticate a socket.
+  """
+  @spec claim_command_as(server(), String.t(), digest(), non_neg_integer() | nil) ::
+          {:ok, :execute | :pending | {:replay, :ok | {:error, String.t()}}}
+          | {:error, term()}
+  def claim_command_as(server, command_id, command_hash, actor_uid) do
+    GenServer.call(server, {:claim_command, command_id, command_hash, actor_uid})
   end
 
   @doc "Persists the terminal outcome for a previously claimed command."
   @spec complete_command(server(), String.t(), digest(), :ok | {:error, atom()}) ::
           :ok | {:error, term()}
   def complete_command(server \\ __MODULE__, command_id, command_hash, outcome) do
-    GenServer.call(server, {:complete_command, command_id, command_hash, outcome})
+    complete_command_as(server, command_id, command_hash, nil, outcome)
+  end
+
+  @doc "Persists an outcome only for the exact command digest and authenticated local actor."
+  @spec complete_command_as(
+          server(),
+          String.t(),
+          digest(),
+          non_neg_integer() | nil,
+          :ok | {:error, atom()}
+        ) :: :ok | {:error, term()}
+  def complete_command_as(server, command_id, command_hash, actor_uid, outcome) do
+    GenServer.call(server, {:complete_command, command_id, command_hash, actor_uid, outcome})
   end
 
   @doc "Admits and stores a frame Thing Description with an opaque credential reference and server pin."
@@ -786,12 +822,12 @@ defmodule Frameshift.Library do
   def handle_call({:update_storage, revision, limit}, _, state),
     do: {:reply, Storage.update(state.connection, revision, limit), state}
 
-  def handle_call({:claim_command, command_id, command_hash}, _, state) do
-    {:reply, claim_command_record(state, command_id, command_hash), state}
+  def handle_call({:claim_command, command_id, command_hash, actor_uid}, _, state) do
+    {:reply, claim_command_record(state, command_id, command_hash, actor_uid), state}
   end
 
-  def handle_call({:complete_command, command_id, command_hash, outcome}, _, state) do
-    {:reply, complete_command_record(state, command_id, command_hash, outcome), state}
+  def handle_call({:complete_command, command_id, command_hash, actor_uid, outcome}, _, state) do
+    {:reply, complete_command_record(state, command_id, command_hash, actor_uid, outcome), state}
   end
 
   def handle_call(
@@ -1617,16 +1653,20 @@ defmodule Frameshift.Library do
 
   defp put_setting_record(_, _, _), do: {:error, :invalid_setting}
 
-  defp claim_command_record(state, command_id, command_hash)
+  defp claim_command_record(state, command_id, command_hash, actor_uid)
        when is_binary(command_id) and byte_size(command_id) in 1..64 and
-              is_binary(command_hash) do
+              is_binary(command_hash) and
+              local_actor?(actor_uid) do
     if Digest.valid_sha256?(command_hash) do
       result =
-        transaction(state.connection, &insert_command_claim(&1, command_id, command_hash))
+        transaction(
+          state.connection,
+          &insert_command_claim(&1, command_id, command_hash, actor_uid)
+        )
 
       case result do
         {:ok, :execute} -> {:ok, :execute}
-        {:ok, :existing} -> existing_command_receipt(state, command_id, command_hash)
+        {:ok, :existing} -> existing_command_receipt(state, command_id, command_hash, actor_uid)
         {:error, reason} -> {:error, reason}
       end
     else
@@ -1636,27 +1676,28 @@ defmodule Frameshift.Library do
     error in Exqlite.Error -> {:error, {:database, error.message}}
   end
 
-  defp claim_command_record(_, _, _),
+  defp claim_command_record(_, _, _, _),
     do: {:error, :invalid_command_receipt}
 
-  defp insert_command_claim(connection, command_id, command_hash) do
+  defp insert_command_claim(connection, command_id, command_hash, actor_uid) do
     inserted =
       Exqlite.query!(
         connection,
         """
         INSERT INTO command_receipts(
-          command_id, command_hash, status, error_code, created_at_ms, completed_at_ms
-        ) VALUES (?, ?, 'pending', NULL, ?, NULL)
+          command_id, command_hash, actor_uid, status, error_code, created_at_ms, completed_at_ms
+        ) VALUES (?, ?, ?, 'pending', NULL, ?, NULL)
         ON CONFLICT(command_id) DO NOTHING
         RETURNING command_id
         """,
-        [command_id, command_hash, now_ms()]
+        [command_id, command_hash, actor_uid, now_ms()]
       )
 
     case inserted.rows do
       [[^command_id]] ->
         DiagnosticsStore.record_audit(connection, "command.claimed", nil, %{
-          "commandId" => command_id
+          "commandId" => command_id,
+          "actorId" => command_actor_id(actor_uid)
         })
 
         :execute
@@ -1666,21 +1707,23 @@ defmodule Frameshift.Library do
     end
   end
 
-  defp existing_command_receipt(state, command_id, command_hash) do
+  defp existing_command_receipt(state, command_id, command_hash, actor_uid) do
     case query_one(
            state.connection,
-           "SELECT command_hash, status, error_code FROM command_receipts WHERE command_id = ?",
+           "SELECT command_hash, actor_uid, status, error_code FROM command_receipts WHERE command_id = ?",
            [command_id]
          ) do
-      {:ok, %{"command_hash" => ^command_hash, "status" => "pending"}} ->
+      {:ok, %{"command_hash" => ^command_hash, "actor_uid" => ^actor_uid, "status" => "pending"}} ->
         {:ok, :pending}
 
-      {:ok, %{"command_hash" => ^command_hash, "status" => "succeeded"}} ->
+      {:ok,
+       %{"command_hash" => ^command_hash, "actor_uid" => ^actor_uid, "status" => "succeeded"}} ->
         {:ok, {:replay, :ok}}
 
       {:ok,
        %{
          "command_hash" => ^command_hash,
+         "actor_uid" => ^actor_uid,
          "status" => "failed",
          "error_code" => error_code
        }}
@@ -1695,15 +1738,16 @@ defmodule Frameshift.Library do
     end
   end
 
-  defp complete_command_record(state, command_id, command_hash, outcome)
+  defp complete_command_record(state, command_id, command_hash, actor_uid, outcome)
        when is_binary(command_id) and byte_size(command_id) in 1..64 and
-              is_binary(command_hash) do
+              is_binary(command_hash) and
+              local_actor?(actor_uid) do
     with true <- Digest.valid_sha256?(command_hash),
          {:ok, status, error_code} <- encode_command_outcome(outcome) do
       result =
         transaction(
           state.connection,
-          &complete_pending_receipt(&1, command_id, command_hash, status, error_code)
+          &complete_pending_receipt(&1, command_id, command_hash, actor_uid, status, error_code)
         )
 
       case result do
@@ -1711,7 +1755,14 @@ defmodule Frameshift.Library do
           :ok
 
         {:ok, :existing} ->
-          validate_completed_receipt(state, command_id, command_hash, status, error_code)
+          validate_completed_receipt(
+            state,
+            command_id,
+            command_hash,
+            actor_uid,
+            status,
+            error_code
+          )
 
         {:error, reason} ->
           {:error, reason}
@@ -1724,26 +1775,34 @@ defmodule Frameshift.Library do
     error in Exqlite.Error -> {:error, {:database, error.message}}
   end
 
-  defp complete_command_record(_, _, _, _),
+  defp complete_command_record(_, _, _, _, _),
     do: {:error, :invalid_command_receipt}
 
-  defp complete_pending_receipt(connection, command_id, command_hash, status, error_code) do
+  defp complete_pending_receipt(
+         connection,
+         command_id,
+         command_hash,
+         actor_uid,
+         status,
+         error_code
+       ) do
     updated =
       Exqlite.query!(
         connection,
         """
         UPDATE command_receipts
         SET status = ?, error_code = ?, completed_at_ms = ?
-        WHERE command_id = ? AND command_hash = ? AND status = 'pending'
+        WHERE command_id = ? AND command_hash = ? AND actor_uid IS ? AND status = 'pending'
         RETURNING command_id
         """,
-        [status, error_code, now_ms(), command_id, command_hash]
+        [status, error_code, now_ms(), command_id, command_hash, actor_uid]
       )
 
     case updated.rows do
       [[^command_id]] ->
         DiagnosticsStore.record_audit(connection, "command.completed", nil, %{
           "commandId" => command_id,
+          "actorId" => command_actor_id(actor_uid),
           "kind" => status
         })
 
@@ -1766,11 +1825,11 @@ defmodule Frameshift.Library do
 
   defp encode_command_outcome(_), do: {:error, :invalid_command_outcome}
 
-  defp validate_completed_receipt(state, command_id, command_hash, status, error_code) do
+  defp validate_completed_receipt(state, command_id, command_hash, actor_uid, status, error_code) do
     case query_one(
            state.connection,
            """
-           SELECT command_hash, status, error_code
+           SELECT command_hash, actor_uid, status, error_code
            FROM command_receipts
            WHERE command_id = ?
            """,
@@ -1779,12 +1838,13 @@ defmodule Frameshift.Library do
       {:ok,
        %{
          "command_hash" => ^command_hash,
+         "actor_uid" => ^actor_uid,
          "status" => ^status,
          "error_code" => ^error_code
        }} ->
         :ok
 
-      {:ok, %{"command_hash" => ^command_hash, "status" => "pending"}} ->
+      {:ok, %{"command_hash" => ^command_hash, "actor_uid" => ^actor_uid, "status" => "pending"}} ->
         {:error, :command_completion_failed}
 
       {:ok, _} ->
@@ -1794,6 +1854,11 @@ defmodule Frameshift.Library do
         {:error, :command_receipt_missing}
     end
   end
+
+  defp command_actor_id(nil), do: nil
+
+  defp command_actor_id(uid),
+    do: Digest.sha256("frameshift-linux-uid-v1:" <> Integer.to_string(uid))
 
   defp admit_paired_frame(state, frame) do
     existing =

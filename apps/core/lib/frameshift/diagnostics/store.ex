@@ -7,6 +7,11 @@ defmodule Frameshift.Diagnostics.Store do
   with stable pagination and identifier-free health gauges rather than the raw
   SQLite connection or arbitrary SQL access.
 
+  Linux command claim/completion facts may include a validated SHA-256 `actorId`
+  derived from the policy and authenticated UID. This permits correlation without
+  exposing raw account IDs, usernames, PIDs or group lists; a hash of a numeric
+  account is not anonymization. Private token commands omit that actor field.
+
   ## Metric retention
 
   `validate_rollups/1` checks batch shape/count and the versioned catalog before
@@ -20,7 +25,7 @@ defmodule Frameshift.Diagnostics.Store do
   cannot erase an audit fact, and telemetry cannot manufacture domain success.
   """
 
-  @audit_detail_keys ~w(kind outcome revision sourceKind)
+  @audit_detail_keys ~w(kind outcome revision sourceKind actorId)
   @audit_kinds ~w(composition generation succeeded failed push reconcile)
   @audit_outcomes ~w(started displayed pending unknown failed)
   @audit_sources ~w(import generated)
@@ -72,6 +77,7 @@ defmodule Frameshift.Diagnostics.Store do
   defp allowed_detail?("outcome", value), do: value in @audit_outcomes
   defp allowed_detail?("sourceKind", value), do: value in @audit_sources
   defp allowed_detail?("revision", value), do: is_integer(value) and value in 1..1_000_000_000
+  defp allowed_detail?("actorId", value), do: Digest.valid_sha256?(value)
 
   defp safe_attempt_id(value) when is_binary(value) and byte_size(value) == 32 do
     if String.match?(value, ~r/\A[0-9a-f]{32}\z/), do: value, else: nil

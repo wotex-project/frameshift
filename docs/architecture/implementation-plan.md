@@ -223,8 +223,14 @@ still require qualification.
 Linux observer-group admission now has nonroot kernel/dispatcher fixtures for
 exact ownership/modes, supplementary-group access, denied users, unsafe targets,
 live socket custody and changed-permission refusal. Its group policy is explicit
-and diagnostic-only; command-group attribution, installed provisioning and
-physical power-loss measurements remain open gates.
+and diagnostic-only. The command policy now uses a distinct control group and
+public OTP raw peer credentials. Nonroot Linux application fixtures trace UID 1
+through actual command claim/completion calls, deny outsiders and altered socket
+permissions, refuse caller-path imports/pairing and exercise orderly socket
+cleanup. Fresh SQLite fixtures bind claim/replay/completion to the actor across
+restart and verified backup, with atomic audit rollback. Linux database/NIF
+qualification, streamed import, pairing/credentials, CLI/package wiring, installed
+provisioning and physical power-loss measurements remain open gates.
 
 ## Shared contracts
 

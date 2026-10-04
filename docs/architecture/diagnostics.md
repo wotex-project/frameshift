@@ -297,6 +297,14 @@ Linux peer/group admission follows the Linux host contract. The CLI does not ope
 the database or read the Apple unified log store programmatically. Explicit
 local export is redacted, bounded, and records its own audit fact.
 
+Linux group-authorized command claims/completions retain the kernel UID in the
+private receipt and expose only its policy-bound SHA-256 `actorId` in diagnostic
+audit detail. That hash supports correlation and is not anonymization of a
+numeric OS account. Raw UID, PID, username and group membership never become
+metric labels or operational log fields. Private launch-token commands omit
+`actorId`. Receipt identity and conflict/recovery behavior are owned by the
+[Linux command contract](../host/linux.md#group-owned-command-endpoint-and-receipts).
+
 Before the OTP fallback file handler starts, the core must inspect the final
 diagnostics directory and any existing log file without following a symlink.
 It must refuse a symlink or non-regular log target, require a private directory,

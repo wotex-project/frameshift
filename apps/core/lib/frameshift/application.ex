@@ -11,9 +11,11 @@ defmodule Frameshift.Application do
   ## Startup and custody
 
   `Frameshift.Paths` supplies relocatable data/socket locations. The shell's
-  bootstrap challenge is consumed through `Frameshift.LocalIPC.Token` before the
-  command listener starts. Invalid bootstrap or listener configuration prevents
-  that boundary from opening instead of accepting unauthenticated commands.
+  Mac bootstrap challenge is consumed through `Frameshift.LocalIPC.Token` before
+  its command listener starts. Linux may explicitly select distinct control and
+  observer groups; that policy accepts no bootstrap token or Mac credential
+  broker. Invalid bootstrap/group/listener configuration prevents the boundary
+  from opening instead of accepting unauthenticated commands.
 
   Renderer and service failures are handled by their supervisors without treating
   unconfirmed delivery as displayed artwork. Durable recovery remains the library
@@ -89,30 +91,50 @@ defmodule Frameshift.Application do
   defp local_ipc_children do
     if Application.fetch_env!(:frameshift_core, :start_local_ipc) do
       diagnostics = diagnostics_options()
-
-      token_path =
-        System.get_env("FRAMESHIFT_IPC_TOKEN_FILE") ||
-          raise "FRAMESHIFT_IPC_TOKEN_FILE is required when local IPC is enabled"
-
-      token =
-        case Token.consume(token_path) do
-          {:ok, token} -> token
-          {:error, reason} -> raise "could not consume local IPC bootstrap token: #{reason}"
-        end
-
-      broker = configure_credential_broker(token)
+      {commands, broker} = command_options(diagnostics)
 
       [
         Supervisor.child_spec(
           {Task.Supervisor, name: Frameshift.DiagnosticsTaskSupervisor, max_children: 17},
           id: Frameshift.DiagnosticsTaskSupervisor
         ),
-        {Frameshift.LocalIPC.Server, path: Frameshift.Paths.socket_path(), token: token},
+        {Frameshift.LocalIPC.Server, commands},
         {DiagnosticsServer, diagnostics}
       ] ++ outbox_children(broker)
     else
       []
     end
+  end
+
+  defp command_options(diagnostics) do
+    case System.get_env("FRAMESHIFT_CONTROL_GID") do
+      nil ->
+        private_command_options()
+
+      value ->
+        with {:ok, gid} <- group_gid(value),
+             observer when is_integer(observer) and observer != gid <- diagnostics[:group_gid],
+             true <- is_nil(System.get_env("FRAMESHIFT_IPC_TOKEN_FILE")),
+             true <- is_nil(System.get_env("FRAMESHIFT_CREDENTIAL_SOCKET")) do
+          {[path: Frameshift.Paths.socket_path(), group_gid: gid], nil}
+        else
+          _ -> raise "Linux control group requires distinct observer access and no token broker"
+        end
+    end
+  end
+
+  defp private_command_options do
+    token_path =
+      System.get_env("FRAMESHIFT_IPC_TOKEN_FILE") ||
+        raise "FRAMESHIFT_IPC_TOKEN_FILE is required when local IPC is enabled"
+
+    token =
+      case Token.consume(token_path) do
+        {:ok, token} -> token
+        {:error, reason} -> raise "could not consume local IPC bootstrap token: #{reason}"
+      end
+
+    {[path: Frameshift.Paths.socket_path(), token: token], configure_credential_broker(token)}
   end
 
   defp diagnostics_options do
@@ -125,9 +147,7 @@ defmodule Frameshift.Application do
         options
 
       value ->
-        with {:unix, :linux} <- :os.type(),
-             {gid, ""} when gid in 1..4_294_967_294 <- Integer.parse(value),
-             true <- value == Integer.to_string(gid),
+        with {:ok, gid} <- group_gid(value),
              true <- Path.dirname(path) != Path.dirname(Frameshift.Paths.socket_path()) do
           Keyword.put(options, :group_gid, gid)
         else
@@ -135,6 +155,18 @@ defmodule Frameshift.Application do
         end
     end
   end
+
+  defp group_gid(value) when byte_size(value) in 1..10 do
+    with {:unix, :linux} <- :os.type(),
+         {gid, ""} when gid in 1..4_294_967_294 <- Integer.parse(value),
+         true <- value == Integer.to_string(gid) do
+      {:ok, gid}
+    else
+      _ -> {:error, :invalid_socket_group}
+    end
+  end
+
+  defp group_gid(_), do: {:error, :invalid_socket_group}
 
   defp outbox_children(nil), do: []
 

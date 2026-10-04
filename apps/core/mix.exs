@@ -36,6 +36,11 @@ defmodule FrameshiftCore.MixProject do
       source_url: @source_url,
       homepage_url: @source_url,
       test_coverage: [tool: ExCoveralls],
+      test_ignore_filters: [
+        "test/frameshift/local_ipc/linux_peer_identity_contract.exs",
+        "test/frameshift/local_ipc/linux_diagnostics_service.exs",
+        "test/frameshift/local_ipc/linux_command_service.exs"
+      ],
       dialyzer: dialyzer()
     ]
   end

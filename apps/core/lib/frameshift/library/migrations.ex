@@ -236,6 +236,7 @@ defmodule Frameshift.Library.Migrations do
            substr(command_hash, 1, 7) = 'sha256:' AND
            substr(command_hash, 8) NOT GLOB '*[^0-9a-f]*'
          ),
+         actor_uid INTEGER CHECK (actor_uid IS NULL OR actor_uid BETWEEN 0 AND 4294967294),
          status TEXT NOT NULL CHECK (status IN ('pending', 'succeeded', 'failed')),
          error_code TEXT CHECK (
            error_code IS NULL OR (
