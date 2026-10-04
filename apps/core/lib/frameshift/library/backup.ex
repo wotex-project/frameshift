@@ -8,6 +8,11 @@ defmodule Frameshift.Library.Backup do
   before the staged directory is published to an absent destination outside the
   live data root.
 
+  Directory synchronization uses OTP's explicit `:directory` mode and requires
+  a successful sync; an unsupported or refused open cannot count as persistence.
+  If parent synchronization fails after rename, `{:commit_uncertain, reason}`
+  preserves the published destination for deliberate offline inspection.
+
   ## Restore boundary
 
   `verify/1` checks the manifest, database and object closure, including expected
@@ -286,8 +291,12 @@ defmodule Frameshift.Library.Backup do
   defp publish(stage, destination) do
     with :ok <- absent_destination(destination),
          :ok <- sync_directory(stage),
-         :ok <- File.rename(stage, destination),
-         do: sync_directory(Path.dirname(destination))
+         :ok <- File.rename(stage, destination) do
+      case sync_directory(Path.dirname(destination)) do
+        :ok -> :ok
+        {:error, reason} -> {:error, {:commit_uncertain, reason}}
+      end
+    end
   end
 
   defp sync_file(path) do
@@ -301,16 +310,13 @@ defmodule Frameshift.Library.Backup do
   end
 
   defp sync_directory(path) do
-    case :file.open(String.to_charlist(path), [:read]) do
+    case :file.open(String.to_charlist(path), [:read, :raw, :directory]) do
       {:ok, directory} ->
         try do
           :file.sync(directory)
         after
           :file.close(directory)
         end
-
-      {:error, :eisdir} ->
-        :ok
 
       {:error, reason} ->
         {:error, reason}

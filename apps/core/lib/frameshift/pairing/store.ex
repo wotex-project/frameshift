@@ -12,6 +12,8 @@ defmodule Frameshift.Pairing.Store do
   `save/2` writes a private synchronized temporary file, replaces the authority
   record and attempts directory synchronization before success is acknowledged.
   An uncertain directory commit remains an error requiring reconciliation.
+  OTP's explicit `:directory` open mode supplies the synchronization descriptor;
+  refused or unsupported directory operations never count as a successful sync.
   Unlike artwork recovery, this store must not recover an older valid slot that
   could restore revoked authority or single-use secrets.
 
@@ -180,16 +182,13 @@ defmodule Frameshift.Pairing.Store do
   end
 
   defp sync_directory(path) do
-    case :file.open(String.to_charlist(path), [:read]) do
+    case :file.open(String.to_charlist(path), [:read, :raw, :directory]) do
       {:ok, directory} ->
         try do
           :file.sync(directory)
         after
           :file.close(directory)
         end
-
-      {:error, :eisdir} ->
-        :ok
 
       {:error, reason} ->
         {:error, reason}

@@ -48,11 +48,35 @@ defmodule Frameshift.LinuxCredentialFixture do
       true = identity.certificate == certificate
       tls_join(pki, identity, :inet)
       tls_join(pki, identity, :inet6)
+      pairing_directory_join(root)
       refusal_checks(root, path, pem, reference, config, wrong_owner)
       IO.puts("protected-file-pinned-tls-passed")
     after
       File.rm_rf!(root)
     end
+  end
+
+  defp pairing_directory_join(root) do
+    directory = Path.join(root, "pairing")
+    File.mkdir!(directory)
+    File.chmod!(directory, 0o700)
+
+    {:ok, window} =
+      Frameshift.Pairing.Store.load_or_create(directory, "frame-000000000001", <<1::128>>)
+
+    paired = %{
+      window
+      | secret: nil,
+        host_certificate_fingerprint: "sha256:" <> String.duplicate("a", 64),
+        paired_request_id: "fs-fixture"
+    }
+
+    :ok = Frameshift.Pairing.Store.save(directory, paired)
+
+    {:ok, ^paired} =
+      Frameshift.Pairing.Store.load_or_create(directory, "frame-000000000001", <<1::128>>)
+
+    IO.puts("pairing-directory-sync-passed")
   end
 
   defp tls_join(pki, identity, family) do

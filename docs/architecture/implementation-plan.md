@@ -154,6 +154,12 @@ Streamed original-byte import and a qualified Linux canonical codec are the
 next command-surface boundary; native Ubuntu closure, protected provisioning
 and installed package acceptance remain R3 requirements.
 
+Backup/restore and simulated pairing authority now require OTP directory
+synchronization through explicit directory handles. Parent-sync failure after
+publication remains an uncertain commit with retained bytes. Local syscall and
+nonroot Linux pairing joins cover this software boundary; exact filesystem
+power-loss qualification remains open. Identity installation must use this boundary.
+
 ### Independent software delivery order
 
 Deliver S1 first, then inspect and exercise the exact S2/S3 mappings before

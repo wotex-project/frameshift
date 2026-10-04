@@ -22,6 +22,12 @@ and copied bytes must match their digest and size. It writes and syncs the
 manifest last, verifies the complete staging directory, and publishes it with
 one rename. An existing destination is never overwritten. Failed or interrupted
 staging remains non-activatable and can be removed without touching the library.
+Directory opens use OTP's explicit `directory` mode, and synchronization must
+succeed before acknowledging publication. Refused/unsupported directory sync is
+an error, never an inferred pass. The API is checked against [OTP 29.1 `file`](https://github.com/erlang/otp/blob/OTP-29.1/lib/kernel/src/file.erl)
+(`open/2`, source blob `bac83444cf5974b3f9a14057f5b4f4ec8c792001`, retrieved
+2026-10-04). Local macOS and pinned Linux/OTP directory-open/sync joins establish
+syscall acceptance; they do not qualify physical power-loss durability.
 SQLite documents `VACUUM INTO` as a consistent live backup and notes that
 interrupted output may be corrupt: [VACUUM INTO](https://www.sqlite.org/lang_vacuum.html#vacuuminto).
 
@@ -34,7 +40,10 @@ the manifest, database and every named object digest and size, then runs
 previous-known-good, queued, and playlist references must resolve to verified
 objects. It rebuilds the derived FTS5 index because vacuuming may change
 unkeyed rowids. Only then does it rename the staged directory into place.
-Failures leave the destination absent and the source backup untouched. Restore
+Failures before publication leave the destination absent and the source backup
+untouched. Failed parent sync after rename returns `{:commit_uncertain, reason}`
+and preserves the published destination for deliberate offline verification;
+it never deletes or overwrites it or reports committed success. Restore
 does not assert that a frame displayed a queued image or transfer Keychain
 private keys to another Mac; a moved installation requires re-pairing.
 
