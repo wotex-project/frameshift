@@ -49,6 +49,7 @@ they do not stop independent native, host or frame-profile work.
 - [Frameshift packs, research orchestration and model qualification](architecture/build-orchestration.md)
 - [Optional service, purchasing and care integration — on hold](architecture/build-commerce.md)
 - [Portable host core](architecture/host-core.md)
+- [Library backup, verification and offline restore](architecture/library-backup.md)
 - [Host domain map](architecture/domain-map.md)
 - [Host diagnostics contract](architecture/diagnostics.md)
 - [Frame Protocol](architecture/frame-protocol.md)

@@ -19,6 +19,7 @@ check_policy() {
     "$repository_root/.githooks/commit-msg" \
     "$repository_root/scripts/build-macos-icons" \
     "$repository_root/scripts/build-guide" \
+    "$repository_root/scripts/build-site" \
     "$repository_root/scripts/build-release-guide" \
     "$repository_root/scripts/check" \
     "$repository_root/scripts/check-workspace" \
@@ -107,6 +108,23 @@ check_release() {
 check_guide_browser() {
   check_guide
   mise exec -- node "$repository_root/apps/guide/test/browser-smoke.mjs"
+}
+
+check_docs() {
+  (
+    cd "$repository_root/apps/core"
+    mise exec -- mix format --check-formatted ../../scripts/docs/*.exs
+    mise exec -- mix run --no-start ../../scripts/docs/markdown_test.exs
+  )
+  mise exec -- node --test "$repository_root/scripts/docs/site.test.mjs"
+  mise exec -- node --check "$repository_root/scripts/docs/build.mjs"
+  mise exec -- node --check "$repository_root/scripts/docs/browser.mjs"
+  "$repository_root/scripts/build-site" --preview
+}
+
+check_docs_browser() {
+  check_docs
+  mise exec -- node "$repository_root/scripts/docs/browser.mjs"
 }
 
 check_core() {
@@ -201,6 +219,7 @@ case "${1:-all}" in
     check_core
     check_release
     check_guide
+    check_docs
     check_macos
     ;;
   policy) check_policy ;;
@@ -212,6 +231,8 @@ case "${1:-all}" in
   conjunct) mise exec -- node "$repository_root/scripts/conjunct/run.mjs" ;;
   guide) check_guide ;;
   guide-browser) check_guide_browser ;;
+  docs) check_docs ;;
+  docs-browser) check_docs_browser ;;
   core) check_core ;;
   release) check_release ;;
   macos) check_macos ;;
@@ -219,7 +240,7 @@ case "${1:-all}" in
   linux-ipc) check_linux_ipc ;;
   keychain-pairing) "$repository_root/scripts/check-keychain-pairing" ;;
   *)
-    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|kernel|build-spec|conjunct|guide|guide-browser|core|release|macos|container|linux-ipc|keychain-pairing]" >&2
+    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|keychain-pairing]" >&2
     exit 64
     ;;
 esac

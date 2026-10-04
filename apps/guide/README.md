@@ -30,6 +30,16 @@ the trust file comes from the owner-approved release configuration. The site
 publisher must separately fetch each public URL and verify its bytes before
 deployment.
 
+For the local combined documentation site, run `./scripts/check docs` or
+`./scripts/check docs-browser` from the repository root. The first renders all
+maintained Markdown and core API documentation, checks source/index/link
+custody and builds `var/site-preview`; the second also exercises real Chrome
+search, keyboard controls, narrow layout, API/version links, no-JavaScript
+recovery text, HTTP 404s and the generated security policies. `./scripts/build-site`
+requires clean `main`; `--preview` permits uncommitted inspection and records
+that its output cannot be published. Neither command deploys or promotes a
+release. See the [development documentation contract](../../docs/architecture/install-and-guide.md#development-documentation-build).
+
 The three compressed frame illustrations come from the maintainer's desktop
 `Frameshift.html` visual draft. The Frameshift SVG is the existing macOS mark.
 No externally loaded fonts, scripts, trackers, or image hosts are required.

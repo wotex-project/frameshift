@@ -22,6 +22,57 @@ archives belong in the public release artifact channel, not the site bundle.
 The user or domain owner must configure DNS and any public release repository;
 the private source repository's visibility is never changed by automation.
 
+## Development documentation build
+
+`./scripts/build-site` builds a local staged site from a clean `main` commit.
+`./scripts/build-site --preview` allows worktree inspection and records the
+uncommitted input state; preview output is never eligible for publication.
+The outputs are `var/site` and `var/site-preview`. The builder performs no
+deployment, repository visibility change, release upload or channel promotion.
+Release environment inputs refuse this development-only operation.
+
+Render every maintained `docs/` Markdown page and component README with the
+locked ExDoc toolchain alongside core API pages at `/docs/dev/`. Repository-path
+page identities keep same-named READMEs distinct. Resolve links from the original
+file, preserve repository heading anchors, and bind code/source links to the
+selected commit. Embedded repository images are copied locally; missing files,
+symlinks, outside-root references, rendering warnings, missing output assets and
+broken local anchors refuse. Source bytes and Git identity are checked again
+before the staged site replaces its previous development output.
+Existing output must match its complete recorded file inventory; unowned or
+changed output refuses replacement. A failed staged rename restores the prior
+development output. Generated section-link icons have static accessible names.
+
+`docs/dev/build.json` records the source commit, dirty/eligibility flags, exact
+source-input digests, page inventory and pinned toolchain configuration.
+`site-manifest.json` inventories final static files, sizes/digests and link-check
+counts; these are build evidence, not release signing or public readback.
+Static assets have a 25 MiB/file and 20,000-file build ceiling. The local
+no-release site serves the guide/lab at `/`, explicit unavailable installer
+content at `/download/`, the no-release entry at `/docs/`, and a real 404 page.
+No executable customer install command or artifact URL is invented.
+
+Use non-overlapping CSP rules: the guide remains restricted to its existing
+local assets; development docs permit same-origin search fetches, exact hashes
+of generated inline scripts and ExDoc's inline style behavior. Shared framing,
+content-type and privacy headers remain in force. Cloudflare joins duplicate
+matching header values rather than replacing them, so the guide CSP must not
+also match docs. Check this behavior against the
+[static header contract](https://developers.cloudflare.com/workers/static-assets/headers/)
+and exercise the actual generated policies in a browser. Development/status
+routes require cache revalidation.
+
+The development builder refuses to replace an output containing retained
+`docs/vX.Y.Z/` directories. Its failure preserves those bytes and stable entry
+points. The publication assembler must later verify and retain release docs,
+isolate development replacement, serialize writes and reconcile interrupted
+deployment; this builder does not claim that publication work has passed.
+Acceptance combines clean/dirty source fixtures, parsed link/image custody,
+full corpus rendering and local link/anchor checks, real Chrome search/API/version
+navigation, narrow-viewport keyboard access, essential text without JavaScript
+and HTTP 404 behavior. Installed/public Cloudflare and release-version evidence
+remain separate.
+
 ## Composition and independent instructions
 
 The [build platform](build-platform.md) extends the public experience with

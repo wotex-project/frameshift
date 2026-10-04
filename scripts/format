@@ -11,6 +11,7 @@ repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 (
   cd "$repository_root/apps/core"
   mise exec -- mix format
+  mise exec -- mix format ../../scripts/docs/*.exs
 )
 
 (

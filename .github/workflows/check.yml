@@ -82,6 +82,8 @@ jobs:
         run: ./scripts/check core
       - name: Check browser guide
         run: ./scripts/check guide
+      - name: Check maintained documentation and API site
+        run: ./scripts/check docs
       - name: Check release manifest verifier
         run: ./scripts/check release
 

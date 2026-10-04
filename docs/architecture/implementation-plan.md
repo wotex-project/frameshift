@@ -173,9 +173,18 @@ evidence is in the
 [verification ledger](verification.md); they do not complete H3's installed
 accessibility matrix or H2's measured palette/packing profiles. Continue the
 remaining native labeling/similarity adapters, storage settings and H4 contracts
-alongside
-the documentation/site build. S2's explicit producer refusal still gates its
-dependent composition authority, rather than these independent host surfaces.
+alongside release-version documentation and publication work. S2's explicit
+producer refusal still gates its dependent composition authority, rather than
+these independent host surfaces.
+
+The development documentation slice now joins maintained Markdown, core API
+pages and the guide/lab with explicit no-release routes. Clean-main identity,
+source digests, index coverage, local links/anchors and output custody gate the
+staged build; dirty previews carry no publication eligibility. Chrome exercises
+search, keyboard controls, narrow layout, API anchors, no-JavaScript recovery
+text and the generated security policies. Release docs retention/assembly,
+public hostname/readback and deployment automation remain separate open work;
+the development builder refuses to replace retained release directories.
 
 ## Shared contracts
 
