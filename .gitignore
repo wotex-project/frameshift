@@ -26,6 +26,9 @@
 /renderer/.zig-cache/
 /renderer/zig-out/
 
+# Native codec
+/codec/target/
+
 # Swift
 /.build/
 /apps/macos/.build/

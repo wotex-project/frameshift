@@ -217,6 +217,16 @@ revision acceptance use the actual SQLite owner; ordered-loop argument fixtures
 join the retained core rendering/playlist tests. These are software checks, not
 Linux NIF, installed package, qualified target or physical display evidence.
 Streamed import remains required CLI work with its own custody/codec adapter.
+
+The [native normalization profile](../architecture/content-pipeline.md#linux-native-normalization)
+uses an isolated codec executable. Its first admitted static-PNG profile owns
+complete container/stillness, primary orientation, alpha and SDR-to-sRGB
+conversion. Original-byte upload must precede this service-owned codec; no
+client-decoded pixels or caller path can replace it. A decoder fixture is
+distinct from authenticated upload/receipt, installed Ubuntu and target binary
+closure evidence. JPEG needs its own complete-container/color/stillness corpus
+before the Linux adapter enables it.
+
 Physical pair/recovery and stdin intake follow the dedicated contracts below.
 
 Requests retain 64 KiB/8 KiB framing bounds and responses 1 MiB/256 KiB bounds.

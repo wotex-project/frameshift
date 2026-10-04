@@ -91,7 +91,7 @@ does not depend on database IDs.
 
 ## Deterministic stages
 
-1. Decode through a bounded, memory-safe system codec path.
+1. Decode through a bounded, memory-safe platform codec path.
 2. Apply embedded orientation; reject contradictory or malformed metadata.
 3. Convert to a canonical working color representation.
 4. Apply the saved crop and mat-safe composition.
@@ -115,6 +115,93 @@ copy, hashes the copied bytes, and launches that copy. It retains the copy until
 the worker exits, then removes it. A change to the configured executable path
 after that snapshot cannot change the active worker's build identity; a worker
 restart reads and qualifies a new snapshot before accepting work.
+
+### Linux native normalization
+
+Linux original-byte import uses a separate `frameshift-codec` executable,
+consumed by the Elixir host through bounded stdin/stdout. It is a narrow codec
+adapter, not a renderer, provider, library writer or new orchestration runtime.
+The existing Zig raster worker and macOS ImageIO adapter keep their owners.
+The [source cohort review](../research/software-stack.md#linux-codec-source-cohort)
+records why the Linux adapter uses pinned memory-safe Rust libraries.
+
+The first qualified software profile accepts **static PNG**, including indexed,
+grayscale, alpha, low bit depths, 16-bit samples and Adam7 interlace. Unsupported
+formats return a finite refusal; enabling JPEG or another format requires its
+own complete-container, stillness, metadata and golden-byte corpus. A media
+signature alone never establishes stillness or decoder validity. Any APNG marker
+refuses, even with only one advertised frame.
+
+Admission requires 1 byte–128 MiB of original bytes, dimensions 1–32,768 and at most
+16,777,011 source pixels. Before pixel decoding, the adapter validates the
+complete chunk envelope, every CRC, required/consecutive image data, metadata
+placement/duplicates, exact IEND and absence of trailing bytes.
+Image data must contain exactly one complete checksummed zlib stream with no
+trailing compressed bytes and the exact filtered scanline count for the
+declared bit depth/interlace. Check it with a bounded scratch buffer before
+pixel decoding; permissive decoder completion cannot substitute for admission.
+It allows at most 65,536 chunks, 1 MiB per ancillary chunk, 4 MiB total ancillary data, 64 KiB
+Exif and 1 MiB inflated ICC. The PNG decoder has a separate 192 MiB internal
+allocation budget; its caller-owned pixel buffer is capped at eight bytes per
+source pixel. These are distinct bounds, not a total RSS measurement. CRC and
+compressed-data checksums are required; errors must not become untagged color.
+
+Read primary Exif orientation from the complete container, including legal
+trailing metadata. Missing orientation means 1; a present value must be one
+SHORT in 1–8. Duplicate primary orientation fields, malformed Exif or an invalid
+type/count refuse. Thumbnail fields do not override primary artwork. Apply
+orientation exactly once, swapping axes for 5–8. Do not resample during this
+operation. The canonical master stores orientation 1 and retains the original
+orientation in provenance.
+
+The SDR color profile is deliberately bounded:
+
+- Untagged PNG uses **assumed sRGB**, recorded separately from an explicit PNG
+  sRGB declaration. Alpha bypasses every color transform.
+- Honor PNG color precedence: admitted cICP, then ICC, then sRGB, then gAMA/cHRM.
+  cICP accepts full-range identity-matrix sRGB `(1,13,0,1)` and Display P3
+  `(12,13,0,1)` only. Other transfer/primary/matrix/range combinations refuse.
+  Unsupported HDR metadata refuses until a tone-mapping contract exists.
+- ICC admits bounded v2/v4 RGB matrix-shaper or gray-TRC display/input profiles
+  with XYZ PCS, aligned bounded unique tags and required white point/curves.
+  LUT, device-link, alternate PCS, CICP-bearing ICC and incomplete profiles
+  refuse. Curve tables are capped at 4,096 entries; admitted transfer curves
+  must be finite, nondecreasing and within the SDR range. Duplicate/conflicting
+  primary color descriptions refuse; ICC plus sRGB is not admitted.
+- An sRGB declaration requires matching supplied fallback gAMA/cHRM. Without
+  a higher-priority declaration, only sRGB chromaticities are currently admitted;
+  gAMA in 0.1–10 converts its power-law encoding using sRGB primaries. Absent
+  primaries are explicitly interpreted as sRGB primaries, not measured facts.
+
+Color conversion uses scalar moxcms, relative colorimetric intent, fixed-point
+preference and no CICP substitution inside ICC conversion. Preserve 16-bit
+precision through conversion, then quantize a u16 sample with
+`floor((sample + 128) / 257)`. Expand indexed/low-bit inputs before conversion.
+Canonical output is top-left straight-alpha RGBA8 sRGB; zero-alpha RGB is zero.
+Record original media/interpretation, source-color digest, original orientation,
+exact codec cohort and the executed binary digest. Reusing an older normalized
+master never silently renormalizes it under a new codec.
+
+One worker invocation accepts an unsigned big-endian u32 length, exactly that
+many source bytes and EOF. It returns the fixed 64-byte `FSN1` v1 header defined
+in [the codec component](../../codec/README.md#input-and-output), followed by
+exactly width × height × 4 bytes; errors contain no pixels or source metadata.
+The host MUST validate all header fields, reserve one actual worker at a time,
+bound accumulated output and apply a 30-second absolute worker deadline.
+Cancellation/timeout must reap that worker before freeing its slot. Never
+automatically retry library effects after an uncertain receipt. Original paths,
+credentials, provider context and frame identities are excluded from this
+worker protocol. Service-owned upload custody is specified by
+[the Linux host](../host/linux.md); this executable alone does not authorize
+caller paths or complete streamed import.
+
+Acceptance requires native debug/release normalization and process-framing
+fixtures, all orientations, actual ICC/cICP/gamma transforms, alpha, bit depth,
+interlace, checksums, corruption and bounds. Host joins must additionally exercise
+worker death/deadline, executable custody, authenticated upload, no duplicate
+library write and recovery after lost replies. Identical fixtures on both Linux
+architectures and installed resource limits are separate release evidence;
+native macOS tests do not establish those claims or measured panel color.
 
 ## Photo renderer
 

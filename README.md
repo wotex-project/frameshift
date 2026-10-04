@@ -163,6 +163,12 @@ make check
 `./scripts/check-workspace` checks the graph and static Elixir imports before
 component moves; it also runs as part of the repository policy gate.
 
+The [isolated Linux codec](codec/README.md) has a bounded static-PNG profile.
+`./scripts/check codec` runs its native format/static/debug/release gate;
+`./scripts/check linux-codec` builds the pinned Linux arm64/amd64 fixtures and
+runs the same corpus as a nonroot process with read-only root and no network.
+The codec executable precedes the streamed-import host join and installed DEBs.
+
 The Docker-backed live receiver and Linux peer-credential checks are separate
 lanes in CI. Run them locally with `./scripts/check container` and
 `./scripts/check linux-ipc` when a Docker-compatible daemon is available.

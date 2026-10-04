@@ -78,6 +78,8 @@ jobs:
         run: ./scripts/check build-spec
       - name: Check Zig renderer
         run: ./scripts/check renderer
+      - name: Check isolated native codec
+        run: ./scripts/check codec
       - name: Check Elixir core
         run: ./scripts/check core
       - name: Check browser guide
@@ -105,6 +107,8 @@ jobs:
         run: mix deps.get --check-locked
       - name: Check Swift shell
         run: ./scripts/check macos
+      - name: Check native codec on macOS
+        run: ./scripts/check codec
 
   frame-receiver:
     name: Container frame receiver
@@ -126,3 +130,9 @@ jobs:
         run: ./scripts/check linux-ipc
       - name: Check Linux Avahi discovery
         run: ./scripts/check linux-discovery
+      - uses: docker/setup-qemu-action@v4.4.0
+        with:
+          platforms: arm64
+          image: tonistiigi/binfmt@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
+      - name: Check Linux codec source cohort
+        run: ./scripts/check linux-codec

@@ -228,16 +228,68 @@ MCU firmware uses the exact controller's qualified SDK/language after a
 reproducible build, signed update, TLS, and power/refresh spike. Keeping Zig
 there is allowed only if it passes those gates.
 
-The raster protocol carries a versioned job header plus paths or file
-descriptors to canonical decoded buffers. It emits progress and one terminal
-result. The Elixir owner enforces maximum dimensions, output size, wall-clock
-deadline, and process memory limits where the OS permits. A crash fails one job
-and restarts the port.
+The raster protocol carries a versioned job header and bounded canonical pixel
+bytes on stdin/stdout. It emits one framed terminal result. The Elixir owner
+enforces dimensions, output size and wall-clock deadline; installed process
+memory limits require target-specific qualification. A crash fails one job
+and restarts the port without automatic effect replay.
 
 Zig is not a reason to rewrite high-quality system facilities. SQLite, image
 codecs supplied by Apple, and vendor kernel drivers can remain upstream native
 dependencies when their license and attack surface are reviewed. Keep the
 existing Zig renderer while it passes its isolated-worker gates.
+
+### Linux codec source cohort
+
+**Source observation:** 2026-10-05; source inspection supports implementation,
+not an installed release or measured color profile.
+
+Linux needs original-byte decoding, orientation and canonical sRGB conversion;
+the existing Zig raster input is already canonical RGBA8. Rewriting PNG/JPEG
+decoders in Zig would add an unnecessary parser. Apple ImageIO remains the Mac
+adapter. A system libpng/libjpeg/LittleCMS wrapper would require a C-memory and
+target shared-library closure; the selected first Linux profile instead uses a
+small isolated Rust executable with pinned upstream libraries. This keeps
+Elixir orchestration and Zig raster behavior intact. Rust is selected for this
+adapter's memory-safe producer boundary, not as a new host or generic engine.
+
+The accepted first profile is static PNG. Complete JPEG admission remains
+independent work: exact end-of-image/multiple-image handling, Exif, ICC and
+CMYK/YCCK interpretation must be qualified before enabling it. The direct PNG
+API exposes raw color chunks, unlike a convenience image wrapper that loses
+precedence information and defaults malformed orientation to no transform.
+
+| Producer | Exact inspected source / license | Consequence for this adapter |
+| --- | --- | --- |
+| PNG 0.18.1 | [image-png `2a3f980`](https://github.com/image-rs/image-png/tree/2a3f980245e3ae38b82ade96533e7b450e8477bb), `src/decoder/{mod,stream,zlib}.rs`, `CHANGES.md`; MIT OR Apache-2.0 | `new_with_limits`, checked optional output size, `EXPAND`, `finish` and raw color/Exif fields support bounded decoding. Explicitly enable Adler-32: its default ignores it. `zlib.rs` also tolerates missing checksums after enough output and ignores trailing compressed data; an independent bounded stream pass requires the exact scanline count, complete checksum and no second stream. `parse_iccp` discards parsing errors, so validate/inflate ICC separately and disable that upstream path. The changelog's duplicate-APNG tolerance is unsuitable for stillness admission: reject every animation marker in the container envelope. |
+| moxcms 0.9.1 | [source `1e5305c`](https://github.com/awxkee/moxcms/tree/1e5305c77a0523acbd96721385ebe6dadfab6bc9), `profile.rs`, `transform.rs`, `trc.rs`, `writer.rs`; BSD-3-Clause OR Apache-2.0 | Use bounded `ParsingOptions`, complete matrix/gray profiles and row transforms. Disable default SIMD/LUT features and force relative colorimetric/fixed-point options. The release accepts zero-version ICC; this product profile deliberately requires v2/v4. Its gray-profile writer emits unaligned tag offsets in a generated fixture; keep decoder refusal and pad test-producer tags to conforming boundaries. No claim that its writer is a production source encoder. |
+| kamadak-exif 0.6.1 | [tag source `52b53a2`](https://github.com/kamadak/exif-rs/tree/52b53a236b95b364c70d020b420148e0e25de4af), `reader.rs`, `tiff.rs`, `NEWS`; BSD-2-Clause | Default reader refuses partial parse errors. Iterate all fields because `get_field` would conceal duplicates; bound raw Exif before parsing and own primary orientation type/count/range. All 18 published `src/`, NEWS, LICENSE and README blobs match that tag. The crate's recorded VCS commit `ba531e6bb523bf7c01849cf8e679beff4ef960b0` is unavailable through GitHub; the lockfile checksum and compared source blobs establish the inspected cohort, not that unavailable ref. |
+| flate2 1.1.10 | [source `ed93d4f`](https://github.com/rust-lang/flate2-rs/tree/ed93d4fc60eaf876c6aded741bf992d524551930), Rust backend; MIT OR Apache-2.0 | Inflate ICC through an output-limited checked zlib reader; require exact compressed-input consumption. No system zlib runtime. |
+| crc32fast 1.5.2 and SHA-2 0.11.0 | [CRC source `7eb0b8a`](https://github.com/srijs/rust-crc32fast/tree/7eb0b8a2c9b246d27dc4cb5a53d3fc3b43a4bb83), [SHA source `ffe0939`](https://github.com/RustCrypto/hashes/tree/ffe093984c004769747e998f77da8ff7c0e7a765/sha2); MIT OR Apache-2.0 | Check all envelope CRCs and fingerprint exact source-color bytes. SHA-2's current edition/digest API is supported by pinned Rust 1.97.1; integer hash backend differences do not change digests. |
+
+The current [PNG Recommendation](https://www.w3.org/TR/2025/REC-png-3-20250624/)
+owns container ordering, alpha and color precedence. The adapter accepts a
+smaller explicitly tested SDR profile; unknown transfer functions, LUT/HDR
+profiles and unsupported primaries refuse rather than becoming assumed sRGB.
+Original bytes preserve metadata that is not projected into the canonical
+master. ICC, cICP and power-gamma interpretation retain separate digests.
+
+`codec/Cargo.lock` fixes transitive versions and registry checksums. Native
+changelog review includes PNG 0.18.1's checked sizes/chunk skipping and animation
+tolerance, moxcms 0.9.1's version relaxation, flate2 1.1.10's refusal of incomplete
+streams at EOF, crc32fast 1.5.2's integer tail-block changes and SHA-2 0.11.0's
+digest API/MSRV migration. Exif's opt-in partial-reader mode remains disabled;
+its 0.6.1 `Sync` fix introduces no different orientation admission. The adapter
+explicitly exercises refusal paths that differ from convenient producer defaults.
+Native
+fixtures test actual library exports and complete process framing. Before
+shipping, independently verify Ubuntu amd64/arm64 binary/runtime closure,
+the common golden corpus, OS memory/deadline enforcement, dependency advisories
+and the complete license-notice inventory. A mismatch invalidates that target's
+codec admission; it does not authorize an alternate decoder or an automatic
+fallback. The [content pipeline](../architecture/content-pipeline.md#linux-native-normalization)
+owns requirements, while the [verification ledger](../architecture/verification.md)
+records actual executions.
 
 ## Explicit exclusions
 

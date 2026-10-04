@@ -40,6 +40,14 @@ are outside this technical ledger; historical revisions remain in Git.
   evidence. It is never a shipped application runtime.
 - **Detail:** [Software stack research](../research/software-stack.md)
 
+The Linux canonical codec is a separate bounded Rust executable consuming
+pinned memory-safe upstream PNG, color and metadata libraries. It does not
+replace Elixir orchestration, the Zig raster worker or Apple's native adapter.
+Its first admitted static-PNG profile and exact source cohort are owned by
+[the content pipeline](../architecture/content-pipeline.md#linux-native-normalization)
+and [source review](../research/software-stack.md#linux-codec-source-cohort).
+Other formats and installed target closure require separate qualification.
+
 ## D-004 — Host-rendered immutable artifacts
 
 - **State:** accepted

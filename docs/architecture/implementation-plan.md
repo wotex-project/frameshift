@@ -173,6 +173,15 @@ backup, systemd credential policy, installed Ubuntu closure and exact physical
 identity recovery remain separate R3 evidence. Streamed original import and its
 Linux codec contract are the next independent command boundary.
 
+The Linux codec contract now defines a bounded isolated static-PNG profile,
+complete-container/stillness refusal, exact orientation and SDR color
+normalization. Its worker fixtures precede authenticated streamed upload and
+the Library/receipt join; the executable alone does not complete `import`.
+Qualify JPEG metadata/stillness separately, then exercise worker loss/deadline,
+actor-bound staging, lost replies and immutable source/package readback.
+Both Ubuntu architectures, OS resource enforcement and installed release
+closure remain R3 requirements.
+
 ### Independent software delivery order
 
 Deliver S1 first, then inspect and exercise the exact S2/S3 mappings before

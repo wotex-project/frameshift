@@ -55,6 +55,28 @@ check_renderer() {
   )
 }
 
+check_codec() {
+  (
+    cd "$repository_root/codec"
+    mise exec -- cargo fmt --check
+    mise exec -- cargo clippy --locked --all-targets -- -D warnings
+    mise exec -- cargo test --locked
+    mise exec -- cargo test --locked --release
+    mise exec -- cargo build --locked --release
+  )
+}
+
+check_linux_codec() {
+  docker build --platform linux/arm64 --file "$repository_root/codec/test.Dockerfile" \
+    --tag frameshift-codec-arm64:fixture "$repository_root/codec"
+  docker run --rm --platform linux/arm64 --network none --read-only \
+    frameshift-codec-arm64:fixture
+  docker build --platform linux/amd64 --file "$repository_root/codec/test.Dockerfile" \
+    --tag frameshift-codec-amd64:fixture "$repository_root/codec"
+  docker run --rm --platform linux/amd64 --network none --read-only \
+    frameshift-codec-amd64:fixture
+}
+
 check_platform() {
   (
     cd "$repository_root/apps/build-platform/assets"
@@ -254,6 +276,7 @@ case "${1:-all}" in
   all)
     check_policy
     check_renderer
+    check_codec
     "$repository_root/scripts/check-build-spec"
     check_core
     check_release
@@ -265,6 +288,8 @@ case "${1:-all}" in
   platform) check_platform ;;
   platform-observability) "$repository_root/scripts/check-platform-observability" ;;
   renderer) check_renderer ;;
+  codec) check_codec ;;
+  linux-codec) check_linux_codec ;;
   kernel) check_kernel ;;
   build-spec) "$repository_root/scripts/check-build-spec" ;;
   conjunct) mise exec -- node "$repository_root/scripts/conjunct/run.mjs" ;;
@@ -280,7 +305,7 @@ case "${1:-all}" in
   linux-discovery) check_linux_discovery ;;
   keychain-pairing) "$repository_root/scripts/check-keychain-pairing" ;;
   *)
-    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
+    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|codec|linux-codec|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
     exit 64
     ;;
 esac
