@@ -18,6 +18,7 @@ public final class ShellModel {
 
   private let client: any CoreClient
   private var searchRevision = 0
+  private var playlistDrafts: [String: PlaylistDraft] = [:]
 
   public init(
     client: any CoreClient,
@@ -159,6 +160,101 @@ public final class ShellModel {
     await send(CoreCommand(kind: .loopPinned, targetID: selectedTargetID, dwellMs: dwellMs))
   }
 
+  public var playlistDraft: PlaylistDraft? {
+    guard let target = snapshot.selectedTarget else { return nil }
+    return playlistDrafts[target.id] ?? PlaylistDraft(target: target)
+  }
+
+  public func beginPlaylistEdit() {
+    editPlaylist { _ in }
+  }
+
+  public func reloadSavedPlaylist() {
+    guard let target = snapshot.selectedTarget else { return }
+    playlistDrafts[target.id] = PlaylistDraft(target: target)
+  }
+
+  private func editPlaylist(_ change: (inout PlaylistDraft) -> Void) {
+    guard let target = snapshot.selectedTarget else { return }
+    var draft = playlistDrafts[target.id] ?? PlaylistDraft(target: target)
+    change(&draft)
+    playlistDrafts[target.id] = draft
+  }
+
+  public func usePinnedArtwork() {
+    guard snapshot.pinnedSetTooLarge != true, let pins = snapshot.pinnedItems else {
+      errorMessage =
+        "The full pin set is unavailable or exceeds 64 stills. Review the library pins."
+      return
+    }
+    editPlaylist { $0.items = pins }
+  }
+
+  public func addSelectedToPlaylist() {
+    guard let selectedItem else { return }
+    editPlaylist { draft in
+      guard !draft.items.contains(where: { $0.id == selectedItem.id }), draft.items.count < 64
+      else {
+        return
+      }
+      draft.items.append(
+        PlaylistItem(id: selectedItem.id, digest: selectedItem.digest, title: selectedItem.title))
+    }
+  }
+
+  public func removePlaylistItem(_ itemID: String) {
+    editPlaylist { $0.items.removeAll { $0.id == itemID } }
+  }
+
+  public func movePlaylistItem(_ itemID: String, offset: Int) {
+    guard offset == -1 || offset == 1 else { return }
+    editPlaylist { draft in
+      guard let index = draft.items.firstIndex(where: { $0.id == itemID }),
+        draft.items.indices.contains(index + offset)
+      else { return }
+      draft.items.swapAt(index, index + offset)
+    }
+  }
+
+  public func setPlaylistInterval(_ input: String) {
+    editPlaylist { $0.intervalInput = input }
+  }
+
+  public func setPlaylistIntervalUnit(_ unit: LoopIntervalInput.Unit) {
+    editPlaylist { $0.intervalUnit = unit }
+  }
+
+  public func setPlaylistProfileSuggestion(_ enabled: Bool) {
+    editPlaylist { $0.useProfileSuggestion = enabled }
+  }
+
+  public var canQueuePlaylist: Bool {
+    guard let target = snapshot.selectedTarget, let draft = playlistDraft else { return false }
+    return !draft.items.isEmpty
+      && draft.items.count <= min(64, target.maximumPlaylistLength ?? 64)
+      && draft.effectiveDwell(for: target) != nil
+  }
+
+  public func queuePlaylist() async {
+    guard canQueuePlaylist, let target = snapshot.selectedTarget, let draft = playlistDraft else {
+      return
+    }
+    await send(
+      CoreCommand(
+        kind: .loopArtwork, targetID: target.id,
+        dwellMs: draft.useProfileSuggestion ? nil : draft.effectiveDwell(for: target),
+        itemIDs: draft.items.map(\.id)))
+  }
+
+  public func resumePlaylist() async {
+    guard let target = snapshot.selectedTarget, let playlist = target.playlist,
+      playlist.status == .suspended, playlist.requiresRevalidation != true,
+      target.hasQueuedDelivery != true, target.directDelivery?.status != .pending
+    else { return }
+    await send(
+      CoreCommand(kind: .resumePlaylist, targetID: target.id, playlistRevision: playlist.revision))
+  }
+
   public func reconcileDelivery() async {
     guard let selectedTargetID = snapshot.selectedTargetID else { return }
     await send(CoreCommand(kind: .reconcileDelivery, targetID: selectedTargetID))
@@ -212,7 +308,13 @@ public final class ShellModel {
     } catch CoreClientError.loopUnavailable {
       errorMessage = "Frame cannot cycle artwork offline. Check its pairing and transfer mode."
     } catch CoreClientError.loopStorageFull {
-      errorMessage = "This frame cannot hold the pinned set. Remove pins or free frame storage."
+      errorMessage = "This frame cannot hold the set. Reduce its size or free frame storage."
+    } catch CoreClientError.loopRevisionConflict {
+      errorMessage = "The saved loop changed. Refresh and review the frame before resuming."
+    } catch CoreClientError.loopProfileChanged {
+      errorMessage = "Frame capabilities changed. Review and queue a newly prepared set."
+    } catch CoreClientError.duplicateLoopArtwork {
+      errorMessage = "Two stills render to identical frame bytes. Keep one of them in the set."
     } catch CoreClientError.loopPending {
       errorMessage = "This loop is already queued. Wait for the frame to confirm it."
     } catch CoreClientError.loopAlreadyActive {

@@ -124,4 +124,25 @@ struct ModelsTests {
     #expect(snapshot.selectedTargetID == nil)
     #expect(snapshot.generationAvailability == .notConfigured)
   }
+
+  @Test("Sub-minute intervals use checked whole-integer unit conversion")
+  func preciseIntervalBounds() {
+    #expect(
+      LoopIntervalInput.dwellMilliseconds("1501", unit: .milliseconds, minimumDwellMs: 1000) == 1501
+    )
+    #expect(LoopIntervalInput.dwellMilliseconds("2", unit: .seconds, minimumDwellMs: 1501) == 2000)
+    #expect(LoopIntervalInput.dwellMilliseconds("1", unit: .seconds, minimumDwellMs: 1501) == nil)
+    #expect(
+      LoopIntervalInput.dwellMilliseconds(String(Int.max), unit: .hours, minimumDwellMs: nil) == nil
+    )
+    #expect(LoopIntervalInput.dwellMilliseconds("1.5", unit: .seconds, minimumDwellMs: nil) == nil)
+    #expect(
+      LoopIntervalInput.dwellMilliseconds("31536000000", unit: .milliseconds, minimumDwellMs: nil)
+        == 31_536_000_000)
+    #expect(
+      LoopIntervalInput.dwellMilliseconds("31536000001", unit: .milliseconds, minimumDwellMs: nil)
+        == nil)
+    #expect(LoopIntervalInput.exactUnit(for: 1501) == .milliseconds)
+    #expect(LoopIntervalInput.exactUnit(for: 120000) == .minutes)
+  }
 }

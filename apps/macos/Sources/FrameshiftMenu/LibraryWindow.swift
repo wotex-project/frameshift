@@ -52,6 +52,7 @@ struct LibraryWindow: View {
             ContentUnavailableView("Select artwork", systemImage: "photo.on.rectangle")
           }
           instruction
+          PlaylistEditor(model: model)
           Label(model.snapshot.statusMessage, systemImage: "info.circle")
             .font(.callout)
             .foregroundStyle(.secondary)
@@ -76,7 +77,11 @@ struct LibraryWindow: View {
         .disabled(model.isBusy)
       Button("Settings", systemImage: "gearshape") { openSettings() }
     }
-    .task { await model.refresh() }
+    .task {
+      await model.refresh()
+      model.beginPlaylistEdit()
+    }
+    .onChange(of: model.snapshot.selectedTargetID) { _, _ in model.beginPlaylistEdit() }
   }
 
   @ViewBuilder

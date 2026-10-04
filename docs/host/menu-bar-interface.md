@@ -112,8 +112,7 @@ unsaved text, including edits made while a save is awaiting acknowledgement,
 survives refresh, pin/remove/target commands and opening/closing the window.
 The window displays source-master identity and queued/loop state explicitly;
 it cannot infer a rendered preview or physical display from that identity.
-Target previews, comparison and the complete playlist editor remain separate
-software acceptance slices.
+Target previews and comparison remain separate software acceptance slices.
 
 Use SwiftUI's native [window scenes and open-window action](https://developer.apple.com/documentation/swiftui/windows)
 with a 700 × 520 point minimum and an initial 860 × 640 point size for this
@@ -228,7 +227,7 @@ active states. See [display timing](../architecture/display-timing.md).
 
 The compact menu exposes this as **Loop pins** with a provisional suggestion
 when advertised, fixed choices filtered by the receiver minimum, and a custom
-whole-minute interval field. The custom control validates the receiver minimum
+interval field. The custom control validates the receiver minimum
 and a one-year upper bound before submission; the core applies the receiver
 minimum again.
 It shows pending, active, or suspended state from the durable core snapshot.
@@ -242,9 +241,17 @@ asset alone does not describe the whole loop.
 The core renders the pin set and queues a complete authenticated pull playlist;
 the receiver performs the offline cycle. Repeating **Loop pins** after a single
 still has paused it queues a fresh intent, including when the revision is the
-same. Set preview, ordering, sub-minute dwell entry, and a dedicated resume
-control remain open. A photo or pixel interval is a viewing choice, not a
-measured energy optimization.
+same. The focused Library presents the included master titles in order, allows
+selected artwork or current pins to seed a draft, and provides add/remove and
+move-up/down controls. Per-frame drafts survive refresh and target changes.
+Whole-integer milliseconds, seconds, minutes and hours allow sub-minute dwell
+where admitted; the saved per-frame override is the next editor default.
+**Resume saved loop** submits the exact suspended revision and uses its retained
+set and interval. It refuses stale intent, pending delivery and changed
+capabilities for review. It does not recreate a playlist from current pins.
+Capability/recommendation changes are labelled before queueing. A photo or pixel
+interval is a viewing choice, not a measured energy optimization. Target-rendered
+image previews and the installed accessibility/layout matrix remain open.
 
 ## Progress and failure
 

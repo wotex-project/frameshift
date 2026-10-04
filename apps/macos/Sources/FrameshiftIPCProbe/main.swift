@@ -58,6 +58,25 @@ private struct FrameshiftIPCProbe {
     let absent = try await client.snapshot(query: "absent")
     guard absent.items.isEmpty else { throw ProbeFailure() }
 
+    let item = matched.items[0]
+    _ = try await client.send(CoreCommand(kind: .setPinned, itemID: item.id, isPinned: true))
+    let pinPreview = try await client.snapshot(query: "absent")
+    guard pinPreview.items.isEmpty, pinPreview.pinnedItems?.map(\.id) == [item.id],
+      pinPreview.pinnedSetTooLarge == false
+    else { throw ProbeFailure() }
+    do {
+      _ = try await client.send(
+        CoreCommand(
+          kind: .loopArtwork, targetID: "missing-frame", dwellMs: 1501, itemIDs: [item.id]))
+      throw ProbeFailure()
+    } catch CoreClientError.targetNotFound {}
+    do {
+      _ = try await client.send(
+        CoreCommand(kind: .resumePlaylist, targetID: "missing-frame", playlistRevision: item.digest)
+      )
+      throw ProbeFailure()
+    } catch CoreClientError.targetNotFound {}
+
     print("Frameshift Swift-to-Elixir IPC probe passed")
   }
 

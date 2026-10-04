@@ -43,6 +43,29 @@ public struct FramePlaylist: Codable, Equatable, Sendable {
   public let entryCount: Int
   public let dwellMs: Int
   public let replacingActive: Bool?
+  public let items: [PlaylistItem]?
+  public let requiresRevalidation: Bool?
+}
+
+public struct PlaylistItem: Codable, Equatable, Identifiable, Sendable {
+  public let id: String
+  public let digest: String
+  public let title: String
+
+  public init(id: String, digest: String, title: String) {
+    self.id = id
+    self.digest = digest
+    self.title = title
+  }
+}
+
+public struct LoopIntervalPreference: Codable, Equatable, Sendable {
+  public let source: String
+  public let requestedDwellMs: Int?
+  public let appliedDwellMs: Int
+  public let recommendationRevision: String?
+  public let capabilityDigest: String
+  public let requiresReview: Bool
 }
 
 public struct FrameTarget: Codable, Equatable, Identifiable, Sendable {
@@ -57,6 +80,9 @@ public struct FrameTarget: Codable, Equatable, Identifiable, Sendable {
   public let recommendationBasis: String?
   public let recommendationRevision: String?
   public let playlist: FramePlaylist?
+  public let loopInterval: LoopIntervalPreference?
+  public let maximumPlaylistLength: Int?
+  public let hasQueuedDelivery: Bool?
 
   public init(
     id: String,
@@ -69,7 +95,10 @@ public struct FrameTarget: Codable, Equatable, Identifiable, Sendable {
     recommendedDwellMs: Int? = nil,
     recommendationBasis: String? = nil,
     recommendationRevision: String? = nil,
-    playlist: FramePlaylist? = nil
+    playlist: FramePlaylist? = nil,
+    loopInterval: LoopIntervalPreference? = nil,
+    maximumPlaylistLength: Int? = nil,
+    hasQueuedDelivery: Bool? = nil
   ) {
     self.id = id
     self.name = name
@@ -82,6 +111,9 @@ public struct FrameTarget: Codable, Equatable, Identifiable, Sendable {
     self.recommendationBasis = recommendationBasis
     self.recommendationRevision = recommendationRevision
     self.playlist = playlist
+    self.loopInterval = loopInterval
+    self.maximumPlaylistLength = maximumPlaylistLength
+    self.hasQueuedDelivery = hasQueuedDelivery
   }
 }
 
@@ -122,6 +154,8 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
   public var items: [LibraryItem]
   public var generationAvailability: GenerationAvailability
   public var statusMessage: String
+  public var pinnedItems: [PlaylistItem]?
+  public var pinnedSetTooLarge: Bool?
 
   public init(
     targets: [FrameTarget],
@@ -129,7 +163,9 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
     instruction: String = "",
     items: [LibraryItem] = [],
     generationAvailability: GenerationAvailability = .notConfigured,
-    statusMessage: String
+    statusMessage: String,
+    pinnedItems: [PlaylistItem]? = nil,
+    pinnedSetTooLarge: Bool? = nil
   ) {
     self.targets = targets
     self.selectedTargetID = selectedTargetID
@@ -137,6 +173,8 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
     self.items = items
     self.generationAvailability = generationAvailability
     self.statusMessage = statusMessage
+    self.pinnedItems = pinnedItems
+    self.pinnedSetTooLarge = pinnedSetTooLarge
   }
 
   public var selectedTarget: FrameTarget? {
@@ -163,6 +201,8 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     case remove
     case queue
     case loopPinned
+    case loopArtwork
+    case resumePlaylist
     case reconcileDelivery
   }
 
@@ -181,6 +221,8 @@ public struct CoreCommand: Codable, Equatable, Sendable {
   public let importCanonicalPath: String?
   public let importCanonicalDigest: String?
   public let dwellMs: Int?
+  public let itemIDs: [String]?
+  public let playlistRevision: String?
 
   public init(
     id: UUID = UUID(),
@@ -197,7 +239,9 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     importColorProfile: String? = nil,
     importCanonicalPath: String? = nil,
     importCanonicalDigest: String? = nil,
-    dwellMs: Int? = nil
+    dwellMs: Int? = nil,
+    itemIDs: [String]? = nil,
+    playlistRevision: String? = nil
   ) {
     self.id = id
     self.kind = kind
@@ -214,6 +258,8 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     self.importCanonicalPath = importCanonicalPath
     self.importCanonicalDigest = importCanonicalDigest
     self.dwellMs = dwellMs
+    self.itemIDs = itemIDs
+    self.playlistRevision = playlistRevision
   }
 
   func withDecodedImport(_ decoded: DecodedImport) -> CoreCommand {
@@ -233,7 +279,9 @@ public struct CoreCommand: Codable, Equatable, Sendable {
       importColorProfile: metadata.colorProfile,
       importCanonicalPath: decoded.canonicalURL.path,
       importCanonicalDigest: decoded.canonicalDigest,
-      dwellMs: dwellMs
+      dwellMs: dwellMs,
+      itemIDs: itemIDs,
+      playlistRevision: playlistRevision
     )
   }
 }

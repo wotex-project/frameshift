@@ -22,6 +22,9 @@ public enum CoreClientError: Error, Equatable, Sendable {
   case intervalRequired
   case loopUnavailable
   case loopStorageFull
+  case loopRevisionConflict
+  case loopProfileChanged
+  case duplicateLoopArtwork
   case itemNotFound
   case protocolFailure
   case pairingIncomplete

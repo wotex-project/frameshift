@@ -372,6 +372,18 @@ struct FrameshiftPanel: View {
               .buttonStyle(.plain)
           }
         }
+        if target.playlist?.status == .suspended {
+          Button("Resume saved loop", systemImage: "play") {
+            Task { await model.resumePlaylist() }
+          }
+          .disabled(
+            model.isBusy || target.hasQueuedDelivery == true
+              || target.playlist?.requiresRevalidation == true
+              || target.directDelivery?.status == .pending)
+        }
+        Button("Edit playlist in Library", systemImage: "list.number") {
+          openWindow(id: "library")
+        }
       }
     }
   }

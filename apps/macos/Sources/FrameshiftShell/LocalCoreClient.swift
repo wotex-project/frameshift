@@ -201,6 +201,9 @@ public actor LocalCoreClient: CoreClient {
     case "import_too_large": .importTooLarge
     case "already_active": .loopAlreadyActive
     case "playlist_pending": .loopPending
+    case "playlist_revision_conflict": .loopRevisionConflict
+    case "playlist_profile_changed": .loopProfileChanged
+    case "duplicate_artifact": .duplicateLoopArtwork
     case "no_pinned_artwork": .noPinnedArtwork
     case "interval_required", "invalid_interval": .intervalRequired
     case "pull_not_supported", "frame_not_paired", "compatible_binding_unavailable":

@@ -325,7 +325,7 @@ private actor InMemoryCoreClient: CoreClient {
         throw CoreClientError.targetNotFound
       }
       try updateItem(command.itemID) { $0.queuedTargetID = targetID }
-    case .loopPinned:
+    case .loopPinned, .loopArtwork, .resumePlaylist:
       throw CoreClientError.loopUnavailable
     case .reconcileDelivery:
       guard let targetID = command.targetID,
