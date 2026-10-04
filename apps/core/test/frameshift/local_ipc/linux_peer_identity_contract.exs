@@ -281,6 +281,26 @@ defmodule Frameshift.LocalIPC.LinuxCommandContract do
     assert accepted =~ ~s("ok":true)
     assert accepted =~ ~s("instruction":"Linux local setting")
 
+    cli_code = """
+    Code.prepend_paths(Path.wildcard("/src/_build/test/lib/*/ebin"))
+    System.put_env("FRAMESHIFT_SERVICE_UID", "65534")
+    System.put_env("FRAMESHIFT_CONTROL_GID", "50")
+    System.put_env("FRAMESHIFT_SOCKET_PATH", #{inspect(path)})
+    {0, response, ""} = Frameshift.CLI.run(["instruction", "CLI still artwork", "--id", "cli-command"])
+    IO.write(response)
+    {0, state, ""} = Frameshift.CLI.run(["state"])
+    IO.write(state)
+    """
+
+    assert {cli, 0} =
+             System.cmd(
+               "runuser",
+               ["-u", "daemon", "-g", "daemon", "-G", "staff", "--", "elixir", "-e", cli_code],
+               stderr_to_stdout: true
+             )
+
+    assert cli =~ ~s("instruction":"CLI still artwork")
+
     assert {token, 0} = client(path, %{request | "auth" => String.duplicate("a", 64)})
     assert token =~ ~s("code":"authentication_required")
     assert {forged, 0} = client(path, Map.put(request, "actor_uid", 0))
@@ -406,4 +426,141 @@ defmodule Frameshift.LocalIPC.LinuxCommandContract do
         await_file(root, name, service, attempts - 1)
     end
   end
+end
+
+defmodule Frameshift.LocalIPC.LinuxClientContract do
+  @moduledoc false
+
+  use ExUnit.Case, async: false
+
+  alias Frameshift.LocalIPC.Client
+
+  test "client checks kernel server UID before sending even when filesystem custody matches" do
+    root = "/tmp/fg-client-peer-#{System.unique_integer([:positive])}"
+    path = Path.join(root, "c.sock")
+    File.mkdir_p!(root)
+    File.chown!(root, 65_534)
+    File.chgrp!(root, 50)
+    File.chmod!(root, 0o710)
+
+    {:ok, listener} =
+      :gen_tcp.listen(0, [:binary, packet: 4, active: false, ifaddr: {:local, path}])
+
+    File.chown!(path, 65_534)
+    File.chgrp!(path, 50)
+    File.chmod!(path, 0o660)
+
+    on_exit(fn ->
+      :gen_tcp.close(listener)
+      File.rm_rf!(root)
+    end)
+
+    caller =
+      Task.async(fn -> Client.exchange(path, request(), :command, uid: 65_534, gid: 50) end)
+
+    {:ok, connected} = :gen_tcp.accept(listener, 5_000)
+    assert {:error, :unavailable} = Task.await(caller)
+    assert {:error, :closed} = :gen_tcp.recv(connected, 0, 1_000)
+    :gen_tcp.close(connected)
+  end
+
+  test "one sent mutation gets unknown outcome for invalid frames, with no retry and finite partial-read deadline" do
+    control = "/tmp/fg-client-frame-#{System.unique_integer([:positive])}"
+    path = control <> "-service/c.sock"
+    File.mkdir_p!(control)
+    File.chmod!(control, 0o777)
+
+    on_exit(fn ->
+      File.rm_rf!(control)
+      File.rm_rf!(Path.dirname(path))
+    end)
+
+    service =
+      Task.async(fn ->
+        System.cmd(
+          "runuser",
+          [
+            "-u",
+            "nobody",
+            "-g",
+            "nogroup",
+            "-G",
+            "staff",
+            "--",
+            "elixir",
+            "/src/test/frameshift/local_ipc/linux_client_service.exs",
+            path,
+            Path.join(control, "ready")
+          ],
+          stderr_to_stdout: true
+        )
+      end)
+
+    wait = fn wait, attempts ->
+      cond do
+        File.exists?(Path.join(control, "ready")) ->
+          :ok
+
+        result = Task.yield(service) ->
+          flunk("fixture exited: #{inspect(result)}")
+
+        attempts == 0 ->
+          flunk("fixture timeout")
+
+        true ->
+          Process.sleep(10)
+          wait.(wait, attempts - 1)
+      end
+    end
+
+    wait.(wait, 1_000)
+    policy = [uid: 65_534, gid: 50]
+
+    previous =
+      for name <- ~w(FRAMESHIFT_SERVICE_UID FRAMESHIFT_CONTROL_GID FRAMESHIFT_SOCKET_PATH),
+          into: %{},
+          do: {name, System.get_env(name)}
+
+    on_exit(fn ->
+      Enum.each(previous, fn {name, value} ->
+        if value, do: System.put_env(name, value), else: System.delete_env(name)
+      end)
+    end)
+
+    System.put_env("FRAMESHIFT_SERVICE_UID", "65534")
+    System.put_env("FRAMESHIFT_CONTROL_GID", "50")
+    System.put_env("FRAMESHIFT_SOCKET_PATH", path)
+    assert {2, refusal, ""} = Frameshift.CLI.run(["instruction", "refused", "--id", "retained"])
+    assert refusal =~ ~s("code":"command_id_conflict")
+    assert {75, "", error} = Frameshift.CLI.run(["instruction", "unknown", "--id", "retained"])
+    assert error =~ "command_outcome_unknown"
+    refute error =~ path
+
+    for _ <- [:duplicate, :oversized, :truncated] do
+      assert {:error, :command_outcome_unknown} =
+               Client.exchange(path, request(), :command, policy)
+    end
+
+    started = System.monotonic_time(:millisecond)
+
+    assert {:error, :command_outcome_unknown} =
+             Client.exchange(path, request(), :command, policy, 50)
+
+    assert System.monotonic_time(:millisecond) - started < 1_000
+    assert {:error, :command_outcome_unknown} = Client.exchange(path, request(), :command, policy)
+    assert {_, 0} = Task.await(service, 10_000)
+  end
+
+  defp request,
+    do: %{
+      "version" => 1,
+      "requestId" => "bounded-client",
+      "operation" => "command",
+      "auth" => "peer",
+      "command" => %{
+        "kind" => "updateInstruction",
+        "id" => "retained",
+        "instruction" => "bounded"
+      }
+    }
 end

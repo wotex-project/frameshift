@@ -26,6 +26,20 @@ trap cleanup EXIT HUP INT TERM
   mise exec -- env MIX_ENV=prod mix release --overwrite
 )
 
+# The CLI clean boot neither reads service runtime config nor requires the
+# customer's development tools or service release cookie. Never boot the service
+# for these read-only launcher checks.
+cli_version=$(
+  env -u FRAMESHIFT_RENDERER_PATH -u FRAMESHIFT_IPC_TOKEN_FILE \
+    FRAMESHIFT_DATA_DIR="$runtime_root/cli-data" \
+    PATH=/usr/bin:/bin "$release_root/bin/frameshiftctl" --version
+)
+test "$cli_version" = 'frameshiftctl 0.1.0-dev'
+env -u FRAMESHIFT_RENDERER_PATH -u FRAMESHIFT_IPC_TOKEN_FILE \
+  FRAMESHIFT_DATA_DIR="$runtime_root/cli-data" \
+  PATH=/usr/bin:/bin "$release_root/bin/frameshiftctl" --help >"$runtime_root/cli-help"
+test ! -e "$runtime_root/cli-data"
+
 physical_result=$(
   FRAMESHIFT_RENDERER_PATH="$renderer_path" \
     "$release_root/bin/frameshift_core" eval \

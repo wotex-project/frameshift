@@ -85,12 +85,18 @@ File.write!(Path.join(control, "restored"), "done")
 wait.(wait, "stop", 3_000)
 
 %{
-  calls: [{:complete, "actor-command", hash, 1, :ok}, {:claim, "actor-command", hash, 1}],
-  mutations: 1
+  calls: [
+    {:complete, "cli-command", cli_hash, 1, :ok},
+    {:claim, "cli-command", cli_hash, 1},
+    {:complete, "actor-command", hash, 1, :ok},
+    {:claim, "actor-command", hash, 1}
+  ],
+  mutations: 2
 } =
   :sys.get_state(store)
 
 true = Frameshift.Digest.valid_sha256?(hash)
+true = Frameshift.Digest.valid_sha256?(cli_hash)
 Supervisor.stop(application)
 {:error, :enoent} = File.lstat(path)
 GenServer.stop(store)

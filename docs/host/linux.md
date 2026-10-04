@@ -154,6 +154,63 @@ Mac token authentication and packaged IPC keep their existing contract.
 The public raw option was checked in [OTP 29.1 `inet:getopts/2`](https://github.com/erlang/otp/blob/OTP-29.1/lib/kernel/src/inet.erl)
 on 2026-10-04 (source blob `97d826a2d240b42ab8c7dedffb35607a1cb50e04`).
 
+### Bundled local CLI
+
+The Linux CLI runs `Frameshift.CLI` in the packaged OTP runtime with a clean,
+non-distributed boot. It does not start the application, load runtime service
+configuration, read the service release cookie, open SQLite or require a customer
+Elixir installation. A release overlay places `bin/frameshiftctl` beside the
+service launcher; package install supplies the public policy values and runtime
+socket paths. Development/source checks are not installed-DEB qualification.
+
+The CLI defaults to `/run/frameshift/control/c.sock` and
+`/run/frameshift/observer/d.sock`; `FRAMESHIFT_SOCKET_PATH` and
+`FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH` override those paths. Installation configures
+the service to match those separate endpoints.
+
+Each socket exchange requires explicit canonical numeric `FRAMESHIFT_SERVICE_UID`
+and the selected `FRAMESHIFT_CONTROL_GID` or `FRAMESHIFT_DIAGNOSTICS_GID`. The
+client checks final directory/socket owner, GID and exact `0710`/`0660` modes,
+connects through Linux pathname permissions, then checks the kernel server UID
+against the configured service identity before sending any request. A path,
+server response or CLI JSON cannot supply the trusted UID. Managed ancestors and
+installed root-owned policy provisioning remain installation acceptance work.
+A replaced/wrong-owner endpoint, unavailable peer credentials or mismatched
+server identity refuses; there is no token, TCP or database fallback.
+
+`diagnostics health|metrics|audit` uses the observer socket with optional bounded
+cursor/limit on paginated queries. `state`, `metadata ID`, `recovery [--after ID]`
+and `storage` use finite existing command reads. Initial mutations are
+`instruction TEXT`, `select TARGET`, `send ITEM TARGET`, `reconcile TARGET`,
+`pin ID`, `unpin ID`, `remove ID`, `restore ID`, and `resume TARGET REVISION`.
+Every mutation requires an explicit `--id COMMAND_ID` of 1–64 UTF-8 bytes; the
+CLI neither invents an ID after failure nor automatically retries an exchange.
+Arguments map to existing product commands and cannot supply an actor UID.
+Import, discovery/pairing, metadata editing, storage editing and playlist creation
+remain required CLI work until their dedicated argument/adapter contracts land.
+
+Requests retain 64 KiB/8 KiB framing bounds and responses 1 MiB/256 KiB bounds.
+The connection and send use finite deadlines; the response has one absolute
+30-second deadline, including all partial reads, and bounded duplicate-key-aware
+JSON admission. The response must match protocol version and request ID and
+contain a valid success/error envelope. Output is canonical JSON plus a newline;
+no private socket path, input artwork, raw exception or credential is printed.
+
+Exit codes are 0 for a validated success/help/version, 2 for a validated domain
+refusal, 64 for usage/policy errors, 69 for unavailable/invalid read exchanges or
+pre-send admission failure, and 75 when a mutation may have been sent but its
+validated outcome is unavailable. Exit 75 explicitly reports
+`command_outcome_unknown`; callers reconcile with the same command ID. A closed,
+truncated, oversized, mismatched or hostile response never becomes success.
+Receipt conflict and pending outcomes remain the server's authoritative results.
+
+Acceptance runs pure argument/refusal fixtures, real socket wrong-peer/framing
+checks, the actual nonroot Linux application/CLI join and a clean production
+release invocation with no development tools in PATH. That clean CLI invocation
+must work without service credentials or a renderer variable and must not create
+application state. Target-specific Linux OTP/NIF/renderer closure and install
+permissions remain independent package qualification gates.
+
 ## Nerves Pi 5 bridge
 
 Use the official `nerves_system_rpi5` as the base when a dedicated appliance

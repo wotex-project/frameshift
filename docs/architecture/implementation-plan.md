@@ -228,9 +228,14 @@ public OTP raw peer credentials. Nonroot Linux application fixtures trace UID 1
 through actual command claim/completion calls, deny outsiders and altered socket
 permissions, refuse caller-path imports/pairing and exercise orderly socket
 cleanup. Fresh SQLite fixtures bind claim/replay/completion to the actor across
-restart and verified backup, with atomic audit rollback. Linux database/NIF
-qualification, streamed import, pairing/credentials, CLI/package wiring, installed
-provisioning and physical power-loss measurements remain open gates.
+restart and verified backup, with atomic audit rollback. The initial bundled
+CLI now supplies state/metadata/recovery/storage reads and explicit-ID settings,
+pin/removal/restore/send/reconciliation/resume commands, with server UID checks,
+bounded framing and unknown-outcome exit 75. Clean production CLI help/version
+uses the shipped runtime without service configuration or development tools.
+Linux database/NIF qualification, streamed import, pairing/credentials, remaining
+CLI operations and package wiring, installed provisioning and physical power-loss
+measurements remain open gates.
 
 ## Shared contracts
 

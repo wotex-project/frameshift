@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+
+release_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd -P)
+erts_version=''
+release_version=''
+# Mix's release metadata need not end with a newline. Validate the fields even
+# when POSIX read reports EOF after assigning them.
+IFS=' ' read -r erts_version release_version <"$release_root/releases/start_erl.data" || :
+case "$release_version" in
+  ''|*[!0-9A-Za-z.+-]*) exit 69 ;;
+esac
+case "$erts_version" in
+  ''|*[!0-9.]*) exit 69 ;;
+esac
+
+exec "$release_root/releases/$release_version/elixir" \
+  --boot "$release_root/releases/$release_version/start_clean" \
+  --boot-var RELEASE_LIB "$release_root/lib" \
+  --eval 'Frameshift.CLI.main(System.argv())' -- "$@"
