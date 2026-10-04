@@ -1,6 +1,6 @@
 # Required library contracts
 
-**Status:** normative consumer expectations, 2026-09-25; implementation and
+**Status:** normative consumer expectations, source mapping updated 2026-10-04; implementation and
 joined conformance are tracked separately in the [verification map](verification.md).
 **Owner:** Frameshift integration. Generic implementation belongs to the named
 producer. This contract complements [CI-01–CI-08](conjunct-integration.md).
@@ -34,10 +34,14 @@ universal RPC envelope. Resolve them to the owning library's public API. Extend
 that owner when necessary; do not create a parallel registry, encoder, scheduler,
 documentation model, effect dispatcher or financial ledger in Frameshift.
 
-The current Conjunct mapping uses its 0.2.0 working specification snapshot,
-including P1/P2 producer work packages. Its exact provenance is recorded in the
-[adoption audit](../research/conjunct-adoption.md#conjunct-02-working-specification).
-This snapshot is not a released package or a dependency on a sibling directory.
+The current mapping uses the exact source cohort in the
+[consolidated research](../research/conjunct-adoption.md#exact-producer-source-cohort),
+including CJ.09, domain/geometry annexes and the trusted discovery registry.
+The Rust kernel, Elixir port, browser WASM/data bindings and guide have public
+source exports; none is installed or qualified by this consumer yet.
+Unreleased semantic descriptor, package and executable identities are distinct.
+P1/P2 contracts now require qualification of existing producer APIs and their
+remaining extensions, rather than implementation from scratch.
 
 ## Required deliveries
 
@@ -74,9 +78,15 @@ refuse unrepresentable/lost required semantics. A migration records both IDs,
 semantic differences and readable/writable/executable version support. No
 historical catalog row is silently rehashed or promoted to current eligibility.
 
-The first instruction profile may use synthetic/manual geometry. The separate
-`cj/cad-step/0.2` profile qualifies STEP through OCCT XDE/STEPCAFControl to
-glTF 2.0/GLB with exact tool/subset, units, transforms, loss and feature evidence.
+The first instruction profile may use synthetic/manual geometry. The broader
+`cj/cad-step/0.2` requirement is not an advertised implemented capability.
+The inspected adapter selects `cj/step-planar-assembly/0.1`: Linux/arm64,
+OCCT 7.9.3 and single-file ASCII AP214 planar B-rep. It excludes AP242,
+curves, PMI, external documents, manufacturer geometry and engineering accuracy;
+activation/distribution remain unqualified. Record the exact
+[cohort and exclusions](../research/conjunct-adoption.md#procedures-geometry-and-accessible-output).
+Any claimed STEP conversion to glTF 2.0/GLB needs exact tool/subset, units,
+transforms, loss and feature evidence.
 Conjunct's right-handed metre/+Y-up/+Z-forward transform convention is an
 explicit conversion from the existing frame-coordinate profile. Other CAD
 formats remain unavailable until their own adapter qualifies. Manufacturer CAD
@@ -104,8 +114,14 @@ the fence, mint new IDs for pending effects or rewrite accepted compositions.
 Test two operators from the same source, concurrent successors, stale clients,
 lost acknowledgment, complete VM restart, missing assets and an unknown effect
 across upgrade/rollback. Simulators support development; the joined gate uses
-the producer's real durable store. P1 implementation belongs in Refpath and may
-proceed alongside core/instruction work.
+the producer's real durable store. The installed Refpath already exports
+`ApplicationAdmissions.admit/2`, `current/2`, `restoration/2`, `pin/2` and
+`source/3`, with scoped HotReload wrappers. Map these existing interfaces;
+do not create another admission head. Atomic current review-through-commit
+remains a producer qualification gap: the prospective
+`Artifacts.with_review_projections/3` snapshot is not the selected cohort and
+is absent from the installed pin. Require withdrawal/commit race fixtures
+against a qualified producer transaction before enabling that profile.
 
 **PC-04 — ExMaude solver evidence.** ExMaude supplies P2/CJ8-04 through its
 existing search/pool/backend owner. Inputs are reviewed model/query identities,
@@ -127,6 +143,14 @@ and a deliberately broken rule whose witness reproduces in the real compiler.
 P2 gates formal-evidence claims; it does not prevent deterministic compiler or
 viewer development. Required formal predicates still gate the profile that
 claims their evidence.
+
+The inspected producer supplies `ExMaude.Verification.SearchRun.run/3` with
+typed termination and bound session/output/trace evidence. Conjunct's selected
+formal join covers screw reach and sensor capacity, not the full frame profile.
+Typed cancellation receipts, state-count limits and complete predicate/trace
+coverage remain required work. Qualify the exact selected cohort and distinguish
+producer-reported tests from Frameshift reruns; do not describe the search API
+as wholly missing or an empty bounded result as a proof.
 
 **PC-05 — DocShell explanations.** The generic bridge consumes an exact
 documentation collection through DocShell's collection/projection boundary.

@@ -104,6 +104,7 @@ defmodule FrameshiftCore.MixProject do
       extras:
         [
           {"README.md", title: "Core overview"},
+          {"../../docs/product-definition.md", title: "Product definition"},
           {"../../docs/architecture/system.md", title: "System architecture"},
           {"../../docs/architecture/build-platform.md", title: "Composition workbench"},
           {"../../docs/architecture/conjunct-integration.md", title: "Conjunct integration"},

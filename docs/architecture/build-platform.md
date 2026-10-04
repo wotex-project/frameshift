@@ -1,12 +1,12 @@
 # Composition Workbench and Product Integration
 
-**Status:** adopted specification direction, 2026-09-25; existing host/compiler
+**Status:** adopted direction, source mapping updated 2026-10-04; existing host/compiler
 slices retained, Conjunct integration open, transactional shop implementation on hold.
 **Scope:** Frameshift product bundle, physical composition, instructions,
 research and optional later service capabilities.
 
 The [Conjunct source and readiness record](../research/conjunct-adoption.md)
-identifies the producer specification used here. [CI-01–CI-08](conjunct-integration.md)
+identifies the producer contracts and implemented exports. [CI-01–CI-08](conjunct-integration.md)
 defines identity migration and producer ownership. Existing site presentations
 are implementation evidence only where the verification map names a test.
 
@@ -16,8 +16,10 @@ Frameshift is the first modular reference product and integration proof of
 concept for Conjunct's generic physical composition and instruction engine.
 Frameshift supplies frame profiles, product rules, procedures, evidence and
 presentation. Its native app, renderer, device protocol and firmware remain
-independent product software. Conjunct's inspected cohort contains specifications,
-not an installed engine. Integration claims require actual exports and tests.
+independent product software. Conjunct's inspected cohort implements a Rust
+kernel, Elixir port, browser WASM bindings and portable guide. No qualified
+Conjunct package is installed here. Integration claims require the exact
+producer distribution and joined consumer tests.
 
 **BP-01 — Independent composition.** Provide visual Paper, Photo and Pixel
 configuration, explained constraints and exact printable output. Users can

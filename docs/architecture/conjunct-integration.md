@@ -1,7 +1,7 @@
 # Conjunct integration and Frameshift product profile
 
-**Status:** adopted specification direction, 2026-09-25; extraction and producer
-conformance remain open.
+**Status:** adopted direction; producer source mapping updated 2026-10-04,
+Frameshift integration and joined conformance open.
 **Owner:** Frameshift product integration; generic producer semantics belong in
 Conjunct. The [adoption record](../research/conjunct-adoption.md) maps inspected
 revisions and existing implementation.
@@ -21,9 +21,11 @@ packaging semantics. Refpath owns generic capability, application-generation,
 UI-graph, work, effect and recovery contracts. Rivure owns financial operations;
 DocShell owns versioned explanatory artifacts; Wotex owns device-interaction
 contracts. Frameshift must not introduce another owner for those responsibilities.
-The inspected Conjunct cohort supplies no qualified runtime package. Missing
-exports remain named integration gaps and cannot be replaced by a second local
-generic engine.
+The inspected Conjunct cohort supplies a Rust kernel and public Elixir
+port/browser WASM/data/guide source exports. They are unreleased and not
+installed or qualified here. Map the actual discovery/protocol/ABI before
+adoption. A missing generic export needs a producer requirement and reproducing
+fixture; it cannot be replaced by a second local generic engine.
 
 Conjunct's core contract owns product/profile validation and normalization,
 explicit-selection composition, canonical physical identity, comparison,
@@ -233,9 +235,10 @@ an API. Private/unreleased packages remain explicit distribution gaps; a local
 sibling checkout is inspection evidence, not an installed dependency.
 
 PC-03 and PC-04 identify Refpath P1 durable scoped admission and ExMaude P2
-typed completion/session evidence as producer work packages. Their absence
-does not prevent deterministic core/instruction development; it gates the
-operator or formal-evidence profile that depends on that behavior.
+typed completion/session evidence. Both producers now have relevant public
+exports; atomic review-through-commit, full formal coverage and this consumer's
+joined qualification remain open. Missing required evidence gates the dependent
+operator/formal claim, without preventing deterministic core/instruction work.
 
 Refpath owns generic product/operator solution binding, approved UI graphs,
 generation compilation/admission, attempts and effects. Frameshift binds typed
@@ -271,9 +274,13 @@ owners. Engine conformance does not establish supplier truth or physical safety.
 
 ## Source cohort
 
-The current requirements use Conjunct's 0.2.0 working specification inspected
-on 2026-09-25. The exact file digests and producer readiness limits are in the
-[source record](../research/conjunct-adoption.md#conjunct-02-working-specification).
-That specification is not an installed package or a passing conformance result.
+The current source mapping uses Conjunct at
+`f6609c5e4c2188626f5e1f345446fec04e78d6c9`, inspected on 2026-10-04.
+The [source record](../research/conjunct-adoption.md#exact-producer-source-cohort)
+identifies the relevant exports, trusted registry and remaining qualification
+limits. Exact discovery ContractRef/schema digests and staged artifacts are
+frozen by [S1](implementation-plan.md#composition-specification-delivery).
+Source exports and pure tests do not constitute an installed package or stable
+semantic conformance.
 Generic schema/adapter work belongs upstream; Frameshift defines its profile,
 migration and consumer proof here.

@@ -85,9 +85,10 @@ Visual assembly instructions in the companion guide are a separate renderer.
 | `apps/build-platform` | Frameshift product UI, catalog/evidence storage and authorized Conjunct consumer |
 | Refpath | Later adaptive/operator generations and effects; not required for independent composition or native artwork |
 
-Build Conjunct's core and instruction profiles with exact Frameshift consumer
-fixtures, preserve v1 history through an explicit migration, then connect the
-workbench to qualified producer exports. The host authorization and native
+Qualify Conjunct's existing Rust kernel, Elixir port/browser WASM bindings and
+guide with exact Frameshift profile/consumer fixtures. Preserve v1 identities
+through an explicit migration, then connect the workbench to qualified producer
+exports. The host authorization and native
 artwork lanes can progress independently. Transactional services remain on
 hold. The [implementation plan](docs/architecture/implementation-plan.md) and
 [verification map](docs/architecture/verification.md) separate required work

@@ -86,7 +86,7 @@ they do not stop independent native, host or frame-profile work.
 
 ## Research
 
-- [Conjunct source and integration readiness](research/conjunct-adoption.md)
+- [Consolidated composition research, current producer exports and specification plan](research/conjunct-adoption.md)
 - [Hardware platforms and power feasibility](research/hardware-platforms.md)
 - [Software stack](research/software-stack.md)
 - [Technical build decisions, producer seams and model qualification](research/build-platform-decisions.md)

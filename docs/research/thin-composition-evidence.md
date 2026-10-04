@@ -1,9 +1,13 @@
 # Thin compositions and geometry evidence
 
-**Date:** 2026-09-25. **Status:** technical research inventory, not validated hardware or live supply qualification.
+**Updated:** 2026-10-04. **Status:** technical research inventory, not validated hardware or live supply qualification.
 
-This inventory was reviewed against the current sourced profiles. The review
-did not re-fetch these manufacturer pages or acquire new CAD/hardware.
+This inventory was reviewed against the current sourced profiles. Good Display
+GDEP133C02, E Ink EL253EW1 and Waveshare's 64×64 family pages were rechecked;
+the [dated findings and conflicts](conjunct-adoption.md#hardware-source-checks-and-remaining-experiments)
+record the exact scope. The other rows retain their earlier source evidence.
+No new CAD or hardware was acquired; denied wiki requests and gated downloads
+are not successful refreshes or obtained assets.
 Use [CI-05–CI-07](../architecture/conjunct-integration.md) for consumer evidence
 and geometry/procedure requirements. The existing candidate data remains at its
 recorded evidence tier.

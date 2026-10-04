@@ -17,13 +17,16 @@ Conjunct owns generic physical composition and procedure semantics. Frameshift
 supplies the product profile, evidence and typed commands. Refpath owns generic
 adaptive application binding, UI graphs and generation admission. The
 [CI-01–CI-08 integration contract](conjunct-integration.md) defines these
-boundaries; none of the planned Conjunct exports is installed by this spec.
+boundaries; the available upstream exports are not installed by this spec.
 
 [PC-03](producer-contracts.md) defines the required Refpath delivery, including
-Conjunct P1/CJ6-07–CJ6-08 durable scoped admission. The existing volatile
-generation surface is not that completion evidence. Implement the extension in
-Refpath while Conjunct/Frameshift build consumer fixtures; core and portable
-instructions do not require a live operator host.
+Conjunct P1/CJ6-07–CJ6-08 durable scoped admission. The installed Refpath has
+durable application-admission exports; map and qualify them rather than adding
+another generation pointer. Atomic current review-through-commit and the
+two-operator Conjunct join remain open at this consumer cohort. Required
+extensions belong in Refpath; core and portable instructions do not require a
+live operator host. The [source research](../research/conjunct-adoption.md#adaptive-admission-and-formal-evidence)
+distinguishes the installed pin, selected upstream join and prospective API.
 
 The initial embedded host uses the public `Refpath.BootConfig.Contract`,
 `Refpath.Migrations` and readiness probe. The host owns one PostgreSQL pool and

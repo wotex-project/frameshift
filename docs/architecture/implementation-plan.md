@@ -46,10 +46,12 @@ generic producer capability has an upstream owner and reproducing consumer test;
 it cannot be filled by a second Frameshift runtime. Narrow deterministic paths
 remain usable while broader profiles are unavailable.
 
-Conjunct core/instructions work, Refpath P1 durable-generation work and ExMaude
-P2 search-evidence work can progress together. Only the dependent operator or
-formal claim waits for the real producer join. A per-profile C-to-D slice does
-not wait for the remaining frame classes or optional CAD/service/device profile;
+Conjunct consumer work, qualification of Refpath's existing durable admissions,
+and ExMaude's existing typed search boundary can progress together. The
+[current source research](../research/conjunct-adoption.md) identifies the
+remaining atomic-review, formal-coverage and distribution gaps. Only the
+dependent operator or formal claim waits for the real producer join. A
+per-profile C-to-D slice does not wait for the remaining frame classes or optional CAD/service/device profile;
 complete claimed Paper/Photo/Pixel coverage remains the overall C/D gate.
 
 Host, protocol, receiver and simulator work below remains a separate product
@@ -57,6 +59,87 @@ lane. Conjunct proof-of-concept completion does not claim these installed-produc
 requirements have passed. The native product stays independent of the platform
 and optional transactions. Update the [verification ledger](verification.md)
 with evidence for each actual implementation slice.
+
+## Composition specification delivery
+
+The [consolidated research](../research/conjunct-adoption.md) supports the
+following specification and consumer sequence. These are required next
+artifacts, not completed implementations. Update the existing owners; no new
+parallel specification tree, generic engine or readiness report is needed.
+Each slice freezes its schema/diagnostic fixtures before adapter code and
+updates the verification map only with results actually obtained.
+
+| Slice and dependency | Specification changes and owner | Required acceptance before the next authority change |
+| --- | --- | --- |
+| S1 — Source/distribution contract; first | CI-01/CI-08 and PC-01/PC-02: select one exact Conjunct source cohort; discovery ContractRef, required profiles/algorithms/schema digests, port/WASM ABI, Elixir/data/TS/guide artifacts, licenses and executable/WASM hashes. Separate unreleased packaging from publication/signing. Map every logical operation to the public export and wire schema. | A fresh isolated Elixir and browser consumer uses staged artifacts, verifies discovery/digests and refuses altered artifacts/unsupported profiles. TypeScript 6.0.3 and Frameshift's pinned toolchains accept the distributed declarations. No sibling checkout or upstream developer environment is required at runtime. |
+| S2 — Frame profile; after S1 | PB-01–PB-09 and CI-02/CI-04/CI-06: obligation-to-rule/assessment mapping for all thirteen retained stages, occurrence/count semantics, exact units/coordinates, mandatory missing/conflicting facts and resource limits. Start with a complete synthetic Paper software fixture; retain sourced Paper/Photo/Pixel candidates as unknown/refusal fixtures. Other builder tracks remain independent. | Every mandatory obligation has positive, violated and missing/conflicting fixtures against the real producer operation. Unsupported semantics return unavailable and have a reproducing upstream requirement; they cannot be skipped. Synthetic test-purpose compatibility never grants physical/current-use admission. Existing sourced candidates stay unqualified. |
+| S3 — Identity and migration; after S1, coordinated with S2 | CI-03, PB-02 and build-artifacts: map all five existing v1 domains to exact producer artifacts, preserving raw bytes/IDs and recording old/new references, semantic differences, loss and read/write/execute support. Define source/assessment closure and duplicate/Unicode/rational overflow refusal. | Existing v1 corpus replays unchanged; BEAM/browser consume the same successor bytes and reports. Exact conversions succeed; erased obligations, ambiguous coordinates or unsupported evidence refuse. No catalog row is rehashed in place. Any pre-release persistence change edits original `_create_`/`_install_` migrations. |
+| S4 — Independent composition/guide; after S2/S3 for its claimed profile | BP-01/BP-04/BP-05, CI-05–CI-07 and PC-05/PC-06: frame controls, comparison, projection, source-bound procedure, reviewed DocShell projection, local file I/O, browser artwork privacy, guide/export/print and unadmitted observations. Specify source/geometry/scene identities, exact transforms/loss and essential text fallback. Manual geometry is the first supported path; qualify STEP separately. | Real kernel/guide exports produce compatible/incompatible/unknown outputs; a valid procedure cannot override a blocked composition. Local save/reload/import/export, comparison and exact parts counts survive restart/offline operation. Text/print agree on IDs, parameters and warnings. Keyboard, screen reader, reduced motion, high zoom and low graphics paths are exercised; no network-only guide assets or hidden upload. |
+| S5 — Authenticated server storage; after S4, before any new write endpoint | BP-06/BP-08 and PC-06: freeze the host session mechanism and action/resource permission matrix; server-derived actor/scope, private sharing/retention, stable command ID/payload digest/expected revision, CSRF and asset access. Existing public catalog reads remain separate. | Forged roles, cross-scope references, stale revisions, changed-payload replay, concurrent writes and private asset/cache/search leakage refuse. Same-ID/same-payload commands replay without duplicate mutation. Ash actor policies alone do not count as an authenticated browser boundary. Local composition remains usable without an account. |
+| S6 — Generality, operator and formal profiles; generality can follow S1, operator requires S5 | CI-08, PC-03/PC-04 and BO-01–BO-08: replay passive/sensor producer fixtures; map installed Refpath admission exports and exact cohort, atomic review-through-commit, scopes/fences/receipts/restart; map ExMaude SearchRun termination and witness replay. Specify missing cancellation/state-limit/full-predicate evidence upstream. | Passive/sensor inputs need no Frameshift imports. Two operator scopes pass concurrent successor, review withdrawal, lost receipt, complete VM restart, missing closure, stale command and unknown-effect recovery against the real durable store. Formal cases retain exact model/query/limits/trace and broken-rule witnesses; empty bounded search never counts as proof. Each claim records its own qualified cohort. |
+| S7 — Physical and operated qualification; after the corresponding software profile | CI-06/CI-07, frame/hardware owners and PC-08: exact panel/controller/power/firmware revision packets, whole installed envelope, source rights, measured behavior; host queue/memory/deadline/restore/telemetry profile. No controller or real frame is selected by the synthetic slice. | Exact received configurations pass electrical/thermal/mounting and interrupted refresh/network/power-loss tests, with last-valid artwork and recovery evidence. Operated host passes overload, worker replacement, missing assets, revocation and restore closure before its operational claims. CAD acquisition, signing and hardware measurements are explicit dependencies rather than inferred successes. |
+
+### First consumer experiment and authority boundary
+
+After S1–S3 fixtures are frozen, build a test-only vertical slice in the
+existing product host/browser. Load one complete synthetic Paper composition
+and its reviewed synthetic procedure/content through the public producer
+operations. Its complete assumptions exercise all mandatory frame obligations;
+it is not merely Conjunct's partial frame-corner sample relabeled as a frame.
+Use distinct test-purpose artifacts and reject them for actual-build admission.
+Keep positive software behavior separate from the required E2–E4 evidence for
+a received configuration. This fixture choice does not require builders to
+prototype Paper before Photo or Pixel.
+
+Express the Frameshift product profile as producer-schema ProductDefinition,
+PartRevision, RuleSet, evidence/assessment and ProductPack artifacts under the
+installed semantic profiles. A product pack cannot register a new kernel
+contract or operator. Freeze units, exact operating scopes and conditional
+ratings instead of comparing unlike surge/continuous/storage properties.
+If a retained flow, reachability, timing or recovery obligation cannot be
+faithfully expressed, S2 records an upstream profile requirement and the affected
+composition remains unavailable. The first probe may demonstrate that refusal;
+it cannot claim the complete S4 workbench until the required semantics exist.
+Do not mark fabricated measurements as real qualified assessments to obtain
+a synthetic pass: test assumptions remain distinct from actual-build evidence.
+
+The slice calls normalization, pack validation, composition, comparison,
+catalog projection and procedure planning through one pinned semantic contract.
+Packaging is qualified only if its profile is claimed. Preserve transport,
+protocol and physical-result layers separately. Test malformed bytes,
+unsupported profiles, worker death/deadline, stale contexts and bounded queue
+refusal. Replacement invalidates old contexts; explicitly recreate and reload
+immutable inputs, without automatic command/effect replay. Keep existing v1
+limits; any successor limit increase needs a measured profile and its own
+acceptance corpus, not the producer's larger default.
+
+Compare server-port and browser-worker canonical artifacts/diagnostics from the
+same inputs, and compare mandatory frame outcomes with the retained independent
+v1 oracle. Load the three sourced candidates as negative/unknown controls.
+Retain the producer's passive/sensor corpus to detect frame coupling. Draft
+upstream vectors are useful regression inputs, but pending independent review
+and one Rust engine reached through multiple transports cannot establish stable
+semantic conformance.
+
+The implementation may expose the qualified local composition/guide path
+after S4. Switching existing semantic authority needs the corresponding S2/S3
+replay and rule-coverage evidence. Public write endpoints wait for S5;
+operator admission and formal claims wait for their S6 evidence; physical and
+operated claims wait for S7. STEP/federation, live device effects, diagnostics
+providers and financial services are independent profiles. F stays on hold.
+
+### Review before each implementation slice
+
+Review the concrete request/response fixtures and failure paths with both
+producer and product sources open. A slice is specified when every mandatory
+input maps to a supported operation or explicit refusal, every result retains
+its evidence/authority scope, and restart/offline behavior is observable.
+Resolve an unsupported generic behavior upstream; do not compensate with a
+parallel consumer engine. Recheck the exact selected cohort before coding,
+because unreleased descriptor/suite identities change with normative bytes.
+Update these owning specifications if that check changes the contract, then
+rerun the affected acceptance corpus. Preserve remaining external evidence
+gates without withholding independent implementation work.
 
 ## Shared contracts
 

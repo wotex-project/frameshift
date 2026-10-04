@@ -284,13 +284,19 @@ are outside this technical ledger; historical revisions remain in Git.
 
 ## D-022 — Conjunct product-engine consumer and technical-only corpus
 
-- **State:** extraction direction, 2026-09-25; producer and consumer evidence open
+- **State:** integration direction, source mapping revised 2026-10-04; consumer qualification open
 - **Decision:** Frameshift is the first modular reference product and integration
   proof of concept for Conjunct. Its physical BuildSpec becomes a versioned
   product profile of qualified Conjunct composition
   semantics. Frame-specific code/procedures/evidence remain here; generic
   product compilation belongs in Conjunct, adaptive execution in Refpath,
   financial primitives in Rivure and documentation data in DocShell.
+- **Implementation direction:** Consume Conjunct's existing Rust semantic
+  kernel through its public Elixir port and browser WASM bindings, with its
+  portable guide. This does not replace the Zig artwork renderer or require
+  a new Frameshift-owned Rust/Gleam composition engine. Freeze exact producer
+  discovery and distribution, frame-rule coverage and loss-refusing v1 migration
+  before switching semantic authority.
 - **Consequence:** No competing encoders, UI graph, effect journal or copied
   manufacturer applications. Preserve native/device independence and exact
   accepted identities through migration. Preserve the existing app moves,

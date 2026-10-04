@@ -17,8 +17,8 @@ the product contract. They do not define the product's business model.
 | Frameshift | Current native, guide, platform and v1 BuildSpec source | Keep product behavior, v1 replay and exact fixtures while extracting genuinely generic semantics |
 | Refpath | Current host cohort `ee60f58cb885f8fe6875ce9468b0c6ffdb5496c0`; [dependency refresh](#dependency-refresh-2026-10-04) | Reuse runtime owners, qualify actual exports and joined consumer behavior; unreleased/private source is not a public distribution path |
 | phoenix-assets | `c76b626104e938d1c6601b73ed8c4d9d7aa4feb3` | Existing Phoenix/SvelteKit asset tooling, generated contracts and Ash metadata; no second schema generator |
-| ExMaude | `73acecf087934e593d6bae231b0e1a4d2ddf60b4` | Separate-process backend; explicit completion/bound/session evidence must be qualified |
-| Conjunct | 0.2 working specification recorded in the [source record](conjunct-adoption.md#conjunct-02-working-specification) | Generic physical model, evidence, geometry/procedure and operator-host seams; no qualified runtime package |
+| ExMaude | Current inspected source `d7669346e6983258bbe43dbcf982c558c7300283`; [source/API map](conjunct-adoption.md#adaptive-admission-and-formal-evidence) | Typed SearchRun boundary exists; complete formal profile and Frameshift join remain unqualified |
+| Conjunct | `f6609c5e4c2188626f5e1f345446fec04e78d6c9`; [source record](conjunct-adoption.md#exact-producer-source-cohort) | Rust kernel, Elixir port/browser WASM/data bindings and guide exist; distribution and Frameshift consumer qualification remain open |
 
 These are research snapshots, not automatically admitted dependency pins. Repeat owner/API discovery against the selected implementation cohort. All public requirements must be understandable without private memos or a maintainer's local Downloads file.
 
@@ -45,7 +45,7 @@ pure decisions free of database access, clocks, inference and provider I/O.
 Extraction must preserve historical canonical output parity and leave
 frame-specific rules here without creating a second workbench engine.
 
-The inspected [ExMaude search implementation](https://github.com/futhr/ex_maude/blob/73acecf087934e593d6bae231b0e1a4d2ddf60b4/lib/ex_maude/maude.ex) returns bounded search solutions; an empty result or partial statistics do not establish global exhaustion. The [Maude manual](https://maude.lcc.uma.es/maude-manual/maude-manual.html) describes search within selected semantics. Require distinct counterexample, bounded-no-counterexample, exhausted-finite-model and inconclusive outcomes, with same-session witnesses and replay.
+The earlier [ExMaude search implementation](https://github.com/futhr/ex_maude/blob/73acecf087934e593d6bae231b0e1a4d2ddf60b4/lib/ex_maude/maude.ex) returned bounded search solutions. The current [SearchRun boundary](conjunct-adoption.md#adaptive-admission-and-formal-evidence) supplies typed termination and bound session/output/trace evidence. An empty result or partial statistics still do not establish global exhaustion. The [Maude manual](https://maude.lcc.uma.es/maude-manual/maude-manual.html) describes search within selected semantics. Qualify distinct counterexample, bounded-no-counterexample, exhausted-finite-model and inconclusive outcomes, with same-session witnesses and replay.
 
 Use bounded separate OS processes through the qualified Port backend. Review formal predicates independently, mutate rules deliberately and replay counterexamples against production decisions. Formal evidence covers its model and bounds, not physical supplier truth. [Dependency notices](https://github.com/futhr/ex_maude/blob/main/THIRD_PARTY_NOTICES.md) distinguish library and executable licensing; retain exact tool/version notices in release artifacts without making a new licensing strategy here.
 
@@ -101,8 +101,9 @@ results, source pins and known gaps remain scoped evidence; current ownership
 and scheduling follow the integration/platform contracts above. None establishes
 Conjunct conformance.
 
-The later Conjunct 0.2 working specification and its P1/P2 work packages are
-recorded by digest in [the adoption audit](conjunct-adoption.md#conjunct-02-working-specification).
+The current Conjunct code, descriptor/schema ownership, existing P1/P2 producer
+APIs and remaining qualification gaps are recorded in the
+[consolidated research](conjunct-adoption.md).
 [PC-01–PC-09](../architecture/producer-contracts.md) states required library
 deliveries and consumer tests. These requirements guide concurrent producer and
 consumer implementation; they do not demand that an owned library already be
