@@ -315,8 +315,11 @@ pairing status. Pair, Recover, and Login Items actions share the dropdown's
 flat labeled button style and visible symbols. Disabled actions remain visibly
 disabled and keyboard accessible controls retain their native semantics.
 
-The implemented settings are grouped as Connection, Image generation, Nearby
-frames, and Startup.
+The implemented settings are grouped as Connection, Library, Image generation,
+Storage, Nearby frames, and Startup. Storage reports registered artwork/trash
+usage and offers a revision-bound budget editor; lowering it preserves retained
+artwork and refuses additional bytes. See the
+[local storage budget](../architecture/content-pipeline.md#local-storage-budget).
 
 Settings contains:
 

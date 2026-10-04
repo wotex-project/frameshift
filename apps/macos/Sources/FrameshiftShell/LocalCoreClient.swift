@@ -54,6 +54,13 @@ public actor LocalCoreClient: CoreClient {
     return page
   }
 
+  public func storage() async throws -> LibraryStorage {
+    let response = try await libraryRead(operation: "libraryStorage")
+    guard let storage = response.storage else { throw CoreClientError.protocolFailure }
+    try storage.validate()
+    return storage
+  }
+
   private func libraryRead(operation: String, itemID: String? = nil, afterID: String? = nil)
     async throws -> WireResponse
   {
@@ -260,6 +267,10 @@ public actor LocalCoreClient: CoreClient {
 
   private static func clientError(for code: String?) -> CoreClientError {
     switch code {
+    case "library_storage_full": .libraryStorageFull
+    case "storage_revision_conflict": .storageRevisionConflict
+    case "storage_configuration_invalid", "storage_unavailable", "invalid_storage_setting":
+      .storageUnavailable
     case "command_id_conflict": .commandIDConflict
     case "command_outcome_unknown": .commandOutcomeUnknown
     case "credential_broker_unavailable": .credentialBrokerUnavailable
@@ -574,6 +585,7 @@ private struct WireResponse: Decodable, Sendable {
   let preview: ArtworkPreview?
   let metadata: LibraryMetadata?
   let recovery: LibraryRecoveryPage?
+  let storage: LibraryStorage?
   let error: WireError?
 
   private enum CodingKeys: String, CodingKey {
@@ -586,6 +598,7 @@ private struct WireResponse: Decodable, Sendable {
     case preview
     case metadata
     case recovery
+    case storage
     case error
   }
 }

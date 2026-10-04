@@ -172,7 +172,8 @@ shared read-only source/pin/frame facets preserve selection and drafts. Software
 evidence is in the
 [verification ledger](verification.md); they do not complete H3's installed
 accessibility matrix or H2's measured palette/packing profiles. Continue the
-remaining native labeling/similarity adapters, storage settings and H4 contracts
+remaining native labeling/similarity adapters, retention/model-download settings
+and H4 contracts
 alongside release-version documentation and publication work. S2's explicit
 producer refusal still gates its dependent composition authority, rather than
 these independent host surfaces.
@@ -185,6 +186,14 @@ search, keyboard controls, narrow layout, API anchors, no-JavaScript recovery
 text and the generated security policies. Release docs retention/assembly,
 public hostname/readback and deployment automation remain separate open work;
 the development builder refuses to replace retained release directories.
+
+The local storage budget slice enforces unique registered object bytes under
+the Library writer and exposes active/trash accounting with a native
+revision-bound editor. Over-budget state preserves retained bytes and permits
+read/restore; additional object placement refuses. This completes byte-budget
+configuration, not filesystem quota/free-space measurement, model-download
+management or permanent trash expiration. Those lifecycles and physical
+full-disk/power-loss evidence remain attached to their owning contracts.
 
 ## Shared contracts
 

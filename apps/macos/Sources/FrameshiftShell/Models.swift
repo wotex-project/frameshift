@@ -160,6 +160,7 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
   public var pinnedItems: [PlaylistItem]?
   public var pinnedSetTooLarge: Bool?
   public var updatedMetadata: LibraryMetadata?
+  public var updatedStorage: LibraryStorage?
 
   public init(
     targets: [FrameTarget],
@@ -170,7 +171,8 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
     statusMessage: String,
     pinnedItems: [PlaylistItem]? = nil,
     pinnedSetTooLarge: Bool? = nil,
-    updatedMetadata: LibraryMetadata? = nil
+    updatedMetadata: LibraryMetadata? = nil,
+    updatedStorage: LibraryStorage? = nil
   ) {
     self.targets = targets
     self.selectedTargetID = selectedTargetID
@@ -181,6 +183,7 @@ public struct CoreSnapshot: Codable, Equatable, Sendable {
     self.pinnedItems = pinnedItems
     self.pinnedSetTooLarge = pinnedSetTooLarge
     self.updatedMetadata = updatedMetadata
+    self.updatedStorage = updatedStorage
   }
 
   public var selectedTarget: FrameTarget? {
@@ -207,6 +210,7 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     case remove
     case restore
     case updateMetadata
+    case updateStorage
     case queue
     case loopPinned
     case loopArtwork
@@ -235,6 +239,8 @@ public struct CoreCommand: Codable, Equatable, Sendable {
   public let title: String?
   public let userLabels: [String]?
   public let dismissedLabels: [LabelDismissal]?
+  public let storageRevision: String?
+  public let objectByteLimit: Int?
 
   public init(
     id: UUID = UUID(),
@@ -257,7 +263,9 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     metadataRevision: String? = nil,
     title: String? = nil,
     userLabels: [String]? = nil,
-    dismissedLabels: [LabelDismissal]? = nil
+    dismissedLabels: [LabelDismissal]? = nil,
+    storageRevision: String? = nil,
+    objectByteLimit: Int? = nil
   ) {
     self.id = id
     self.kind = kind
@@ -280,6 +288,8 @@ public struct CoreCommand: Codable, Equatable, Sendable {
     self.title = title
     self.userLabels = userLabels
     self.dismissedLabels = dismissedLabels
+    self.storageRevision = storageRevision
+    self.objectByteLimit = objectByteLimit
   }
 
   func withDecodedImport(_ decoded: DecodedImport) -> CoreCommand {

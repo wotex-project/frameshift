@@ -80,6 +80,42 @@ defmodule Frameshift.LocalIPC.ServerTest do
     assert Bitwise.band(File.stat!(Path.dirname(context.socket_path)).mode, 0o777) == 0o700
   end
 
+  test "storage read and revision-bound command retain authentication and replay custody", c do
+    read = %{"version" => 1, "requestId" => "storage-read", "operation" => "libraryStorage"}
+    assert %{"ok" => true, "storage" => before} = request(c.socket_path, read)
+    refute Map.has_key?(before, "path")
+
+    command = %{
+      "id" => "storage-budget-command",
+      "kind" => "updateStorage",
+      "storageRevision" => before["revision"],
+      "objectByteLimit" => 1024 * 1024
+    }
+
+    mutation = %{
+      "version" => 1,
+      "requestId" => "storage-save",
+      "operation" => "command",
+      "command" => command
+    }
+
+    assert %{"ok" => true, "snapshot" => %{"updatedStorage" => committed}} =
+             request(c.socket_path, mutation)
+
+    assert committed["objectByteLimit"] == 1024 * 1024
+    assert %{"ok" => true} = request(c.socket_path, mutation)
+    assert %{"ok" => true, "storage" => ^committed} = request(c.socket_path, read)
+
+    assert %{"ok" => false, "error" => %{"code" => "authentication_required"}} =
+             request(c.socket_path, Map.put(read, "auth", String.duplicate("b", 64)))
+
+    assert %{"ok" => false, "error" => %{"code" => "invalid_request"}} =
+             request(c.socket_path, Map.put(read, "itemID", "unexpected"))
+
+    assert %{"entries" => entries} = Library.audit_page(c.library)
+    assert Enum.count(entries, &(&1["operation"] == "storage_budget_changed")) == 1
+  end
+
   test "a bounded snapshot query filters cards without mutating library state", context do
     attributes = %{
       title: "Copper Forest",

@@ -7,6 +7,7 @@ import Observation
 public final class ShellModel {
   private static let logger = Logger(subsystem: "io.frameshift.app", category: "shell")
   public private(set) var snapshot: CoreSnapshot
+  public let storageSettings: StorageSettingsModel
   public private(set) var isBusy = false
   public private(set) var errorMessage: String?
   public var draftInstruction: String
@@ -43,6 +44,7 @@ public final class ShellModel {
     initialSnapshot: CoreSnapshot = .disconnected
   ) {
     self.client = client
+    storageSettings = StorageSettingsModel(client: client)
     snapshot = initialSnapshot
     draftInstruction = initialSnapshot.instruction
   }
@@ -585,6 +587,11 @@ public final class ShellModel {
       errorMessage = "Frame cannot cycle artwork offline. Check its pairing and transfer mode."
     } catch CoreClientError.loopStorageFull {
       errorMessage = "This frame cannot hold the set. Reduce its size or free frame storage."
+    } catch CoreClientError.libraryStorageFull {
+      errorMessage = "The host Library reached its byte budget. Review Storage in Settings."
+    } catch CoreClientError.storageUnavailable {
+      errorMessage =
+        "Storage settings are unavailable. Review them in Settings before adding artwork."
     } catch CoreClientError.loopRevisionConflict {
       errorMessage = "The saved loop changed. Refresh and review the frame before resuming."
     } catch CoreClientError.loopProfileChanged {

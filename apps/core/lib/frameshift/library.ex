@@ -22,6 +22,10 @@ defmodule Frameshift.Library do
 
   ## Maintenance and diagnostics
 
+  New master/artifact bytes are admitted under the durable registered-object
+  budget before placement. Trash remains accounted; lowering the limit preserves
+  existing bytes and permits read/restore while refusing additional objects.
+
   Removal preserves protected/recoverable objects rather than deleting referenced
   content. Backup creation serializes changes for its full copy; offline restore
   requires the stopped-library maintenance path. Bounded audit/metric projections
@@ -41,6 +45,7 @@ defmodule Frameshift.Library do
   alias Frameshift.Library.Identity
   alias Frameshift.Library.Metadata
   alias Frameshift.Library.Migrations
+  alias Frameshift.Library.Storage
   alias Frameshift.Library.Writer
   alias Frameshift.Playlist.Store, as: PlaylistStore
   alias Frameshift.Protocol.Schema
@@ -197,6 +202,15 @@ defmodule Frameshift.Library do
   def put_setting(server \\ __MODULE__, key, value) do
     GenServer.call(server, {:put_setting, key, value})
   end
+
+  @doc "Reads the durable object-byte budget and registered active/trash accounting."
+  @spec storage(server()) :: {:ok, map()} | {:error, term()}
+  def storage(server \\ __MODULE__), do: GenServer.call(server, :storage)
+
+  @doc "Changes a byte budget under its observed configuration revision without deleting content."
+  @spec update_storage(server(), String.t(), pos_integer()) :: {:ok, map()} | {:error, term()}
+  def update_storage(server \\ __MODULE__, expected_revision, byte_limit),
+    do: GenServer.call(server, {:update_storage, expected_revision, byte_limit})
 
   @doc "Claims a command identity before mutation, distinguishing replay from an unresolved claim."
   @spec claim_command(server(), String.t(), digest()) ::
@@ -736,6 +750,11 @@ defmodule Frameshift.Library do
     {:reply, put_setting_record(state, key, value), state}
   end
 
+  def handle_call(:storage, _, state), do: {:reply, Storage.read(state.connection), state}
+
+  def handle_call({:update_storage, revision, limit}, _, state),
+    do: {:reply, Storage.update(state.connection, revision, limit), state}
+
   def handle_call({:claim_command, command_id, command_hash}, _, state) do
     {:reply, claim_command_record(state, command_id, command_hash), state}
   end
@@ -1115,6 +1134,7 @@ defmodule Frameshift.Library do
     with :ok <- Identity.validate_master(attributes, parent_digest, recipe_hash),
          :ok <- validate_parent_recipe(state, parent_digest, recipe_hash),
          :not_found <- existing_generation(state, recipe_hash),
+         :ok <- Storage.admit(state.connection, bytes),
          {:ok, digest, byte_count, placement} <- ContentStore.put(state.data_dir, bytes) do
       insert_master(state, digest, byte_count, attributes, parent_digest, recipe_hash, placement)
     else
@@ -1348,6 +1368,7 @@ defmodule Frameshift.Library do
            query_one(state.connection, "SELECT hash FROM recipes WHERE hash = ?", [
              attributes.recipe_hash
            ]),
+         :ok <- Storage.admit(state.connection, bytes),
          {:ok, digest, byte_count, placement} <- ContentStore.put(state.data_dir, bytes),
          :ok <- ensure_artifact_media_type(state, digest, attributes.media_type) do
       result =

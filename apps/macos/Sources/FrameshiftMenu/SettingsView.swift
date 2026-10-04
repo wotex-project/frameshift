@@ -37,6 +37,8 @@ struct SettingsView: View {
           settingsValue("Generation provider", value: "Not configured")
         }
 
+        storage
+
         nearbyFrames
         startup
       }
@@ -50,6 +52,53 @@ struct SettingsView: View {
       discovery.start()
     }
     .onDisappear { discovery.stop() }
+    .task { await shell.storageSettings.refresh() }
+  }
+
+  private var storage: some View {
+    let settings = shell.storageSettings
+    return SettingsSection(
+      "Storage",
+      footer:
+        "The budget counts registered artwork and recoverable trash. Database, work files, logs and model downloads use additional disk space. Removal does not free this allowance."
+    ) {
+      if let usage = settings.storage {
+        settingsValue("Accounted artwork", value: byteCount(usage.totalBytes))
+        settingsValue("Recoverable trash", value: byteCount(usage.trashBytes))
+        settingsValue("Current byte budget", value: byteCount(usage.objectByteLimit))
+        if usage.overBudget {
+          Label(
+            "Over budget — new artwork bytes are refused", systemImage: "exclamationmark.circle"
+          )
+          .fixedSize(horizontal: false, vertical: true)
+        }
+        TextField(
+          "Budget in MiB",
+          text: Binding(get: { settings.draftMebibytes }, set: { settings.edit($0) })
+        )
+        .accessibilityIdentifier("storage-budget")
+        Text("Choose a whole number from 1 to 1,048,576 MiB. Existing artwork is preserved.")
+          .font(.callout)
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+        Button("Save budget", systemImage: "checkmark") { Task { await settings.save() } }
+          .disabled(!settings.canSave)
+      }
+      HStack {
+        Button("Refresh", systemImage: "arrow.clockwise") { Task { await settings.refresh() } }
+        Button("Reload settings", systemImage: "arrow.counterclockwise") {
+          Task { await settings.refresh(discardDraft: true) }
+        }
+      }
+      .disabled(settings.isBusy)
+      if let message = settings.message {
+        Text(message).fixedSize(horizontal: false, vertical: true)
+      }
+    }
+  }
+
+  private func byteCount(_ bytes: Int) -> String {
+    ByteCountFormatter.string(fromByteCount: Int64(bytes), countStyle: .binary)
   }
 
   private var nearbyFrames: some View {

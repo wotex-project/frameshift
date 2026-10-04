@@ -8,9 +8,14 @@ public protocol CoreClient: Sendable {
   func preview(masterID: String, target: FrameTarget?) async throws -> ArtworkPreview
   func metadata(itemID: String) async throws -> LibraryMetadata
   func recovery(afterID: String?) async throws -> LibraryRecoveryPage
+  func storage() async throws -> LibraryStorage
 }
 
 extension CoreClient {
+  public func storage() async throws -> LibraryStorage {
+    throw CoreClientError.storageUnavailable
+  }
+
   public func snapshot(query: String, filters: LibraryFilters) async throws -> CoreSnapshot {
     guard !filters.isActive else { throw CoreClientError.filtersUnavailable }
     return try await snapshot(query: query)
@@ -31,6 +36,9 @@ extension CoreClient {
 
 public enum CoreClientError: Error, Equatable, Sendable {
   case commandIDConflict
+  case libraryStorageFull
+  case storageUnavailable
+  case storageRevisionConflict
   case commandOutcomeUnknown
   case coreUnavailable
   case credentialBrokerUnavailable

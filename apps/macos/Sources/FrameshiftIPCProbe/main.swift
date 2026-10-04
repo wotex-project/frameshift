@@ -120,6 +120,26 @@ private struct FrameshiftIPCProbe {
     let retained = try await client.metadata(itemID: item.id)
     guard retained.revision == committed.revision else { throw ProbeFailure() }
 
+    let storage = try await client.storage()
+    guard storage.totalBytes > 0, storage.objectCount == 1 else { throw ProbeFailure() }
+    let budgetResult = try await client.send(
+      CoreCommand(
+        kind: .updateStorage, storageRevision: storage.revision,
+        objectByteLimit: LibraryStorage.mebibyte))
+    guard let budget = budgetResult.updatedStorage,
+      budget.objectByteLimit == LibraryStorage.mebibyte,
+      budget.totalBytes == storage.totalBytes
+    else { throw ProbeFailure() }
+    try budget.validate()
+    guard try await client.storage() == budget else { throw ProbeFailure() }
+    do {
+      _ = try await client.send(
+        CoreCommand(
+          kind: .updateStorage, storageRevision: storage.revision,
+          objectByteLimit: 2 * LibraryStorage.mebibyte))
+      throw ProbeFailure()
+    } catch CoreClientError.storageRevisionConflict {}
+
     print("Frameshift Swift-to-Elixir IPC probe passed")
   }
 

@@ -32,6 +32,10 @@ defmodule Frameshift.LocalAPI do
 
   ## Metadata and recovery
 
+  `updateStorage` changes the registered-object budget under an observed
+  configuration revision. New master/artifact placement uses that same Library
+  owner; capacity refusal does not collect artwork or change frame intent.
+
   `updateMetadata` edits a title and user labels against the observed revision,
   with explicit machine-observation dismissals. It returns the committed metadata
   in addition to shell state; immutable bytes, recipes and delivery remain intact.
@@ -172,6 +176,23 @@ defmodule Frameshift.LocalAPI do
     case Library.put_setting(library, @instruction_key, instruction) do
       :ok -> {:ok, snapshot(library, "Instruction saved")}
       {:error, _} -> {:error, :persistence_failed}
+    end
+  end
+
+  defp do_execute(library, %{
+         "kind" => "updateStorage",
+         "storageRevision" => revision,
+         "objectByteLimit" => limit
+       }) do
+    case Library.update_storage(library, revision, limit) do
+      {:ok, storage} ->
+        {:ok, Map.put(snapshot(library, "Storage budget saved"), "updatedStorage", storage)}
+
+      {:error, reason} when is_atom(reason) ->
+        {:error, reason}
+
+      {:error, _} ->
+        {:error, :storage_unavailable}
     end
   end
 
@@ -557,6 +578,7 @@ defmodule Frameshift.LocalAPI do
   defp validate_command_shape(_), do: {:error, :invalid_command}
 
   defp allowed_command_keys("updateInstruction"), do: ~w(id kind instruction)
+  defp allowed_command_keys("updateStorage"), do: ~w(id kind storageRevision objectByteLimit)
 
   defp allowed_command_keys("importFile") do
     ~w(id kind importPath importWidth importHeight importMediaType importOrientation importColorProfile importCanonicalPath importCanonicalDigest)
@@ -725,6 +747,9 @@ defmodule Frameshift.LocalAPI do
 
   defp normalize_queue_error(reason)
        when reason in [
+              :library_storage_full,
+              :storage_configuration_invalid,
+              :storage_unavailable,
               :target_not_found,
               :invalid_command,
               :item_not_found,
@@ -868,6 +893,9 @@ defmodule Frameshift.LocalAPI do
 
   defp normalize_import_error(reason)
        when reason in [
+              :library_storage_full,
+              :storage_configuration_invalid,
+              :storage_unavailable,
               :invalid_import,
               :invalid_dimensions,
               :invalid_orientation,

@@ -223,6 +223,50 @@ comparison and native installed visual/accessibility evidence remain separate.
 - Current, previous-known-good, queued, playlist-referenced, or pinned frame
   assets are never collected.
 
+## Local storage budget
+
+The Library writer owns a durable `storage.objectByteLimit` setting. Its initial
+budget is 20 GiB; an explicit change accepts whole byte counts from 1 MiB to
+1 TiB. This is a budget for unique registered object bytes, including masters,
+artifacts and recoverable trash. It is not a filesystem quota or free-space
+measurement: SQLite, work files, logs, provider/model downloads and unregistered
+orphans are outside this accounting and need their own bounded lifecycle.
+
+The authenticated `libraryStorage` read reports the configured limit, a revision
+over that configuration, active/trash byte counts, total registered bytes,
+object count, remaining allowance and over-budget state. It returns no private
+paths. `updateStorage` accepts only the expected configuration revision and the
+new byte limit. Setting and redacted audit commit together; a stale revision or
+invalid stored configuration refuses without resetting it. Lowering a limit
+below retained usage is allowed and visibly reports over-budget state.
+
+Before placing a new master or artifact, the serialized writer checks its exact
+byte size against the remaining allowance. Duplicate registered bytes consume
+no additional allowance; digest-addressed placement still verifies bytes before
+reuse. Over-budget imports, generated results and new render artifacts refuse with
+`library_storage_full` before placement or new object/master/artifact rows and
+their placement audit commit. Recipe registration or provider execution may
+already have occurred before this final admission; refusal does not roll back
+those earlier operations. Existing artwork remains readable, pinnable and
+deliverable using retained artifacts; restore and
+metadata edits remain usable. Removal and collection into recoverable trash
+do not free registered bytes and never trigger automatic permanent deletion.
+
+Native Settings shows accounted usage and trash bytes, accepts an explicit
+whole-MiB draft and saves against its observed revision. Refresh and window
+closure preserve unsaved drafts; a concurrent settings change requires explicit
+reload/review. Edits typed during save survive its acknowledgement. Uncertain
+command outcomes use the existing receipt/reconciliation contract. A budget
+error distinguishes host library capacity from a frame's storage capacity and
+offers review of Storage settings. No write is retried automatically.
+
+Acceptance covers exact-boundary admission, duplicate reuse, removed/trash
+accounting, over-budget read/restore, generated/artifact refusal, writer
+serialization, stale configuration, audit rollback, invalid persisted settings
+and restart. Native fixtures cover draft/save races and finite input; a packaged
+Swift/core probe joins the read/update path. Full-disk, physical power loss and
+installed native accessibility remain separate evidence gates.
+
 ## Auto-labeling
 
 User labels win. Filename/metadata terms and Apple Vision classifications are

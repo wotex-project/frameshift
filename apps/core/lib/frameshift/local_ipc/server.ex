@@ -20,6 +20,8 @@ defmodule Frameshift.LocalIPC.Server do
   separate transient boundary. `libraryMetadata` and `libraryRecovery` are bounded
   authenticated reads, with digest identities and exclusive recovery cursors;
   they accept neither paths nor replacement provenance/capability documents.
+  `libraryStorage` reports path-free registered-byte accounting and configuration
+  identity; budget changes retain the ordinary durable command receipt boundary.
   The listener monitors its acceptor and removes the
   socket on termination. The token file is consumed before startup through
   `Frameshift.LocalIPC.Token`; read-only diagnostics use a separate peer-UID
@@ -306,6 +308,7 @@ defmodule Frameshift.LocalIPC.Server do
               "preview",
               "libraryMetadata",
               "libraryRecovery",
+              "libraryStorage",
               "command",
               "pair",
               "recoverPair",
@@ -506,6 +509,14 @@ defmodule Frameshift.LocalIPC.Server do
        "ok" => true,
        "outbox" => %{"available" => status.available, "port" => status.port}
      }}
+  end
+
+  defp execute_request(
+         %{"requestId" => request_id, "operation" => "libraryStorage"},
+         library,
+         _
+       ) do
+    library_read_response(request_id, "storage", Library.storage(library))
   end
 
   defp execute_request(
