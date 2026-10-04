@@ -1,6 +1,6 @@
 # AI Image Generation Research
 
-**Research date:** 2026-09-22
+**Research dates:** 2026-09-22; provider/source recheck 2026-10-04
 
 **Decision:** local-first, provider-neutral, still-image generation. Generated
 masters are cached permanently unless the user removes them.
@@ -13,8 +13,8 @@ provider runs on a frame.
 
 | Provider | Execution | Billing fit | Integration maturity | Decision |
 | --- | --- | --- | --- | --- |
-| Draw Things / MediaGenerationKit | Local Apple Silicon | Free local compute | Public Swift package; local, gRPC, and cloud backends | **Primary dependable local candidate** |
-| Ollama image generation | Local macOS | Free local compute | Experimental; current releases have disabled/broken image paths | **Adapter and preflight only** |
+| Draw Things / MediaGenerationKit | Local Apple Silicon | Local compute | Public Swift package; exact SDK/model cohort still needs qualification | **Primary local candidate** |
+| Ollama image generation | Local macOS | Local compute | Experimental; older endpoint regressions do not establish current runtime behavior | **Adapter and actual-generation qualification required** |
 | Draw Things+ | Managed cloud | Subscription includes a monthly task allowance, then metered | Existing account can request an API key | **Preferred subscription-backed fallback** |
 | Gemini Nano Banana | Google API | Metered API | Strong generation/editing REST API | **Optional paid fallback** |
 | Consumer ChatGPT/Gemini UI | Hosted app | Subscription | No supported Frameshift automation entitlement | **Manual import only** |
@@ -45,16 +45,48 @@ Z-Image Turbo and FLUX.2 Klein. The 4B FLUX.2 Klein weights are Apache-2.0;
 the 9B variant is non-commercial. Official model pages recommend 1024×1024 and
 show materially larger storage for higher-precision variants.
 
-The integration cannot currently be a product dependency. As of this research
-date, issue reports show image generation temporarily removed in newer releases
-while model listings can still claim image capability. Earlier releases also
-show runner and packaging failures. Therefore the adapter must probe an actual
-tiny generation, not merely `/api/tags`, and expose “unavailable” without asking
-the user to downgrade silently.
+The integration is not qualified as a product dependency. Issue #17893 reports
+endpoint rejection on macOS with Ollama 0.32.14 despite image-capable model
+listings. The issue is closed when rechecked on 2026-10-04; it does not establish
+whether 0.35.0 has that defect. An adapter must qualify an actual bounded
+generation for its exact runtime/model cohort rather than enable generation
+from `/api/tags`. Failure exposes unavailable without an automatic downgrade.
 
 Sources: [Ollama image announcement](https://ollama.com/blog/image-generation),
 [FLUX.2 Klein model page](https://ollama.com/x/flux2-klein), and the current
 [capability/endpoint regression report](https://github.com/ollama/ollama/issues/17893).
+
+### Exact source and local inspection, 2026-10-04
+
+GitHub API inspection through `gh` resolves the MediaGenerationKit wrapper main
+to [8868a9685d9c299816f43ef53efd455ffca437f0](https://github.com/drawthingsai/media-generation-kit/commit/8868a9685d9c299816f43ef53efd455ffca437f0).
+Its [Package.swift](https://github.com/drawthingsai/media-generation-kit/blob/8868a9685d9c299816f43ef53efd455ffca437f0/Package.swift)
+declares Swift 5.9/macOS 13 and pins `draw-things-community` to
+`d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66`; the public target depends on
+`_MediaGenerationKit`. This is source inspection, not a successful Frameshift
+consumer build or license/model admission.
+
+The [public API guide](https://github.com/drawthingsai/media-generation-kit)
+describes async pipeline construction, configuration on the pipeline, explicit
+local/remote/cloud backends and still-result file/image access. Catalog sync
+overloads are offline/cache-only; network-capable operations are async.
+Preflight must use offline inspection and must not call a model-download helper.
+An exact consumer must check actual exports, build both supported Mac targets,
+and qualify cancel, timeout, edit input and still output before activation.
+
+The local read-only `/api/version` probe reports Ollama server 0.35.0; its CLI
+reports 0.35.1. The tags probe finds no installed Z-Image Turbo or FLUX.2 Klein
+candidate. No weights were downloaded and no image-generation call ran. The
+runtime discrepancy and absent model prevent a live provider claim; private
+model inventory is not copied into this research. A future model download needs
+the specified source/license/size disclosure first.
+
+The first implemented prerequisite is canonical result custody: exact
+model/decoder revisions in recipes, verified edit-parent bytes, canonical master
+packaging, corrupt-cache refusal and joined master-to-Zig/outbox fixtures.
+Fixture pixels establish that boundary only. Next qualify a platform codec and
+the exact SDK/model cohort, then expose provider selection, model admission and
+cancellation through native Settings and the authenticated host command owner.
 
 ### Nano Banana
 

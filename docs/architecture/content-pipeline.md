@@ -42,6 +42,41 @@ Records source digests, base/user instructions, provider, exact model, seed and
 parameters, provider response identity, parent variant, and disclosure state.
 See [AI image generation](../research/ai-image-generation.md).
 
+### Generated-result normalization
+
+Provider output enters the same canonical master representation as import.
+The request and recipe name the exact model revision and platform decoder
+identity/revision, in addition to the provider/adapter identity. Preflight MUST
+match those identities and the selected local/cloud destination. A model alias
+or adapter name alone cannot substitute for the recorded revision. Cache keys
+include model and decoder revisions; a changed decoder does not reuse an older
+normalization result under the same recipe.
+
+The trusted selected provider adapter returns the exact original still bytes,
+canonical sRGB top-left straight-alpha RGBA8, decoded width/height, decoder
+identity/revision and result identity. Normalization belongs to the narrow
+platform codec adapter; the provider must not label raw service bytes as decoded
+pixels or replace codec work with declared dimensions. The core checks binary
+length, source-byte/pixel ceilings, exact decoder identity and the canonical
+representation before packaging with `MasterPackage`. Generated masters store
+orientation 1 and sRGB; original output media type and decoder/model revisions
+remain in provenance. A missing or malformed canonical result refuses with no
+generated master. Provider execution and canonical-result validation share the
+finite worker deadline, with no retry or alternate provider.
+
+Cache reuse re-verifies object bytes and the complete master package, including
+stored dimensions. Corrupt, missing or legacy raw-image results refuse; a failed
+cache verification does not call a provider or silently overwrite the old master.
+An exact valid cached result remains usable while its provider is unavailable.
+An edit derives its parent original and canonical pixels from an active verified
+master package under the Library owner. Caller-supplied source pixels or paths
+are not accepted; derived source bytes are transient provider input, excluded
+from the recipe, logs and credential context. Removed or invalid parents refuse
+before provider work. Fixtures exercise byte/identity refusal, revision changes,
+source derivation, timeout and joined generated-master-to-Zig rendering. Native
+codec and live model conformance remain separate evidence requirements; fixture
+canonical pixels do not prove a production decoder or model.
+
 ### Composition recipe
 
 Records target frame/profile, crop rectangle, focal point, rotation, mat-safe

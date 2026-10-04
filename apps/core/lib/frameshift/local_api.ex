@@ -857,23 +857,7 @@ defmodule Frameshift.LocalAPI do
     end
   end
 
-  defp media_type(<<137, "PNG\r\n", 26, 10, _::binary>>), do: "image/png"
-  defp media_type(<<255, 216, 255, _::binary>>), do: "image/jpeg"
-  defp media_type(<<"GIF87a", _::binary>>), do: "image/gif"
-  defp media_type(<<"GIF89a", _::binary>>), do: "image/gif"
-  defp media_type(<<"II", 42, 0, _::binary>>), do: "image/tiff"
-  defp media_type(<<"MM", 0, 42, _::binary>>), do: "image/tiff"
-  defp media_type(<<"RIFF", _::binary-size(4), "WEBP", _::binary>>), do: "image/webp"
-
-  defp media_type(<<_::unsigned-big-32, "ftyp", brand::binary-size(4), _::binary>>)
-       when brand in ["heic", "heix", "hevc", "hevx"],
-       do: "image/heic"
-
-  defp media_type(<<_::unsigned-big-32, "ftyp", brand::binary-size(4), _::binary>>)
-       when brand in ["mif1", "msf1"],
-       do: "image/heif"
-
-  defp media_type(_), do: nil
+  defp media_type(bytes), do: MasterPackage.source_media_type(bytes)
 
   defp import_title(path) do
     case path |> Path.basename() |> Path.rootname() |> String.trim() do

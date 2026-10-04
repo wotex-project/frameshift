@@ -13,7 +13,11 @@ defmodule Frameshift.Generation do
   Provider work runs under the core task supervisor with a finite deadline.
   Timeout terminates the task; there is no automatic retry, alternate provider or
   silent cloud fallback. Returned still bytes and dimensions are bounded before
-  the library records a master or parent-linked variant with its recipe.
+  the library records a canonical master package or parent-linked variant with
+  its recipe. The selected platform adapter must supply decoded canonical RGBA8
+  and its exact decoder identity; raw provider bytes alone refuse. Edit input is
+  derived from a verified active master, never caller-supplied pixels or paths.
+  Cache reuse re-verifies the object and package without provider traffic.
 
   Provider/model/adapter revisions, target profile, instructions, disclosures and
   reproducibility remain part of the request's recorded meaning. Cache reuse is
@@ -23,16 +27,15 @@ defmodule Frameshift.Generation do
   """
 
   alias Frameshift.Digest
+  alias Frameshift.Generation.NormalizedResult
   alias Frameshift.Library
+  alias Frameshift.MasterPackage
 
   @maximum_instruction_bytes 16 * 1024
-  @maximum_result_bytes 256 * 1024 * 1024
-  @maximum_dimension 32_768
-  @maximum_pixels 100_000_000
   @default_timeout_ms 120_000
   @required_request_fields ~w(
     adapter_revision application_revision base_instruction base_instruction_revision
-    disclosure instruction mode model negative_instruction parameters provider_id
+    decoder_id decoder_revision disclosure instruction mode model model_revision negative_instruction parameters provider_id
     reproducibility seed target_profile_id target_profile_revision title
   )a
 
@@ -80,6 +83,8 @@ defmodule Frameshift.Generation do
     missing = Enum.reject(@required_request_fields, &Map.has_key?(request, &1))
 
     with [] <- missing,
+         true <-
+           Enum.all?(Map.keys(request), &(&1 in @required_request_fields or &1 == :parent_digest)),
          :ok <- validate_request_identity(request, provider_id),
          :ok <- validate_request_instructions(request),
          :ok <- validate_request_options(request),
@@ -87,6 +92,7 @@ defmodule Frameshift.Generation do
       :ok
     else
       fields when is_list(fields) -> {:error, {:missing_fields, fields}}
+      false -> {:error, :invalid_request}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -98,6 +104,9 @@ defmodule Frameshift.Generation do
       {request.provider_id == provider_id, :provider_mismatch},
       {bounded_string?(request.provider_id, 128), :invalid_provider_id},
       {bounded_string?(request.model, 256), :invalid_model},
+      {bounded_string?(request.model_revision, 256), :invalid_model_revision},
+      {bounded_string?(request.decoder_id, 128), :invalid_decoder_id},
+      {bounded_string?(request.decoder_revision, 128), :invalid_decoder_revision},
       {bounded_string?(request.adapter_revision, 128), :invalid_adapter_revision},
       {bounded_string?(request.application_revision, 128), :invalid_application_revision},
       {bounded_string?(request.target_profile_id, 128), :invalid_target_profile_id},
@@ -181,6 +190,8 @@ defmodule Frameshift.Generation do
         "instruction" => request.instruction,
         "mode" => request.mode,
         "model" => request.model,
+        "modelRevision" => request.model_revision,
+        "decoder" => %{"id" => request.decoder_id, "revision" => request.decoder_revision},
         "negativeInstruction" => request.negative_instruction,
         "parameters" => request.parameters,
         "provider" => request.provider_id,
@@ -197,8 +208,15 @@ defmodule Frameshift.Generation do
 
   defp fetch_or_generate(library, provider, request, context, timeout, recipe_hash) do
     case Library.cached_generation(library, recipe_hash) do
-      {:ok, master} -> {:ok, Map.put(master, :cache, :hit)}
-      :not_found -> run_provider(library, provider, request, context, timeout, recipe_hash)
+      {:ok, master} ->
+        with {:ok, _} <- NormalizedResult.read_master(library, master["digest"]) do
+          {:ok, Map.put(master, :cache, :hit)}
+        end
+
+      :not_found ->
+        with {:ok, derived} <- NormalizedResult.source_request(library, request) do
+          run_provider(library, provider, derived, context, timeout, recipe_hash)
+        end
     end
   end
 
@@ -206,32 +224,37 @@ defmodule Frameshift.Generation do
     task =
       Task.Supervisor.async_nolink(Frameshift.TaskSupervisor, fn ->
         with {:ok, preflight} <- provider.preflight(context),
-             :ok <- validate_preflight(preflight, request) do
-          provider.generate(request, context)
+             :ok <- validate_preflight(preflight, request),
+             {:ok, result} <- provider.generate(request, context) do
+          normalize_result(result, request)
         end
       end)
 
     case Task.yield(task, timeout) || Task.shutdown(task, :brutal_kill) do
       {:ok, {:ok, result}} -> persist_result(library, request, recipe_hash, result)
+      {:ok, {:normalization_error, reason}} -> {:error, reason}
       {:ok, {:error, reason}} -> {:error, {:provider, reason}}
       {:exit, _} -> {:error, :provider_crashed}
       nil -> {:error, :provider_timeout}
     end
   end
 
+  defp normalize_result(result, request) do
+    case NormalizedResult.package(result, request) do
+      {:ok, normalized} -> {:ok, normalized}
+      {:error, reason} -> {:normalization_error, reason}
+    end
+  end
+
   defp validate_preflight(preflight, request) when is_map(preflight) do
-    required = ~w(provider_id model destination capabilities disclosures)a
+    required =
+      ~w(provider_id model model_revision decoder_id decoder_revision destination capabilities disclosures)a
+
     missing = Enum.reject(required, &Map.has_key?(preflight, &1))
 
     cond do
       missing != [] ->
         {:error, {:invalid_preflight, {:missing_fields, missing}}}
-
-      preflight.provider_id != request.provider_id ->
-        {:error, {:invalid_preflight, :provider_mismatch}}
-
-      preflight.model != request.model ->
-        {:error, {:invalid_preflight, :model_mismatch}}
 
       preflight.destination not in [:local, :cloud] ->
         {:error, {:invalid_preflight, :invalid_destination}}
@@ -246,86 +269,65 @@ defmodule Frameshift.Generation do
         {:error, {:invalid_preflight, :invalid_disclosures}}
 
       true ->
-        :ok
+        validate_preflight_identity(preflight, request)
     end
   end
 
   defp validate_preflight(_, _),
     do: {:error, {:invalid_preflight, :invalid_response}}
 
-  defp persist_result(library, request, recipe_hash, result) do
-    with :ok <- validate_result(result) do
-      attributes = %{
-        title: request.title,
-        source_kind: :generated,
-        width: result.width,
-        height: result.height,
-        media_type: result.media_type,
-        provenance: %{
-          "kind" => "ai-generation",
-          "model" => request.model,
-          "provider" => request.provider_id,
-          "resultId" => result.result_id,
-          "seed" => request.seed
-        }
-      }
+  defp validate_preflight_identity(preflight, request) do
+    checks = [
+      {preflight.provider_id == request.provider_id, :provider_mismatch},
+      {preflight.model == request.model, :model_mismatch},
+      {preflight.model_revision == request.model_revision, :model_revision_mismatch},
+      {preflight.decoder_id == request.decoder_id and
+         preflight.decoder_revision == request.decoder_revision, :decoder_mismatch}
+    ]
 
-      result =
-        if request[:parent_digest] do
-          Library.add_generated_variant(
-            library,
-            result.bytes,
-            attributes,
-            request.parent_digest,
-            recipe_hash
-          )
-        else
-          Library.add_generated_master(library, result.bytes, attributes, recipe_hash)
-        end
-
-      case result do
-        {:ok, master} -> {:ok, Map.put(master, :cache, :miss)}
-        {:error, reason} -> {:error, reason}
-      end
+    case first_validation_error(checks) do
+      :ok -> :ok
+      {:error, reason} -> {:error, {:invalid_preflight, reason}}
     end
   end
 
-  defp validate_result(result) when is_map(result) do
-    with :ok <- validate_result_bytes(result[:bytes]),
-         :ok <- validate_result_dimensions(result[:width], result[:height]),
-         :ok <- validate_result_media_type(result[:media_type]),
-         true <- bounded_string?(result[:result_id], 512) do
-      :ok
-    else
-      false -> {:error, :invalid_result_id}
+  defp persist_result(library, request, recipe_hash, result) do
+    attributes = %{
+      title: request.title,
+      source_kind: :generated,
+      width: result.width,
+      height: result.height,
+      media_type: MasterPackage.media_type(),
+      orientation: 1,
+      color_profile: "sRGB",
+      provenance: %{
+        "kind" => "ai-generation",
+        "model" => request.model,
+        "modelRevision" => request.model_revision,
+        "originalMediaType" => result.media_type,
+        "decoder" => %{"id" => request.decoder_id, "revision" => request.decoder_revision},
+        "provider" => request.provider_id,
+        "resultId" => result.result_id,
+        "seed" => request.seed
+      }
+    }
+
+    result =
+      if request[:parent_digest] do
+        Library.add_generated_variant(
+          library,
+          result.master_package,
+          attributes,
+          request.parent_digest,
+          recipe_hash
+        )
+      else
+        Library.add_generated_master(library, result.master_package, attributes, recipe_hash)
+      end
+
+    case result do
+      {:ok, master} -> {:ok, Map.put(master, :cache, :miss)}
       {:error, reason} -> {:error, reason}
     end
   end
-
-  defp validate_result(_), do: {:error, :invalid_provider_result}
-
-  defp validate_result_bytes(bytes)
-       when is_binary(bytes) and byte_size(bytes) > 0 and
-              byte_size(bytes) <= @maximum_result_bytes,
-       do: :ok
-
-  defp validate_result_bytes(_), do: {:error, :invalid_result_bytes}
-
-  defp validate_result_dimensions(width, height)
-       when is_integer(width) and width > 0 and width <= @maximum_dimension and
-              is_integer(height) and height > 0 and height <= @maximum_dimension and
-              width * height <= @maximum_pixels,
-       do: :ok
-
-  defp validate_result_dimensions(_, _), do: {:error, :invalid_result_dimensions}
-
-  defp validate_result_media_type(media_type) do
-    if still_media_type?(media_type), do: :ok, else: {:error, :invalid_result_media_type}
-  end
-
-  defp still_media_type?(media_type) when is_binary(media_type) do
-    media_type in ["image/png", "image/jpeg", "image/heic", "image/avif"]
-  end
-
-  defp still_media_type?(_), do: false
 end

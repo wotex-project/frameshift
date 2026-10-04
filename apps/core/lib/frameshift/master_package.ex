@@ -82,6 +82,28 @@ defmodule Frameshift.MasterPackage do
 
   def decode(_), do: {:error, :invalid_master_package}
 
+  @doc "Identifies a known source container marker; this is not image decoding or stillness proof."
+  @spec source_media_type(term()) :: String.t() | nil
+  def source_media_type(<<137, "PNG\r\n", 26, 10, _::binary>>), do: "image/png"
+  def source_media_type(<<255, 216, 255, _::binary>>), do: "image/jpeg"
+  def source_media_type(<<"GIF87a", _::binary>>), do: "image/gif"
+  def source_media_type(<<"GIF89a", _::binary>>), do: "image/gif"
+  def source_media_type(<<"II", 42, 0, _::binary>>), do: "image/tiff"
+  def source_media_type(<<"MM", 0, 42, _::binary>>), do: "image/tiff"
+  def source_media_type(<<"RIFF", _::binary-size(4), "WEBP", _::binary>>), do: "image/webp"
+
+  def source_media_type(<<_::unsigned-big-32, "ftyp", "avif", _::binary>>), do: "image/avif"
+
+  def source_media_type(<<_::unsigned-big-32, "ftyp", brand::binary-size(4), _::binary>>)
+      when brand in ["heic", "heix", "hevc", "hevx"],
+      do: "image/heic"
+
+  def source_media_type(<<_::unsigned-big-32, "ftyp", brand::binary-size(4), _::binary>>)
+      when brand in ["mif1", "msf1"],
+      do: "image/heif"
+
+  def source_media_type(_), do: nil
+
   defp parse_header(
          <<@magic, @version::unsigned-big-16, 0::unsigned-big-16, width::unsigned-big-32,
            height::unsigned-big-32, rgba_bytes::unsigned-big-64, original_bytes::unsigned-big-64,

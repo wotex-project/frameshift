@@ -5,6 +5,7 @@ defmodule Frameshift.RenderPipelineTest do
 
   alias Frameshift.Digest
   alias Frameshift.DirectDelivery
+  alias Frameshift.Generation
   alias Frameshift.Library
   alias Frameshift.LocalAPI
   alias Frameshift.MasterPackage
@@ -27,6 +28,46 @@ defmodule Frameshift.RenderPipelineTest do
                    "../../../../protocol/fixtures/valid/thing-description.json",
                    __DIR__
                  )
+
+  defmodule CanonicalGenerationProvider do
+    @moduledoc false
+
+    @behaviour Frameshift.Generation.Provider
+
+    @impl true
+    def id, do: "pipeline-generation-fixture"
+
+    @impl true
+    def preflight(_) do
+      {:ok,
+       %{
+         provider_id: id(),
+         model: "fixture-still",
+         model_revision: "fixture-model-v1",
+         decoder_id: "fixture-canonical",
+         decoder_revision: "fixture-codec-v1",
+         destination: :local,
+         capabilities: %{"still" => true},
+         disclosures: %{}
+       }}
+    end
+
+    @impl true
+    def generate(_, _) do
+      {:ok,
+       %{
+         bytes: <<137, "PNG\r\n", 26, 10, 1, 2, 3>>,
+         canonical_rgba: <<1, 2, 3, 255, 4, 5, 6, 255>>,
+         canonical_representation: "rgba8-srgb-straight-alpha-top-left",
+         decoder_id: "fixture-canonical",
+         decoder_revision: "fixture-codec-v1",
+         width: 2,
+         height: 1,
+         media_type: "image/png",
+         result_id: "fixture-generated-still"
+       }}
+    end
+  end
 
   defmodule StaticCredentialResolver do
     @moduledoc false
@@ -145,6 +186,52 @@ defmodule Frameshift.RenderPipelineTest do
     assert acknowledgement["refresh"] == "displayed"
     assert acknowledgement["currentAsset"] == manifest["desiredAsset"]
     assert :ok = Library.acknowledge_outbox(context.library, @frame_id, acknowledgement)
+  end
+
+  test "a canonical generated master reaches real Zig rendering and the durable outbox", c do
+    request = %{
+      provider_id: CanonicalGenerationProvider.id(),
+      adapter_revision: "fixture-adapter-v1",
+      application_revision: "fixture-app-v1",
+      model: "fixture-still",
+      model_revision: "fixture-model-v1",
+      decoder_id: "fixture-canonical",
+      decoder_revision: "fixture-codec-v1",
+      mode: "generate",
+      instruction: "synthetic still",
+      negative_instruction: "",
+      base_instruction: "",
+      base_instruction_revision: "fixture-base-v1",
+      target_profile_id: @profile_id,
+      target_profile_revision: "fixture-profile-v1",
+      seed: 1,
+      parameters: %{},
+      reproducibility: "deterministic",
+      disclosure: %{"destination" => "local", "acknowledged" => true},
+      title: "Generated pipeline fixture"
+    }
+
+    assert {:ok, master} = Generation.generate(c.library, CanonicalGenerationProvider, request)
+    assert master["media_type"] == MasterPackage.media_type()
+
+    assert {:ok, _} =
+             Library.register_paired_frame(
+               c.library,
+               thing_description(),
+               "keychain:generated-pipeline",
+               "sha256:" <> String.duplicate("d", 64)
+             )
+
+    assert {:ok, _} =
+             LocalAPI.execute_with_renderer(c.library, c.renderer, %{
+               "kind" => "queue",
+               "targetID" => @frame_id,
+               "itemID" => master["digest"]
+             })
+
+    assert {:ok, manifest} = Library.outbox_manifest(c.library, @frame_id)
+    assert {:ok, artifact} = Library.read_object(c.library, manifest["desiredAsset"])
+    assert artifact["bytes"] == @rgb
   end
 
   test "an explicit pinned-loop command renders a still and queues a durable playlist", context do

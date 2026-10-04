@@ -283,6 +283,13 @@ meaning across presentation modes.
   disclosure and current authorization;
 - recipe/cache/provenance and cancellation.
 
+The core now requires canonical generated masters and exact model/decoder
+revisions, derives verified edit sources and refuses corrupt cache results
+without a provider call. Joined fixtures reach the real Zig renderer and outbox;
+they do not qualify a production codec, SDK or model. The
+[dated provider/source inspection](../research/ai-image-generation.md#exact-source-and-local-inspection-2026-10-04)
+records the selected next adapter cohort and the live-generation evidence gap.
+
 **Exit:** local-only mode emits no provider traffic; no automatic cloud switch;
 cached repeat avoids provider call; secrets remain in Keychain.
 
