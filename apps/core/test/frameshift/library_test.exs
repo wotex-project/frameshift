@@ -73,6 +73,23 @@ defmodule Frameshift.LibraryTest do
     backup_dir = data_dir <> "-backup"
     restored_dir = data_dir <> "-restored"
 
+    reference = "linux-pem-v1:" <> String.duplicate("c", 64)
+
+    {:ok, frame} =
+      Library.register_paired_frame(
+        library,
+        File.read!(@frame_fixture),
+        reference,
+        @frame_fingerprint
+      )
+
+    credential_directory = Path.join(data_dir, "operator-credentials")
+    File.mkdir_p!(credential_directory)
+    File.chmod!(credential_directory, 0o700)
+    credential_path = Path.join(credential_directory, String.duplicate("c", 64) <> ".pem")
+    File.write!(credential_path, "private credential fixture excluded from artwork backup")
+    File.chmod!(credential_path, 0o600)
+
     on_exit(fn ->
       File.rm_rf!(backup_dir)
       File.rm_rf!(restored_dir)
@@ -80,6 +97,11 @@ defmodule Frameshift.LibraryTest do
 
     assert :ok = Library.create_backup(library, backup_dir)
     assert :ok = Backup.verify(backup_dir)
+    refute File.exists?(Path.join(backup_dir, "operator-credentials"))
+
+    assert File.read!(credential_path) ==
+             "private credential fixture excluded from artwork backup"
+
     assert {:error, :backup_destination_exists} = Library.create_backup(library, backup_dir)
 
     assert {:error, :backup_inside_library} =
@@ -87,6 +109,11 @@ defmodule Frameshift.LibraryTest do
 
     assert :ok = Backup.restore(backup_dir, restored_dir)
     assert {:ok, restored} = Library.start_link(data_dir: restored_dir, name: nil)
+    refute File.exists?(Path.join(restored_dir, "operator-credentials"))
+
+    assert {:ok, %{"credential_ref" => ^reference}} =
+             Library.get_paired_frame(restored, frame["frame_id"])
+
     assert [%{"digest" => digest}] = Library.search(restored, "protect")
     assert digest == protected["digest"]
 

@@ -19,7 +19,7 @@ defmodule Frameshift.LocalIPC.GroupConfigurationTest do
     end
 
     for key <-
-          ~w(FRAMESHIFT_CONTROL_GID FRAMESHIFT_CREDENTIAL_SOCKET FRAMESHIFT_DIAGNOSTICS_GID FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH FRAMESHIFT_SOCKET_PATH FRAMESHIFT_IPC_TOKEN_FILE) do
+          ~w(FRAMESHIFT_CONTROL_GID FRAMESHIFT_CREDENTIAL_SOCKET FRAMESHIFT_CREDENTIAL_DIRECTORY FRAMESHIFT_DIAGNOSTICS_GID FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH FRAMESHIFT_SOCKET_PATH FRAMESHIFT_IPC_TOKEN_FILE) do
       previous = System.get_env(key)
 
       on_exit(fn ->
@@ -30,6 +30,21 @@ defmodule Frameshift.LocalIPC.GroupConfigurationTest do
     end
 
     :ok
+  end
+
+  test "protected Linux custody refuses private token policy before consuming bootstrap" do
+    path = "/tmp/fs-linux-key-config-#{System.unique_integer([:positive])}"
+    File.write!(path, "preserved bootstrap")
+    on_exit(fn -> File.rm(path) end)
+    System.put_env("FRAMESHIFT_IPC_TOKEN_FILE", path)
+    System.put_env("FRAMESHIFT_CREDENTIAL_DIRECTORY", path <> "-keys")
+
+    assert_raise RuntimeError,
+                 "protected Linux credentials require explicit Linux group policy",
+                 fn -> Frameshift.Application.start(:normal, []) end
+
+    assert File.read!(path) == "preserved bootstrap"
+    refute File.exists?(path <> "-keys")
   end
 
   test "control access cannot silently use a missing observer policy or private bootstrap token" do

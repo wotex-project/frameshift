@@ -141,8 +141,8 @@ Ordinary bounded product commands (settings, pin/removal/restore, metadata,
 playlists, queue/reconciliation) and existing finite reads use this endpoint.
 Group-mode `importFile` and `recordVision` refuse before a claim: caller paths
 must not reach the service, and Apple observations require their native adapter.
-The standalone pair/recover operations also refuse until their Linux credential
-and actor/receipt join is defined. Streamed import, pairing, protected signing
+The standalone pair/recover operations still refuse until their Linux actor and
+receipt join is defined. Streamed import, pairing, protected signing
 credentials, discovery, the CLI and installed packages remain required work;
 this admission slice does not qualify a complete Linux application.
 
@@ -236,6 +236,61 @@ release invocation with no development tools in PATH. That clean CLI invocation
 must work without service credentials or a renderer variable and must not create
 application state. Target-specific Linux OTP/NIF/renderer closure and install
 permissions remain independent package qualification gates.
+
+### Protected file credential resolver
+
+Linux may configure `FRAMESHIFT_CREDENTIAL_DIRECTORY` as an operator-provisioned
+absolute UTF-8 path of at most 4096 bytes. It selects protected-file custody only
+with the explicit Linux control/observer policy; mixing it with the Mac token or
+broker policy refuses before bootstrap consumption. Absence leaves transport
+credentials unavailable without stopping catalog/diagnostic operation. The
+service checks its actual nonroot real/effective/saved/filesystem UID and the
+final directory inode before opening listeners. The directory must be owned by
+that UID with exact `0700` permissions. It is neither created nor chmodded by the
+resolver. Root/service-owner ancestor replacement remains an installation trust
+boundary, not a descriptor-relative race-protection claim.
+
+`linux-pem-v1:HEX` is the only admitted reference, where HEX is the lowercase
+SHA-256 of the complete DER host certificate. It selects exactly `HEX.pem` under
+the configured directory; no caller path, arbitrary filename or environment key
+material selects a credential. Each file is an owned regular file with exact
+`0400` or `0600` permissions and 1–131072 bytes. Resolution checks the final
+path with `lstat`, the opened descriptor and readback inode/size/mtime/ctime/custody,
+reads at most the bound plus one byte, closes the descriptor and returns a finite
+error on replacement, missing/unsafe bytes or decode failure. The final directory
+is rechecked. No failure prints an exception, path, PEM or key.
+
+The PEM contains exactly one certificate then one unencrypted RSA or EC private
+key, including supported PKCS#8 wrapping, with no extra blocks or non-whitespace
+text. Certificate DER is at most 65536 bytes and must match the reference. Only
+two-prime RSA of 2048–8192 bits with a bounded odd public exponent, and
+named-curve P-256/P-384/P-521 ECDSA keys are admitted. A SHA-256 proof signs
+fixed domain-separated certificate identity and verifies with that certificate's
+public key before returning transient OTP TLS material. It establishes key/cert
+agreement, not current certificate validity, pairing or a frame pin. Those remain
+the existing TLS/protocol checks. Direct delivery and the pull listener resolve
+through the same existing port; missing custody preserves pending artwork.
+
+Private PEM is exportable key custody. Provisioning and encrypted administrator
+backup live outside the artwork backup and metadata database; the resolver never
+writes key material. Restoring artwork alone does not restore identity. Missing
+identity requires deliberate re-provisioning of the same verified certificate/key
+or physical re-pairing; there is no automatic replacement key or replay of a
+consumed pairing secret. Pair/recover CLI actor/receipt work remains separate.
+
+This protected-file policy does not assume systemd credentials have service-owned
+private modes. Upstream uses root ownership plus ACLs when supported and ownership
+fallback in qualified cases. `LoadCredential=`/`LoadCredentialEncrypted=` support
+therefore needs a separate ACL/mount/installed consumer fixture; merely setting
+`CREDENTIALS_DIRECTORY` is not this adapter. Never put plaintext private keys in
+unit environment variables or `SetCredential=`. TPM/encrypted provisioning needs
+exact installation evidence. The current research checks [systemd credentials](https://systemd.io/CREDENTIALS/)
+and [credential creation](https://github.com/systemd/systemd/blob/cfd2f7c73e21d6890b3a5b26203a9ba69e690c26/src/core/exec-credential.c)
+on 2026-10-04. PEM/PKCS#8 support is checked against [OTP 29.1 `public_key`](https://github.com/erlang/otp/blob/OTP-29.1/lib/public_key/src/public_key.erl)
+(source blob `29cf404b9e585f3d0198a44e5ef49e06c48f8b11`). Acceptance requires real
+nonroot Linux file custody and a PEM-resolved pinned mutual-TLS exchange, alongside
+malformed/mismatched/encrypted/oversized/symlink/owner/mode refusal. Installed
+systemd, TPM, amd64 closure and physical identity recovery remain open.
 
 ## Nerves Pi 5 bridge
 

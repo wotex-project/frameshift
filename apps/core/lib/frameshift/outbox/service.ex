@@ -16,8 +16,9 @@ defmodule Frameshift.Outbox.Service do
 
   Listener failure does not clear outboxes, rotate current artwork or delete
   paired records. The service owns network lifecycle only; `Frameshift.Library`
-  retains pending intent for a later authenticated contact. Keychain/private-key
-  ownership stays with the native resolver and signer boundary.
+  retains pending intent for a later authenticated contact. Keychain keys stay
+  with the native signer; Linux protected PEM stays under operator-provisioned
+  service custody and resolves transiently through the same credential port.
   """
 
   use GenServer

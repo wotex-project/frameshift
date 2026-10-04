@@ -17,6 +17,12 @@ defmodule Frameshift.Application do
   broker. Invalid bootstrap/group/listener configuration prevents the boundary
   from opening instead of accepting unauthenticated commands.
 
+  Explicit Linux protected-file custody resolves transient TLS identity through
+  `Frameshift.Transport.ProtectedFile` for direct delivery and the pull listener.
+  Its directory is admitted before listeners start; missing keys leave network
+  delivery unavailable while catalog and diagnostics continue. No private key
+  enters an environment variable, command or metadata database.
+
   Renderer and service failures are handled by their supervisors without treating
   unconfirmed delivery as displayed artwork. Durable recovery remains the library
   and frame owners' responsibility; restarting a process is not a new external
@@ -33,9 +39,11 @@ defmodule Frameshift.Application do
   alias Frameshift.Diagnostics.FallbackLog
   alias Frameshift.Diagnostics.Metrics
   alias Frameshift.LocalIPC.DiagnosticsServer
+  alias Frameshift.LocalIPC.SocketDirectory
   alias Frameshift.LocalIPC.Token
   alias Frameshift.Outbox.Service
   alias Frameshift.Transport.KeychainBroker
+  alias Frameshift.Transport.ProtectedFile
 
   @impl true
   def start(_, _) do
@@ -116,7 +124,7 @@ defmodule Frameshift.Application do
              observer when is_integer(observer) and observer != gid <- diagnostics[:group_gid],
              true <- is_nil(System.get_env("FRAMESHIFT_IPC_TOKEN_FILE")),
              true <- is_nil(System.get_env("FRAMESHIFT_CREDENTIAL_SOCKET")) do
-          {[path: Frameshift.Paths.socket_path(), group_gid: gid], nil}
+          {[path: Frameshift.Paths.socket_path(), group_gid: gid], configure_linux_credentials()}
         else
           _ -> raise "Linux control group requires distinct observer access and no token broker"
         end
@@ -124,6 +132,9 @@ defmodule Frameshift.Application do
   end
 
   defp private_command_options do
+    if System.get_env("FRAMESHIFT_CREDENTIAL_DIRECTORY"),
+      do: raise("protected Linux credentials require explicit Linux group policy")
+
     token_path =
       System.get_env("FRAMESHIFT_IPC_TOKEN_FILE") ||
         raise "FRAMESHIFT_IPC_TOKEN_FILE is required when local IPC is enabled"
@@ -134,7 +145,9 @@ defmodule Frameshift.Application do
         {:error, reason} -> raise "could not consume local IPC bootstrap token: #{reason}"
       end
 
-    {[path: Frameshift.Paths.socket_path(), token: token], configure_credential_broker(token)}
+    broker = configure_credential_broker(token)
+    resolver = if broker, do: {KeychainBroker, broker}, else: nil
+    {[path: Frameshift.Paths.socket_path(), token: token], resolver}
   end
 
   defp diagnostics_options do
@@ -170,8 +183,25 @@ defmodule Frameshift.Application do
 
   defp outbox_children(nil), do: []
 
-  defp outbox_children(config) do
-    [{Service, resolver: {KeychainBroker, config}, task_supervisor: Frameshift.TaskSupervisor}]
+  defp outbox_children(resolver) do
+    [{Service, resolver: resolver, task_supervisor: Frameshift.TaskSupervisor}]
+  end
+
+  defp configure_linux_credentials do
+    case System.get_env("FRAMESHIFT_CREDENTIAL_DIRECTORY") do
+      nil ->
+        nil
+
+      directory ->
+        with {:ok, uid} <- SocketDirectory.service_uid(),
+             {:ok, %{uid: ^uid} = config} <- ProtectedFile.configure(directory) do
+          resolver = {ProtectedFile, config}
+          Application.put_env(:frameshift_core, :direct_delivery, credential_resolver: resolver)
+          resolver
+        else
+          _ -> raise "protected Linux credential directory failed local admission"
+        end
+    end
   end
 
   defp configure_credential_broker(token) do

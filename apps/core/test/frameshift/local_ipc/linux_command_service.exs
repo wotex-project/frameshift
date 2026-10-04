@@ -48,6 +48,10 @@ System.put_env(
 System.put_env("FRAMESHIFT_DATA_DIR", Path.dirname(path) <> "-data")
 System.delete_env("FRAMESHIFT_IPC_TOKEN_FILE")
 System.delete_env("FRAMESHIFT_CREDENTIAL_SOCKET")
+credential_directory = Path.dirname(path) <> "-credentials"
+File.mkdir_p!(credential_directory)
+File.chmod!(credential_directory, 0o700)
+System.put_env("FRAMESHIFT_CREDENTIAL_DIRECTORY", credential_directory)
 Application.put_env(:frameshift_core, :start_library, false)
 Application.put_env(:frameshift_core, :start_renderer, false)
 Application.put_env(:frameshift_core, :start_local_ipc, true)
@@ -56,6 +60,11 @@ Application.put_env(:frameshift_core, :start_local_ipc, true)
   GenServer.start_link(Frameshift.LinuxCommandFixtureStore, nil, name: Frameshift.Library)
 
 {:ok, application} = Frameshift.Application.start(:normal, [])
+
+{Frameshift.Transport.ProtectedFile, %{directory: ^credential_directory, uid: 65_534}} =
+  Application.fetch_env!(:frameshift_core, :direct_delivery)[:credential_resolver]
+
+%{available: false} = Frameshift.Outbox.Service.status()
 :ok = Frameshift.LocalIPC.SocketDirectory.validate_group_socket(path, 50, 65_534)
 
 {:error, :socket_already_active} = Frameshift.LocalIPC.SocketDirectory.prepare_group(path, 1)
@@ -103,3 +112,4 @@ GenServer.stop(store)
 File.rm_rf!(Path.dirname(path))
 File.rm_rf!(Path.dirname(path) <> "-observer")
 File.rm_rf!(Path.dirname(path) <> "-data")
+File.rm_rf!(credential_directory)

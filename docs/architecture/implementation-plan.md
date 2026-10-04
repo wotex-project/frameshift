@@ -237,9 +237,14 @@ behavior; planner fixtures preserve millisecond intervals and target refusal.
 Server UID checks, bounded framing and unknown-outcome exit 75 still apply.
 Clean production CLI help/version
 uses the shipped runtime without service configuration or development tools.
-Linux database/NIF qualification, streamed import, discovery/pairing/credentials
-and package wiring, installed provisioning and physical power-loss
-measurements remain open gates.
+Protected Linux PEM custody now admits certificate-bound opaque references under
+an actual nonroot service-owned directory, proves bounded RSA/ECDSA key agreement
+and joins a loaded identity to pinned mutual TLS. Real Linux fixtures cover
+permissions, wrong owner, missing/oversized/malformed bytes, symlink refusal and
+application resolver/pull-service wiring; artwork backup excludes private keys.
+Linux database/NIF qualification, streamed import, discovery/pairing actor/receipts,
+systemd ACL/credential mounts and encrypted provisioning, package wiring, installed
+lifecycle and physical power-loss measurements remain open gates.
 
 ## Shared contracts
 

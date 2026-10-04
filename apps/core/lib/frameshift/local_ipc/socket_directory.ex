@@ -101,7 +101,15 @@ defmodule Frameshift.LocalIPC.SocketDirectory do
 
   defp group_path(_), do: {:error, :unsafe_socket_path}
 
-  defp service_uid do
+  @doc "Reads the actual nonroot Linux service UID, requiring identical kernel UID fields."
+  @spec service_uid() :: {:ok, pos_integer()} | {:error, atom()}
+  def service_uid do
+    if :os.type() == {:unix, :linux},
+      do: read_service_uid(),
+      else: {:error, :unsupported_service_identity}
+  end
+
+  defp read_service_uid do
     with {:ok, file} <- File.open("/proc/self/status", [:read, :binary]) do
       bytes = IO.binread(file, @maximum_status_bytes + 1)
       File.close(file)

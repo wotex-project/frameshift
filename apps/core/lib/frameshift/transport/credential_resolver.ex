@@ -15,10 +15,15 @@ defmodule Frameshift.Transport.CredentialResolver do
   The stored reference is opaque custody metadata, not a serializable credential
   or permission to contact arbitrary origins. Transport audience/pin checks apply
   separately through `Frameshift.Transport.MTLSCredential`.
+
+  Linux `Frameshift.Transport.ProtectedFile` resolves certificate-bound references
+  under an operator-provisioned private directory. Its exportable PEM key is
+  transient TLS material, not an artwork-backup or metadata-database object.
+  Service configuration selects custody; a caller reference cannot select a path.
   """
 
   @type identity :: %{certificate: binary(), private_key: term()}
 
-  @doc "Resolves one opaque Keychain reference without persisting credential material."
+  @doc "Resolves one opaque platform identity reference without persisting credential material."
   @callback resolve(String.t(), term()) :: {:ok, identity()} | {:error, atom()}
 end

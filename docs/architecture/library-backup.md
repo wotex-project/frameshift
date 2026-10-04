@@ -38,6 +38,14 @@ Failures leave the destination absent and the source backup untouched. Restore
 does not assert that a frame displayed a queued image or transfer Keychain
 private keys to another Mac; a moved installation requires re-pairing.
 
+Linux protected PEM identity is also outside the artwork backup. Backup/restore
+copies only the opaque certificate-bound reference in paired metadata; it never
+copies the configured credential directory or key bytes. An administrator restores
+the same verified identity separately from an encrypted key backup or physically
+re-pairs the frames. Missing keys preserve pending intent and unavailable transport;
+artwork restoration never generates replacement keys or resends a consumed secret.
+See [Linux credential custody](../host/linux.md#protected-file-credential-resolver).
+
 ## Packaged maintenance command
 
 The packaged macOS app exposes `Contents/Resources/bin/frameshift-maintenance` with

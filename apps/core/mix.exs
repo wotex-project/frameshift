@@ -40,7 +40,8 @@ defmodule FrameshiftCore.MixProject do
         "test/frameshift/local_ipc/linux_peer_identity_contract.exs",
         "test/frameshift/local_ipc/linux_diagnostics_service.exs",
         "test/frameshift/local_ipc/linux_command_service.exs",
-        "test/frameshift/local_ipc/linux_client_service.exs"
+        "test/frameshift/local_ipc/linux_client_service.exs",
+        "test/frameshift/local_ipc/linux_credential_service.exs"
       ],
       dialyzer: dialyzer()
     ]

@@ -4,6 +4,42 @@ ExUnit.start()
 Code.require_file(Path.join(__DIR__, "group_configuration_test.exs"))
 Code.require_file(Path.join(__DIR__, "peer_identity_test.exs"))
 
+defmodule Frameshift.LocalIPC.LinuxCredentialContract do
+  @moduledoc false
+
+  use ExUnit.Case, async: false
+
+  test "a nonroot resolver admits private inode custody and uses the loaded identity in pinned TLS" do
+    root = "/tmp/fs-key-wrong-#{System.unique_integer([:positive])}"
+    File.mkdir_p!(root)
+    File.chmod!(root, 0o700)
+    File.chown!(root, 65_534)
+    path = Path.join(root, String.duplicate("f", 64) <> ".pem")
+    File.write!(path, "root-owned fixture must not be read")
+    File.chmod!(path, 0o600)
+    on_exit(fn -> File.rm_rf!(root) end)
+
+    assert {output, 0} =
+             System.cmd(
+               "runuser",
+               [
+                 "-u",
+                 "nobody",
+                 "--",
+                 "elixir",
+                 "/src/test/frameshift/local_ipc/linux_credential_service.exs",
+                 root
+               ],
+               stderr_to_stdout: true
+             )
+
+    assert output =~ "protected-file-pinned-tls-passed"
+    assert File.read!(path) == "root-owned fixture must not be read"
+    assert {:ok, %File.Stat{uid: 0, mode: mode}} = File.lstat(path)
+    assert Bitwise.band(mode, 0o7777) == 0o600
+  end
+end
+
 defmodule Frameshift.LocalIPC.LinuxPeerIdentityContract do
   @moduledoc false
 
