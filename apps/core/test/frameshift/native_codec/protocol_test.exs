@@ -59,7 +59,7 @@ defmodule Frameshift.NativeCodec.ProtocolTest do
           header(interpretation: 2, digest: <<1::256>>),
           header(interpretation: 3),
           header(interpretation: 6),
-          header(media: 2),
+          header(media: 3),
           header(reserved: 1),
           header(version: 2),
           header() <> <<0>>,
@@ -67,6 +67,33 @@ defmodule Frameshift.NativeCodec.ProtocolTest do
         ] do
       assert {:error, :invalid_codec_header} = Protocol.decode_header(invalid)
     end
+  end
+
+  test "JPEG admits only its qualified colors and opaque pixels" do
+    for interpretation <- [1, 5, 7], orientation <- 1..8 do
+      digest = if interpretation == 5, do: <<1::256>>, else: <<0::256>>
+
+      metadata =
+        header(media: 2, interpretation: interpretation, orientation: orientation, digest: digest)
+
+      assert {:ok, %{original_media_type: "image/jpeg", original_orientation: ^orientation}} =
+               Protocol.decode_response(metadata, <<12, 34, 56, 255>>)
+
+      for alpha <- [0, 1, 254] do
+        assert {:error, :invalid_codec_pixels} =
+                 Protocol.decode_response(metadata, <<0, 0, 0, alpha>>)
+      end
+    end
+
+    for interpretation <- [0, 2, 3, 4, 6, 8] do
+      assert {:error, :invalid_codec_header} =
+               Protocol.decode_header(
+                 header(media: 2, interpretation: interpretation, digest: <<1::256>>)
+               )
+    end
+
+    assert {:error, :invalid_codec_header} =
+             Protocol.decode_header(header(media: 2, interpretation: 7, digest: <<1::256>>))
   end
 
   test "only exact finite worker failures with no metadata are admitted" do

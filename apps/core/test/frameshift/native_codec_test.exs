@@ -143,7 +143,7 @@ defmodule Frameshift.NativeCodecTest do
                rgba: normalized.rgba
              })
 
-    assert {:error, :codec_unsupported} = NativeCodec.normalize(codec, <<255, 216, 255>>, digest)
+    assert {:error, :codec_malformed} = NativeCodec.normalize(codec, <<255, 216, 255>>, digest)
 
     assert {:error, :codec_malformed} =
              NativeCodec.normalize(codec, binary_part(original, 0, 20), digest)

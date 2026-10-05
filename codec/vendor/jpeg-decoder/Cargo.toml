@@ -1,0 +1,19 @@
+[package]
+name = "jpeg-decoder"
+version = "0.3.2-fs.1"
+edition = "2021"
+rust-version = "1.61.0"
+license = "MIT OR Apache-2.0"
+publish = false
+
+[features]
+default = ["platform_independent"]
+platform_independent = []
+rayon = []
+nightly_aarch64_neon = []
+
+[lib]
+doctest = false
+
+[lints.rust]
+unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_arch, values("asmjs"))'] }

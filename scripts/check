@@ -32,6 +32,7 @@ check_policy() {
     "$repository_root/scripts/check-packaged-app" \
     "$repository_root/scripts/check-platform-observability" \
     "$repository_root/scripts/check-linux-codec-owner" \
+    "$repository_root/codec/vendor/jpeg-decoder/check-source" \
     "$repository_root/scripts/format" \
     "$repository_root/scripts/frameshift-maintenance" \
     "$repository_root/scripts/index" \
@@ -59,6 +60,7 @@ check_renderer() {
 check_codec() {
   (
     cd "$repository_root/codec"
+    ./vendor/jpeg-decoder/check-source
     mise exec -- cargo fmt --check
     mise exec -- cargo clippy --locked --all-targets -- -D warnings
     mise exec -- cargo test --locked

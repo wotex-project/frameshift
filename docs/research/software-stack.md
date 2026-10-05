@@ -253,9 +253,10 @@ small isolated Rust executable with pinned upstream libraries. This keeps
 Elixir orchestration and Zig raster behavior intact. Rust is selected for this
 adapter's memory-safe producer boundary, not as a new host or generic engine.
 
-The accepted first profile is static PNG. Complete JPEG admission remains
-independent work: exact end-of-image/multiple-image handling, Exif, ICC and
-CMYK/YCCK interpretation must be qualified before enabling it. The direct PNG
+The accepted software profiles are static PNG and the bounded 8-bit JPEG
+subset below. Complete-container, primary Exif, assembled ICC, entropy
+completion and cross-target bytes pass their software fixtures; CMYK/YCCK and
+unqualified HDR/multiple-image/metadata extensions remain explicit refusals. The direct PNG
 API exposes raw color chunks, unlike a convenience image wrapper that loses
 precedence information and defaults malformed orientation to no transform.
 
@@ -290,6 +291,98 @@ codec admission; it does not authorize an alternate decoder or an automatic
 fallback. The [content pipeline](../architecture/content-pipeline.md#linux-native-normalization)
 owns requirements, while the [verification ledger](../architecture/verification.md)
 records actual executions.
+
+#### JPEG admission source review
+
+**Observation and experiment:** 2026-10-05. The crates.io sparse index reports
+zune-jpeg 0.5.15 as the latest stable release and 0.5.16-rc2 as the newest
+candidate; jpeg-decoder 0.3.2 and fixture-only jpeg-encoder 0.7.1 are current
+published versions. These are dated observations, not future upgrade claims.
+
+The initial candidates fail complete-image admission. With scalar code and
+strict mode, zune-jpeg [0.5.15 source `31d81fe`](https://github.com/etemesi254/zune-image/tree/31d81fed7551c8ccea456d9d8e2b1fd8bebb6995/crates/zune-jpeg)
+and [0.5.16-rc2 `c93e77f`](https://github.com/etemesi254/zune-image/tree/c93e77f5652f76fa77bf7a3823f360f65ceaab6f/crates/zune-jpeg)
+accept every tested truncation of a generated 32×24 RGB baseline's 1,299-byte
+entropy segment, including zero retained entropy bytes followed by EOI. They
+also accept all nine first-scan truncations of the progressive counterpart.
+jpeg-decoder 0.3.2 behaves the same without a patch. This is actual code
+execution against those fixtures, not a claim about every possible JPEG.
+A marker walk cannot detect fabricated decoded coefficients after an early EOI.
+
+zune's `bitstream.rs` pads after markers and its baseline `mcu.rs` contains
+successful early returns. The packaged changelog ends at 0.5.7 and includes
+truncation tolerance; missing later entries do not establish strict admission.
+The [August 25 truncation change](https://github.com/etemesi254/zune-image/pull/431)
+addresses reader EOF and resumable output, which does not resolve the forged-EOI
+experiment. zune-core 0.5.3's recorded VCS ref is unavailable through GitHub;
+its packaged sources do not all match the JPEG source revision. Neither crate
+is selected in this codec. zenjpeg 0.8.4 exposes strictness/resource controls,
+but its larger encoder/HDR dependency surface and AGPL-3.0-only/commercial
+license would introduce independent scope and licensing decisions; it is not
+selected or claimed to pass these experiments. A C libjpeg wrapper would change
+the memory-safe producer and native closure boundary and is not needed for the
+bounded correction below.
+
+The selected implementation source is
+[jpeg-decoder `eb2d7c0`](https://github.com/image-rs/jpeg-decoder/tree/eb2d7c0f6a2d0298aba7a7f8b9ca1440353e8f8c),
+MIT OR Apache-2.0. All 21 published Rust source, README, changelog and license
+blobs match that revision. `huffman.rs` currently pads its lookahead with zero
+bits after markers; consumption does not distinguish those bits from source.
+The maintained vendored patch records actual-bit availability independently,
+refuses consumption beyond it, checks all-one terminal padding, refuses excess
+EOB runs/terminal restarts and selects the immediate worker. Platform-independent
+compilation forbids unsafe code and removes SIMD dispatch. No JPEG entropy,
+IDCT or upsampling algorithm is reimplemented. The original source manifest,
+license texts and exact patch are retained beside the vendored owner. Replacing
+that patch requires the same refusal and byte corpus, not a version-only update.
+
+The 0.3.2 changelog fixes a prediction panic; earlier documented behavior includes
+rendering incomplete progressive coefficients, ignoring extraneous entropy and
+non-identical SIMD output. The adapter owns full segment admission, complete
+coefficient scan progression and explicit color transforms; it does not infer
+strictness from this changelog or the decoded-buffer limit. That limit checks
+output size and does not cover internal coefficient allocations. Common source
+bounds and restricted sampling bound padded geometry; installed RSS enforcement
+is still an independent acceptance gate.
+
+Fixture encoding uses [jpeg-encoder 0.7.1 `baf4019`](https://github.com/vstroebel/jpeg-encoder/tree/baf40191ae25a32e56a884fa6e001c4fe938d451),
+`(MIT OR Apache-2.0) AND IJG`; all 16 published Rust/README/license blobs match.
+It is a development dependency, not a shipped encoder or proof of arbitrary
+camera compatibility. The package has no changelog and its GitHub release body
+is empty. Exact v0.7.0–v0.7.1 source changes add block alignment, opt-in box-average
+chroma, quality accessors and the missing IJG license text. Fixtures retain the
+explicit nearest-sample/default scalar encoding cohort; these source changes
+do not authorize enabling encoder SIMD or a product export path. Its sampling, progressive and restart exports generate
+positive inputs and systematic entropy-deletion counterexamples.
+
+[ITU T.81](https://www.w3.org/Graphics/JPEG/itu-t81.pdf), B.1.1.2/B.1.1.5,
+B.2 and F.1.2.3, supplies marker lengths, stuffing, scan structure and all-one
+Huffman padding. [CIPA Exif standards](https://www.cipa.jp/e/std/std-sec.html)
+currently list Exif 3.1; the admitted legacy color/orientation subset is narrower.
+The [Exif 2.3 text](https://www.cipa.jp/std/documents/e/DC-008-2012_E.pdf),
+4.6.5, defines ColorSpace 1/65,535 and gamma. The adapter refuses unqualified
+3.x/alternate color declarations instead of assuming their semantics. Restricting
+APP segments also refuses MPF/MPO, gain-map/HDR and unknown extension declarations
+before they can be silently discarded by the decoder. This is a bounded JPEG
+profile, not conformance to every T.81/Exif extension or measured color proof.
+
+The patched probe preserves complete baseline/progressive fixtures and rejects
+all 1,308 tested first-scan truncations. Eighteen maintained JPEG tests now
+extend this to every scan, orientation, assembled RGB/gray ICC, explicit Exif
+color, padding/EOB/restart rules, metadata/geometry/scan bounds and process
+framing. The unchanged forty PNG vectors and 98 JPEG vectors match macOS arm64,
+pinned Linux arm64 and emulated amd64. Actual authenticated upload/CLI/Library
+fixtures retain the exact fixed JPEG original, pixels, media/cohort provenance
+and durable result across a complete host-VM restart. These are software
+fixtures; installed Ubuntu, OS memory enforcement, physical storage and
+measured display color remain independent evidence.
+
+Cargo-audit **0.22.1** reports no vulnerabilities or warnings for all 29 entries
+in this lock against [RustSec `ef6173c`](https://github.com/RustSec/advisory-db/tree/ef6173cbc5c50ec8166f9a5b28f07834144373ee),
+retrieved through `gh` on 2026-10-05. This includes fixture dependencies and the
+pinned source-patched package. An advisory scan does not audit the local patch
+or replace source/refusal tests; the maintained source-check reverses that
+patch and checks every preserved upstream file hash.
 
 #### Codec process transport cohort
 

@@ -105,6 +105,8 @@ version = "0.1.0"
 dependencies = [
  "crc32fast",
  "flate2",
+ "jpeg-decoder",
+ "jpeg-encoder",
  "kamadak-exif",
  "moxcms",
  "png",
@@ -119,6 +121,16 @@ checksum = "27f864f10dfb56725ce5ce5472bc52252c8f93a4ab86327122cebf62c5f59a17"
 dependencies = [
  "typenum",
 ]
+
+[[package]]
+name = "jpeg-decoder"
+version = "0.3.2-fs.1"
+
+[[package]]
+name = "jpeg-encoder"
+version = "0.7.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a0370574b86f7eca156b9f298392b5e69a23f8c86f3f865add60bbc2e79467a6"
 
 [[package]]
 name = "kamadak-exif"

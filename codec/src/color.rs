@@ -15,18 +15,90 @@ pub fn convert(
     info: &png::Info<'_>,
     icc: Option<&[u8]>,
 ) -> Result<Converted, Error> {
-    let (profile, code, digest) = select_profile(info, icc)?;
-    let gray = matches!(
-        frame.color_type,
-        png::ColorType::Grayscale | png::ColorType::GrayscaleAlpha
-    );
-    let input_channels = frame.color_type.samples();
-    let pixels = frame.width as usize * frame.height as usize;
-    let depth = match frame.bit_depth {
-        png::BitDepth::Eight => 1,
-        png::BitDepth::Sixteen => 2,
-        _ => return Err(Error::Malformed),
+    let samples = Samples {
+        width: frame.width,
+        height: frame.height,
+        channels: frame.color_type.samples(),
+        depth: match frame.bit_depth {
+            png::BitDepth::Eight => 1,
+            png::BitDepth::Sixteen => 2,
+            _ => return Err(Error::Malformed),
+        },
+        gray: matches!(
+            frame.color_type,
+            png::ColorType::Grayscale | png::ColorType::GrayscaleAlpha
+        ),
+        alpha: matches!(
+            frame.color_type,
+            png::ColorType::Rgba | png::ColorType::GrayscaleAlpha
+        ),
     };
+    convert_samples(data, samples, select_profile(info, icc)?)
+}
+
+pub fn select_jpeg_profile(
+    icc: Option<&[u8]>,
+    gray: bool,
+    explicit_srgb: bool,
+) -> Result<(Option<ColorProfile>, u8, [u8; 32]), Error> {
+    let profile = icc.map(matrix_profile).transpose()?;
+    if profile
+        .as_ref()
+        .is_some_and(|p| (p.color_space == DataColorSpace::Gray) != gray)
+    {
+        return Err(Error::Color);
+    }
+    Ok(match profile {
+        Some(profile) => (Some(profile), 5, Sha256::digest(icc.unwrap()).into()),
+        None => (None, if explicit_srgb { 7 } else { 1 }, [0; 32]),
+    })
+}
+
+pub fn convert_jpeg(
+    data: &[u8],
+    width: u32,
+    height: u32,
+    gray: bool,
+    selected: (Option<ColorProfile>, u8, [u8; 32]),
+) -> Result<Converted, Error> {
+    convert_samples(
+        data,
+        Samples {
+            width,
+            height,
+            channels: if gray { 1 } else { 3 },
+            depth: 1,
+            gray,
+            alpha: false,
+        },
+        selected,
+    )
+}
+
+struct Samples {
+    width: u32,
+    height: u32,
+    channels: usize,
+    depth: usize,
+    gray: bool,
+    alpha: bool,
+}
+
+fn convert_samples(
+    data: &[u8],
+    samples: Samples,
+    selected: (Option<ColorProfile>, u8, [u8; 32]),
+) -> Result<Converted, Error> {
+    let (profile, code, digest) = selected;
+    let Samples {
+        width,
+        height,
+        channels: input_channels,
+        depth,
+        gray,
+        alpha,
+    } = samples;
+    let pixels = width as usize * height as usize;
     if data.len() != pixels * input_channels * depth {
         return Err(Error::Malformed);
     }
@@ -57,11 +129,11 @@ pub fn convert(
         .map_err(|_| Error::Color)?;
     // One row at a time. Color conversion preserves 16-bit precision until final
     // round-to-nearest quantization. Source alpha bypasses the color transform.
-    let mut row: Vec<u16> = vec![0; frame.width as usize * channels];
-    let mut converted: Vec<u16> = vec![0; frame.width as usize * 3];
-    for y in 0..frame.height as usize {
-        for x in 0..frame.width as usize {
-            let pixel = &data[(y * frame.width as usize + x) * input_channels * depth..]
+    let mut row: Vec<u16> = vec![0; width as usize * channels];
+    let mut converted: Vec<u16> = vec![0; width as usize * 3];
+    for y in 0..height as usize {
+        for x in 0..width as usize {
+            let pixel = &data[(y * width as usize + x) * input_channels * depth..]
                 [..input_channels * depth];
             let sample = |i| {
                 if depth == 1 {
@@ -77,11 +149,12 @@ pub fn convert(
                     row[x * 3 + c] = sample(if gray { 0 } else { c });
                 }
             }
-            let alpha = match frame.color_type {
-                png::ColorType::Rgba | png::ColorType::GrayscaleAlpha => sample(input_channels - 1),
-                _ => u16::MAX,
+            let alpha = if alpha {
+                sample(input_channels - 1)
+            } else {
+                u16::MAX
             };
-            output[(y * frame.width as usize + x) * 4 + 3] = quantize(alpha);
+            output[(y * width as usize + x) * 4 + 3] = quantize(alpha);
         }
         if let Some(transform) = &transform {
             transform
@@ -90,9 +163,9 @@ pub fn convert(
         } else {
             converted.copy_from_slice(&row);
         }
-        for x in 0..frame.width as usize {
+        for x in 0..width as usize {
             for c in 0..3 {
-                output[(y * frame.width as usize + x) * 4 + c] = quantize(converted[x * 3 + c]);
+                output[(y * width as usize + x) * 4 + c] = quantize(converted[x * 3 + c]);
             }
         }
     }

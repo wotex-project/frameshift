@@ -163,7 +163,7 @@ make check
 `./scripts/check-workspace` checks the graph and static Elixir imports before
 component moves; it also runs as part of the repository policy gate.
 
-The [isolated Linux codec](codec/README.md) has a bounded static-PNG profile.
+The [isolated Linux codec](codec/README.md) has bounded static-PNG and JPEG profiles.
 `./scripts/check codec` runs its native format/static/debug/release gate;
 `./scripts/check linux-codec` builds the pinned Linux arm64/amd64 fixtures and
 runs the same corpus as a nonroot process with read-only root and no network.

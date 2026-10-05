@@ -1,12 +1,13 @@
 //! Bounded still-image normalization; no paths, network, library or frame authority.
 //!
-//! This cohort accepts static PNG, applies the primary Exif orientation and
+//! This cohort accepts bounded static PNG/JPEG, applies primary Exif orientation and
 //! converts admitted SDR color descriptions to straight-alpha RGBA8 sRGB.
 //! Original bytes remain the host's immutable source. Other formats and color
 //! profiles require their own admission fixtures before this worker enables them.
 
 mod color;
 mod envelope;
+mod jpeg;
 
 use std::io::Cursor;
 
@@ -14,7 +15,8 @@ pub const MAX_SOURCE: usize = 128 * 1024 * 1024;
 pub const MAX_PIXELS: usize = 16_777_011;
 pub const MAX_DIMENSION: u32 = 32_768;
 pub const HEADER_BYTES: usize = 64;
-pub const REVISION: &str = "frameshift-codec/1 png/0.18.1 moxcms/0.9.1 exif/0.6.1 scalar-sdr/1";
+pub const REVISION: &str =
+    "frameshift-codec/1 png/0.18.1 jpeg/0.3.2-fs.1 moxcms/0.9.1 exif/0.6.1 scalar-sdr/1";
 
 /// Finite wire errors. No producer diagnostic or source metadata is disclosed.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
@@ -31,6 +33,7 @@ pub enum Error {
 
 /// Normalized pixels and the exact source-color interpretation used by this cohort.
 pub struct Normalized {
+    pub media: u8,
     pub width: u32,
     pub height: u32,
     pub orientation: u8,
@@ -41,6 +44,12 @@ pub struct Normalized {
 
 /// Decode one complete source, rejecting animation, malformed metadata and overflow.
 pub fn normalize(source: &[u8]) -> Result<Normalized, Error> {
+    if source.is_empty() || source.len() > MAX_SOURCE {
+        return Err(Error::Bounds);
+    }
+    if source.starts_with(&[255, 216]) {
+        return jpeg::normalize(source);
+    }
     let envelope = envelope::inspect(source)?;
     let mut decoder = png::Decoder::new_with_limits(
         Cursor::new(source),
@@ -79,6 +88,7 @@ pub fn normalize(source: &[u8]) -> Result<Normalized, Error> {
     }
     let (width, height, rgba) = orient(rgba, frame.width, frame.height, orientation)?;
     Ok(Normalized {
+        media: 1,
         width,
         height,
         orientation,
@@ -144,7 +154,7 @@ pub fn header(result: &Result<Normalized, Error>) -> [u8; HEADER_BYTES] {
             h[8..12].copy_from_slice(&image.width.to_be_bytes());
             h[12..16].copy_from_slice(&image.height.to_be_bytes());
             h[16] = image.orientation;
-            h[17] = 1; // image/png; no caller-supplied media label.
+            h[17] = image.media; // Inspected source; no caller-supplied media label.
             h[24..32].copy_from_slice(&(image.rgba.len() as u64).to_be_bytes());
             h[32..64].copy_from_slice(&image.profile_digest);
         }

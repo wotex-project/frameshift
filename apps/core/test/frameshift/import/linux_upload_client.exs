@@ -33,7 +33,14 @@ if System.argv() == ["recovery"] do
     Wotex.JSON.decode(output)
 
   true = Digest.valid_sha256?(id)
+  {jpeg_output, 0} = cli.(["import-status", "linux-cli-jpeg"])
+
+  {:ok, %{"import" => %{"status" => "succeeded", "importedItemID" => jpeg_id}}} =
+    Wotex.JSON.decode(jpeg_output)
+
+  true = Digest.valid_sha256?(jpeg_id)
   IO.puts("fresh-vm-import-recovery-passed")
+
   System.halt(0)
 end
 
@@ -142,6 +149,39 @@ File.rm!(file)
 {:ok, %{"import" => ^cli_receipt}} = Wotex.JSON.decode(output)
 {output, 69} = cli.(["import", file, "--id", "missing-source"])
 false = String.contains?(output, directory)
+jpeg = File.read!("/src/test/fixtures/canonical-jpeg.jpg")
+
+jpeg_intent = %{
+  "kind" => "importOriginal",
+  "id" => "linux-upload-jpeg",
+  "title" => "Linux JPEG",
+  "originalFilename" => "art.jpg",
+  "sourceByteCount" => byte_size(jpeg),
+  "sourceDigest" => Digest.sha256(jpeg)
+}
+
+{:ok, %{"ok" => true, "import" => %{"uploadToken" => jpeg_token}}} =
+  exchange.("importBegin", %{"intent" => jpeg_intent})
+
+{:ok, %{"ok" => true}} =
+  exchange.("importChunk", %{
+    "uploadToken" => jpeg_token,
+    "offset" => 0,
+    "bytes" => Base.encode64(jpeg)
+  })
+
+{:ok, %{"ok" => true, "import" => %{"importedItemID" => jpeg_id}}} =
+  exchange.("importFinish", %{"uploadToken" => jpeg_token})
+
+jpeg_file = Path.join(directory, "art.jpg")
+File.write!(jpeg_file, jpeg)
+File.chmod!(jpeg_file, 0o600)
+{output, 0} = cli.(["import", jpeg_file, "--title", "CLI JPEG", "--id", "linux-cli-jpeg"])
+{:ok, %{"import" => %{"importedItemID" => ^jpeg_id} = jpeg_receipt}} = Wotex.JSON.decode(output)
+File.rm!(jpeg_file)
+{output, 0} = cli.(["import-status", "linux-cli-jpeg"])
+{:ok, %{"import" => ^jpeg_receipt}} = Wotex.JSON.decode(output)
+IO.puts("fresh-cli-jpeg-import-passed")
 File.rmdir!(directory)
 IO.puts("fresh-cli-original-import-passed")
 

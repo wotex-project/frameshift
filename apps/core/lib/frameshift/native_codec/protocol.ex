@@ -16,6 +16,9 @@ defmodule Frameshift.NativeCodec.Protocol do
   interpretation/digest used by the pinned codec. `decode_response/2` revalidates
   the original header, exact pixel count and canonical zero-alpha RGB; neither a media
   signature nor a well-formed header proves that a trusted decoder produced it.
+  JPEG admits only assumed sRGB, matrix ICC or explicit Exif sRGB and requires
+  alpha 255 for every pixel. PNG retains its six qualified interpretations.
+  Source media and interpretation must agree before payload admission.
   The worker owner must bind execution to the staged executable digest and retain
   that identity in immutable master provenance.
 
@@ -45,7 +48,8 @@ defmodule Frameshift.NativeCodec.Protocol do
     3 => "cicp-srgb",
     4 => "cicp-display-p3",
     5 => "matrix-icc",
-    6 => "gamma-srgb-primaries"
+    6 => "gamma-srgb-primaries",
+    7 => "jpeg-exif-srgb"
   }
 
   @type header :: %{
@@ -87,12 +91,13 @@ defmodule Frameshift.NativeCodec.Protocol do
   @spec decode_header(binary()) :: {:ok, header()} | {:worker_error, atom()} | {:error, atom()}
   def decode_header(
         <<"FSN1", 1::unsigned-big-16, 0, interpretation, width::unsigned-big-32,
-          height::unsigned-big-32, orientation, 1, 0::48, length::unsigned-big-64,
+          height::unsigned-big-32, orientation, media, 0::48, length::unsigned-big-64,
           digest::binary-size(32)>>
       ) do
     with true <- width in 1..@maximum_dimension and height in 1..@maximum_dimension,
          true <- width * height <= @maximum_pixels and length == width * height * 4,
          true <- orientation in 1..8,
+         true <- admitted_interpretation?(media, interpretation),
          {:ok, color} <- Map.fetch(@interpretations, interpretation),
          :ok <- validate_digest(interpretation, digest) do
       {:ok,
@@ -101,10 +106,10 @@ defmodule Frameshift.NativeCodec.Protocol do
          height: height,
          rgba_bytes: length,
          original_orientation: orientation,
-         original_media_type: "image/png",
+         original_media_type: if(media == 1, do: "image/png", else: "image/jpeg"),
          color_interpretation: color,
          source_color_digest:
-           if(interpretation in [1, 2],
+           if(interpretation in [1, 2, 7],
              do: nil,
              else: "sha256:" <> Base.encode16(digest, case: :lower)
            )
@@ -127,7 +132,9 @@ defmodule Frameshift.NativeCodec.Protocol do
   @spec decode_response(binary(), binary()) :: {:ok, normalized()} | {:error, atom()}
   def decode_response(bytes, rgba) when is_binary(rgba) do
     with {:ok, header} <- decode_header(bytes),
-         true <- byte_size(rgba) == header.rgba_bytes and canonical_alpha?(rgba) do
+         true <-
+           byte_size(rgba) == header.rgba_bytes and
+             canonical_pixels?(rgba, header.original_media_type) do
       {:ok, header |> Map.delete(:rgba_bytes) |> Map.put(:rgba, rgba)}
     else
       _ -> {:error, :invalid_codec_pixels}
@@ -136,12 +143,23 @@ defmodule Frameshift.NativeCodec.Protocol do
 
   def decode_response(_, _), do: {:error, :invalid_codec_pixels}
 
-  defp validate_digest(interpretation, <<0::256>>) when interpretation in [1, 2], do: :ok
+  defp validate_digest(interpretation, <<0::256>>) when interpretation in [1, 2, 7], do: :ok
 
   defp validate_digest(interpretation, digest)
        when interpretation in 3..6 and digest != <<0::256>>, do: :ok
 
   defp validate_digest(_, _), do: {:error, :invalid_codec_header}
+
+  defp admitted_interpretation?(1, interpretation), do: interpretation in 1..6
+  defp admitted_interpretation?(2, interpretation), do: interpretation in [1, 5, 7]
+  defp admitted_interpretation?(_, _), do: false
+
+  defp canonical_pixels?(rgba, "image/jpeg"), do: opaque_alpha?(rgba)
+  defp canonical_pixels?(rgba, "image/png"), do: canonical_alpha?(rgba)
+
+  defp opaque_alpha?(<<>>), do: true
+  defp opaque_alpha?(<<_, _, _, 255, rest::binary>>), do: opaque_alpha?(rest)
+  defp opaque_alpha?(_), do: false
 
   defp canonical_alpha?(<<>>), do: true
   defp canonical_alpha?(<<0, 0, 0, 0, rest::binary>>), do: canonical_alpha?(rest)

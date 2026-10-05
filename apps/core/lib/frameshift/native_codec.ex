@@ -45,7 +45,7 @@ defmodule Frameshift.NativeCodec do
   alias Frameshift.NativeCodec.LogPrivacy
   alias Frameshift.NativeCodec.Protocol
 
-  @revision "frameshift-codec/1 png/0.18.1 moxcms/0.9.1 exif/0.6.1 scalar-sdr/1"
+  @revision "frameshift-codec/1 png/0.18.1 jpeg/0.3.2-fs.1 moxcms/0.9.1 exif/0.6.1 scalar-sdr/1"
   @maximum_executable_bytes 64 * 1024 * 1024
   @default_deadline 30_000
   @chunk_bytes 65_536

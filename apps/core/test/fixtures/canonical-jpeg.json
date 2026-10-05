@@ -1,0 +1,7 @@
+{
+  "width": 32,
+  "height": 24,
+  "sourceDigest": "sha256:ddfa06de4402fd02e69ce3680d100ef46d96d753abbcf8941232023243b0c2cf",
+  "rgbaDigest": "sha256:1458a4886b87888007877615396d8b6b03b1656398c6767bfcae4ba2ef6c6766",
+  "codecRevision": "frameshift-codec/1 png/0.18.1 jpeg/0.3.2-fs.1 moxcms/0.9.1 exif/0.6.1 scalar-sdr/1"
+}

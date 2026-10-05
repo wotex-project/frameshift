@@ -1,0 +1,14 @@
+#!/bin/sh
+set -eu
+owner=$(CDPATH='' cd -- "$(dirname -- "$0")" && pwd)
+scratch=$(mktemp -d "${TMPDIR:-/tmp}/frameshift-jpeg-source.XXXXXXXX")
+trap 'rm -rf "$scratch"' EXIT HUP INT TERM
+cp -R "$owner/src" "$scratch/src"
+cp "$owner/LICENSE-APACHE" "$owner/LICENSE-MIT" "$owner/CHANGELOG.md" \
+  "$owner/UPSTREAM-README.md" "$owner/Cargo.toml.upstream" "$scratch/"
+(
+  cd "$scratch"
+  git apply --reverse "$owner/frameshift.patch"
+  shasum -a 256 --check "$owner/upstream.sha256" >/dev/null
+)
+printf '%s\n' 'Pinned JPEG source and strict patch match.'

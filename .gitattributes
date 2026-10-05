@@ -3,3 +3,6 @@ apps/build-platform/assets/src/lib/generated/*.ts linguist-generated=true whites
 # Preserve exact upstream licenses; the package gate checks locked source bytes.
 packages/build-spec/priv/licenses/gleam_json.txt whitespace=-blank-at-eof
 packages/decision-kernel/priv/licenses/gleam_stdlib.txt whitespace=-blank-at-eof
+# Preserve upstream JPEG text and unified-diff context; check-source verifies exact bytes.
+codec/vendor/jpeg-decoder/src/decoder.rs whitespace=-blank-at-eol
+codec/vendor/jpeg-decoder/frameshift.patch -whitespace

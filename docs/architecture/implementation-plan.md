@@ -151,7 +151,7 @@ omits privacy/route/identity violations and returns no authenticated frame
 authority. Parser/CLI fixtures and real Linux helper deadlines join a separate
 pinned Avahi/D-Bus producer lane, including nonroot CLI and daemon restart.
 Original import now joins the canonical PNG codec, authenticated byte intake
-and exact receipts through the CLI. JPEG qualification, native Ubuntu closure,
+and exact receipts through the CLI. Native Ubuntu closure,
 protected provisioning and installed package acceptance remain required.
 
 Backup/restore and simulated pairing authority now require OTP directory
@@ -172,7 +172,7 @@ fault, alongside resolved-key pinned TLS. Administrator issuance/encrypted
 backup, systemd credential policy, installed Ubuntu closure and exact physical
 identity recovery remain separate R3 evidence.
 
-The Linux import software joins a bounded isolated static-PNG profile, complete
+The Linux import software joins bounded isolated static-PNG/JPEG profiles, complete
 container/stillness refusal, exact orientation and SDR color normalization to
 private authenticated upload and immutable Library results. Pinned Exile 0.15.0
 owns protected descriptor-handshake custody, a verified executable snapshot,
@@ -199,12 +199,22 @@ orphans, verified backup and unknown owner/task effects. This is pinned Debian
 software evidence; installed Ubuntu/systemd/package/upgrade acceptance, native
 amd64/default JIT and OS memory limits remain R3 requirements.
 
-Next qualify JPEG complete-container, primary Exif, source-color and stillness
-semantics against exact producer source and positive/refusal fixtures. Preserve
-PNG vectors and explicit unsupported-format refusal. Then finish the supported
-Ubuntu native/runtime/package closure and installed lifecycle checks. Physical
-filesystem power-loss, received frame interoperability and measured display
-color retain their separate evidence gates.
+JPEG admission now passes the bounded complete-container/scan/Exif/ICC contract
+with exact pinned source and an auditable strict-entropy patch. Both zune
+candidates and unpatched jpeg-decoder failed the forged-EOI experiment, so none
+is admitted without that correction. Eighteen JPEG tests and 98 common golden
+vectors pass on macOS arm64 and pinned Linux arm64/emulated amd64; all forty
+PNG vectors remain unchanged. Actual authenticated upload, CLI, immutable
+original/pixel/provenance readback and complete host-VM restart/status now pass
+for the fixed JPEG cohort. Unknown extensions and unqualified color/coding
+profiles retain finite refusal. Dated RustSec advisory and source/patch checks
+complement these fixtures without establishing installed or physical proof.
+
+Next finish the supported Ubuntu native/runtime/package closure and installed
+lifecycle checks. Preserve the exact PNG/JPEG producer cohort, single-worker
+custody, peer authorization and explicit CLI IDs/results through packaging.
+Physical filesystem power-loss, received frame interoperability and measured
+display color retain their separate evidence gates.
 
 ### Independent software delivery order
 

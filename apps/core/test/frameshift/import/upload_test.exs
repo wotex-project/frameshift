@@ -98,6 +98,45 @@ defmodule Frameshift.Import.UploadTest do
     assert is_integer(removed)
   end
 
+  test "qualified JPEG bytes retain exact source, canonical pixels and media provenance", %{
+    library: library
+  } do
+    owner = owner(library, @codec)
+    original = File.read!(Path.expand("../../fixtures/canonical-jpeg.jpg", __DIR__))
+    pixels = File.read!(Path.expand("../../fixtures/canonical-jpeg.rgba", __DIR__))
+    intent = %{intent(original) | "originalFilename" => "art.jpg"}
+
+    assert {:ok, %{"uploadToken" => token}} = Upload.begin_upload(owner, intent, @actor)
+    assert {:ok, _} = Upload.append(owner, token, 0, Base.encode64(original), @actor)
+
+    assert {:ok, %{"status" => "succeeded", "importedItemID" => id} = receipt} =
+             Upload.finish(owner, token, @actor)
+
+    assert {:ok, %{"bytes" => package}} = Library.read_object(library, id)
+
+    assert {:ok, %{original: ^original, rgba: ^pixels, width: 32, height: 24}} =
+             MasterPackage.decode(package)
+
+    assert {:ok, master} = Library.get_master(library, id)
+    provenance = master["provenance_json"]
+    assert provenance["originalMediaType"] == "image/jpeg"
+    assert provenance["originalFilename"] == "art.jpg"
+    assert provenance["colorInterpretation"] == "assumed-srgb"
+    assert provenance["codecRevision"] == Frameshift.NativeCodec.revision()
+    assert provenance["sourceDigest"] == Digest.sha256(original)
+    assert {:ok, ^receipt} = Upload.begin_upload(owner, intent, @actor)
+
+    malformed = %{intent(<<255, 216, 255, 217>>) | "id" => "jpeg-refusal"}
+    assert {:ok, %{"uploadToken" => token}} = Upload.begin_upload(owner, malformed, @actor)
+
+    assert {:ok, _} =
+             Upload.append(owner, token, 0, Base.encode64(<<255, 216, 255, 217>>), @actor)
+
+    assert {:error, :codec_malformed} = Upload.finish(owner, token, @actor)
+    assert :not_found = Library.command_receipt_as(library, malformed["id"], @actor)
+    assert {:ok, %{"status" => "cancelled"}} = Upload.cancel(owner, token, @actor)
+  end
+
   test "actor, hash and token conflicts refuse before appending or claiming", %{
     library: library,
     worker: worker

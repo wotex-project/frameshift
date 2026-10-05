@@ -1,0 +1,164 @@
+diff --git a/src/decoder.rs b/src/decoder.rs
+index b8eb531..5131d3c 100644
+--- a/src/decoder.rs
++++ b/src/decoder.rs
+@@ -455,7 +455,7 @@ impl<R: Read> Decoder<R> {
+                         }
+ 
+                         let preference =
+-                            Self::select_worker(&frame, PreferWorkerKind::Multithreaded);
++                            Self::select_worker(&frame, PreferWorkerKind::Immediate);
+ 
+                         let (marker, data) = worker_scope
+                             .get_or_init_worker(preference, |worker| {
+@@ -607,7 +607,7 @@ impl<R: Read> Decoder<R> {
+         }
+ 
+         let frame = self.frame.as_ref().unwrap();
+-        let preference = Self::select_worker(frame, PreferWorkerKind::Multithreaded);
++        let preference = Self::select_worker(frame, PreferWorkerKind::Immediate);
+ 
+         worker_scope.get_or_init_worker(preference, |worker| {
+             self.decode_planes(worker, planes, planes_u16)
+@@ -919,6 +919,9 @@ impl<R: Read> Decoder<R> {
+ 
+                 if self.restart_interval > 0 {
+                     if mcus_left_until_restart == 0 {
++                        if eob_run != 0 {
++                            return Err(Error::Format("EOB run exceeds restart interval".to_owned()));
++                        }
+                         match huffman.take_marker(&mut self.reader)? {
+                             Some(Marker::RST(n)) => {
+                                 if n != expected_rst_num {
+@@ -1060,9 +1063,12 @@ impl<R: Read> Decoder<R> {
+             }
+         }
+ 
+-        let mut marker = huffman.take_marker(&mut self.reader)?;
+-        while let Some(Marker::RST(_)) = marker {
+-            marker = self.read_marker().ok();
++        if eob_run != 0 {
++            return Err(Error::Format("EOB run exceeds scan".to_owned()));
++        }
++        let marker = huffman.take_marker(&mut self.reader)?;
++        if matches!(marker, Some(Marker::RST(_))) {
++            return Err(Error::Format("unexpected terminal restart".to_owned()));
+         }
+ 
+         if finished.iter().any(|&c| c) {
+diff --git a/src/huffman.rs b/src/huffman.rs
+index fca57c1..aafef44 100644
+--- a/src/huffman.rs
++++ b/src/huffman.rs
+@@ -14,6 +14,8 @@ const LUT_BITS: u8 = 8;
+ pub struct HuffmanDecoder {
+     bits: u64,
+     num_bits: u8,
++    // Source bits; padded lookahead may never satisfy entropy consumption.
++    real_bits: u8,
+     marker: Option<Marker>,
+ }
+ 
+@@ -22,6 +24,7 @@ impl HuffmanDecoder {
+         HuffmanDecoder {
+             bits: 0,
+             num_bits: 0,
++            real_bits: 0,
+             marker: None,
+         }
+     }
+@@ -36,7 +39,7 @@ impl HuffmanDecoder {
+         let (value, size) = table.lut[self.peek_bits(LUT_BITS) as usize];
+ 
+         if size > 0 {
+-            self.consume_bits(size);
++            self.consume_bits(size)?;
+             Ok(value)
+         }
+         else {
+@@ -46,7 +49,7 @@ impl HuffmanDecoder {
+                 let code = (bits >> (15 - i)) as i32;
+ 
+                 if code <= table.maxcode[i as usize] {
+-                    self.consume_bits(i + 1);
++                    self.consume_bits(i + 1)?;
+ 
+                     let index = (code + table.delta[i as usize]) as usize;
+                     return Ok(table.values[index]);
+@@ -69,7 +72,7 @@ impl HuffmanDecoder {
+                 let run = run_size >> 4;
+                 let size = run_size & 0x0f;
+ 
+-                self.consume_bits(size);
++                self.consume_bits(size)?;
+                 return Ok(Some((value, run)));
+             }
+         }
+@@ -84,7 +87,7 @@ impl HuffmanDecoder {
+         }
+ 
+         let bits = self.peek_bits(count);
+-        self.consume_bits(count);
++        self.consume_bits(count)?;
+ 
+         Ok(bits)
+     }
+@@ -98,10 +101,15 @@ impl HuffmanDecoder {
+     pub fn reset(&mut self) {
+         self.bits = 0;
+         self.num_bits = 0;
++        self.real_bits = 0;
+     }
+ 
+     pub fn take_marker<R: Read>(&mut self, reader: &mut R) -> Result<Option<Marker>> {
+-        self.read_bits(reader).map(|_| self.marker.take())
++        self.read_bits(reader)?;
++        if self.real_bits > 7 || self.real_bits > 0 && self.peek_bits(self.real_bits) != (1u16 << self.real_bits) - 1 {
++            return Err(Error::Format("excess entropy data or invalid scan padding".to_owned()));
++        }
++        Ok(self.marker.take())
+     }
+ 
+     #[inline]
+@@ -113,11 +121,16 @@ impl HuffmanDecoder {
+     }
+ 
+     #[inline]
+-    fn consume_bits(&mut self, count: u8) {
++    fn consume_bits(&mut self, count: u8) -> Result<()> {
++        if count > self.real_bits {
++            return Err(Error::Format("premature entropy marker".to_owned()));
++        }
++        self.real_bits -= count;
+         debug_assert!(self.num_bits >= count);
+ 
+         self.bits <<= count as usize;
+         self.num_bits -= count;
++        Ok(())
+     }
+ 
+     fn read_bits<R: Read>(&mut self, reader: &mut R) -> Result<()> {
+@@ -152,6 +165,9 @@ impl HuffmanDecoder {
+                 }
+             }
+ 
++            if self.marker.is_none() {
++                self.real_bits += 8;
++            }
+             self.bits |= (byte as u64) << (56 - self.num_bits);
+             self.num_bits += 8;
+         }
+diff --git a/src/lib.rs b/src/lib.rs
+index ff1ceb1..2e24893 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -30,6 +30,9 @@
+ #![deny(unsafe_code)]
+ #![cfg_attr(feature = "platform_independent", forbid(unsafe_code))]
+ 
++#[cfg(any(not(feature = "platform_independent"), feature = "rayon", feature = "nightly_aarch64_neon"))]
++compile_error!("Frameshift JPEG requires the scalar platform-independent cohort");
++
+ extern crate alloc;
+ extern crate core;
+ 

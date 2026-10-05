@@ -55,10 +55,24 @@ defmodule Frameshift.NativeCodec.LinuxOwnerJoin do
     assert {:ok, %{original: ^original, rgba: rgba}} = MasterPackage.decode(encoded)
     assert rgba == result.rgba
     assert {:ok, ^result} = NativeCodec.normalize(codec, original, digest)
-    assert {:error, :codec_unsupported} = NativeCodec.normalize(codec, <<255, 216, 255>>, digest)
+    assert {:error, :codec_malformed} = NativeCodec.normalize(codec, <<255, 216, 255>>, digest)
 
     assert {:error, :codec_malformed} =
              NativeCodec.normalize(codec, binary_part(original, 0, 20), digest)
+  end
+
+  test "Linux scalar JPEG pixels match the fixed source and canonical golden bytes" do
+    codec = start_supervised!({NativeCodec, path: "/usr/local/bin/frameshift-codec", name: nil})
+    digest = NativeCodec.build_digest(codec)
+    original = File.read!("/src/test/fixtures/canonical-jpeg.jpg")
+    pixels = File.read!("/src/test/fixtures/canonical-jpeg.rgba")
+    assert {:ok, result} = NativeCodec.normalize(codec, original, digest)
+    assert result.rgba == pixels
+    assert result.width == 32 and result.height == 24
+    assert result.original_media_type == "image/jpeg"
+    assert result.color_interpretation == "assumed-srgb"
+    assert result.codec_revision == NativeCodec.revision()
+    assert {:ok, ^result} = NativeCodec.normalize(codec, original, digest)
   end
 
   test "blocked native reads and writes terminate before accepting fresh work" do

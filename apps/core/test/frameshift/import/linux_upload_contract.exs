@@ -31,7 +31,7 @@ defmodule Frameshift.Import.LinuxUploadContract do
                stderr_to_stdout: true
              )
 
-    assert output =~ "10 passed"
+    assert output =~ "12 passed"
   end
 
   test "fresh Linux SQLite and Exile join different kernel actors to real import registration" do
@@ -80,6 +80,7 @@ defmodule Frameshift.Import.LinuxUploadContract do
 
     assert output =~ "authenticated-import-passed"
     assert output =~ "fresh-cli-original-import-passed"
+    assert output =~ "fresh-cli-jpeg-import-passed"
 
     assert {output, 0} =
              System.cmd(

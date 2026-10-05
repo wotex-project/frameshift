@@ -219,13 +219,14 @@ Linux NIF, installed package, qualified target or physical display evidence.
 Streamed original import uses the dedicated custody/codec/receipt contract below.
 
 The [native normalization profile](../architecture/content-pipeline.md#linux-native-normalization)
-uses an isolated codec executable. Its first admitted static-PNG profile owns
+uses an isolated codec executable. Its admitted static-PNG and bounded JPEG profiles own
 complete container/stillness, primary orientation, alpha and SDR-to-sRGB
 conversion. Original-byte upload must precede this service-owned codec; no
 client-decoded pixels or caller path can replace it. A decoder fixture is
 distinct from authenticated upload/receipt, installed Ubuntu and target binary
-closure evidence. JPEG needs its own complete-container/color/stillness corpus
-before the Linux adapter enables it.
+closure evidence. The exact JPEG cohort passes complete-container, primary
+Exif, split ICC, complete entropy/scan and golden-byte fixtures. CMYK/YCCK,
+HDR/gain-map/multiple-image and unknown metadata extensions refuse explicitly.
 
 The host's `Frameshift.NativeCodec` owner requires existing nonroot private
 `0700` temporary custody selected before startup, including Exile's descriptor

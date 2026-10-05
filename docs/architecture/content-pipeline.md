@@ -146,6 +146,59 @@ allocation budget; its caller-owned pixel buffer is capped at eight bytes per
 source pixel. These are distinct bounds, not a total RSS measurement. CRC and
 compressed-data checksums are required; errors must not become untagged color.
 
+The admitted JPEG profile is 8-bit Huffman SOF0/SOF2 with one grayscale
+component or three RGB/YCbCr components. It uses the pinned, scalar
+jpeg-decoder 0.3.2 source with the maintained strict-entropy patch; the
+[source review](../research/software-stack.md#jpeg-admission-source-review)
+records the rejected permissive alternatives and exact patch boundary. JPEG
+admission MUST precede decoder allocation and require:
+
+- Exactly one initial SOI, one frame header, bounded complete marker segments
+  and one final EOI, with no trailing bytes or second primary image. Reject
+  unsupported coding modes, 12-bit/lossless/arithmetic images, CMYK/YCCK,
+  DNL, hierarchical frames and unknown application extensions.
+- At most 65,536 markers, 64 scans, 4 MiB total non-entropy segment payload bytes,
+  64 KiB raw Exif and 1 MiB assembled ICC. Grayscale uses 1×1 sampling;
+  RGB uses 1×1 sampling; YCbCr admits 4:4:4, 4:2:2, 4:4:0 and 4:2:0 with
+  both chroma components 1×1. The common source/dimension/pixel bounds apply.
+- Every declared component/coefficient must be supplied through approximation
+  bit zero before EOI. Initial coefficient ranges cannot overlap; refinements
+  follow their preceding approximation. Incomplete progressive previews are
+  unsupported imports. Decode every expected block using actual entropy bits;
+  fabricated bits after an early marker cannot complete a block. Require at
+  most seven remaining all-one padding bits, exact restart order/intervals and
+  no EOB run beyond a restart/scan boundary. Excess entropy data refuses.
+- Only structurally checked JFIF, Exif APP1, ICC APP2 and Adobe APP14 application
+  segments are admitted. Comments are retained only in the original bytes.
+  XMP, MPF/MPO, SPIFF, JPEG XT/gain-map and other extensions refuse, including
+  metadata between scans or after the last scan. JFIF thumbnails do not select
+  primary artwork; non-square JFIF density refuses without resampling.
+- Assemble every ICC chunk exactly once from a consistent nonzero count and
+  sequence, including chunks after entropy data; missing, duplicate, conflicting
+  or malformed chunks refuse. Use the existing bounded RGB matrix/gray-TRC
+  SDR transform. A gray profile requires grayscale source, and an RGB profile
+  requires three-component source.
+- Parse complete Exif with primary orientation rules below. Exif ColorSpace is
+  either one SHORT sRGB (1) or uncalibrated (65,535); unsupported/reserved values,
+  duplicates and conflicting primary color fields refuse. Explicit sRGB plus
+  ICC refuses; uncalibrated color requires an admitted ICC. Exif 3.x and
+  alternate gamma/chromaticity/transfer declarations await their own profile.
+  With neither ICC nor explicit Exif color, record assumed sRGB. JFIF/Adobe
+  and component IDs must agree on RGB versus YCbCr; they do not themselves
+  establish an ICC profile or measured color.
+
+JPEG output is opaque RGBA8 with alpha 255, normalized orientation and source
+media `image/jpeg`. Caller-owned decoded samples are capped at three bytes per
+source pixel. Padded coefficient and row geometry are bounded before decoding;
+the upstream output-buffer limit is not an internal allocation/RSS quota.
+Installed OS memory limits remain a separate target requirement. JPEG acceptance
+requires native process framing, positive baseline/progressive/color/orientation
+fixtures, entropy deletion and forged-EOI refusal, metadata/scan/resource
+refusals, unchanged PNG goldens, identical common corpus bytes on Linux
+arm64/amd64 and an authenticated original-upload/CLI/Library readback join.
+These checks pass for the recorded software cohort; installed Ubuntu/resource
+limits and physical display/storage claims remain separate evidence.
+
 Read primary Exif orientation from the complete container, including legal
 trailing metadata. Missing orientation means 1; a present value must be one
 SHORT in 1–8. Duplicate primary orientation fields, malformed Exif or an invalid

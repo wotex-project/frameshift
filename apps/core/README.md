@@ -96,7 +96,7 @@ verified staged executable and exact revision. It requires existing private
 nonroot `0700` temporary custody for Exile's descriptor handshake. Source bytes
 are bounded; environment/stderr and upstream crash logs cannot expose them.
 The deadline/watchdog awaits native exit before admitting another job; unknown
-custody preserves its replacement fence. Core tests join actual PNG normalization
+custody preserves its replacement fence. Core tests join actual PNG/JPEG normalization
 to immutable package/SQLite readback and Zig rendering. `scripts/check linux-codec`
 also builds target SQLite/Exile NIFs/helpers against pinned OTP headers and exercises
 nonroot arm64/amd64 worker deadlines, shutdown and abrupt-owner refusal.

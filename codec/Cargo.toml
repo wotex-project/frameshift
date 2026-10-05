@@ -13,6 +13,11 @@ moxcms = { version = "=0.9.1", default-features = false }
 png = "=0.18.1"
 sha2 = "=0.11.0"
 
+jpeg-decoder = { path = "vendor/jpeg-decoder", version = "=0.3.2-fs.1", default-features = false, features = ["platform_independent"] }
+
+[dev-dependencies]
+jpeg-encoder = { version = "=0.7.1", default-features = false, features = ["std"] }
+
 [profile.release]
 overflow-checks = true
 lto = "thin"

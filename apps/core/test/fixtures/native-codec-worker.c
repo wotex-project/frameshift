@@ -24,7 +24,7 @@ int main(int argc, char **argv) {
 #ifdef BAD_REVISION
     puts("unqualified-revision");
 #else
-    puts("frameshift-codec/1 png/0.18.1 moxcms/0.9.1 exif/0.6.1 scalar-sdr/1");
+    puts("frameshift-codec/1 png/0.18.1 jpeg/0.3.2-fs.1 moxcms/0.9.1 exif/0.6.1 scalar-sdr/1");
 #endif
     return 0;
   }
