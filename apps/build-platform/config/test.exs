@@ -1,5 +1,7 @@
 import Config
 
+config :frameshift_platform, :secure_session_cookie, false
+
 config :frameshift_platform,
        :authentication_signing_secret,
        "frameshift-isolated-auth-test-key-not-for-production-000000000000000"
@@ -18,6 +20,7 @@ config :frameshift_platform, FrameshiftPlatform.Repo,
 
 config :frameshift_platform, FrameshiftPlatformWeb.Endpoint,
   http: [ip: {127, 0, 0, 1}, port: 4081],
+  check_origin: ["http://www.example.com"],
   secret_key_base:
     "frameshift-isolated-test-secret-not-for-production-00000000000000000000000000000",
   server: false

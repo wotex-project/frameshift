@@ -94,12 +94,45 @@ and S5 plan require database/native hashing refusal tests first, then HTTP cooki
 CSRF, origin, revocation and work-budget tests, and finally the Svelte consumer.
 Authentication never supplies a catalog/operator role or opens composition writes.
 
-Qualification passes twelve focused database/native-hash cases and the full
-47-test platform suite, warning-free compilation, formatter and strict Credo.
+Qualification passes thirteen focused database/native-hash cases, including
+code-point counting and combining-character byte preservation, with warning-free
+compilation, formatter and strict Credo. The full suite with HTTP/task cases below
+passes 61 tests.
 The three new migrations roll back and reapply on the isolated fixture.
 Dependency audits retain only the existing scoped advisory exceptions; the
-new credential/token closure reports no additional advisory. HTTP/browser
-acceptance is still a separate implementation gate.
+new credential/token closure reports no additional advisory. HTTP and browser
+acceptance require their own joined consumer evidence.
+
+### Session HTTP and native work custody
+
+The HTTP consumer uses the pinned
+[Plug 1.20.3 session cookie](https://github.com/elixir-plug/plug/blob/9fa11c8ebedbe68531eba25d8f81b9282e0514da/lib/plug/session/cookie.ex)
+and [CSRF protection](https://github.com/elixir-plug/plug/blob/9fa11c8ebedbe68531eba25d8f81b9282e0514da/lib/plug/csrf_protection.ex).
+The upstream recommendation to delete CSRF state after login is applied together
+with Ash Authentication's session renewal. Only configured exact origins admit
+writes; no forwarded header establishes an IP or origin. Credential JSON input
+and cookie lengths are bounded before authentication. The three session routes
+project no account, role, scope or authentication token.
+
+[OTP 29.1's dirty-NIF contract](https://github.com/erlang/otp/blob/OTP-29.1/erts/doc/references/erl_nif.md#dirty_nifs)
+states that termination can trigger monitors while native execution continues.
+Consequently, caller exit never cancels admitted work or releases its slot.
+Normal task completion releases capacity; abnormal worker exit, limiter restart
+or task-supervisor identity loss fences new work for this VM. Each admission also
+checks the current supervisor PID, closing the replacement race. Two task slots,
+six per-IP and sixty global attempts per real monotonic minute bound this single
+VM. Fixed transport-IP counters contain no credentials. Native hard cancellation
+and multiple-instance shared admission are not qualified by this implementation.
+
+The HTTP fixtures explicitly disable Phoenix.ConnTest's default CSRF bypass.
+Joined cases exercise renewal/fixation, missing/duplicate/foreign origins, forged
+and oversized cookies, exact JSON/query/role refusal, rate headers, storage outage
+and revoke-before-clear. The work fixture holds actual Ash sign-in tasks at their
+database-read boundary, disconnects a caller, waits through the real 60-second
+window, then runs native Argon2/token issuance and observes actual task exit.
+Limiter restart, task-supervisor replacement and abnormal admitted task exit have
+finite refusal controls. This is software account/session evidence, not forced
+dirty-NIF cancellation, production HTTPS or provider identity assurance.
 
 ## Gleam and ExMaude
 

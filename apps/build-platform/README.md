@@ -78,8 +78,19 @@ glob imports refuse at this boundary.
   All 12-hour tokens are stored; authentication verifies signature, expiry,
   revocation, presence and the current account. A login grants no catalog role.
   The account and token resources have no public routes or generated types.
-  Browser cookies, CSRF, origin and password-work budgets are the next consumer
-  gate; confirmation and recovery delivery remain separate host operations.
+  Session HTTP enforces cookie, CSRF, origin and password-work budgets; the Svelte
+  account consumer is next. Confirmation/recovery delivery remain separate.
+- `GET /api/session` returns only an authenticated boolean and CSRF token.
+  `POST /api/session` accepts exact JSON email/password; `DELETE /api/session`
+  accepts an empty JSON body and revokes before clearing the session. Both writes
+  require a valid CSRF header and exact configured Origin. Responses are
+  `no-store`; authentication tokens stay in encrypted HttpOnly cookies.
+  Password work has two worker slots, six attempts per transport IP and sixty
+  total attempts per 60 seconds in one VM, with no queued hashes or automatic
+  retry. Disconnected callers retain their worker slot until normal completion.
+  Limiter/task-supervisor restart or replacement and abnormal worker exit close
+  admission until a full VM restart. Multiple-instance traffic needs a qualified
+  shared admission boundary. Session authentication supplies no domain role.
 - URI/revision identities cannot be replaced. Source and audit records commit
   together. An HTTPS locator and digest do not qualify the source's claims or
   authorize fetching it; source acquisition has a separate admission boundary.
@@ -115,7 +126,9 @@ generated random bytes); optional
 `PORT` and `POOL_SIZE` default to 4080 and 10. Serve behind the deployment's HTTPS
 termination. Database migrations and the frontend build are explicit deployment
 steps. Production never falls back to the local database or development secret.
-Public HTTP has no mutation actions or session credentials in this slice.
+Session writes own credential custody; catalog/composition writes retain their
+independent policy and producer gates. Production HTTPS/cookie installation needs
+its own deployment evidence.
 
 The runtime repository is private. CI needs a `REFPATH_READ_TOKEN` secret with
 read-only repository contents access. That external credential is not stored

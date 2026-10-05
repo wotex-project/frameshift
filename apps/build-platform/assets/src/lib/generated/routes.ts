@@ -2,15 +2,21 @@
 
 export const routes = {
   compositionShow: (class_: string | number) => `/api/composition/${encodeURIComponent(String(class_))}`,
+  create: () => "/api/session",
+  delete: () => "/api/session",
   index: () => "/api/sources",
   profileIndex: () => "/api/profiles",
   profileShow: (digest: string | number) => `/api/profiles/${encodeURIComponent(String(digest))}`,
+  sessionShow: () => "/api/session",
   show: () => "/api/health",
 } as const
 
 export type RouteName =
   | "compositionShow"
+  | "create"
+  | "delete"
   | "index"
   | "profileIndex"
   | "profileShow"
+  | "sessionShow"
   | "show"

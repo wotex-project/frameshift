@@ -86,22 +86,44 @@ No catalog identity or existing compiler authority changes.
 
 ### Private account and token foundation, 2026-10-05
 
-`FrameshiftPlatform.AuthenticationTest` passes twelve cases against a new isolated
+`FrameshiftPlatform.AuthenticationTest` passes thirteen cases against a new isolated
 PostgreSQL 18.6 fixture on macOS arm64, Elixir 1.20.4/OTP 29.1. Actual Argon2id
 hashes use 64 MiB, time cost 3 and parallelism 4. Tests cover independent salts,
 case-insensitive identity uniqueness, matching confirmation, exact whitespace,
-128 Unicode code points, finite invalid/missing credentials, issued 12-hour
+128 Unicode code points, combining-character byte preservation without normalization,
+finite invalid/missing credentials, issued 12-hour
 tokens, cryptographic tamper, expiry, stored-token removal, current-account
 resolution, missing accounts, forged revocation, successful revocation, ordinary
 Ash policy refusal, missing signer, storage failure and credential log exclusion.
-The full platform suite passes 47 cases. The older fixture is preserved.
+The older database fixture is preserved; full-suite evidence is recorded below.
 
-This is private account/token groundwork for BP-06/S5. Browser cookies, CSRF,
-origin, password-work budgets and the Svelte consumer remain the next gates;
+This is private account/token groundwork for BP-06/S5. The HTTP/task join follows;
+the Svelte consumer remains the next gate, while
 mailbox confirmation/recovery and production HTTPS need their own evidence.
 Login supplies no catalog/operator membership and opens no composition writes.
 The [source and decision record](../research/build-platform-decisions.md#private-account-and-token-boundary-2026-10-05)
 retains the exact dependency and verification-before-revocation contract.
+
+### Protected session HTTP and password work, 2026-10-05
+
+Eight `FrameshiftPlatformWeb.SessionHTTPTest` cases and five
+`FrameshiftPlatform.PasswordWorkTest` cases exercise the actual encrypted Plug
+cookie, session-bound CSRF with ConnTest's bypass disabled, renewal/fixation,
+configured origin/missing/duplicate refusal, exact body/query/role and cookie
+bounds, native password work, finite rate headers, storage outage and verified
+revoke-before-clear. Current cookies survive refusal without a false logout
+result. Public catalog routes acquire no session and no account/role write route
+is opened.
+
+The work fixture disconnects a caller with two real admitted Ash tasks held at
+their database-read boundary, crosses the real monotonic 60-second window and
+observes capacity refusal until normal task completion. Both tasks then execute
+native Argon2/token issuance; the next admission succeeds. Limiter restart,
+replacement of the task supervisor and abnormal worker exit refuse further work.
+The complete platform suite passes 61 tests, including the combining-character
+account regression. This establishes bounded single-VM HTTP/task behavior, not
+forced dirty-NIF cancellation, multiple-instance shared admission, production
+HTTPS, mailbox assurance or browser presentation. The Svelte consumer is next.
 
 ### Frame successor profile refusal, 2026-10-04
 

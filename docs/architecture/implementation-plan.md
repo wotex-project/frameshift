@@ -679,11 +679,14 @@ S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned
 Argon2id costs. Private account/token resources, all-token persistence, 12-hour
 expiry, verified revocation and current-account resolution are implemented.
-Twelve focused cases and the 47-test platform suite pass against an isolated
+Thirteen focused account cases and the 61-test platform suite pass against an isolated
 PostgreSQL database; original CREATE/INSTALL migrations preserve existing
 fixtures. The host specification freezes the browser cookie/CSRF and server-only
-role/resource matrix. Next join bounded HTTP sessions and the Svelte consumer,
-with origin, fixation, revocation and resource-budget acceptance. No browser
+role/resource matrix. Bounded HTTP sessions implement origin, CSRF, encrypted
+cookie renewal, verified logout and two-worker/rate admission. Thirteen HTTP/work
+cases include the real 60-second window, disconnected callers, limiter restart,
+supervisor replacement and abnormal task exit. Next join the Svelte consumer.
+Confirmation/recovery delivery and production HTTPS need their own evidence. No browser
 catalog/composition writes open from a successful login alone. Composition and
 operator authority still require their qualified producer/profile boundaries.
 

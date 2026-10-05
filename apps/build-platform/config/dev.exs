@@ -1,5 +1,7 @@
 import Config
 
+config :frameshift_platform, :secure_session_cookie, false
+
 config :frameshift_platform,
        :authentication_signing_secret,
        "frameshift-development-auth-key-not-for-production-0000000000000000"

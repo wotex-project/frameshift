@@ -5,8 +5,9 @@ defmodule FrameshiftPlatformWeb.Endpoint do
   The endpoint assigns request IDs, emits platform-owned request telemetry and
   serves only the configured `_app` and favicon static paths. JSON parsing uses
   Jason with a 256 KiB request limit before routing through
-  `FrameshiftPlatformWeb.Router`. No session or authenticated write pipeline is
-  installed by these plugs.
+  `FrameshiftPlatformWeb.Router`. Only the session routes install encrypted
+  cookies, CSRF and bounded password work through their own pipeline; public
+  catalog routes retain their independent projections.
 
   ## Response owners
 

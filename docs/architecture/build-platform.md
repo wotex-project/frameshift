@@ -139,7 +139,7 @@ or alternate provider fallback is introduced.
 
 The browser session uses an encrypted, signed, HttpOnly cookie, Secure in
 production, SameSite Strict and Path `/`, with a fresh session on successful
-sign-in. Tokens never enter JSON, URLs, frontend storage, public projections or
+sign-in. Authentication tokens never enter JSON, URLs, frontend storage, public projections or
 logs. State-changing session requests require the matching CSRF token and the
 configured same origin. Sign-out revokes the stored token before clearing the
 session; failed revocation cannot report completed sign-out. Use finite errors
@@ -166,13 +166,43 @@ refusal. Fixture accounts and tokens grant no live identity-provider or release
 authority. Recovery/delivery and production HTTPS configuration require their
 own actual consumer evidence.
 
+The session API has three operations: `GET /api/session` returns only the current
+authenticated boolean and a CSRF token; `POST /api/session` accepts exactly email
+and password; `DELETE /api/session` accepts an empty body and revokes the current
+session. It exposes no account registration, password recovery or role-assignment
+route. JSON query parameters cannot supply credentials. An existing token that
+cannot be resolved returns a finite refusal while preserving its cookie; it does
+not claim that remote sign-out completed. Missing cookies can obtain an anonymous
+CSRF session without an account. Successful sign-in renews the cookie and CSRF
+state; successful sign-out clears both after revocation.
+
+Both state-changing operations require exactly one configured Origin and a valid
+session-bound CSRF token. Session cookie input is bounded to 4096 bytes. Responses
+are JSON with `no-store`, `nosniff` and no authentication token or account fields.
+Only production HTTPS uses Secure cookies; loopback development/test fixtures
+explicitly disable that flag. Origin checks use configured origins, never forwarded
+headers or caller-supplied authority.
+
+Password work admits at most two supervised workers, six attempts per transport
+IP and sixty total attempts in a 60-second monotonic window, retaining at most
+1000 IP counters. Capacity/rate refusal is 429 with a bounded Retry-After; it never
+queues a hash or retries credentials. A disconnected caller does not release a
+worker before its normal completion. Limiter or worker-supervisor restart or
+replacement and abnormal worker exit fence new password work until a complete
+VM restart, because lost rate/work state cannot
+be treated as an empty budget. There is no hard native-hash cancellation claim.
+Unknown/unavailable work returns 503, malformed input 400, invalid credentials or
+session 401, and origin/CSRF refusal 403. These are one-VM admission limits; a
+deployment with multiple instances requires an independently qualified shared
+admission boundary before enabling password traffic across those instances.
+
 **BP-07 — Domain ownership.** Keep explicit consistency/API boundaries:
 
 | Domain | Responsibility | State/dependency |
 | --- | --- | --- |
 | Product Catalog & Evidence | Frame sources, claims, profiles and current assessments; consume Conjunct generic semantics | Immutable sources/profiles implemented; assessment and federation open |
 | Composition & Instructions | Frame rules and content, Conjunct consumer adapter, authorized product storage and installation handoff | Retained v1 checks exist; Conjunct selection, reports, projection and instruction consumers open |
-| Access & Policy | Actor/operator authorization, external decision references, retention and audit access | Internal actions exist; browser write authentication open |
+| Access & Policy | Actor/operator authorization, external decision references, retention and audit access | Private account/session foundation implemented; current membership and browser domain writes open |
 | Product Research | Frameshift source/task mappings, rubrics and evaluations through Refpath | Packs and joined runtime conformance open |
 | Service Commitments & Care | Optional exact accepted provider plans, production/packaging/fulfillment observations and cases | Deferred F |
 | Financial Integration | Product-event and commitment references through Rivure public commands/results | Deferred F; no Frameshift ledger or provider engine |

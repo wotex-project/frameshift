@@ -3,8 +3,8 @@ defmodule FrameshiftPlatform.Application do
   Starts the companion platform and its owned infrastructure.
 
   The supervisor starts the PostgreSQL Repo, named PubSub service and metric
-  reporter and authentication expiry supervisor, followed by enabled Refpath
-  child specifications, phoenix-assets
+  reporter, authentication expiry supervisor and bounded password task/limiter
+  owners, followed by enabled Refpath child specifications, phoenix-assets
   children and the Phoenix endpoint. A `:one_for_one` strategy restarts failed
   children independently; dependency configuration is supplied by the host.
 
@@ -25,7 +25,9 @@ defmodule FrameshiftPlatform.Application do
       FrameshiftPlatform.Repo,
       {Phoenix.PubSub, name: FrameshiftPlatform.PubSub},
       FrameshiftPlatform.Telemetry.Reporter,
-      {AshAuthentication.Supervisor, otp_app: :frameshift_platform}
+      {AshAuthentication.Supervisor, otp_app: :frameshift_platform},
+      {Task.Supervisor, name: FrameshiftPlatform.Access.PasswordTasks, max_children: 2},
+      FrameshiftPlatform.Access.PasswordWork
     ]
 
     children =

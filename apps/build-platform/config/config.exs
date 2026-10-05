@@ -21,6 +21,7 @@ config :frameshift_platform, FrameshiftPlatformWeb.Endpoint,
   pubsub_server: FrameshiftPlatform.PubSub
 
 config :phoenix, :json_library, Jason
+config :phoenix, :filter_parameters, ["password", "password_confirmation", "token"]
 
 config :phoenix_assets,
   otp_app: :frameshift_platform,
