@@ -286,3 +286,19 @@ includes directory identities by relative path and mode, so empty-directory
 drift also changes retained identity. See
 [the universal join contract](../docs/host/macos.md#universal-development-bundle-join)
 for independent exact-source, native producer and installed acceptance gates.
+
+A tagged native Mac candidate builds separately with:
+
+```sh
+./scripts/package-macos-candidate vX.Y.Z EXACT_COMMIT SOURCE_RECORD arm64 OUTPUT
+```
+
+Use `x86_64` only on physical Intel hardware. The exact clean tag, frozen source
+record, declared app/core versions and captured dependency/tool observations
+must remain unchanged. The producer retains the admitted ad-hoc app and a private
+candidate record; identical reruns verify without rebuilding. The isolated full
+arm64 producer and packaged IPC/import/restart/offline maintenance pass locally.
+Captured cache bytes are not upstream provenance or license approval. This
+candidate has publication authority `none`; the
+[Mac producer contract](../docs/host/macos.md#tagged-native-mac-build-candidate)
+keeps universal assembly and installed/signing gates separate.

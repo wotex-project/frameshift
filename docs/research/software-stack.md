@@ -337,6 +337,38 @@ producer, source/license cohort, older-OS/Intel execution and production signing
 remain independent requirements under the
 [join contract](../host/macos.md#universal-development-bundle-join).
 
+### Tagged native Mac source and producer
+
+Observed 2026-10-05 with macOS 27.0.1 (`26A434`), Xcode 27.0 (`27A266a`),
+SDK 27.0 (`26A425`), Swift 6.4, Elixir 1.20.4/OTP 29.1 and Zig 0.16.0.
+The exact clean isolated test tag binds source commit
+`73ae9f4823515b448fce761b67a3da04cf5e55b2` and source-input SHA-256
+`b03d625b512457fd5e0a41adb99fd35521ec6ec9be24cb3e6eeb8bf89dbf5d07`.
+The native producer captures 1,464 dependency/Gleam source-material files
+(21,873,908 bytes), excluding private Git metadata and generated native code.
+These are inspected local cache bytes, not authenticated upstream provenance.
+
+The clean recipe compiles the native compiler/runtime dependencies in a separate
+Mix VM before rebuilding Exile and vendored SQLite. Elixir 1.20.4's
+[dependency task](https://github.com/elixir-lang/elixir/blob/v1.20.4/lib/mix/lib/mix/tasks/deps.compile.ex)
+loads cached dependency status and compiles selected dependency names; the
+fresh producer checks this actual startup boundary rather than inheriting a
+warm build's helper modules. Source/material/tool observations are repeated
+after building and copying, alongside shell and core release descriptors.
+
+The retained app has 1,417 files, 96 directories, 24 native items and
+39,261,132 bytes, with actual minimum 15.0.0. Its 527,900-byte candidate record
+has SHA-256
+`c5e650ae2b70bd297123f51959ccb09e373713bc12dec2a1a341c074be7524b5`.
+Actual packaged authenticated Swift/core IPC, PNG import, restart and offline
+backup/verify/restore/refusal checks pass. A no-build replay preserves the source
+and record hashes. Six fixture groups cover hidden source, material, tool,
+version, physical-CPU and copied-byte changes, aliases, unknown/incomplete
+output and finite tool refusal. Publication authority is `none`; this test tag
+does not qualify native Intel, upstream provenance, licenses, older-OS execution,
+production signatures or installed distribution. See the
+[producer contract](../host/macos.md#tagged-native-mac-build-candidate).
+
 ## Zig boundary
 
 The existing project-owned host raster executable is Zig. It accepts a

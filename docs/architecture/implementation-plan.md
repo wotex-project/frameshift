@@ -444,9 +444,15 @@ inputs, equal common resources/directories/product identities, merged code in
 every native role, final seals and durable retained observations. Compiler
 fixtures join both CPUs, execute the arm64 fixture and enter actual DMG
 readback. Conflicting sources, failed merges, interrupted output and replay
-mutation refuse. Continue the complete Intel/Apple Silicon host producer cohort
-and exact release-input joining before production signing/notarization and
-installed channel acceptance; the fixture supplies no source or installed claim.
+mutation refuse. The native Mac producer now freezes the exact tag/source record,
+captures dependency and installed-tool observations, runs the actual package
+recipe, joins shell/core versions and retains the copied app with publication
+authority none. Clean-cache native dependency ordering is explicit. The complete
+isolated arm64 tagged build passes packaged IPC/import/restart/offline maintenance
+and unchanged no-build replay on macOS 27.0.1. Continue source-bound joining of
+both CPU candidates and native Intel production before signing/notarization and
+installed channel acceptance; captured cache bytes do not establish upstream
+provenance or licenses, and local test tags do not establish public distribution.
 
 ## Shared contracts
 

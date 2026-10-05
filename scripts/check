@@ -44,6 +44,7 @@ check_policy() {
     "$repository_root/scripts/package-macos" \
     "$repository_root/scripts/package-macos-dmg" \
     "$repository_root/scripts/package-macos-universal" \
+    "$repository_root/scripts/package-macos-candidate" \
     "$repository_root/scripts/package-linux" \
     "$repository_root/scripts/package-linux-deb" \
     "$repository_root/scripts/package-linux-candidate" \

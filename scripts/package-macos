@@ -23,6 +23,10 @@ esac
 
 (
   cd "$core_root"
+  # A clean checkout needs the native compiler/runtime dependencies before the
+  # forced native build starts. Use a separate Mix VM so dependency statuses
+  # observed before helper compilation cannot remain cached as outdated.
+  mise exec -- env MIX_ENV=prod mix deps.compile elixir_make cc_precompiler telemetry db_connection
   mise exec -- env MIX_ENV=prod mix deps.clean exqlite --build
   mise exec -- env -u EXQLITE_USE_SYSTEM MIX_ENV=prod MACOSX_DEPLOYMENT_TARGET=14.0 \
     "FRAMESHIFT_RENDERER_PATH=$renderer_path" \

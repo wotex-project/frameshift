@@ -345,6 +345,61 @@ import, restart and offline maintenance checks on the observed Mac. Those
 checks do not qualify macOS 14, Intel execution, universal OTP/NIF packaging,
 Developer ID, hardened runtime, notarization or installed DMG/update behavior.
 
+### Tagged native Mac build candidate
+
+`scripts/package-macos-candidate TAG COMMIT SOURCE_RECORD arm64|x86_64 OUTPUT`
+builds an ad-hoc single-CPU app from the exact clean tagged checkout and the
+independently retained source record under
+[release inputs](../architecture/release-manifest.md#frozen-source-inputs).
+Source, lock/toolchain files, package recipe, declared bundle version and core
+application version must agree before creating output. Refuse dirty/moved/hidden
+source, unsupported CPU and architecture mismatch before a build. The native
+build execution must match the physical host CPU; Rosetta is not native Intel
+producer evidence.
+
+Record the inspected macOS build, physical CPU, Xcode/SDK/Swift, OTP/Elixir and
+Zig observations. Bound each tool's output and deadline. Capture bounded
+regular dependency and Gleam package input files before and after building,
+excluding Git/private tool metadata, build directories and the explicitly
+generated Exile/SQLite native outputs. Changed retained material refuses.
+These recorded cache bytes and installed-tool version strings do not prove
+upstream provenance, compiler authenticity or license admission.
+
+Build with the existing package recipe, check shell/core runtime version
+descriptors against the tag, copy the admitted app into a private mode `0700`
+output and verify its complete closure, signatures and exact copy identity.
+Repeat source, material and tool checks before syncing the app and a bounded
+mode `0600` candidate record. The record binds source-input SHA-256, tag/commit,
+native execution/material facts and the final app observation with publication
+authority `none`. It is a native build candidate, not a conforming universal
+release manifest artifact. Both candidate cohorts must still be joined and
+qualified before production distribution.
+
+An identical completed rerun verifies retained app/source/material/tool facts
+without rebuilding or signing. Source/version/CPU/material/output changes and
+incomplete output refuse while preserving custody. Before a new build, require
+at least 1 GiB available plus twice the admitted source-material bytes; the
+build still needs filesystem/resource qualification. Bound material to 8,192
+entries, 128 MiB per file, 512 MiB total, a two-minute software inventory budget
+and a 16 MiB record. The build has a thirty-minute child deadline; source/read
+budgets do not promise to interrupt a stalled syscall or terminate OS services.
+
+Acceptance requires positive exact-source compiler fixtures and before/after
+source/material/tool mutation, version/CPU mismatch, copied-byte change,
+unknown/incomplete output and no-build replay refusals. Record an actual full
+native host build against its exact isolated tagged source before claiming
+that producer cohort; synthetic native-role fixtures do not substitute for
+the OTP/NIF/runtime join. Installed OS/CPU, licenses, production signing,
+notarization and physical product claims retain their separate gates.
+
+The complete isolated tagged arm64 producer now passes on macOS 27.0.1 with
+Xcode 27.0/SDK 27.0, Swift 6.4, Elixir 1.20.4/OTP 29.1 and Zig 0.16.0. Its
+24-native-file app declares 15.0.0, binds 1,464 retained material files and
+passes packaged authenticated IPC/import/restart/offline maintenance checks.
+No-build replay preserves its source and candidate hashes. This is a local
+test-purpose tag and captured source-cache cohort, not a public release or
+authenticated upstream dependency/Intel/installed-distribution qualification.
+
 ### Universal development bundle join
 
 `scripts/package-macos-universal ARM_APP INTEL_APP OUTPUT` joins two admitted

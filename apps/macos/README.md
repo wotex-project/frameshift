@@ -140,3 +140,10 @@ universal bundle. A rerun verifies retained custody without merging or signing
 again. Differing resources, incomplete output and changed source/output refuse.
 See the [join contract](../../docs/host/macos.md#universal-development-bundle-join);
 the tool does not supply exact-source provenance or installed CPU qualification.
+
+For an exact clean stable test/release tag, `scripts/package-macos-candidate`
+joins the frozen source record, physical native CPU, captured dependency/tool
+facts, app/core versions and copied bundle closure. Its retained private record
+and no-build replay are candidate custody, with publication authority `none`.
+See the [native producer contract](../../docs/host/macos.md#tagged-native-mac-build-candidate)
+for the passed full arm64 software join and remaining release gates.
