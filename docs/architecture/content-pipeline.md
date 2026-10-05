@@ -120,14 +120,23 @@ against its admitted identity; filename, SDK `isDownloaded` or a cached expected
 digest alone cannot establish the exact model revision recorded in a recipe.
 
 Required SDK resources must come from the admitted revision and remain available
-inside the installed worker without a source checkout. Qualify process-wide
+inside the installed worker without a source checkout. Verify their protected
+raw descriptors, complete bytes and admitted SHA-256 before SDK inspection;
+missing/corrupt resources refuse rather than presenting a reduced builtin catalog
+as the selected cohort. An external model-root setting does not authorize SDK
+fallback reads or writes in the user's Documents/Models tree. Qualify and enforce
+refusal of every model root outside the owned private asset directory before
+inspection. An SDK source-path fallback must also remain inaccessible in the
+installed qualification fixture. Qualify process-wide
 model/cache state, private native outputs and actual cancellation/deadline
 completion before admitting concurrent or replacement work. Missing resources,
 bytes, disclosure, offline behavior or lifecycle evidence leaves generation
 unavailable without downloading, altering a model or switching destinations.
 The [exact SDK inspection](../research/ai-image-generation.md#exact-sdk-consumer-boundary-2026-10-05)
-records source-based candidates and failed-build evidence; it does not establish
-any of these runtime gates as passed.
+records exact public consumer builds and bounded offline-catalog/resource
+fixtures. They qualify the tested metadata operations on their observed platform;
+pipeline initialization, weights, generation, concurrent state and cancellation
+remain independent activation gates.
 
 ### Composition recipe
 

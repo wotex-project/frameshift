@@ -765,9 +765,15 @@ BEAM task exit alone cannot qualify that lifecycle. The
 [exact SDK consumer inspection](../research/ai-image-generation.md#exact-sdk-consumer-boundary-2026-10-05)
 requires public-export builds, installed JSON resource custody, an explicit
 offline boundary and full weight identity before activation. The isolated SDK
-consumer resolved dependencies but compilation stopped at disk exhaustion;
-restore sufficient build capacity before repeating it. SDK local/ensure flags,
-downloaded status and cancellation requests do not replace those qualifications.
+consumer now builds public exports for arm64 and cross-compiles x86_64 with all
+33 resolved identities fixed. Arm64 offline-catalog fixtures deny network, external
+Documents/Models IO and checkout reads; exact bundled resources restore selected
+metadata while missing resources leave a reduced builtin catalog. Continue
+protected resource/full-weight admission and qualify the shipping worker network/
+root boundary, generation and native cancellation. Intel compilation is not native
+Intel execution, and catalog inspection is not pipeline or generation evidence.
+SDK local/ensure flags, downloaded status and cancellation requests do not replace
+those qualifications.
 
 **Exit:** local-only mode emits no provider traffic; no automatic cloud switch;
 cached repeat avoids provider call; secrets remain in Keychain.

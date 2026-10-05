@@ -90,16 +90,79 @@ cancellation through native Settings and the authenticated host command owner.
 
 ### Exact SDK consumer boundary, 2026-10-05
 
-`gh` still resolves the public wrapper to `8868a9685d9c299816f43ef53efd455ffca437f0`
+`gh` resolves the public wrapper to `8868a9685d9c299816f43ef53efd455ffca437f0`
 and its implementation dependency to `d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66`.
-An isolated Swift 6.4/macOS SDK 27 consumer resolves 33 dependency identities,
-then fails compilation with filesystem `ENOSPC` while compiling plugins/Clang
-modules. It supplies no successful API build, Intel build or runtime evidence.
-No model/helper is invoked and no weights are downloaded. Disposable build
-material and the newly fetched CCV cache were removed; the probe source, lock
-and finite failure log remain local research inputs. Check available space
-before repeating the full dependency/native build; there is no measured final
-build-space requirement yet.
+An isolated Swift 6.4/Xcode 27 (`27A266a`) consumer builds the exact public
+exports for arm64 and cross-compiles x86_64 on macOS 27.0.1 arm64. Automatic
+resolution is disabled; all 33 checked-out identities still match the preserved
+resolved lock. The arm64 executable runs only its link marker. Constructor,
+configuration, generation and PNG-result methods type-check without invoking
+models, pipeline initialization or generation. The Intel result is compiler
+proof, not native Intel execution. Neither binary qualifies macOS 13 runtime
+compatibility; both Mach-O build commands report minimum/SDK fields 13.0 despite
+the observed Xcode 27 build environment. The isolated dependency/build tree uses
+about 4.2 GiB after the first arm64 build; this is an observation, not a universal
+space requirement. No weights are downloaded.
+
+Consumer inputs/results retain these SHA-256 identities:
+
+| Input/result | SHA-256 |
+| --- | --- |
+| Package manifest | `08682eb862f4aeb919b030108c38c55793e3f9cf3df05be9fc6f310ebbf8efcb` |
+| Resolved lock, 33 pins | `a9b4a6a176157b2caf82ae9824f3bafd1649e23a2b405d174317ce3d8ad1e82b` |
+| Public-export consumer source | `23727d1170584790bde13e2ca9cd061e7e693f1a21015b7410883c43f2604434` |
+| Linked arm64 consumer | `6b8932f84942ffec5655396bea4d80bd4aa1c306b29d7b9ae99caf20145d10b0` |
+| Linked x86_64 consumer | `e9cb7985f6f772e67d93dcd638f8259c5d20cbe12bdfa11c6ad4bc07b2ed5e7d` |
+
+Build commands use `swift build --configuration debug --jobs 2
+--disable-automatic-resolution` and, for Intel compilation,
+`--triple x86_64-apple-macosx13.0`. The disposable consumer depends on the public
+`MediaGenerationKit` product at the wrapper revision above, with a macOS 13
+package platform. Its checked public calls include synchronous
+`MediaGenerationEnvironment.default.inspectModel(model, offline: true)`, async
+`MediaGenerationPipeline.fromPretrained(model, backend: .local(directory: root))`,
+configuration width/height/steps, `generate(prompt:negativePrompt:)` and
+`result.write(to:type: .png)`. Only the explicit inspection fixture below invokes
+SDK operations; the generation methods are compile-only evidence.
+
+The preserved consumer lock selects these exact Git revisions. Version labels
+are lock observations; none admits a package's rights or shipping scope.
+
+| Dependency | Revision | Version label |
+| --- | --- | --- |
+| [ccv](https://github.com/liuliu/ccv) | `ae1de9962437c14ff7d84af9bac66305e7ce5927` | Revision pin |
+| [dflat](https://github.com/liuliu/dflat) | `73925e51e4f44add842177a229f9990cb13711ff` | Revision pin |
+| [draw-things-community](https://github.com/drawthingsai/draw-things-community) | `d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66` | Revision pin |
+| [flatbuffers](https://github.com/google/flatbuffers) | `c92e78a9f841a6110ec27180d68d1f7f2afda21d` | Revision pin |
+| [grpc-swift](https://github.com/grpc/grpc-swift) | `65d0084f6d7db34b0dfcb1c956b8dd8da8ef9d23` | 1.27.6 |
+| [media-generation-kit](https://github.com/drawthingsai/media-generation-kit) | `8868a9685d9c299816f43ef53efd455ffca437f0` | Revision pin |
+| [s4nnc](https://github.com/liuliu/s4nnc) | `e3a83b351b84a7917fefd28366a3b9417fee3b2e` | Revision pin |
+| [swift-algorithms](https://github.com/apple/swift-algorithms) | `87e50f483c54e6efd60e885f7f5aa946cee68023` | 1.2.1 |
+| [swift-argument-parser](https://github.com/apple/swift-argument-parser) | `6a52f3251125d74daf04fcbd5e6f08a75d074382` | 1.8.2 |
+| [swift-asn1](https://github.com/apple/swift-asn1) | `3b6410f7dee09eb33cdd26260c5fd47fda19b0e2` | 1.7.3 |
+| [swift-async-algorithms](https://github.com/apple/swift-async-algorithms) | `13713a4ffdee8abd929f92568ee9462a46ae26e0` | 1.1.7 |
+| [swift-atomics](https://github.com/apple/swift-atomics) | `0442cb5a3f98ab802acb777929fdb446bda11a34` | 1.3.1 |
+| [swift-certificates](https://github.com/apple/swift-certificates) | `ff86b924ead66f853b8baf91f3c41926a8f36177` | 1.21.0 |
+| [swift-collections](https://github.com/apple/swift-collections) | `98ef3c98609a1e31b7e157b5b619579001a789d6` | 1.7.1 |
+| [swift-crypto](https://github.com/apple/swift-crypto) | `95ba0316a9b733e92bb6b071255ff46263bbe7dc` | 3.15.1 |
+| [swift-fickling](https://github.com/liuliu/swift-fickling) | `5c982bf479c4cdf8c7f72002cd79ec88b553ab34` | Revision pin |
+| [swift-fpzip-support](https://github.com/weiyanlin117/swift-fpzip-support) | `0ec6d4668c9c83bc3da0f8b2d6dfc46da0b98609` | Revision pin |
+| [swift-http-structured-headers](https://github.com/apple/swift-http-structured-headers) | `933538faa42c432d385f02e07df0ace7c5ecfc47` | 1.7.0 |
+| [swift-http-types](https://github.com/apple/swift-http-types) | `bff4b6903cdc99dda49649dd52f46c11cfd3ed50` | 1.8.0 |
+| [swift-log](https://github.com/apple/swift-log) | `9c6fb14227f55d8f711ce3847dc2f419fb0ecacb` | 1.15.1 |
+| [swift-log-datadog](https://github.com/jagreenwood/swift-log-datadog) | `e47aa092908764bdd625bb18d72e4db5bf9d7c4e` | 0.3.0 |
+| [swift-nio](https://github.com/apple/swift-nio) | `21de5f08c1a166a6dd293d0e587ad977bf8dac5d` | 2.103.0 |
+| [swift-nio-extras](https://github.com/apple/swift-nio-extras) | `41449336c8ecfadac6b4b5be75f9c3c306e61ced` | 1.35.1 |
+| [swift-nio-http2](https://github.com/apple/swift-nio-http2) | `0f3e54e29c944c2e835ad52159da7d9e1c94ac69` | 1.46.0 |
+| [swift-nio-ssl](https://github.com/apple/swift-nio-ssl) | `322f3c2a4a21df31c84ca416bf65ee5e9059e440` | 2.37.5 |
+| [swift-nio-transport-services](https://github.com/apple/swift-nio-transport-services) | `67787bb645a5e67d2edcdfbe48a216cc549222d5` | 1.28.0 |
+| [swift-numerics](https://github.com/apple/swift-numerics) | `0c0290ff6b24942dadb83a929ffaaa1481df04a2` | 1.1.1 |
+| [swift-package-support-sentencepiece](https://github.com/weiyanlin117/swift-package-support-sentencepiece) | `a39a5be0b3e3ad9bcb19b085af7dd891c00aa3d2` | Revision pin |
+| [swift-png](https://github.com/kelvin13/swift-png) | `075dfb248ae327822635370e9d4f94a5d3fe93b2` | Revision pin |
+| [swift-protobuf](https://github.com/apple/swift-protobuf) | `d57a5aecf24a25b32ec4a74be2f5d0a995a47c4b` | Revision pin |
+| [swift-sentencepiece](https://github.com/liuliu/swift-sentencepiece) | `8d17bf2e017c97563e8805545d676be9739b6c0e` | Revision pin |
+| [swift-service-lifecycle](https://github.com/swift-server/swift-service-lifecycle) | `7f9326b0326ff86e3646295ea6e891f68c471c5e` | 2.12.0 |
+| [swift-system](https://github.com/apple/swift-system) | `fbd61a676d79cbde05cd4fda3cc46e94d6b8f0eb` | Revision pin |
 
 The exact source defines boundaries that the consumer must preserve:
 
@@ -126,17 +189,51 @@ The exact source defines boundaries that the consumer must preserve:
   measured deadline or proof of worker exit; qualify actual completion/exit.
   Environment/model roots and weight-cache settings have process-wide effects.
 
-The next consumer experiment must build the exact public exports on the claimed
-Mac architectures, freeze its resolved inputs, test offline catalog lookup and
-installed resource custody with an empty private model root, and observe attempted
-network operations. Before generation activation, qualify an explicit offline
-initialization/refusal boundary, full selected-model byte identity, private
-native ownership/output and cancellation/deadline completion. A public upstream
-offline initializer or qualified platform network denial are candidate ways to
-meet that boundary; assuming every known filename stays local is insufficient.
-Keep producer internals out of Frameshift and preserve unavailable/refusal until
-these checks pass. Model source/license/size disclosure and distribution license
-review remain separate admission gates.
+The [ModelZoo path implementation](https://github.com/drawthingsai/draw-things-community/blob/d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66/Libraries/ModelZoo/Sources/ModelZoo.swift#L2400-L2426)
+also consults and attempts to create the user's Documents/Models directory even
+when an external root is set. Therefore `DRAWTHINGS_MODELS_DIR` does not isolate
+all model IO. Qualification must deny roots outside owned custody rather than
+inspect or modify an existing user's models.
+
+An arm64 offline-only consumer runs inside a private copied `.app` fixture with
+an empty model root. It sets `DRAWTHINGS_MODELS_DIR`, clears the cloud API-key
+environment entry, calls only synchronous `inspectModel(..., offline: true)` and
+`downloadableModels(..., offline: true)`, and uses finite outputs. A URLProtocol
+interceptor refuses every request; a canary verifies interception before counting
+SDK calls. A disposable `sandbox-exec` policy denies network and Documents/Models
+IO, then additionally denies checkout reads. A raw loopback-connect canary returns
+`EPERM` under both policies and a different result without them. A source-read
+canary also refuses; these qualify the disposable policy on macOS 27.0.1 only,
+not a shipping entitlement or supported installed sandbox mechanism.
+
+| Fixture | Catalog entries | Selected f16 FLUX.2 Klein 4B / Z Image Turbo | SDK URLSession attempts |
+| --- | --- | --- | --- |
+| Checkout readable, no bundled JSON | 313 | Both resolve; neither downloaded | 0 |
+| Checkout inaccessible, no bundled JSON | 114 | Both refuse resolution | 0 |
+| Checkout inaccessible, exact bundled JSON | 313 | Both resolve; neither downloaded | 0 |
+
+The model root remains empty and stderr remains empty in all three fixtures.
+The SDK silently retains a reduced builtin catalog when resources are absent;
+Frameshift must verify required resources explicitly before presenting this as
+an admitted cohort. `models.json` is 125,897 bytes with SHA-256
+`b50e05acf0410422bb1513b61dc81542e94bea5e5d7c3ed9a94ca47ca89c0134`;
+`configs.json` is 47,709 bytes with SHA-256
+`37180f6a7b21bf718e30e1f72efcc1241691daa5d3dc4ef32fc5d9fe7ec50f86`.
+Both come from the pinned implementation revision. Only model catalog/resource
+lookup is exercised; copying configs does not qualify pipeline configuration.
+The instrumented consumer source SHA-256 is
+`65d29b92dcecd2fd3cbc7b894a115f6f5cb98655e2c2fcc10b028fbb1ba72b75`;
+its arm64 executable SHA-256 is
+`91e507746c965a1fc05f73b29cce7edf8fd922a20655d982ccb6afa8ea99c826`.
+
+Next implement protected resource and selected-weight admission, qualify the
+shipping worker's network/root refusal and actual native ownership/output, then
+measure cancellation/deadline completion on an admitted model cohort. Public
+pipeline initialization still has the network-capable boundary described above.
+Preserve unavailable/refusal until these checks pass; assuming every known
+filename stays local is insufficient. Native Intel/older macOS execution, model
+source/license/size disclosure and distribution license review remain separate
+admission gates. Keep producer internals out of Frameshift.
 
 ### Provider callback logging and failure boundary
 
