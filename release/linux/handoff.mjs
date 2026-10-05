@@ -4,7 +4,7 @@ import { verifyInputs } from '../inputs.mjs';
 import { releaseGit } from '../source.mjs';
 import { buildCandidate } from './candidate.mjs';
 import { inventory, sha256 } from './material.mjs';
-import { availableSpace, extractArchive, openArchive, verifyArchive, verifyExtractedArchive } from './ustar.mjs';
+import { availableSpace, extractArchive, openArchive, verifyArchive, verifyExtractedArchive } from '../ustar.mjs';
 
 const encode = record => JSON.stringify(record) + '\n';
 const same = (a, b) => JSON.stringify(a) === JSON.stringify(b);

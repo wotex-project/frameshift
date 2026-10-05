@@ -341,8 +341,10 @@ This profile admits at most 1 GiB of archive/payload, 512 MiB per file and 65,53
 entries. Check available destination space for the payload plus a 128 MiB reserve
 before writing. Use bounded descriptor reads and compare archive identity before
 and after extraction. Extract into a new owner-only directory, preserve admitted
-file modes, then verify exact directory names/modes and source/candidate
-inventories, synchronize files and verify again before
+file modes, then compare every regular member's bounded descriptor bytes with
+its admitted archive payload, including same-size substitutions. Verify exact
+directory names/modes and source/candidate inventories, synchronize files and
+verify again before
 publishing a private `handoff.json`. The record binds the transport, candidate and
 source digests with publication authority `none`; it is separate from manifest v1.
 

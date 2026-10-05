@@ -5,7 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
 import { sha256 } from './material.mjs';
-import { availableSpace, extractArchive, openArchive, verifyArchive, verifyExtractedArchive } from './ustar.mjs';
+import { availableSpace, extractArchive, openArchive, verifyArchive, verifyExtractedArchive } from '../ustar.mjs';
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'frameshift-ustar-'));
@@ -52,6 +52,10 @@ test('actual USTAR producer preserves bounded regular bytes and modes, and chang
     assert.equal(readFileSync(join(output, 'ubuntu-candidate/nested/still'), 'utf8'), 'retained still bytes');
     assert.equal(lstatSync(join(output, 'ubuntu-candidate/nested')).mode & 0o7777, 0o750);
     assert.equal(lstatSync(join(output, 'ubuntu-candidate/nested/still')).mode & 0o7777, 0o640);
+    writeFileSync(join(output, 'ubuntu-candidate/nested/still'), 'substitute same size');
+    assert.throws(() => verifyExtractedArchive(archive, output), /bytes differ/);
+    writeFileSync(join(output, 'ubuntu-candidate/nested/still'), 'retained still bytes');
+    verifyExtractedArchive(archive, output);
     writeFileSync(f.path, f.bytes);
     assert.throws(() => verifyArchive(archive), /custody/);
   } finally { closeSync(archive.fd); }
@@ -126,6 +130,8 @@ test('archive custody, digest grammar, sparse size ceiling and free-space reserv
   for (const hash of ['0'.repeat(64), 'a'.repeat(64) + '\n', 'A'.repeat(64), '0'.repeat(63)]) {
     assert.throws(() => openArchive(f.path, hash));
   }
+  assert.throws(() => openArchive(f.path, sha256(f.bytes), 'unsupported-candidate'), /profile/);
+  assert.throws(() => openArchive(f.path, sha256(f.bytes), 'macos-candidate'), /path/);
   chmodSync(f.path, 0o666);
   assert.throws(() => openArchive(f.path, sha256(f.bytes)), /custody/);
   chmodSync(f.path, 0o600);

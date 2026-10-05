@@ -455,7 +455,12 @@ captured material/compiler cohorts and actual app/core versions before merging.
 Separate CPU compiler fixtures pass final assembly and no-effect replay; the
 retained complete arm64 host passes the receiver independently. Source/digest/
 compiler/material/version conflicts and changes during assembly/replay refuse.
-Continue native Intel production and candidate archive/workflow handoff before
+The Mac candidate USTAR receiver now preserves those exact bytes/modes and source
+identities through a separately pinned transport archive. Both CPU compiler
+archives enter source-bound universal assembly; the full retained arm64 host and
+both Ubuntu GNU USTAR candidates pass exact member-byte replay. Same-size member
+substitution and namespace/source/transport/profile conflicts refuse. Continue
+native Intel production and native Mac candidate workflow automation before
 signing/notarization and installed channel acceptance; captured cache bytes do
 not establish upstream provenance or licenses, and local test tags do not
 establish public distribution.

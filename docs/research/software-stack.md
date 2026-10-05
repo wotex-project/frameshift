@@ -396,6 +396,34 @@ installed execution. Parent/child records have publication authority `none`;
 source joining and independent digests do not grant production distribution.
 See the [source-cohort contract](../host/macos.md#source-bound-universal-candidate).
 
+### Mac native candidate archive consumer
+
+Observed 2026-10-05 on the same Mac cohort. The system producer reports
+`bsdtar 3.5.3 - libarchive 3.7.4`; POSIX USTAR with `COPYFILE_DISABLE=1`
+preserves the admitted app's ordinary bytes and modes without AppleDouble
+extension members. The shared release reader uses separate fixed Ubuntu and
+Mac root profiles, compares every regular member with the opened archive
+payload and checks exact directory names/modes. A same-size byte substitution
+therefore refuses before candidate metadata can redefine those bytes.
+
+Five Mac fixture groups stage and replay actual BSD archives for separate CPU
+compiler candidates, then enter the existing source-bound universal join. Wrong
+transport/source/CPU/profile, same-size candidate-record replacement, added
+directories and source/namespace changes during readback refuse. Five shared
+USTAR groups retain the malformed header/path/type/padding/terminator and exact
+65,536-member limits, alongside descriptor/byte custody checks.
+
+The complete retained arm64 host passes a 40,922,624-byte archive with SHA-256
+`da96cf5c819b34fc927087d67c7def712a6af86a8a809f8207400392009131b3`.
+Candidate record SHA-256 remains
+`c5e650ae2b70bd297123f51959ccb09e373713bc12dec2a1a341c074be7524b5`.
+An unchanged replay preserves the exact source, app, archive and handoff record.
+Both retained full Ubuntu candidates also reverify their GNU USTAR payloads
+through the shared reader without rebuilding or replacing custody. This is
+local software transport, not hosted Actions/native Intel execution or upstream
+authentication; publication authority is `none`. See the
+[Mac archive contract](../host/macos.md#native-candidate-archive-handoff).
+
 ## Zig boundary
 
 The existing project-owned host raster executable is Zig. It accepts a
@@ -887,12 +915,14 @@ support a deliberately narrow producer: uncompressed USTAR, one candidate root,
 and hard-linked files copied as regular members. Extended tar formats and
 unrestricted extraction add no required capability to this retained-byte path.
 
-`release/linux/ustar.mjs` verifies a separately supplied transport hash through
+`release/ustar.mjs` verifies a separately supplied transport hash through
 one bounded regular descriptor before interpreting those headers. It admits
 only safe regular files/directories, bounds bytes/member count/time/free space,
 creates exclusive private output names and preserves admitted modes without
 restoring archived ownership. Candidate/source verification remains a separate
-semantic check. Exact extracted directory names and modes matter on replay;
+semantic check. Every regular member is compared byte-for-byte through bounded
+no-follow descriptors against its admitted archive payload, including same-size
+substitutions. Exact extracted directory names and modes matter on replay;
 file hashes alone cannot detect an added empty directory or changed directory
 permissions. The final record has no release authority and no manifest v1 fields.
 

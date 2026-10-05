@@ -312,3 +312,12 @@ binds those candidates to the retained universal child; replay has no build,
 merge or signing effect. The [cohort contract](../docs/host/macos.md#source-bound-universal-candidate)
 keeps retained assertions, native producer evidence and public release authority
 separate. Full arm64 receiver admission passes; full native Intel remains open.
+
+`scripts/stage-macos-candidate TAG COMMIT SOURCE_RECORD arm64|x86_64 ARCHIVE
+ARCHIVE_SHA256 OUTPUT` receives a separately pinned POSIX USTAR containing only
+`macos-candidate/`. The shared bounded reader compares each extracted regular
+member with its archive payload and preserves exact modes/names. Native app/core
+versions, candidate records, closures, seals and source identity reverify before
+completion; unchanged replay never extracts or rebuilds. Actual BSD TAR CPU
+fixtures and the full arm64 host pass, alongside retained Ubuntu GNU TAR replay.
+See the [Mac handoff contract](../docs/host/macos.md#native-candidate-archive-handoff).

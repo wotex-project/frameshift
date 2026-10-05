@@ -400,6 +400,44 @@ No-build replay preserves its source and candidate hashes. This is a local
 test-purpose tag and captured source-cache cohort, not a public release or
 authenticated upstream dependency/Intel/installed-distribution qualification.
 
+### Native candidate archive handoff
+
+`scripts/stage-macos-candidate TAG COMMIT SOURCE_RECORD arm64|x86_64 ARCHIVE
+ARCHIVE_SHA256 OUTPUT` admits a bounded uncompressed POSIX USTAR under the same
+frozen source. Independently supply the archive digest. Its sole root is
+`macos-candidate/` with mode `0700`; it contains exactly the completed app and
+private candidate record. Use the release USTAR reader's regular-file/directory,
+checksum, UTF-8/path, mode, member/byte/deadline and complete-terminator rules.
+No aliases, devices, extensions, compression, outside paths or duplicate members
+are admitted. Copy file bytes and modes; do not execute an extraction tool on
+received paths.
+
+Create a new private receiver output and retain a pending marker until exact
+archive member readback, source checks, complete candidate-record/app version/
+closure/signature admission and final byte checks pass. Sync a bounded private
+handoff record binding source-input, transport and candidate-record digests with
+publication authority `none`. A completed rerun verifies the same retained
+archive and candidate without extraction, building, merging, signing or replacing
+bytes. Partial/conflicting custody refuses and remains retained.
+
+Mac producers disable AppleDouble metadata when writing POSIX USTAR and verify
+the actual archive through this receiver before transport. SHA-256 custody does
+not authenticate the upstream dependency cache or prove remote native execution.
+Acceptance includes actual BSD USTAR from separate CPU compiler fixtures, exact
+copied native seals/modes, source/transport/candidate/namespace mutation and
+no-extraction replay, plus a full retained arm64 host archive readback. Full
+native Intel, hosted runner, installed and production signing evidence remains
+separate. The shared Ubuntu profile retains its own `ubuntu-candidate/` root and
+existing acceptance corpus.
+
+Five Mac handoff fixture groups pass actual BSD USTAR staging/replay for both
+compiler CPU candidates, followed by source-bound universal assembly. Wrong
+source/transport/CPU/profile, same-size candidate-record replacement, added
+directories and source/namespace changes during readback refuse. The retained
+full arm64 host also passes a 40,922,624-byte archive and unchanged replay;
+both retained full Ubuntu GNU USTAR candidates pass the shared byte comparison.
+These are local transport/consumer results, with publication authority `none`.
+
 ### Source-bound universal candidate
 
 `scripts/package-macos-cohort TAG COMMIT SOURCE_RECORD ARM_CANDIDATE ARM_SHA256

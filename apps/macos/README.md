@@ -153,3 +153,8 @@ records to one frozen source and matching material/compiler facts before using
 the universal assembler. Its private retained parent/child records have no
 publication authority. See the [source-cohort contract](../../docs/host/macos.md#source-bound-universal-candidate)
 for receiver/refusal and actual producer evidence boundaries.
+
+`scripts/stage-macos-candidate` receives the native candidate's independently
+pinned POSIX USTAR, preserving exact member bytes/modes before source-cohort
+admission. Actual BSD archive fixtures and the full retained arm64 host pass;
+see the [handoff contract](../../docs/host/macos.md#native-candidate-archive-handoff).

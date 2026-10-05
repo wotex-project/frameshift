@@ -7,7 +7,7 @@ const maximumFile = 512 * 1024 * 1024;
 const reserve = 128n * 1024n * 1024n;
 const decoder = new TextDecoder('utf-8', { fatal: true });
 const zero = bytes => bytes.every(byte => byte === 0);
-const sameStat = (a, b) => ['dev', 'ino', 'size', 'mode', 'mtimeNs', 'ctimeNs'].every(key => a[key] === b[key]);
+const sameStat = (a, b) => ['dev', 'ino', 'size', 'mode', 'uid', 'gid', 'nlink', 'mtimeNs', 'ctimeNs'].every(key => a[key] === b[key]);
 
 function read(fd, position, length) {
   const bytes = Buffer.alloc(length);
@@ -32,7 +32,7 @@ function octal(bytes) {
   return Number.parseInt(value, 8);
 }
 
-function members(fd, size, deadline) {
+function members(fd, size, deadline, root) {
   const entries = [];
   const names = new Set();
   const directories = new Set();
@@ -47,9 +47,9 @@ function members(fd, size, deadline) {
         if (performance.now() > deadline) throw new Error('USTAR processing deadline');
         if (!zero(read(fd, offset, Math.min(64 * 1024, size - offset)))) throw new Error('trailing USTAR material');
       }
-      if (!names.has('ubuntu-candidate')) throw new Error('missing candidate root');
+      if (!names.has(root)) throw new Error('missing candidate root');
       for (const entry of entries) {
-        if (entry.path !== 'ubuntu-candidate' && !directories.has(dirname(entry.path))) {
+        if (entry.path !== root && !directories.has(dirname(entry.path))) {
           throw new Error('missing USTAR parent directory');
         }
       }
@@ -68,14 +68,14 @@ function members(fd, size, deadline) {
     const directory = type === 53;
     if (directory && path.endsWith('/')) path = path.slice(0, -1);
     if (/[\u0000-\u001f\u007f\\]/.test(path) || path.split('/').some(part => !part || part === '.' || part === '..') ||
-        !(path === 'ubuntu-candidate' || path.startsWith('ubuntu-candidate/')) || names.has(path)) throw new Error('unsafe or duplicate USTAR path');
+        !(path === root || path.startsWith(root + '/')) || names.has(path)) throw new Error('unsafe or duplicate USTAR path');
     const mode = octal(header.subarray(100, 108));
     const bytes = octal(header.subarray(124, 136));
     for (const [start, end] of [[108, 116], [116, 124], [136, 148]]) octal(header.subarray(start, end));
     for (const start of [329, 337]) if (!zero(header.subarray(start, start + 8))) octal(header.subarray(start, start + 8));
     if (mode > 0o777 || (mode & 0o022) !== 0 || (mode & 0o400) === 0 ||
         (directory && ((mode & 0o500) !== 0o500 || bytes !== 0)) || (!directory && bytes > maximumFile) ||
-        (path === 'ubuntu-candidate' && (!directory || mode !== 0o700))) throw new Error('unsafe USTAR mode or size');
+        (path === root && (!directory || mode !== 0o700))) throw new Error('unsafe USTAR mode or size');
     names.add(path);
     if (directory) directories.add(path);
     entries.push({ path, directory, mode, bytes, offset: position + 512 });
@@ -89,7 +89,8 @@ function members(fd, size, deadline) {
   throw new Error('missing USTAR terminator');
 }
 
-export function openArchive(path, expectedHash) {
+export function openArchive(path, expectedHash, root = 'ubuntu-candidate') {
+  if (!['ubuntu-candidate', 'macos-candidate'].includes(root)) throw new Error('unsupported release archive profile');
   if (typeof expectedHash !== 'string' || expectedHash.length !== 64 || !/^[0-9a-f]{64}$/.test(expectedHash)) throw new Error('invalid expected archive digest');
   const named = lstatSync(path, { bigint: true });
   if (!named.isFile()) throw new Error('archive must be a regular file');
@@ -100,7 +101,7 @@ export function openArchive(path, expectedHash) {
         before.size < 1024n || before.size > BigInt(maximumArchive) || before.size % 512n !== 0n || !sameStat(before, named)) throw new Error('unsafe archive custody');
     const archive = { fd, path, before, expectedHash, deadline: performance.now() + 120_000 };
     verifyArchive(archive);
-    return { ...archive, ...members(fd, Number(before.size), archive.deadline) };
+    return { ...archive, root, ...members(fd, Number(before.size), archive.deadline, root) };
   } catch (error) { closeSync(fd); throw error; }
 }
 
@@ -134,7 +135,22 @@ export function verifyExtractedArchive(archive, output) {
         (entry.directory ? !before.isDirectory() : !before.isFile() || before.size !== BigInt(entry.bytes))) {
       throw new Error('extracted archive custody changed');
     }
-    if (!entry.directory) continue;
+    if (!entry.directory) {
+      if (before.nlink !== 1n) throw new Error('extracted archive alias');
+      const fd = openSync(path, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK);
+      try {
+        if (!sameStat(before, fstatSync(fd, { bigint: true }))) throw new Error('extracted archive file changed');
+        const block = Buffer.alloc(64 * 1024);
+        for (let position = 0; position < entry.bytes;) {
+          if (performance.now() > archive.deadline) throw new Error('archive processing deadline');
+          const count = readSync(fd, block, 0, Math.min(block.length, entry.bytes - position), position);
+          if (!count || !block.subarray(0, count).equals(read(archive.fd, entry.offset + position, count))) throw new Error('extracted archive bytes differ');
+          position += count;
+        }
+        if (readSync(fd, block, 0, 1, entry.bytes) !== 0 || !sameStat(before, fstatSync(fd, { bigint: true })) || !sameStat(before, lstatSync(path, { bigint: true }))) throw new Error('extracted archive file custody changed');
+      } finally { closeSync(fd); }
+      continue;
+    }
     const directory = opendirSync(path);
     try {
       let child;
