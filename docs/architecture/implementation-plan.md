@@ -425,6 +425,17 @@ Installed Ubuntu database/NIF qualification,
 systemd ACL/credential mounts and encrypted provisioning, package wiring, installed
 lifecycle and physical power-loss measurements remain open gates.
 
+The Mac development packager now requests explicit macOS 14 renderer/NIF
+targets and admits every native file against a bounded static closure profile.
+It normalizes only the private stage, removes unused selected-toolchain RPATHs,
+signs native leaves before the app, and derives the minimum OS from actual
+headers. The current OTP cohort makes that declaration 15.0.0. This implements
+the R2 closure/refusal prerequisite, not macOS 14 support, universal OTP/NIF
+assembly, installed Intel/older-OS acceptance or production DMG signing.
+Continue those independent packaging mechanisms under
+[native closure admission](../host/macos.md#native-closure-admission), with
+installed evidence attached to the exact final artifact.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

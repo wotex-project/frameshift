@@ -251,3 +251,15 @@ publication authority none. An identical replay verifies without extraction or
 rewriting; malformed, changed or interrupted output stays retained and refuses.
 See the [archive contract](../docs/architecture/install-and-guide.md#candidate-archive-handoff)
 for resource limits and independent acceptance gates.
+
+Mac development bundles use
+`./scripts/check-macos-closure APP arm64|x86_64|universal` before replacing the
+prior app. Its static observation has publication authority none and includes
+the final file hashes/modes and each native CPU/deployment/loader record.
+`scripts/package-macos` rebuilds the local renderer/NIF cohort with explicit
+macOS 14 targets, normalizes its private stage and signs inside out. The actual
+OTP minimum remains visible in `LSMinimumSystemVersion`; the current runtime
+requires 15.0.0. This mechanism does not sign a production release or establish
+older-OS/Intel runtime compatibility. The
+[owning contract](../docs/host/macos.md#native-closure-admission) records the
+bounded static profile and installed acceptance still required.

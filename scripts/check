@@ -30,6 +30,7 @@ check_policy() {
     "$repository_root/scripts/check-kernel-parity" \
     "$repository_root/scripts/check-keychain-pairing" \
     "$repository_root/scripts/check-packaged-app" \
+    "$repository_root/scripts/check-macos-closure" \
     "$repository_root/scripts/check-platform-observability" \
     "$repository_root/scripts/check-linux-codec-owner" \
     "$repository_root/scripts/check-linux-release" \
@@ -192,6 +193,7 @@ check_release() {
   mise exec -- node --check "$repository_root/release/workflow.mjs"
   mise exec -- node --check "$repository_root/release/workflow-cli.mjs"
   for source in "$repository_root"/release/linux/*.mjs; do mise exec -- node --check "$source"; done
+  for source in "$repository_root"/release/macos/*.mjs; do mise exec -- node --check "$source"; done
   (
     cd "$repository_root/apps/core"
     mise exec -- mix format --check-formatted ../../release/read-version.exs ../../release/linux/verify-version.exs
@@ -205,6 +207,7 @@ check_release() {
     "$repository_root/release/linux/candidate.test.mjs" \
     "$repository_root/release/linux/ustar.test.mjs" \
     "$repository_root/release/workflow.test.mjs"
+  mise exec -- node --test "$repository_root/release/macos/closure.test.mjs"
 }
 
 check_guide_browser() {
@@ -249,6 +252,7 @@ check_core() {
 }
 
 check_macos() {
+  mise exec -- node --test "$repository_root/release/macos/closure.test.mjs"
   (
     cd "$repository_root/apps/macos"
     swift format lint --recursive --strict Sources Tests Package.swift
@@ -284,6 +288,7 @@ check_macos() {
   test -s "$app_bundle/Contents/Resources/FrameshiftMenu@3x.png"
   plutil -lint "$app_bundle/Contents/Info.plist" >/dev/null
   codesign --verify --deep --strict "$app_bundle"
+  "$repository_root/scripts/check-macos-closure" "$app_bundle" "$(uname -m)" >/dev/null
   test "$(plutil -extract CFBundlePackageType raw "$app_bundle/Contents/Info.plist")" = "APPL"
   test "$(plutil -extract CFBundleIconFile raw "$app_bundle/Contents/Info.plist")" = "FrameshiftLight.icns"
   test "$(plutil -extract LSUIElement raw "$app_bundle/Contents/Info.plist")" = "true"

@@ -220,6 +220,56 @@ bounded adapter implementation; accuracy, exact installed producer/consumer
 behavior, oldest-supported-macOS execution and local-only traffic measurements
 require separate recorded tests.
 
+### Native Mac bundle closure
+
+Observed 2026-10-05 on Apple Silicon macOS 27.0.1 with Xcode SDK 27.0
+(`26A425`) and Swift 6.4. The development bundle's declared minimum of macOS
+14 conflicted with actual Mach-O headers: the Zig worker required 27.0.1,
+Exile required 27.0, and OTP 29.1 required 15.0. Five upstream grammar files
+were group-writable. The Swift shell had an absolute Xcode Swift 6.2 RPATH
+although its recorded imports were Apple system libraries, without `@rpath`
+imports. These are inspections of this bundle, not observations on older Macs.
+
+Apple recommends repairing library paths in the build system where possible;
+changing them with `install_name_tool` invalidates existing signatures and
+requires signing again. Its
+[nonstandard bundle guidance](https://developer.apple.com/documentation/xcode/embedding-nonstandard-code-structures-in-a-bundle)
+also distinguishes runtime-writable state from immutable bundle content. The
+development stage retains the OTP layout while signing native leaves before
+the enclosing app; installed Developer ID/hardened-runtime qualification of
+that nonstandard layout is still required.
+
+Loader metadata was reviewed against Apple's
+[Mach-O declarations at XNU f6217f8](https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/EXTERNAL_HEADERS/mach-o/loader.h)
+and [fat wrapper declarations](https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/EXTERNAL_HEADERS/mach-o/fat.h).
+The installed SDK's `mach-o/fat.h` additionally declares the 64-bit fat wrapper.
+The bounded reader checks regions before allocation, generic arm64/x86_64
+subtypes, file types, macOS deployment commands and loader strings. It accepts
+system and explicit bundle-relative imports, refusing inherited run-path
+resolution. Static parsing cannot establish older-OS symbol availability,
+runtime `dlopen` behavior or code-signing policy.
+
+The pinned Zig 0.16.0 `std/Target/Query.zig` accepts versioned OS targets;
+`aarch64-macos.14.0` builds the worker with an observed 14.0 header. Exile
+0.15.0's Makefile invokes the compiler directly and respects
+`MACOSX_DEPLOYMENT_TARGET`. Exqlite 0.42.0 needs a clean native build and
+`:elixir_make`'s actual `:force_build` application setting: a nonempty
+`EXQLITE_USE_SYSTEM`, even `0`, selects system SQLite and cannot request the
+vendored closure. Packaging unsets that variable and rebuilds the vendored
+NIF; observed Exile, spawner and SQLite headers then require 14.0. No load
+command is patched to lower its minimum.
+
+The new static gate inspects 24 native files in the freshly signed development
+app, including OTP crypto/ASN.1 and dynamically opened Exile/SQLite code.
+The bundle declares its actual greatest native minimum, 15.0.0. Small actual
+arm64, x86_64 and universal compiler fixtures establish CPU/deployment parsing,
+contained/missing loader targets, exact unused-toolchain-path removal and
+nested ad-hoc signing. Malformed regions, unsafe modes, changing inodes,
+links, sparse oversized files and oversized namespaces refuse. These fixtures
+do not qualify Intel execution, a universal host release, macOS 14 or 15
+runtime behavior, production signatures or a DMG. See the
+[Mac closure contract](../host/macos.md#native-closure-admission).
+
 ## Zig boundary
 
 The existing project-owned host raster executable is Zig. It accepts a

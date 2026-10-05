@@ -296,6 +296,56 @@ Cloud labeling is a separate explicit opt-in and is disabled by default.
 
 ## Packaging gates
 
+### Native closure admission
+
+Before accepting a development or release bundle, inspect every regular file
+for Mach-O code, including dynamically opened OTP NIFs. The local static gate
+is `scripts/check-macos-closure APP arm64|x86_64|universal`. Its JSON observation
+records relative file identities, CPU slices, native deployment minima and
+loader references; it grants no publication authority. Required code includes
+the shell, CLI, renderer, one OTP emulator, SQLite NIF, Exile NIF and spawner.
+Every native item must contain the selected CPU, or both CPUs for `universal`.
+Specialized CPU subtypes, non-macOS platforms, objects and malformed or
+unsupported Mach-O loader metadata refuse rather than becoming compatibility claims.
+
+This initial closure profile accepts Apple system imports below `/usr/lib/`
+and `/System/Library/`, and bundle-contained loader-relative imports. An
+executable-relative import is admitted only in an executable, whose launch
+context is explicit. The target must be an inspected dylib with the matching
+CPU. Inherited `@rpath` imports are unavailable in this profile: an ambiguous
+run-path stack must never be guessed. Search paths outside the bundle or Apple
+system directories refuse, including unused developer-toolchain paths.
+System imports are recorded, not proved to exist or supply symbols on an older
+OS. Dynamically constructed loads still require their own runtime fixtures.
+
+Admission is bounded to 8,192 entries, 32 directory levels, 512-byte relative
+paths, 128 MiB per file, 512 MiB total file bytes, 128 native files, two CPU
+slices and 1 MiB of load commands per slice. Files and directories must be
+regular, without links or group/world writes. The reader checks descriptor and
+named-file custody, records SHA-256 and modes, and repeats the entire inventory
+after inspection. Its two-minute monotonic processing budget is a software
+check, not a promise to interrupt a stalled filesystem syscall.
+
+`LSMinimumSystemVersion` must be at least the greatest native minimum in the
+bundle. Development packaging requests macOS 14 for the renderer and locally
+compiled NIFs, then derives the declaration from the actual closure; a newer
+OTP minimum remains visible. It must never lower a Mach-O deployment header
+to manufacture support. Only a private disposable packaging stage may remove
+an unused RPATH under the selected Xcode compiler toolchain, and only when
+that native file has no `@rpath` imports. Changed code is signed from nested
+leaves outward before the app signature and the final closure check. A failed
+build or admission preserves the previously accepted app.
+
+Acceptance requires actual small arm64/x86_64 and universal Mach-O fixtures,
+missing/wrong CPU, unsupported platform, malformed lengths, outside/missing
+loader targets, links, oversized input and false OS declaration refusals.
+The real fresh development app must then pass closure and packaged IPC,
+import, restart and offline maintenance checks on the observed Mac. Those
+checks do not qualify macOS 14, Intel execution, universal OTP/NIF packaging,
+Developer ID, hardened runtime, notarization or installed DMG/update behavior.
+
+### Installed distribution evidence
+
 1. clean installation and removal on a fresh supported macOS account;
 2. notarization and hardened-runtime validation;
 3. shell/core version skew produces a clear upgrade error;

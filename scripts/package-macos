@@ -9,15 +9,26 @@ artifact_root="$package_root/.build/artifacts"
 app_bundle="$artifact_root/Frameshift.app"
 release_root="$core_root/_build/prod/rel/frameshift_core"
 renderer_path="$renderer_root/zig-out/bin/frameshift-raster"
+architecture=$(uname -m)
+case "$architecture" in
+  arm64) renderer_target=aarch64-macos.14.0 ;;
+  x86_64) renderer_target=x86_64-macos.14.0 ;;
+  *) echo 'unsupported development Mac architecture' >&2; exit 1 ;;
+esac
 
 (
   cd "$renderer_root"
-  mise exec -- zig build -Doptimize=ReleaseSafe
+  mise exec -- zig build -Doptimize=ReleaseSafe "-Dtarget=$renderer_target"
 )
 
 (
   cd "$core_root"
-  mise exec -- env MIX_ENV=prod mix release --overwrite
+  mise exec -- env MIX_ENV=prod mix deps.clean exqlite --build
+  mise exec -- env -u EXQLITE_USE_SYSTEM MIX_ENV=prod MACOSX_DEPLOYMENT_TARGET=14.0 \
+    "FRAMESHIFT_RENDERER_PATH=$renderer_path" \
+    mix run --no-start --no-compile --no-deps-check -e \
+    'Application.put_env(:elixir_make, :force_build, exqlite: true); Mix.Task.run("deps.compile", ["exile", "exqlite", "--force"])'
+  mise exec -- env MIX_ENV=prod MACOSX_DEPLOYMENT_TARGET=14.0 mix release --overwrite
 )
 
 swift build \
@@ -66,9 +77,14 @@ install -m 755 \
   "$stage/Contents/Resources/bin/launch-bundled-core"
 ditto "$release_root" "$stage/Contents/Resources/core"
 
+# Some upstream data files arrive group-writable. Normalize only this private
+# stage; never edit the dependency cache or a previously accepted bundle.
+find "$stage" -type f -exec chmod go-w,u-s,g-s {} +
+find "$stage" -type d -exec chmod go-w,u-s,g-s,-t {} +
+
 plutil -lint "$stage/Contents/Info.plist" >/dev/null
-codesign --force --sign - --timestamp=none "$stage"
-codesign --verify --deep --strict "$stage"
+mise exec -- node "$repository_root/release/macos/prepare.mjs" "$stage" "$architecture" >&2
+"$repository_root/scripts/check-macos-closure" "$stage" "$architecture" >/dev/null
 
 if [ -e "$app_bundle" ]; then
   rm -rf "$app_bundle"

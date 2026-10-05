@@ -96,3 +96,19 @@ production core release. Neither check executable is copied into the app.
 bundled core is available only in the packaged `.app`. The package script
 creates an ad-hoc-signed local artifact; release signing and notarization require
 external Apple credentials and services.
+
+Development packaging rebuilds the renderer and local NIFs with explicit macOS
+14 targets, signs native leaves before the app and declares the greatest actual
+native minimum. The current OTP runtime makes the bundle require macOS 15.0.0;
+that declaration does not establish execution on macOS 15. Inspect a bundle with:
+
+```sh
+../../scripts/check-macos-closure .build/artifacts/Frameshift.app arm64
+```
+
+Use `x86_64` or `universal` for those requested CPU profiles. The bounded gate
+records relative hashes, modes, native CPU/minimum/loader metadata and refuses
+links, unsafe permissions, unsupported run-path contexts, missing native roles
+and understated OS declarations. See the
+[closure contract](../../docs/host/macos.md#native-closure-admission) for its
+limits and the independent installed/signing requirements.
