@@ -1534,42 +1534,68 @@ qualification, complete inline/transitive/distributed closure or installed
 release notices. Toolchain, SDK/model and OS materials remain independent gates.
 Publication authority is none; rights review remains required.
 
-### Booted Ubuntu manager and caller-directory admission
+### Booted Ubuntu manager, launcher and kernel admission
 
 **Observation:** 2026-10-05. An isolated OrbStack 2.2.3 arm64 machine uses Ubuntu
 24.04.5 userspace, systemd 255.4-1ubuntu8.17 and cgroup v2 on
-`7.0.14-orbstack-00380-ga7e0a2dc9535`. Its limits are 2 GiB RAM, two CPU cores
-and 4 GiB disk; host files and SSH-agent integration are disabled. OrbStack's
-[isolation contract](https://docs.orbstack.dev/machines/isolated) describes a
-shared Linux VM/kernel, so this is not an independent stock Ubuntu kernel.
-The retained arm64 DEB transfers with SHA-256
-`f08859538e1b9f25c57e5d85520dcd15a8dad97cc6f8cd1332b9770859b73b7a`.
-APT installs the declared runtime dependencies and the actual manager starts
-its dedicated nonroot service with the packaged default JIT settings.
+`7.0.14-orbstack-00380-ga7e0a2dc9535`. Machine settings request 2 GiB RAM, two CPU
+cores and a 4 GiB disk-usage limit; these settings are not measured whole-machine
+resource enforcement. Host files and SSH-agent integration are disabled.
+OrbStack's [isolation contract](https://docs.orbstack.dev/machines/isolated)
+describes a shared Linux VM/kernel, so this is not an independent stock Ubuntu
+kernel. The initial userspace has an unrelated failed kernel-debug mount.
+
+The fresh private `v0.1.0` source is
+`14a64975e39fb9f1adb20febf2d1623609c728b4`, based on committed main with only the
+fixture's stable application version selected. The candidate record SHA-256 is
+`5a732eba397cd6865d3c341dfe11993ac2b02b44560b4f0cdbd2dfe936cd686a`;
+the DEB is `5f689c269bab94497ab8cbb6bd3421b81afe116414a83599b256dc7aa837d656`.
+Pinned target tools build its OTP, SQLite/Exile NIF/helper, Rust codec and Zig
+closure. Source/package/tag versions agree. After exact transfer readback, actual
+APT/dpkg replacement installs that archive and its wrappers match the frozen
+source byte-for-byte. No accepted source cohort or archive is rewritten.
 
 The machine injects `/run/systemd/system/service.d/zzz-lxc-service.conf`, which
 disables filesystem/home/private-tmp/device/kernel/control-group protection and
 NoNewPrivileges. Those defaults cannot qualify the required service policy.
-A fixture-only per-unit override restores the declared values; the actual
-service still starts and imports under that configuration. Full kernel-enforcement,
-cgroup/OOM and native-worker termination fixtures remain required.
+A fixture-only per-unit override restores the declared values; the actual host
+starts with default JIT, nonzero matching UID fields, NoNewPrivs=1, zero effective
+capabilities and active seccomp. Actual different-UID control/observer commands,
+identity version, absolute PNG import from an unavailable caller directory,
+literal relative PNG import from its usable private directory and observer/
+outsider refusal pass. Both new imports resolve to the same item. Three POSIX
+launcher groups also exercise readable, unreadable and unlinked directories.
 
-The clean CLI VM needs a usable inherited working directory: a different-UID
-caller inheriting `/root` fails OTP bootstrap, while `/` permits its normal
-version/state response. The current shared launcher policy preserves a readable,
-searchable directory with a resolvable physical path; otherwise it uses `/` and
-refuses relative file arguments before moving. The stdin-only identity launcher
-has no relative file interpretation. No fallback changes groups, public policy,
-Library data, credentials or caller environment isolation.
+`release/linux/check-systemd` compiles `systemd-canary.c` with Ubuntu's native C
+compiler, outside shipped runtime material, and copies the independently pinned
+installed service into four temporary fixture units. It checks their resolved
+identity/confinement/limits against the host, restores only the provider-weakened
+restrictions for those units, and leaves the host unit intact. Actual probes pass
+managed-root writes, read-only system/kernel/cgroup views, home denial, isolated
+temporary/device views, `/dev/null`, NoNewPrivileges, 4096 descriptor limits and
+privilege/realtime/personality/address-family refusal. Kernel pseudo-file denial
+is joined to read-only mount flags; EACCES alone is not read-only mount evidence.
+A native fork probe admits 511 children plus its parent and refuses another with
+EAGAIN, then reaps every child: the actual unit limit is 512 tasks.
 
-Three POSIX groups exercise actual accessible, unreadable and unlinked directories,
-literal file arguments and refusal before reinterpretation. The current launcher
-source is installed as an explicit fixture overlay on the retained arm64 runtime.
-Actual control/observer state/health, identity version and finite absent-backup
-verification pass from the tested caller context. Absolute PNG import from the
-unavailable caller directory and a literal relative PNG import from its usable
-private directory succeed to the same item; observer/outsider control still
-refuses. No model or physical frame is involved. Continue fresh DEB packaging and
-booted install/update/remove with the corrected source before claiming that
-archive's installed lifecycle; stock Ubuntu/native amd64, physical storage/power,
-rights/signing and production release acceptance remain independent gates.
+The memory probe first observes positive `memory.events high` under the actual
+805306368-byte high watermark. Only that disposable canary unit then relaxes its
+high watermark to exercise the unchanged 1073741824-byte `MemoryMax`; the manager
+reports `Result=oom-kill` and its observed `OOMPolicy=stop` terminates the unit.
+Swap remains unlimited in the tested unit, so no total allocation or swap ceiling
+is claimed. A separate native child ignores TERM; the actual 40-second stop
+deadline and `KillMode=control-group` remove its process identity and empty/remove
+its cgroup. Current-invocation journal selection excludes prior fixture messages.
+The harness removes its reserved canary files/units and the host remains active.
+
+The upstream v255 contracts support the distinction between declared settings and
+execution: [memory/task control](https://github.com/systemd/systemd/blob/v255/man/systemd.resource-control.xml),
+[execution confinement](https://github.com/systemd/systemd/blob/v255/man/systemd.exec.xml)
+and [whole-group termination](https://github.com/systemd/systemd/blob/v255/man/systemd.kill.xml).
+These sources were read with gh on 2026-10-05. The successful fixtures qualify the
+specified manager/shared kernel and canary configuration; their high-watermark
+relaxation is not operation with all host limits. Real codec-child stop, booted
+numeric-version update/removal and administrative backup/restore remain separate
+checks. Stock Ubuntu/native amd64, physical storage/power, rights/signing and
+production release acceptance remain independent gates. Publication authority is
+none; no model or physical frame is involved.

@@ -637,17 +637,18 @@ toolchain/native/SDK/OS material gates, vendor derivation and distributed closur
 review. This private technical inventory grants no rights or publication
 authority and does not modify candidate transports or installed packages.
 
-The installed Linux launchers now preserve a usable caller working directory and
-fall back to `/` for unreadable/unlinked directories. Relative import/maintenance
-file paths refuse before that move; absolute and path-free work retain admission.
-Three real filesystem/POSIX groups pass. Current launchers joined to the retained
-Ubuntu arm64 runtime under a booted manager pass control/observer state/health,
-identity version, actual absolute and literal-relative PNG imports and actor
-refusal. The isolated OrbStack userspace has a shared kernel and inherited
-hardening overrides; the fixture restores the declared per-unit restrictions.
-Continue a fresh DEB build and booted update/removal, kernel enforcement and
-cgroup/worker termination evidence. This launcher join does not complete stock
-Ubuntu/native amd64, physical power/storage or production release acceptance.
+The installed Linux launchers preserve a usable caller directory and refuse
+relative-file reinterpretation before fallback to `/`. Three POSIX groups pass.
+A freshly source-bound arm64 DEB installs through actual APT/dpkg; its launchers
+match frozen bytes and booted-manager control/observer, identity and new absolute/
+literal-relative PNG imports pass with default JIT. A repeatable native canary
+joins installed-unit confinement, 4096 descriptors, 512 tasks, positive memory-high
+throttling, the unchanged 1 GiB hard ceiling after explicit canary-only throttle
+relaxation, manager OOM stop and whole-group native-child stop at 40 seconds.
+The isolated OrbStack userspace shares a kernel and restores provider-disabled
+hardening only for the tested units. Continue real codec-child stop and booted
+numeric-version update/removal/administrative recovery. Stock Ubuntu/native amd64,
+physical power/storage, rights/signing and production acceptance remain open.
 
 ## Shared contracts
 

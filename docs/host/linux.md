@@ -131,6 +131,30 @@ helpers must pass with the actual unit restrictions; blanket executable-memory
 or syscall restrictions cannot be asserted without that join. Journald consumes
 the existing redacted console format; durable audit remains SQLite.
 
+Booted-manager acceptance must distinguish resolved unit properties from kernel
+execution. A fixture service copied from the installed unit runs a bounded native
+canary under the same confinement, identity, file-descriptor and cgroup limits.
+It checks writable managed roots, read-only system paths, denied home access,
+private temporary/device views, privilege/address-family refusal, actual process
+and memory ceilings, and whole-control-group stop including a child that ignores
+TERM. After observing the declared memory-high throttle, only the disposable
+canary unit relaxes that throttle to exercise the unchanged hard ceiling; record
+this phase separately from operation with all declared limits. `MemoryMax` bounds
+cgroup memory, not total allocation when swap is available; record swap policy.
+Fixture overrides that restore provider-disabled restrictions are explicit;
+missing kernel support refuses rather than becoming a passing skip. This proves
+the tested manager/kernel/configuration, not another Ubuntu kernel or CPU.
+Run `release/linux/check-systemd CANARY_SOURCE INSTALLED_UNIT_SHA256` as root only
+in a disposable booted Ubuntu 24.04 machine with the exact package installed and
+its service active. The canary source is a root-owned 0600 regular file; pin the
+installed unit digest independently from the accepted package. Compiler tooling
+belongs to the fixture and is not a customer dependency. The harness creates and
+removes only its reserved temporary units and canary paths, preserves the host's
+unit, and refuses conflicting custody or provider-weakened host properties.
+The installed host must separately start with default JIT, import through its
+actual native codec, survive managed restarts and preserve state through actual
+package update/removal. No fixture can replace physical power/storage evidence.
+
 DEB maintainer scripts must be idempotent, refuse unsupported OS/architecture and
 version downgrade before unpack, and preserve data/credentials on update,
 removal and purge. Removal stops/disables the unit and removes packaged files;

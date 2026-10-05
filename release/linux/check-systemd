@@ -1,0 +1,149 @@
+#!/bin/sh
+# Run only as root in a disposable, booted Ubuntu 24.04 qualification machine.
+# This fixture compiles a native canary and creates temporary runtime units.
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+refuse() { printf '%s\n' 'Frameshift systemd fixture: environment, custody or enforcement refused' >&2; exit 1; }
+[ "$#" = 2 ] && [ "$(id -u)" = 0 ] || refuse
+[ "$(cat /proc/1/comm)" = systemd ] || refuse
+# shellcheck disable=SC1091
+[ "$(. /etc/os-release; printf '%s:%s' "$ID" "$VERSION_ID")" = ubuntu:24.04 ] || refuse
+[ -f "$1" ] && [ ! -L "$1" ] && [ "$(stat -c '%u:%a' "$1")" = '0:600' ] || refuse
+[ "$(stat -c '%s' "$1")" -le 65536 ] || refuse
+[ "${#2}" = 64 ] || refuse
+printf '%s\n' "$2" | grep -Eq '^[0-9a-f]{64}$' || refuse
+installed=/usr/lib/systemd/system/frameshift.service
+[ -f "$installed" ] && [ ! -L "$installed" ] && [ "$(sha256sum "$installed" | cut -d ' ' -f1)" = "$2" ] || refuse
+systemctl --quiet is-active frameshift.service || refuse
+property() { systemctl show "$1" --property="$2" --value; }
+for setting in NoNewPrivileges=yes ProtectSystem=strict ProtectHome=yes PrivateTmp=yes PrivateDevices=yes ProtectKernelTunables=yes ProtectKernelModules=yes ProtectControlGroups=yes RestrictSUIDSGID=yes RestrictRealtime=yes LockPersonality=yes MemoryHigh=805306368 MemoryMax=1073741824 TasksMax=512 LimitNOFILE=4096 KillMode=control-group; do
+  key=${setting%%=*}; expected=${setting#*=}
+  [ "$(property frameshift.service "$key")" = "$expected" ] || refuse
+done
+# Every final name is absent before this fixture takes custody.
+for path in /usr/lib/frameshift-systemd-qualification /home/frameshift-systemd-qualification /tmp/frameshift-systemd-qualification /dev/frameshift-systemd-qualification /run/frameshift/.systemd-canary-child; do
+  [ ! -e "$path" ] && [ ! -L "$path" ] || refuse
+done
+for mode in policy tasks oom linger; do
+  unit="frameshift-qualification-$mode.service"
+  [ "$(property "$unit" LoadState)" = not-found ] || refuse
+  [ ! -e "/run/systemd/system/$unit" ] && [ ! -L "/run/systemd/system/$unit" ] || refuse
+  [ ! -e "/run/systemd/system/$unit.d" ] && [ ! -L "/run/systemd/system/$unit.d" ] || refuse
+  [ ! -e "/run/systemd/system.control/$unit.d" ] && [ ! -L "/run/systemd/system.control/$unit.d" ] || refuse
+done
+fixture=$(mktemp -d /run/frameshift-systemd-qualification.XXXXXXXX)
+chmod 755 "$fixture"
+created_units=''
+created_paths=''
+cleanup() {
+  for unit in $created_units; do systemctl stop "$unit" >/dev/null 2>&1 || :; systemctl reset-failed "$unit" >/dev/null 2>&1 || :; rm -f "/run/systemd/system/$unit"; rm -rf "/run/systemd/system/$unit.d" "/run/systemd/system.control/$unit.d"; done
+  for path in $created_paths; do rm -rf "$path"; done
+  rm -f /run/frameshift/.systemd-canary-child
+  rm -rf "$fixture"
+  systemctl daemon-reload
+}
+trap cleanup EXIT HUP INT TERM
+cc -std=c17 -O2 -Wall -Wextra -Werror "$1" -o "$fixture/canary"
+mkdir /usr/lib/frameshift-systemd-qualification
+created_paths='/usr/lib/frameshift-systemd-qualification'
+chmod 777 /usr/lib/frameshift-systemd-qualification
+mkdir /home/frameshift-systemd-qualification
+created_paths="$created_paths /home/frameshift-systemd-qualification"
+chmod 755 /home/frameshift-systemd-qualification
+printf 'fixture\n' >/home/frameshift-systemd-qualification/read
+chmod 644 /home/frameshift-systemd-qualification/read
+for path in /tmp/frameshift-systemd-qualification /dev/frameshift-systemd-qualification; do
+  (set -C; printf 'fixture\n' >"$path")
+  created_paths="$created_paths $path"
+  chmod 644 "$path"
+done
+for mode in policy tasks oom linger; do
+  unit="frameshift-qualification-$mode.service"
+  sed "s|^ExecStart=.*|ExecStart=$fixture/canary $mode|; s/^Restart=on-failure$/Restart=no/" "$installed" >"/run/systemd/system/$unit"
+  created_units="$created_units $unit"
+  mkdir "/run/systemd/system/$unit.d"
+  # Restore precisely the declared restrictions if the fixture provider weakens
+  # all services. Never edit provider defaults or the installed host's unit.
+  cat >"/run/systemd/system/$unit.d/zzzz-qualification.conf" <<'POLICY'
+[Service]
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+PrivateDevices=yes
+ProtectKernelTunables=yes
+ProtectKernelModules=yes
+ProtectControlGroups=yes
+ReadWritePaths=-/var/lib/frameshift -/run/frameshift
+POLICY
+done
+systemctl daemon-reload
+for mode in policy tasks oom linger; do
+  unit="frameshift-qualification-$mode.service"
+  for key in User Group SupplementaryGroups UMask WorkingDirectory NoNewPrivileges ProtectSystem ProtectHome PrivateTmp PrivateDevices ProtectKernelTunables ProtectKernelModules ProtectControlGroups RestrictSUIDSGID RestrictRealtime LockPersonality CapabilityBoundingSet RestrictAddressFamilies ReadWritePaths MemoryHigh MemoryMax MemorySwapMax OOMPolicy TasksMax LimitNOFILE KillMode TimeoutStopUSec; do
+    [ "$(property "$unit" "$key")" = "$(property frameshift.service "$key")" ] || refuse
+  done
+done
+for mode in policy tasks; do
+  unit="frameshift-qualification-$mode.service"
+cursor=$(journalctl -n 0 --show-cursor --no-pager | sed -n 's/^-- cursor: //p')
+  [ -n "$cursor" ] || refuse
+  systemctl start "$unit"
+  count=0
+  while [ "$(property "$unit" ActiveState)" = active ]; do
+    count=$((count + 1)); [ "$count" -lt 60 ] || refuse; sleep 1
+  done
+  [ "$(property "$unit" Result)" = success ] && [ "$(property "$unit" ExecMainStatus)" = 0 ] || { journalctl --after-cursor="$cursor" --unit "$unit" --no-pager --output=cat -n 4; refuse; }
+  journalctl --after-cursor="$cursor" --unit "$unit" --no-pager --output=cat | grep -F 'systemd-canary:'
+done
+unit=frameshift-qualification-oom.service
+systemctl start "$unit"
+group=$(property "$unit" ControlGroup)
+[ "$group" = /system.slice/frameshift-qualification-oom.service ] || refuse
+count=0
+while :; do
+  events="/sys/fs/cgroup$group/memory.events"
+  [ -f "$events" ] || refuse
+  if grep -Eq '^high [1-9][0-9]*$' "$events"; then break; fi
+  count=$((count + 1)); [ "$count" -lt 30 ] || refuse; sleep 1
+done
+printf '%s\n' 'systemd-canary: declared memory-high throttle observed'
+cat "$events"
+[ "$(cat "/sys/fs/cgroup$group/memory.max")" = 1073741824 ] || refuse
+[ "$(cat "/sys/fs/cgroup$group/pids.max")" = 512 ] || refuse
+[ "$(property "$unit" OOMPolicy)" = stop ] || refuse
+# Isolate the hard ceiling after observing the declared throttle. Relax only
+# this disposable canary unit's high watermark; MemoryMax remains the real 1 GiB.
+systemctl set-property --runtime "$unit" MemoryHigh=infinity
+systemctl daemon-reload
+[ "$(property "$unit" MemoryHigh)" = infinity ] || refuse
+count=0
+while [ "$(property "$unit" ActiveState)" != failed ]; do
+  count=$((count + 1)); [ "$count" -lt 30 ] || refuse; sleep 1
+done
+# The real manager's default OOMPolicy=stop terminates the parent and removes
+# the cgroup; post-failure memory.events and a surviving parent are not required.
+[ "$(property "$unit" Result)" = oom-kill ] || refuse
+printf '%s\n' 'systemd-canary: declared hard ceiling and manager OOM stop passed'
+systemctl stop "$unit"
+unit=frameshift-qualification-linger.service
+systemctl start "$unit"
+count=0
+while [ ! -f /run/frameshift/.systemd-canary-child ]; do
+  count=$((count + 1)); [ "$count" -lt 20 ] || refuse; sleep 1
+done
+child=$(cat /run/frameshift/.systemd-canary-child)
+printf '%s\n' "$child" | grep -Eq '^[1-9][0-9]{0,9}$' || refuse
+[ "$(cat "/proc/$child/comm")" = canary ] || refuse
+[ "$(cat "/proc/$child/cgroup")" = '0::/system.slice/frameshift-qualification-linger.service' ] || refuse
+start=$(cut -d ' ' -f22 "/proc/$child/stat")
+# Actual declared 40-second stop deadline: child ignores TERM and must be killed.
+systemctl stop "$unit"
+if [ -f "/proc/$child/stat" ] && [ "$(cut -d ' ' -f22 "/proc/$child/stat")" = "$start" ]; then refuse; fi
+[ "$(property "$unit" ActiveState)" = inactive ] || [ "$(property "$unit" ActiveState)" = failed ] || refuse
+group=/sys/fs/cgroup/system.slice/frameshift-qualification-linger.service
+[ ! -e "$group/cgroup.procs" ] || [ -z "$(cat "$group/cgroup.procs")" ] || refuse
+printf '%s\n' 'systemd-canary: whole-group native-child stop passed'
+systemctl --quiet is-active frameshift.service || refuse
+printf '%s\n' 'Frameshift booted systemd fixture passed; exact fixture kernel only'
