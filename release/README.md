@@ -357,3 +357,17 @@ refuses unsupported literal syntax, extra/generated/aliased sources, wrong
 metadata and changed custody. It reuses the pinned Hex memory parser; the receipt
 carries publication authority `none` and grants no publisher, license, compiler,
 operating-system lock or runtime qualification.
+
+`scripts/check-macos-material TAG COMMIT SOURCE_RECORD arm64|x86_64 CANDIDATE
+CANDIDATE_SHA256 CORE_RECEIPT CORE_SHA256 GLEAM_RECEIPT GLEAM_SHA256 OUTPUT`
+compares separately pinned core/Gleam source receipts with an admitted native
+candidate's captured inputs. Every proved source file and Gleam fetched metadata
+must match; only the explicitly identified generated lexer/parser/helper and
+empty compiler-lock inputs remain separately classified. Unknown or changed
+input refuses. Private output binds all three independent record digests and
+preserves unchanged no-effect replay. The full arm64 host matches 1,457 facts
+with seven recorded exceptions. The
+[material join contract](../docs/host/macos.md#candidate-dependency-source-join)
+keeps retained assertions and byte comparison separate from publisher trust,
+rights, generated/toolchain qualification, native execution attestation and
+production distribution. Publication authority is `none`.

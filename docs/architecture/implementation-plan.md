@@ -492,6 +492,21 @@ core/Gleam receipts to their captured producer inputs next; licensing, independe
 publisher trust, compiler authenticity and generated/runtime qualification remain
 separate gates.
 
+The native Mac dependency-input join now binds independently pinned core/Gleam
+source receipts and an admitted candidate to the same frozen source. Every proved
+file/hash/mode must match captured material; only the explicit generated lexer,
+native-helper and empty compiler-lock profile remains outside source proof.
+Unknown input, receipt/schema/source conflicts and child-time mutation refuse.
+Compiler-role candidates and unchanged successful CLI replay pass; the full
+24-native-file arm64 host joins 1,457 proved source/metadata facts and records
+seven generated/lock exceptions without changing the app or source receipts.
+Finish with static receipt/candidate byte checks after all version/parser children.
+Dependency Git queries now disable lazy fetch and use literal sparse paths; actual
+missing-promisor and pattern-name fixtures pass. This closes captured core/Gleam
+source comparison, with authority none; generated-code/toolchain, independent
+publisher/rights, native execution attestation, installed targets and production
+distribution remain separate. Continue workflow/producer receipt integration.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

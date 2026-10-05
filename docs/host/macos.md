@@ -400,6 +400,48 @@ No-build replay preserves its source and candidate hashes. This is a local
 test-purpose tag and captured source-cache cohort, not a public release or
 authenticated upstream dependency/Intel/installed-distribution qualification.
 
+### Candidate dependency source join
+
+`scripts/check-macos-material TAG COMMIT SOURCE_RECORD arm64|x86_64 CANDIDATE
+CANDIDATE_SHA256 CORE_RECEIPT CORE_SHA256 GLEAM_RECEIPT GLEAM_SHA256 OUTPUT`
+joins separately pinned source receipts to an admitted retained native candidate.
+It performs no fetch, build, merge, signing, extraction or publication. Admit
+bounded canonical private core/Gleam receipts against independently supplied
+SHA-256 values and the exact frozen product/tag/version/commit/source-input
+digest. Validate their literal lock/manifest identities against frozen source,
+their supported schemas, unique bounded source facts/directories and matching
+pinned Hex parser observations. Retained receipt assertions do not authenticate
+the original execution or publisher.
+
+Every admitted core/Gleam source file must appear in the candidate's captured
+material with identical path, bytes, mode and SHA-256. Gleam's bounded fetched
+metadata must match its recorded hash/mode too. All remaining captured inputs
+must belong to the explicit generated profile: the five EarmarkParser/Erlex
+lexer/parser `.erl` outputs with corresponding admitted `.xrl`/`.yrl` inputs,
+FileSystem's `priv/mac_listener` with admitted native source, and the empty
+regular `gleam.lock`. Preserve their captured facts and separate classification
+in the joined record. Do not call them authenticated source, regenerate them or
+rewrite a candidate. Missing/mismatched proved files or any unexplained input
+refuse. Compiler/runtime inputs outside the candidate's material remain separate.
+
+Reuse the candidate receiver's real version/closure/seal checks before and after
+joining. Recheck source, both receipts, candidate, namespaces and private output
+custody before syncing a new bounded `dependency-inputs.json`. Output is 0700,
+pending/record files are 0600, receipts are at most 16 MiB, the joined record is
+at most 64 KiB, and processing has a three-minute software budget with existing
+finite child bounds. Partial/conflicting output remains retained and refused;
+completed replay verifies without rewriting or repeating release effects.
+
+Acceptance includes independently pinned receipt/source/candidate conflicts,
+missing/extra/aliased/unsafe/resource inputs, mutation during inspection and
+unchanged replay using actual admitted compiler-role candidates. The retained
+full native host joins its actual source receipts separately. This closes the
+captured-source comparison, with publication authority `none`; independent
+publisher/registry trust, rights, generated-code/toolchain authenticity, native
+execution attestation, installed acceptance and production distribution remain
+open. Source-bound universal assembly still requires its independent common-byte
+and compiler-cohort checks.
+
 ### Native Mac candidate workflow
 
 `.github/workflows/macos-candidate.yml` is an explicit manual candidate workflow

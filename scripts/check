@@ -54,6 +54,7 @@ check_policy() {
     "$repository_root/scripts/inspect-release-channel" \
     "$repository_root/scripts/check-core-material" \
     "$repository_root/scripts/check-gleam-material" \
+    "$repository_root/scripts/check-macos-material" \
     "$repository_root/scripts/record-release-inputs" \
     "$repository_root/scripts/verify-release-inputs" \
     "$repository_root/release/linux/policy.sh" \

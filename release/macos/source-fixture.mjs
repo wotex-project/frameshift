@@ -12,16 +12,18 @@ const owner = resolve(new URL('../..', import.meta.url).pathname);
 const encode = value => Buffer.from(JSON.stringify(value) + '\n');
 const hash = value => createHash('sha256').update(value).digest('hex');
 function put(root, path, bytes) { const full = join(root, path); mkdirSync(dirname(full), { recursive: true }); writeFileSync(full, bytes); }
-export async function sourceFixture(t) {
+export async function sourceFixture(t, { sourceFiles = {}, materialFiles = {} } = {}) {
   const repository = temporary(t), git = args => execFileSync('git', args, { cwd: repository, encoding: 'utf8', stdio: 'pipe' }).trim();
   for (const path of ['.mise.toml', 'release/read-version.exs', 'release/linux/verify-version.exs']) { mkdirSync(dirname(join(repository, path)), { recursive: true }); copyFileSync(join(owner, path), join(repository, path)); }
   put(repository, '.gitignore', 'var/\n_build/\ndeps/\nbuild/\n'); put(repository, 'README.md', 'exact source\n');
   put(repository, 'apps/core/mix.exs', 'defmodule Fixture do\n  @moduledoc false\n\n  use Mix.Project\n  def project, do: [app: :frameshift_core, version: "0.1.0"]\nend\n');
+  for (const [path, bytes] of Object.entries(sourceFiles)) put(repository, path, bytes);
   git(['init', '-b', 'main']); git(['add', '.']); git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'test(mac): define source-bound compiler fixture']);
   const commit = git(['rev-parse', 'HEAD']), tag = 'v0.1.0'; git(['tag', tag]); mkdirSync(join(repository, 'var'), { mode: 0o700 });
   await recordInputs(repository, tag, commit, join(repository, 'var/inputs'));
   const sourcePath = join(repository, 'var/inputs/source-inputs.json'), source = await verifyInputs(repository, tag, commit, sourcePath);
   put(repository, 'apps/core/deps/example/source.c', 'dependency source\n'); put(repository, 'packages/decision-kernel/build/packages/example/source.gleam', 'Gleam source\n');
+  for (const [path, bytes] of Object.entries(materialFiles)) put(repository, path, bytes);
   const material = await macMaterial(repository), candidates = [];
   for (const architecture of ['arm64', 'x86_64']) {
     const f = nativeFixture(t, architecture), candidate = join(repository, 'var', architecture); mkdirSync(candidate, { mode: 0o700 });

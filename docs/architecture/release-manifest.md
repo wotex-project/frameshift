@@ -182,6 +182,9 @@ validate the generated Hex manifest and metadata. Refuse changed, missing,
 duplicate, unsafe or additional source members. For Git dependencies, compare
 actual regular files/modes with literal committed blobs at the lock's exact
 commit and sparse subtree, ignoring replacement refs and caller Git overrides.
+Dependency queries require Git's `--no-lazy-fetch` support and disable the
+filesystem-monitor hook; absent objects refuse instead of automatic network
+retrieval. Older Git installations without that option refuse this profile.
 
 Build directories, private Git metadata and explicitly generated compiler/native
 outputs are outside this source-byte claim; they still require their own producer

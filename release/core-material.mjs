@@ -68,6 +68,7 @@ const generatedSources = new Map([
   ['earmark_parser/src/earmark_parser_string_lexer.erl', 'src/earmark_parser_string_lexer.xrl'],
   ['erlex/src/erlex_lexer.erl', 'src/erlex_lexer.xrl'], ['erlex/src/erlex_parser.erl', 'src/erlex_parser.yrl'],
 ]);
+export const generatedCoreSourceInput = path => generatedSources.get(path);
 async function dependencyFiles(root, lock, expected, archiveDirectories, budget, limits) {
   const observed = [], seen = new Set(), directories = [];
   const parents = new Set(['']);
@@ -140,7 +141,7 @@ async function inspect(repository, cache, parse, budget) {
       parser = result.parser;
       archiveDirectories = result.directories;
     } else {
-      const git = args => releaseGit(root, ['-c', 'protocol.allow=never', '-c', 'core.fsmonitor=false', ...args]);
+      const git = args => releaseGit(root, ['--no-lazy-fetch', '--literal-pathspecs', '-c', 'protocol.allow=never', '-c', 'core.fsmonitor=false', ...args]);
       if (git(['rev-parse', 'HEAD']).trim() !== lock.commit) fail('core Git checkout differs from lock');
       const tree = git(['ls-tree', '-r', '-z', '--full-tree', lock.commit, '--', ...(lock.sparse ? [lock.sparse] : [])]).split('\0').filter(Boolean);
       if (!tree.length || tree.length > 8192) fail('core Git source entry limit');

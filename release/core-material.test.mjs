@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { chmodSync, copyFileSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, symlinkSync, truncateSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, linkSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, renameSync, rmSync, symlinkSync, truncateSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
@@ -196,4 +196,34 @@ test('changed or aliased private receipt and fixed CLI errors refuse without reb
   const result = spawnSync('mise', ['exec', '--', 'node', join(owner, 'release/core-material-cli.mjs'), f.tag, f.commit, secret, secret, secret], { cwd: owner, encoding: 'utf8', timeout: 60_000 });
   assert.equal(result.status, 1); assert.equal(result.stdout, ''); assert.equal(result.stderr, 'core dependency source: unavailable, unsafe or conflicting input/output\n');
   assert.deepEqual(readFileSync(receipt), original);
+});
+
+test('missing sparse Git tree objects refuse without invoking even an explicitly enabled promisor helper', async t => {
+  const f = await fixture(t), tree = f.depGit(['rev-parse', `${f.depCommit}:packages/demo`]);
+  const bin = join(f.repository, 'var/helper-bin'); mkdirSync(bin);
+  const marker = join(f.repository, 'var/fetch-attempted');
+  put(bin, 'git-remote-controlled', '#!/bin/sh\n: > "$FRAME_MATERIAL_FETCH_MARKER"\nexit 1\n', 0o755);
+  f.depGit(['config', 'core.repositoryformatversion', '1']); f.depGit(['config', 'extensions.partialClone', 'origin']);
+  f.depGit(['config', 'remote.origin.url', 'controlled://fixture.invalid']); f.depGit(['config', 'remote.origin.promisor', 'true']);
+  f.depGit(['config', 'protocol.controlled.allow', 'always']);
+  rmSync(join(f.gitRoot, '.git/objects', tree.slice(0, 2), tree.slice(2)));
+  const oldPath = process.env.PATH, oldMarker = process.env.FRAME_MATERIAL_FETCH_MARKER;
+  process.env.PATH = bin + ':' + oldPath; process.env.FRAME_MATERIAL_FETCH_MARKER = marker;
+  try { await assert.rejects(() => checkCoreMaterial(f)); assert.equal(readdirSync(join(f.repository, 'var')).includes('fetch-attempted'), false); }
+  finally { process.env.PATH = oldPath; if (oldMarker === undefined) delete process.env.FRAME_MATERIAL_FETCH_MARKER; else process.env.FRAME_MATERIAL_FETCH_MARKER = oldMarker; }
+});
+
+test('sparse Git names with pattern characters are literal source subtrees', async t => {
+  const f = await fixture(t);
+  renameSync(join(f.gitRoot, 'packages/demo'), join(f.gitRoot, 'packages/[demo]'));
+  f.depGit(['add', '.']); f.depGit(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'test(release): define literal sparse source']);
+  const dependency = f.depGit(['rev-parse', 'HEAD']), lock = join(f.repository, 'apps/core/mix.lock');
+  writeFileSync(lock, readFileSync(lock, 'utf8').replaceAll(f.depCommit, dependency).replace('packages/demo', 'packages/[demo]'));
+  f.git(['add', '.']); f.git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'test(release): freeze literal sparse lock']);
+  const commit = f.git(['rev-parse', 'HEAD']); f.git(['tag', '-f', f.tag]);
+  const inputs = join(f.repository, 'var/literal-inputs'); await recordInputs(f.repository, f.tag, commit, inputs);
+  const output = join(f.repository, 'var/literal-material');
+  assert.equal((await checkCoreMaterial({ ...f, commit, sourcePath: join(inputs, 'source-inputs.json'), output })).packages, 2);
+  const receipt = JSON.parse(readFileSync(join(output, 'core-material.json')));
+  assert.ok(receipt.packages[1].files.every(file => file.path.startsWith('packages/[demo]/')));
 });

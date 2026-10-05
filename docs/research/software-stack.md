@@ -1108,3 +1108,41 @@ dependencies. These prove agreement with approved frozen locks, not independent
 publisher authentication, rights approval, compiler authenticity, generated-code
 or runtime qualification. Producer receipt joins remain separate under the
 [release input contract](../architecture/release-manifest.md#locked-gleam-dependency-source-bytes).
+
+### Native candidate source-receipt join
+
+**Observation:** 2026-10-05. The actual isolated Mac candidate captures 1,464
+material files. Its independently pinned core/Gleam source receipts match 1,457
+source/metadata paths, hashes and modes. The remaining seven are five generated
+EarmarkParser/Erlex lexer/parser `.erl` files, FileSystem's native `mac_listener`
+and the empty Gleam compiler-lock file. The first six are derived build inputs;
+the source receipts deliberately do not qualify their derivation. The lock is
+metadata, not authenticated source or operating-system lock ownership.
+
+The selected receiver validates bounded canonical private receipts and frozen
+lock/manifest identities, then compares every proved fact with the already
+admitted candidate. Explicit generated exceptions retain their captured hashes
+and reasons; any unexplained input refuses. Actual app versions, closure and
+seals are checked separately. Final static receipt/candidate/bundle readback
+follows all version/parser children, so a child-time change to another already
+read input cannot pass completion. Source-receipt assertions are independently
+pinned inputs, not remote execution or publisher authentication.
+
+Git's current [global options](https://git-scm.com/docs/git#Documentation/git.txt---no-lazy-fetch)
+include `--no-lazy-fetch` to prevent missing promisor objects being retrieved on
+demand and `--literal-pathspecs` to prevent pattern interpretation. The admitted
+dependency reader requires those options, ignores caller Git overrides and
+replacement refs, and disables filesystem monitoring. An actual missing sparse
+tree with an explicitly enabled controlled promisor helper refuses without
+invoking the helper; an actual bracket-containing sparse directory admits by
+literal identity. Unsupported Git installations refuse this source profile.
+
+Six retained-assertion fixture groups use real Git/Mix source, CPU compiler
+roles, version consumers and native seals. Successful CLI replay and in-flight
+receipt conflict/refusal pass. The full 24-native-file arm64 host joins its actual
+source-verifier receipts and preserves joined-record inode/timestamp on replay.
+No build, signing, source normalization or candidate rewrite occurs. Independent
+publisher/registry trust, licenses, compiler/generated-code authenticity,
+native execution attestation, installed support and production distribution
+remain separate under the
+[owning join contract](../host/macos.md#candidate-dependency-source-join).
