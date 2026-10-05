@@ -112,3 +112,17 @@ links, unsafe permissions, unsupported run-path contexts, missing native roles
 and understated OS declarations. See the
 [closure contract](../../docs/host/macos.md#native-closure-admission) for its
 limits and the independent installed/signing requirements.
+
+Create a private development DMG from the already packaged app:
+
+```sh
+../../scripts/package-macos-dmg .build/artifacts/Frameshift.app arm64 /path/to/new-candidate
+```
+
+The output contains a labelled development image and private records binding
+the admitted app and archive hashes. Packaging verifies the mounted read-only
+app, every native seal and its `/Applications` link, then detaches before
+completion. The same command verifies unchanged retained bytes on rerun.
+Interrupted or changed output refuses without replacement. The
+[disk-image contract](../../docs/host/macos.md#development-disk-image-custody)
+keeps production signing, notarization and installed acceptance separate.

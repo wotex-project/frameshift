@@ -270,6 +270,39 @@ do not qualify Intel execution, a universal host release, macOS 14 or 15
 runtime behavior, production signatures or a DMG. See the
 [Mac closure contract](../host/macos.md#native-closure-admission).
 
+### Development disk-image source and readback
+
+Observed 2026-10-05 with the same Mac/SDK cohort. Apple's
+[packaging guidance](https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution)
+specifies a staged product directory, `ditto`, disk-image creation and a
+separate distribution-signing/notarization path. The installed macOS 27
+`hdiutil create/attach/detach` help now warns that these commands are deprecated
+in favor of `diskutil image`/`diskutil eject`, but still exposes the compatible
+UDZO, HFS+, checksum, read-only, explicit mountpoint and no-autoopen options.
+The candidate uses that inspected compatibility surface; no assertion is made
+about the replacement API or tools on an older build host.
+
+The complete current ad-hoc app produces a 23,535,455-byte development DMG.
+Its SHA-256 is retained in private metadata beside the exact 275,228-byte
+bundle observation. Actual read-only mount, app inventory, native closure,
+ad-hoc seals, reading text and `/Applications` link agree; detach restores
+the original private mountpoint. A second invocation repeats mounted readback
+with the same retained archive bytes and hash, rather than rebuilding it.
+These results concern this local container, not a publicly authenticated image.
+
+Small compiler fixtures include a universal app's exact mounted readback and
+unchanged replay. Changed archive bytes, metadata aliases/permissions, a
+changed independently re-signed source, failed creation and incomplete rerun
+refuse without replacing retained custody. A lost response after an actual
+attach still detaches its private mount before refusing completion. An injected
+detach refusal preserves the actual read-only mounted filesystem and pending
+workspace; fixture cleanup then explicitly detaches it. The tool boundary
+limits child output and kills a timed-out child, without claiming that process
+exit removes an OS mount. The
+[development image contract](../host/macos.md#development-disk-image-custody)
+keeps stable source, licenses, universal host assembly, production signatures,
+notarization, Gatekeeper and installed/update evidence separate.
+
 ## Zig boundary
 
 The existing project-owned host raster executable is Zig. It accepts a

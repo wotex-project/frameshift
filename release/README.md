@@ -263,3 +263,13 @@ requires 15.0.0. This mechanism does not sign a production release or establish
 older-OS/Intel runtime compatibility. The
 [owning contract](../docs/host/macos.md#native-closure-admission) records the
 bounded static profile and installed acceptance still required.
+
+`./scripts/package-macos-dmg APP arm64|x86_64|universal OUTPUT` creates a private
+development DMG from an admitted ad-hoc app. It binds the final image and app
+inventory in `dmg.json` and `bundle.json`, after actual read-only mounted-byte
+and native-signature readback and detach. Reruns verify the existing archive;
+source/metadata/archive conflicts and incomplete output refuse without a
+rebuild. A refused detach retains the working mount rather than deleting its
+directory. Its authority remains none and it supplies no stable release input,
+production signature or notarization. See
+[development image custody](../docs/host/macos.md#development-disk-image-custody).

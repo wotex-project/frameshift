@@ -434,7 +434,13 @@ the R2 closure/refusal prerequisite, not macOS 14 support, universal OTP/NIF
 assembly, installed Intel/older-OS acceptance or production DMG signing.
 Continue those independent packaging mechanisms under
 [native closure admission](../host/macos.md#native-closure-admission), with
-installed evidence attached to the exact final artifact.
+installed evidence attached to the exact final artifact. The next implemented
+development prerequisite packages an already admitted ad-hoc app into a labelled
+DMG, verifies its exact mounted bytes/native seals and detaches before recording
+the archive identity. Retained reruns verify rather than rebuild; incomplete or
+changed output refuses. It carries no stable-source or publication authority.
+Continue native universal cohort assembly and exact release-input joining
+before production signing/notarization and installed channel acceptance.
 
 ## Shared contracts
 

@@ -344,6 +344,43 @@ import, restart and offline maintenance checks on the observed Mac. Those
 checks do not qualify macOS 14, Intel execution, universal OTP/NIF packaging,
 Developer ID, hardened runtime, notarization or installed DMG/update behavior.
 
+### Development disk-image custody
+
+`scripts/package-macos-dmg APP arm64|x86_64|universal OUTPUT` creates only a
+private development candidate from an already admitted, ad-hoc-signed app.
+It performs no source build, signing-identity selection, notarization, upload
+or installed-app replacement. The image name and enclosed reading text label
+it development; its completed observation has publication authority `none`.
+This prerequisite does not relax the universal signed production DMG gate.
+
+Before creating a new mode `0700` output, admit the source closure and every
+native signature. Copy into a private payload, repeat admission and compare
+the exact app inventory with the source. The disk image contains only that
+app, a fixed `/Applications` link and development reading text, apart from
+explicitly recognized filesystem metadata. Use a compressed, read-only HFS+
+UDIF image, verify its container, mount it read-only at a private explicit
+mountpoint without Finder opening, and check the mounted app's exact
+inventory, closure, native signatures and reading/link bytes. Detach that
+exact mountpoint before acknowledging completion; a refused detach retains
+the private working directory rather than deleting through a mount.
+
+Bind the admitted app observation and final DMG size/SHA-256 in synced
+mode `0600` metadata, capped at 1 MiB. The DMG is bounded to 1 GiB; require
+twice the source byte count plus 256 MiB free before staging, with bounded
+tool output and finite tool deadlines. A completed rerun verifies retained
+metadata, the unchanged source and DMG, and performs mounted readback again;
+it never rebuilds or replaces those bytes. A changed source, changed archive,
+unexpected member or interrupted private output refuses and stays retained.
+Disk-image creation need not produce the same bytes on independent builds;
+identity comes from retaining one verified candidate.
+
+Acceptance includes actual image creation/mount/readback/detach with small
+compiler fixtures and the complete development app on the observed Mac,
+unchanged replay, tamper/source-change/incomplete-output refusal, and finite
+creator/attach/detach failure fixtures. A mounted copy and valid ad-hoc seals
+do not prove Gatekeeper, notarization, Intel execution, installed lifecycle,
+the oldest supported OS, production licensing or update behavior.
+
 ### Installed distribution evidence
 
 1. clean installation and removal on a fresh supported macOS account;
