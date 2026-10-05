@@ -28,3 +28,6 @@ export const sparkleArchive = Object.freeze({
   sha256: '17e28312b8e18ab7cdbbe09a6fb28cc55a5479ec6c371dbc07cdecd2a14fd959',
   url: 'https://github.com/sparkle-project/Sparkle/releases/download/2.10.0/Sparkle-for-Swift-Package-Manager.zip',
 });
+export const sparkleInputArchive = 'apps/macos/.build/sparkle/Sparkle-for-Swift-Package-Manager.zip';
+export const sparkleInputFramework = 'apps/macos/.build/artifacts/macos/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework/';
+export const isSparkleInput = path => path === sparkleInputArchive || path.startsWith(sparkleInputFramework);

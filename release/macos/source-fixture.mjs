@@ -12,7 +12,7 @@ const owner = resolve(new URL('../..', import.meta.url).pathname);
 const encode = value => Buffer.from(JSON.stringify(value) + '\n');
 const hash = value => createHash('sha256').update(value).digest('hex');
 function put(root, path, bytes) { const full = join(root, path); mkdirSync(dirname(full), { recursive: true }); writeFileSync(full, bytes); }
-export async function sourceFixture(t, { sourceFiles = {}, materialFiles = {} } = {}) {
+export async function sourceFixture(t, { sourceFiles = {}, materialFiles = {}, prepareMaterial = async () => [], prepareApp = async () => {} } = {}) {
   const repository = temporary(t), git = args => execFileSync('git', args, { cwd: repository, encoding: 'utf8', stdio: 'pipe' }).trim();
   for (const path of ['.mise.toml', 'release/read-version.exs', 'release/linux/verify-version.exs']) { mkdirSync(dirname(join(repository, path)), { recursive: true }); copyFileSync(join(owner, path), join(repository, path)); }
   put(repository, '.gitignore', 'var/\n_build/\ndeps/\nbuild/\n'); put(repository, 'README.md', 'exact source\n');
@@ -24,7 +24,7 @@ export async function sourceFixture(t, { sourceFiles = {}, materialFiles = {} } 
   const sourcePath = join(repository, 'var/inputs/source-inputs.json'), source = await verifyInputs(repository, tag, commit, sourcePath);
   put(repository, 'apps/core/deps/example/source.c', 'dependency source\n'); put(repository, 'packages/decision-kernel/build/packages/example/source.gleam', 'Gleam source\n');
   for (const [path, bytes] of Object.entries(materialFiles)) put(repository, path, bytes);
-  const material = await macMaterial(repository), candidates = [];
+  const material = [...await macMaterial(repository), ...await prepareMaterial({ repository, tag, commit, sourcePath, source })], candidates = [];
   for (const architecture of ['arm64', 'x86_64']) {
     const f = nativeFixture(t, architecture), candidate = join(repository, 'var', architecture); mkdirSync(candidate, { mode: 0o700 });
     const app = f.root;
@@ -33,6 +33,7 @@ export async function sourceFixture(t, { sourceFiles = {}, materialFiles = {} } 
     put(core, 'releases/start_erl.data', '17.1 0.1.0');
     put(core, 'releases/0.1.0/frameshift_core.rel', '{release,{"frameshift_core","0.1.0"},{erts,"17.1"},[{frameshift_core,"0.1.0",permanent}]}.\n');
     put(core, 'lib/frameshift_core-0.1.0/ebin/frameshift_core.app', '{application,frameshift_core,[{vsn,"0.1.0"}]}.\n');
+    await prepareApp(f, architecture);
     await prepareDevelopmentBundle(app, architecture);
     // These are explicit compiler-purpose assertions, not remote/native Intel
     // producer evidence. The fixture executes actual cross-CPU compiled code.

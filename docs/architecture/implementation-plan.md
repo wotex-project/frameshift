@@ -752,9 +752,15 @@ pass real Git/Mix/SwiftPM/SDK producers, independent receipt digests, unchanged
 replay, wrong frozen pins/source, same-byte cache mutation during the second
 manifest child, strict schema/profile/custody and incomplete-output refusal.
 Receipts have authority `none`; they do not authenticate remote execution or
-upstream derivation. Continue wiring them into captured native compiler inputs,
-candidate/material archive receivers and the application updater. The receipt
-alone does not close those joins or installed/release acceptance.
+upstream derivation. The candidate/material consumers now require all 85 SDK
+regular files and the exact archive to match this independently pinned receipt,
+separate from core/Gleam source counts and generated exceptions. Three actual
+SDK/compiler groups pass both CPU joins, fourth-receipt BSD USTAR transport,
+immutable CLI replay and missing/partial/mismatched source, input, member,
+digest and child-time replacement refusal. The no-updater and Ubuntu profiles
+retain their existing formats. Continue native SwiftPM/compiler-input capture,
+application updater integration and installed/release acceptance; these local
+consumer fixtures do not authenticate remote compilation or grant publication.
 
 S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned

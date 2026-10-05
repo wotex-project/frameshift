@@ -1149,7 +1149,7 @@ Frameworks path. This compiler observation does not establish a self-contained
 running app; packaging must admit the actual cache and eliminate the unwanted
 external search path under a bounded rule.
 
-The material consumer now verifies archive size/hash before invoking extraction
+The material consumer verifies archive size/hash before invoking extraction
 on those fixed admitted bytes, compares all 85 regular files, 57 directories and
 nine aliases with the actual SwiftPM framework, and preserves pre/post archive
 and cache custody. Six groups pass exact archive/cache/CLI admission and
@@ -1186,6 +1186,21 @@ manifest child. That last case requires pre/post inode/time custody as well as
 hash equality and leaves the incomplete receipt marker retained. This is input
 receipt evidence; captured compiler/native candidates, transported material,
 application update behavior and remote/installed/rights proof remain separate.
+
+The native candidate and material receivers consume that independently pinned
+SDK receipt. They require the embedded framework and its 86 captured binary
+inputs together, compare every original framework/archive path, mode, length
+and hash, and preserve the separate core/Gleam source-file count and three
+generated-input exceptions. Three actual SDK/compiler groups pass both CPU
+joins, fourth-receipt BSD USTAR transport, immutable CLI replay, wrong receipt/
+package/digest/input scope, missing/unsafe/extra member and child-time receipt
+replacement refusal. The receiver recomputes and compares the joined receipt;
+transport hashes alone cannot admit a semantically conflicting join. No-updater
+and Ubuntu receipt profiles remain unchanged. These are retained-purpose native
+consumer observations; the production compiler's SwiftPM-input capture and full
+host updater integration still require their own join. Publication authority is
+`none`; original universal SDK hashes do not describe newly thinned/resealed
+app binaries or attest remote native execution.
 
 ### AppKit owned-core quit and modal-loop delivery
 

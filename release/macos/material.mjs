@@ -9,6 +9,8 @@ import { releaseGit } from '../source.mjs';
 import { inspectMacCandidate } from './cohort.mjs';
 import { auditMacBundle } from './closure.mjs';
 import { macImageTool } from './dmg.mjs';
+import { readSparkleSourceReceipt } from './sparkle-source.mjs';
+import { joinSparkleInputs } from './sparkle-inputs.mjs';
 
 const encode = value => Buffer.from(JSON.stringify(value) + '\n');
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -27,21 +29,25 @@ function synchronize(path, isDirectory = false) {
     fsyncSync(fd);
   } finally { closeSync(fd); }
 }
-export async function macMaterialJoin({ repository, tag, commit, sourcePath, architecture, candidate, candidateSha256, corePath, coreSha256, gleamPath, gleamSha256, output }, { tool = macImageTool } = {}) {
+export async function macMaterialJoin({ repository, tag, commit, sourcePath, architecture, candidate, candidateSha256, corePath, coreSha256, gleamPath, gleamSha256, sparklePath, sparkleSha256, output }, { tool = macImageTool } = {}) {
+  if (Boolean(sparklePath) !== Boolean(sparkleSha256)) fail('both updater receipt custody inputs required');
   repository = realpathSync(repository); output = resolve(output);
   const deadline = performance.now() + 180_000, budget = () => { if (performance.now() > deadline) fail('Mac material join processing deadline'); };
   const source = await verifyInputs(repository, tag, commit, sourcePath); budget();
-  const inputDirectories = [candidate, dirname(resolve(corePath)), dirname(resolve(gleamPath))].map(path => resolve(path));
+  const inputDirectories = [candidate, dirname(resolve(corePath)), dirname(resolve(gleamPath)), ...(sparklePath ? [dirname(resolve(sparklePath))] : [])].map(path => resolve(path));
   const custody = () => inputDirectories.map(path => ({ identity: identity(directory(path)), names: readdirSync(path).sort() }));
   const initialCustody = custody();
   const inspect = async () => {
     const core = await readMaterialReceipt(corePath, coreSha256, source, 'locked-core-source-material'), gleam = await readMaterialReceipt(gleamPath, gleamSha256, source, 'locked-gleam-source-material');
     const retained = await inspectMacCandidate({ repository, source, candidate, expectedDigest: candidateSha256, architecture }, tool); budget();
-    const joined = await joinDependencyInputs(repository, core, gleam, retained.material); budget(); return joined;
+    const sparkle = sparklePath ? await readSparkleSourceReceipt(sparklePath, sparkleSha256, source) : undefined;
+    const inputs = joinSparkleInputs(retained.material, sparkle);
+    const joined = await joinDependencyInputs(repository, core, gleam, inputs.material); budget();
+    return { ...joined, ...(sparkle ? { sparkleReceiptSha256: sparkleSha256, updaterInputs: inputs.updaterInputs } : {}) };
   };
   const joined = await inspect(), parent = dirname(output), parentStat = lstatSync(parent, { bigint: true });
   if (!parentStat.isDirectory() || parentStat.uid !== BigInt(process.getuid()) || (parentStat.mode & 0o022n) !== 0n) fail('unsafe Mac material output parent');
-  const physical = join(realpathSync(parent), basename(output)), inputs = [candidate, dirname(corePath), dirname(gleamPath)].map(path => realpathSync(path));
+  const physical = join(realpathSync(parent), basename(output)), inputs = inputDirectories.map(path => realpathSync(path));
   if (physical === repository || inputs.some(path => physical === path || physical.startsWith(path + sep) || path.startsWith(physical + sep)) || (physical.startsWith(repository + sep) && !releaseGit(repository, ['check-ignore', '--no-index', physical]).length)) fail('Mac material output overlaps inputs');
   const bytes = encode({ schemaVersion: 1, kind: 'macos-dependency-input-join', product: source.product, tag, version: source.version, sourceCommit: commit,
     sourceInputsSha256: hash(encode(source)), architecture, candidateRecordSha256: candidateSha256, coreReceiptSha256: coreSha256, gleamReceiptSha256: gleamSha256, publicationAuthority: 'none', ...joined });
@@ -63,6 +69,7 @@ export async function macMaterialJoin({ repository, tag, commit, sourcePath, arc
   // catches a child-time change to another input already read in that pass.
   await readMaterialReceipt(corePath, coreSha256, source, 'locked-core-source-material');
   await readMaterialReceipt(gleamPath, gleamSha256, source, 'locked-gleam-source-material');
+  if (sparklePath) await readSparkleSourceReceipt(sparklePath, sparkleSha256, source);
   const candidatePath = join(candidate, 'candidate.json');
   const candidateBytes = await readReleaseInput(candidatePath, { maximum: 16 * 1024 * 1024, privateKey: true });
   if (lstatSync(candidatePath).nlink !== 1 || hash(candidateBytes) !== candidateSha256 || !same(JSON.parse(candidateBytes).bundle, await auditMacBundle(join(candidate, 'Frameshift.app'), architecture))) fail('Mac material final candidate custody changed');

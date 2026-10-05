@@ -6,7 +6,7 @@ import { sparkleLinks, sparkleRoot } from './macos-framework.mjs';
 const archiveProfiles = {
   'ubuntu-candidate': { archive: 1024 * 1024 * 1024, file: 512 * 1024 * 1024, entries: 65_536 },
   'macos-candidate': { archive: 1024 * 1024 * 1024, file: 512 * 1024 * 1024, entries: 65_536 },
-  'macos-material': { archive: 33 * 1024 * 1024, file: 16 * 1024 * 1024, entries: 4 },
+  'macos-material': { archive: 33 * 1024 * 1024, file: 16 * 1024 * 1024, entries: 5 },
   'ubuntu-material': { archive: 33 * 1024 * 1024, file: 16 * 1024 * 1024, entries: 4 }
 };
 const reserve = 128n * 1024n * 1024n;

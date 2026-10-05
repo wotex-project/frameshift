@@ -33,8 +33,9 @@ async function privateBytes(path, maximum, expectedHash) {
   return bytes;
 }
 
-export async function stageDependencyMaterial({ repository, tag, commit, sourcePath, architecture, candidate, candidateSha256, archivePath, archiveSha256, coreSha256, gleamSha256, joinSha256, output }, { platform, tool } = {}) {
+export async function stageDependencyMaterial({ repository, tag, commit, sourcePath, architecture, candidate, candidateSha256, archivePath, archiveSha256, coreSha256, gleamSha256, joinSha256, sparkleSha256, output }, { platform, tool } = {}) {
   if (!['macos', 'ubuntu'].includes(platform)) fail('unsupported dependency input archive profile');
+  if (sparkleSha256 !== undefined && (platform !== 'macos' || typeof sparkleSha256 !== 'string' || !/^[0-9a-f]{64}$/.test(sparkleSha256))) fail('unsupported updater receipt custody input');
   const root = platform + '-material', architectures = platform === 'macos' ? ['arm64', 'x86_64'] : ['arm64', 'amd64'];
   const adapter = platform === 'macos' ? await import('./macos/material.mjs') : await import('./linux/source-material.mjs');
   const joinMaterial = platform === 'macos' ? adapter.macMaterialJoin : adapter.linuxMaterialJoin;
@@ -43,7 +44,8 @@ export async function stageDependencyMaterial({ repository, tag, commit, sourceP
   const source = await verifyInputs(repository, tag, commit, sourcePath), archive = openArchive(archivePath, archiveSha256, root);
   try {
     const expected = new Map([[root, 0], [root + '/core-material.json', 16 * 1024 * 1024], [root + '/gleam-material.json', 16 * 1024 * 1024], [root + '/dependency-inputs.json', 64 * 1024]]);
-    if (archive.entries.length !== 4 || archive.entries.some(entry => !expected.has(entry.path) || entry.directory !== (entry.path === root) || entry.mode !== (entry.directory ? 0o700 : 0o600) || (!entry.directory && (entry.bytes < 1 || entry.bytes > expected.get(entry.path))))) fail('unsupported material handoff members');
+    if (sparkleSha256) expected.set(root + '/sparkle-material.json', 64 * 1024);
+    if (archive.entries.length !== expected.size || archive.entries.some(entry => !expected.has(entry.path) || entry.directory !== (entry.path === root) || entry.mode !== (entry.directory ? 0o700 : 0o600) || (!entry.directory && (entry.bytes < 1 || entry.bytes > expected.get(entry.path))))) fail('unsupported material handoff members');
     const parent = dirname(output), parentStat = lstatSync(parent, { bigint: true });
     if (!parentStat.isDirectory() || parentStat.uid !== BigInt(process.getuid()) || (parentStat.mode & 0o022n) !== 0n) fail('unsafe material handoff parent');
     const destination = join(realpathSync(parent), basename(output)), input = realpathSync(candidate), archiveInput = realpathSync(archivePath);
@@ -59,9 +61,11 @@ export async function stageDependencyMaterial({ repository, tag, commit, sourceP
       verifyExtractedArchive(archive, destination); verifyArchive(archive);
       await privateBytes(join(material, 'core-material.json'), 16 * 1024 * 1024, coreSha256);
       await privateBytes(join(material, 'gleam-material.json'), 16 * 1024 * 1024, gleamSha256);
+      if (sparkleSha256) await privateBytes(join(material, 'sparkle-material.json'), 64 * 1024, sparkleSha256);
       const received = await privateBytes(joinedPath, 64 * 1024, joinSha256);
       const result = await joinMaterial({ repository, tag, commit, sourcePath, architecture, candidate, candidateSha256,
-        corePath: join(material, 'core-material.json'), coreSha256, gleamPath: join(material, 'gleam-material.json'), gleamSha256, output: verification }, { tool });
+        corePath: join(material, 'core-material.json'), coreSha256, gleamPath: join(material, 'gleam-material.json'), gleamSha256,
+        ...(sparkleSha256 ? { sparklePath: join(material, 'sparkle-material.json'), sparkleSha256 } : {}), output: verification }, { tool });
       if (result.recordSha256 !== joinSha256 || !(await privateBytes(verifiedPath, 64 * 1024, joinSha256)).equals(received)) fail('received dependency join differs from local verification');
       return result;
     };
@@ -94,6 +98,7 @@ export async function stageDependencyMaterial({ repository, tag, commit, sourceP
     const joined = await verifyReceived();
     const bytes = encode({ schemaVersion: 1, kind: platform + '-dependency-input-handoff', product: source.product, tag, version: source.version, sourceCommit: commit,
       sourceInputsSha256: hash(encode(source)), architecture, candidateRecordSha256: candidateSha256, archiveSha256, coreReceiptSha256: coreSha256, gleamReceiptSha256: gleamSha256,
+      ...(sparkleSha256 ? { sparkleReceiptSha256: sparkleSha256, updaterInputs: joined.updaterInputs } : {}),
       dependencyInputsSha256: joinSha256, provedSourceFiles: joined.provedSourceFiles, generatedInputs: joined.generatedInputs.length, ...(platform === 'ubuntu' ? { retainedGitMetadata: joined.retainedGitMetadata.length } : {}), publicationAuthority: 'none' });
     if (bytes.length > 4096) fail('material handoff record limit');
     if (exists && !(await privateBytes(path, 4096)).equals(bytes)) fail('material retained handoff differs');
@@ -108,6 +113,6 @@ export async function stageDependencyMaterial({ repository, tag, commit, sourceP
       if (!same(created, directory(destination)) || !same(materialDirectoryNames(destination), ['handoff.json', 'handoff.pending', root, 'verification'].sort()) || !(await privateBytes(path, 4096)).equals(bytes) || !(await privateBytes(pending, 1024)).equals(marker)) fail('material handoff completion custody changed');
       unlinkSync(pending); synchronize(destination, true); synchronize(parent, true);
     }
-    return { publicationAuthority: 'none', architecture, provedSourceFiles: joined.provedSourceFiles, generatedInputs: joined.generatedInputs.length, ...(platform === 'ubuntu' ? { retainedGitMetadata: joined.retainedGitMetadata.length } : {}), recordSha256: hash(bytes), disposition: exists ? 'retained-bytes-verified' : 'dependency-input-archive-staged' };
+    return { publicationAuthority: 'none', architecture, provedSourceFiles: joined.provedSourceFiles, generatedInputs: joined.generatedInputs.length, ...(sparkleSha256 ? { updaterInputs: joined.updaterInputs } : {}), ...(platform === 'ubuntu' ? { retainedGitMetadata: joined.retainedGitMetadata.length } : {}), recordSha256: hash(bytes), disposition: exists ? 'retained-bytes-verified' : 'dependency-input-archive-staged' };
   } finally { closeSync(archive.fd); }
 }

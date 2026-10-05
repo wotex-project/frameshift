@@ -8,6 +8,7 @@ import { releaseGit } from '../source.mjs';
 import { auditMacBundle } from './closure.mjs';
 import { macImageTool, verifyDevelopmentSignatures } from './dmg.mjs';
 import { universalDevelopmentBundle } from './universal.mjs';
+import { isSparkleInput, sparkleArchive, sparkleInputArchive, sparkleInputFramework } from '../macos-framework.mjs';
 
 const encode = value => Buffer.from(JSON.stringify(value) + '\n');
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -53,9 +54,11 @@ function materialFacts(files) {
   const paths = new Set(); let bytes = 0;
   for (const file of files) {
     if (!keys(file, 'path mode bytes sha256') || typeof file.path !== 'string' || Buffer.byteLength(file.path) > 512 || /[\u0000-\u001f\u007f\\]/.test(file.path) || file.path.split('/').some(part => !part || part === '.' || part === '..') ||
-        !['apps/core/deps/', 'packages/decision-kernel/build/packages/'].some(root => file.path.startsWith(root)) || paths.has(file.path) ||
+        (!['apps/core/deps/', 'packages/decision-kernel/build/packages/', sparkleInputFramework].some(root => file.path.startsWith(root)) && file.path !== sparkleInputArchive) || paths.has(file.path) ||
         !Number.isInteger(file.mode) || file.mode < 0 || file.mode > 0o7777 || !Number.isSafeInteger(file.bytes) || file.bytes < 0 || file.bytes > 128 * 1024 * 1024 || !digest(file.sha256)) fail('invalid Mac candidate material entry');
     paths.add(file.path); bytes += file.bytes;
+    if (isSparkleInput(file.path) && ((file.mode & 0o7022) || !(file.mode & 0o400) || file.bytes > 16 * 1024 * 1024 ||
+        (file.path === sparkleInputArchive && (file.mode !== 0o600 || file.bytes !== sparkleArchive.bytes || file.sha256 !== sparkleArchive.sha256)))) fail('invalid pinned updater material');
   }
   if (bytes > 512 * 1024 * 1024) fail('Mac candidate material byte limit');
   return files;
@@ -73,6 +76,8 @@ export async function inspectMacCandidate({ repository, source, candidate, expec
       record.schemaVersion !== 1 || record.kind !== 'macos-native-build-candidate' || record.product !== source.product || record.publicationAuthority !== 'none' || record.tag !== source.tag || record.version !== source.version || record.sourceCommit !== source.commit || record.sourceInputsSha256 !== hash(encode(source)) || record.architecture !== architecture) fail('Mac candidate source or record digest differs');
   const compiler = compilerCohort(record.execution, architecture), material = materialFacts(record.material);
   const app = join(candidate, 'Frameshift.app'), bundle = await auditMacBundle(app, architecture);
+  const updater = material.filter(file => isSparkleInput(file.path));
+  if (Boolean(bundle.links?.length) !== Boolean(updater.length) || (updater.length && (updater.length !== 86 || !updater.some(file => file.path === sparkleInputArchive)))) fail('Mac updater bundle and captured material differ');
   if (bundle.natives.some(file => file.slices.length !== 1 || file.slices[0].arch !== architecture) || !isDeepStrictEqual(bundle, record.bundle)) fail('Mac candidate bundle differs');
   verifyDevelopmentSignatures(app, bundle, tool);
   for (const [name, expected] of [['CFBundleIdentifier', source.product], ['CFBundleShortVersionString', source.version], ['CFBundleVersion', source.version]]) {

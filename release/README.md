@@ -131,7 +131,7 @@ binds actual SwiftPM manifest parsing and admitted SDK/cache bytes to frozen
 source in a private `sparkle-material.json`. It performs no fetch, app compile,
 thinning, signing or update. Replays verify unchanged receipt custody. The
 independent digest consumer preserves strict source/profile/schema bounds; the
-native/captured-input/transport joins must still consume that receipt. See the
+material join and archive receiver consume it for updater-bearing candidates; native compiler-input capture remains separate. See the
 [updater source contract](../docs/architecture/release-manifest.md#pinned-mac-updater-source-material).
 
 The plan is compact JSON with one trailing newline, such as:
@@ -592,6 +592,16 @@ Partial/conflicting output stays retained; successful replay does not extract,
 fetch, build, sign or rewrite. The full arm64 receipt archive passes at 255,488
 bytes. The [receipt handoff contract](../docs/host/macos.md#dependency-source-receipt-archive-handoff)
 defines its fixed members, private modes, ceilings and remaining evidence gates.
+
+For an updater-bearing candidate, append `SPARKLE_RECEIPT SPARKLE_SHA256` to
+`scripts/check-macos-material` and append `SPARKLE_SHA256` to the receiver above.
+Include the source gate's independently pinned `sparkle-material.json` as the
+fourth receipt in `macos-material/`, mode `0600`, at most 64 KiB. All 85 original
+framework files and the fixed archive must match captured candidate inputs.
+The join and handoff record the SDK receipt digest and 86 binary inputs separately
+from core/Gleam source counts. The receiver recomputes the complete joined
+receipt, preserves immutable replay and refuses missing, partial or unexpected
+SDK evidence. The no-updater and Ubuntu profiles retain their existing formats.
 
 `scripts/prepare-gleam-metadata TAG COMMIT SOURCE_RECORD` prepares only the
 decision-kernel's generated ignored `packages.toml` for a new candidate. It

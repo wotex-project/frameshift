@@ -581,11 +581,37 @@ and compiler-cohort checks.
 
 ### Dependency source receipt archive handoff
 
+Updater-bearing candidates must additionally join an independently hashed
+`sparkle-material.json` from the pinned updater source gate. Capture its 85
+regular framework files below
+`apps/macos/.build/artifacts/macos/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework/`
+and its exact archive as
+`apps/macos/.build/sparkle/Sparkle-for-Swift-Package-Manager.zip`, mode `0600`.
+The source join must compare every captured path, mode, length and digest with
+the receipt, require the frozen package hash, and refuse missing, partial,
+unexpected or mismatched SDK inputs. Keep these 86 binary inputs separate from
+the core/Gleam source-file count and generated-input exceptions. An embedded
+SDK and its complete captured input scope must occur together. Its CPU thinning
+and final seals remain independently checked by bundle admission; original SDK
+hashes are not hashes of the derived native slices.
+
+Append `SPARKLE_RECEIPT SPARKLE_SHA256` to `scripts/check-macos-material` for
+this profile. Append `SPARKLE_SHA256` to `scripts/stage-macos-material`, and
+include mode `0600` `macos-material/sparkle-material.json` as the archive's
+fifth member, bounded to 64 KiB. Recompute the join from all three received
+source receipts and require exact equality with the fourth, joined receipt.
+Bind the SDK receipt hash and binary-input count in both local records. Missing
+or unexpected optional arguments/members refuse; Ubuntu never admits this
+extension. The no-updater profile retains its four members and unchanged
+record format. Recheck SDK receipt bytes and namespace after every child and
+on replay. This consumer contract does not substitute for the native producer's
+SwiftPM-cache capture, compiler-input custody or installed updater acceptance.
+
 `scripts/stage-macos-material TAG COMMIT SOURCE_RECORD arm64|x86_64 CANDIDATE
 CANDIDATE_SHA256 ARCHIVE ARCHIVE_SHA256 CORE_SHA256 GLEAM_SHA256 JOIN_SHA256
 OUTPUT` transports source evidence separately from the strict app-candidate
 archive. Independently supply the exact candidate, archive and three receipt
-digests. The uncompressed POSIX USTAR has exactly four members: mode `0700`
+digests. For the no-updater profile, the uncompressed POSIX USTAR has exactly four members: mode `0700`
 `macos-material/`, and mode `0600` `core-material.json`, `gleam-material.json`
 and `dependency-inputs.json` beneath it. No other path, directory or archive
 profile is admitted. Bound the archive to 33 MiB, each source receipt to 16 MiB,

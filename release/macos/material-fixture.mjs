@@ -8,7 +8,7 @@ import { sourceFixture } from './source-fixture.mjs';
 const owner = resolve(new URL('../..', import.meta.url).pathname);
 const encode = value => Buffer.from(JSON.stringify(value) + '\n');
 const hash = value => createHash('sha256').update(value).digest('hex');
-export async function materialFixture(t) {
+export async function materialFixture(t, { sourceFiles: extraSources = {}, prepareMaterial, prepareApp } = {}) {
   const commit = '1'.repeat(40), outer = '2'.repeat(64), keys = ['earmark_parser', 'example', 'file_system'];
   const mixLock = `%{${keys.map(key => `${key}: {:git, "https://example.invalid/source.git", "${commit}", [ref: "${commit}"]}`).join(', ')}}\n`;
   const manifestText = `packages = [\n  { name = "example", version = "1.0.0", build_tools = ["gleam"], requirements = [], otp_app = "example", source = "hex", outer_checksum = "${outer}" },\n]\n\n[requirements]\nexample = { version = "~> 1.0" }\n`;
@@ -18,7 +18,9 @@ export async function materialFixture(t) {
     if (name.endsWith('.mjs') && !name.endsWith('.test.mjs')) sourceFiles[`${folder}/${name}`] = readFileSync(join(owner, folder, name));
   }
   sourceFiles['release/core-material.exs'] = readFileSync(join(owner, 'release/core-material.exs'));
+  Object.assign(sourceFiles, extraSources);
   const f = await sourceFixture(t, { sourceFiles,
+    prepareMaterial, prepareApp,
     materialFiles: { 'apps/core/deps/earmark_parser/src/earmark_parser_link_text_lexer.xrl': 'grammar source\n',
       'apps/core/deps/earmark_parser/src/earmark_parser_link_text_lexer.erl': 'generated lexer\n', 'apps/core/deps/file_system/c_src/mac/main.c': 'native helper source\n',
       'apps/core/deps/file_system/priv/mac_listener': 'generated helper\n', 'packages/decision-kernel/build/packages/packages.toml': metadata, 'packages/decision-kernel/build/packages/gleam.lock': '' } });
