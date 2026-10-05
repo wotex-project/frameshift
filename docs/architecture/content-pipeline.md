@@ -138,6 +138,32 @@ fixtures. They qualify the tested metadata operations on their observed platform
 pipeline initialization, weights, generation, concurrent state and cancellation
 remain independent activation gates.
 
+### Pinned SDK resource custody check
+
+`scripts/check-sdk-resources RESOURCE_ROOT` performs a read-only admission check
+for the two JSON resources of the exact MediaGenerationKit cohort recorded in
+the research. The private installed qualification resource root must be a real
+0700 directory owned by the current nonroot identity, containing exactly
+`configs.json` and `models.json`. Each file must be an unaliased regular 0600
+inode owned by that identity. Reject symlinks, special files, extra names,
+missing files, unsafe modes and changed descriptor or namespace custody.
+
+Read each protected descriptor with a 256 KiB ceiling and require the exact
+recorded byte count and SHA-256, without JSON decoding, normalization or SDK
+initialization. Recheck both file identities and the directory after all reads.
+The finite result identifies the fixed wrapper/implementation revisions and
+resource facts, with publication authority `none`; it contains no private path.
+Refusal performs no fetch, copy, repair, catalog fallback or model IO. The SDK
+consumer must pass this check before an admitted inspection and recheck resource
+custody after its child finishes. A matching result alone does not qualify SDK
+execution, source publisher trust, rights, weight bytes or generation.
+
+Acceptance uses the actual pinned resources in a private copied-app fixture,
+unchanged read-only CLI replay, and independent missing/extra/aliased/unsafe/
+changed/special/bounded-input and mutation-during-read refusals. The actual-resource
+positive fixture has an explicit local input requirement; missing input is an
+excluded live-cohort check, never a synthetic passing result.
+
 ### Composition recipe
 
 Records target frame/profile, crop rectangle, focal point, rotation, mat-safe

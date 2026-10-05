@@ -775,6 +775,14 @@ Intel execution, and catalog inspection is not pipeline or generation evidence.
 SDK local/ensure flags, downloaded status and cancellation requests do not replace
 those qualifications.
 
+The pinned SDK resource check now requires the exact two private JSON descriptors
+and fixed hashes before inspection. Five groups pass with actual admitted files,
+read-only CLI replay, missing/extra/changed/oversized/special/aliased/unsafe input
+and mutation-during-read refusal. The real offline SDK fixture passes admission
+before and after its child with unchanged custody and no model IO. Continue full
+selected-weight admission and qualify the shipping worker's root/network policy,
+generation and native exit. This byte check does not enable a provider.
+
 **Exit:** local-only mode emits no provider traffic; no automatic cloud switch;
 cached repeat avoids provider call; secrets remain in Keychain.
 

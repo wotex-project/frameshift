@@ -57,6 +57,7 @@ check_policy() {
     "$repository_root/scripts/check-core-generated" \
     "$repository_root/scripts/collect-dependency-notices" \
     "$repository_root/scripts/check-cargo-material" \
+    "$repository_root/scripts/check-sdk-resources" \
     "$repository_root/scripts/collect-codec-notices" \
     "$repository_root/scripts/check-gleam-material" \
     "$repository_root/scripts/prepare-gleam-metadata" \
@@ -216,6 +217,8 @@ check_release() {
   mise exec -- node --check "$repository_root/release/cargo-material-fixture.mjs"
   mise exec -- node --check "$repository_root/release/codec-notices.mjs"
   mise exec -- node --check "$repository_root/release/codec-notices-cli.mjs"
+  mise exec -- node --check "$repository_root/release/macos/sdk-resources.mjs"
+  mise exec -- node --check "$repository_root/release/macos/sdk-resources-cli.mjs"
   mise exec -- node --check "$repository_root/release/gleam-material.mjs"
   mise exec -- node --check "$repository_root/release/gleam-material-cli.mjs"
   mise exec -- node --check "$repository_root/release/gleam-metadata.mjs"

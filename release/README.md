@@ -419,6 +419,15 @@ defines bounds, refusal and partial-custody recovery. This covers the two locked
 dependency source scopes; full distributed closure and rights approval remain
 required, with publication authority `none`.
 
+`scripts/check-sdk-resources RESOURCE_ROOT` verifies the exact two JSON files of
+the pinned generation SDK in an existing private 0700 resource root. Protected
+0600 unaliased descriptors must match the recorded sizes/hashes; unsafe or extra
+custody refuses without SDK/model IO or repair. The finite result contains fixed
+revision/resource facts and publication authority `none`, with no private path.
+The [resource admission contract](../docs/architecture/content-pipeline.md#pinned-sdk-resource-custody-check)
+requires the consumer to admit before inspection and recheck after its child.
+This qualifies resource bytes, not a provider, weights or shipping sandbox.
+
 `scripts/check-cargo-material TAG COMMIT SOURCE_RECORD CRATE_CACHE REGISTRY_SOURCES
 OUTPUT` checks the codec's frozen crates.io lock against existing compressed
 archives and every delivered source file. It does not fetch or invoke Cargo.

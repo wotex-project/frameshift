@@ -226,7 +226,7 @@ The instrumented consumer source SHA-256 is
 its arm64 executable SHA-256 is
 `91e507746c965a1fc05f73b29cce7edf8fd922a20655d982ccb6afa8ea99c826`.
 
-Next implement protected resource and selected-weight admission, qualify the
+Next implement selected-weight admission, qualify the
 shipping worker's network/root refusal and actual native ownership/output, then
 measure cancellation/deadline completion on an admitted model cohort. Public
 pipeline initialization still has the network-capable boundary described above.
@@ -234,6 +234,29 @@ Preserve unavailable/refusal until these checks pass; assuming every known
 filename stays local is insufficient. Native Intel/older macOS execution, model
 source/license/size disclosure and distribution license review remain separate
 admission gates. Keep producer internals out of Frameshift.
+
+### Protected SDK resource admission
+
+The [resource check](../architecture/content-pipeline.md#pinned-sdk-resource-custody-check)
+now admits only the two fixed JSON names in a current-user 0700 directory with
+unaliased regular 0600 descriptors. It checks complete bounded bytes, the
+recorded sizes/hashes and full file/directory custody without decoding JSON or
+invoking SDK/model IO. Extra/partial/unsafe or conflicting material refuses
+without fetching, copying or repairing it. Its finite revision/fact result has
+publication authority none and includes no private root.
+
+Five groups pass against the actual pinned resources with zero exclusions,
+including unchanged CLI replay and missing/changed/oversized/extra/aliased/unsafe/
+linked/special-file and mutation-during-read refusals. The two actual-resource
+groups are explicitly excluded when their local fixture input is unavailable;
+synthetic refusal checks do not substitute for that positive evidence. The real
+copied-app offline consumer passes this admission before and after its child;
+full resource inode/mode/owner/size/modification/change identities remain
+unchanged. The catalog remains 313 entries, both selected models resolve with
+downloaded false, URLSession attempts remain zero and the model root stays empty.
+This closes the implemented resource-byte prerequisite for this private fixture;
+weights, shipping root/network isolation, inference, native cancellation and
+rights remain separate activation gates.
 
 ### Provider callback logging and failure boundary
 
