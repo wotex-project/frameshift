@@ -559,3 +559,45 @@ upgrade/remove/purge/reinstall. Controlled systemctl responses additionally test
 Ubuntu helper and package-script refusal/error-unwind. This is joined package
 software evidence; it does not establish booted systemd, native amd64 JIT,
 physical storage/power, customer licensing/signing or publication.
+
+### Packaged offline Library and identity join
+
+**Observation:** 2026-10-05. Ubuntu's selected `util-linux` is
+**2.39.3-9ubuntu6.6**. Its [flock command contract](https://manpages.ubuntu.com/manpages/noble/man1/flock.1.html)
+supports exclusive nonblocking directory locks and a chosen contention exit code.
+Upstream [v2.39.3 `sys-utils/flock.c`](https://github.com/util-linux/util-linux/blob/v2.39.3/sys-utils/flock.c)
+(blob `6079920dff6bfa61d41ebdfa398cb2e189a635e5`, obtained through `gh`) opens
+read-only by default, uses `LOCK_NB` for nonblocking acquisition and, in its
+normal command mode, forks and waits for the child before returning. No close
+option is requested; inherited custody can retain a lock. This upstream source
+is not proof of identical Ubuntu patch inputs. Actual selected-package tests
+join the documented syscall/process behavior to the packaged VM.
+
+Lock the real admitted private data-directory inode, avoiding a removable
+lockfile. The supervising process and existing live-socket check complement a
+bounded clean-environment systemd status query for offline write operations.
+A manager present with any state other than `inactive` refuses; unavailable or
+hung status refuses after the finite query deadline. Verification of a named
+backup needs no host-writer lock. These checks coordinate managed entrypoints,
+not arbitrary database VMs or a replacement of the owned directory.
+
+The existing `Frameshift.Library.Maintenance` and `Backup` already serialize,
+verify and stage Library exports/restores. The Linux package therefore adds only
+thin role/environment/locking entrypoints and an optional root provisioning
+mode for private `/var/backups/frameshift`; it does not invent another format or
+copy the whole service data directory. Restore is an absent candidate, never
+implicit activation or replacement of the package watermark, credentials or
+unknown import/codec custody. Private keys remain under the existing protected
+stdin import and separately administered encrypted backup/re-pairing contract.
+
+Actual arm64 and emulated amd64 DEBs pass early/live contention, concurrent
+managed-start refusal, caller-environment isolation, literal path arguments,
+private backup-root mode/symlink refusal, exact original/pixel/actor-receipt
+backup/restore, corrupt-input and existing-destination refusal, fresh-VM
+readback and verification while the host runs. A real generated certificate/key
+PEM installs and replays through the public packaged identity command and resolves
+as the service UID. Artwork exports/restores exclude the credential directory,
+package watermark and temporary custody. Actual dpkg lifecycle preserves both
+backups/restored candidates and private key bytes. Controlled manager-query
+states/failure/deadline exercise the refusal contract; no booted-manager,
+physical-storage or encrypted-key-backup qualification follows.

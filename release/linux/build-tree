@@ -4,8 +4,8 @@ stage=/out/root
 mkdir -p "$stage/usr/lib/frameshift/bin" "$stage/usr/bin" "$stage/usr/lib/systemd/system" "$stage/usr/share/doc/frameshift"
 cp -R /src/apps/core/_build/prod/rel/frameshift_core "$stage/usr/lib/frameshift/core"
 cp /src/codec/target/release/frameshift-codec /src/frameshift-raster "$stage/usr/lib/frameshift/bin/"
-cp /src/release/linux/policy.sh /src/release/linux/provision-runtime /src/release/linux/launch-service "$stage/usr/lib/frameshift/"
-cp /src/release/linux/frameshiftctl /src/release/linux/frameshift-identity "$stage/usr/bin/"
+cp /src/release/linux/policy.sh /src/release/linux/provision-runtime /src/release/linux/launch-service /src/release/linux/maintenance-entrypoint "$stage/usr/lib/frameshift/"
+cp /src/release/linux/frameshiftctl /src/release/linux/frameshift-identity /src/release/linux/frameshift-maintenance "$stage/usr/bin/"
 cp /src/release/linux/frameshift.service "$stage/usr/lib/systemd/system/"
 cp /src/inputs.json "$stage/usr/share/doc/frameshift/build-inputs.json"
 dpkg-query -W -f='${Package}\t${Version}\t${Architecture}\n' | sort >/out/build-packages.txt

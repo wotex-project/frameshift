@@ -51,6 +51,22 @@ defmodule FrameshiftLinuxClosureFixture do
 
   defp run_service do
     first = start()
+
+    if File.exists?("/usr/bin/frameshift-maintenance") do
+      69 =
+        command("runuser", [
+          "-u",
+          "frameshift",
+          "--",
+          "/usr/bin/frameshift-maintenance",
+          "backup",
+          "/var/backups/frameshift/live-refused"
+        ])
+
+      false = File.exists?("/var/backups/frameshift/live-refused")
+      69 = command("runuser", ["-u", "frameshift", "--", "/usr/lib/frameshift/launch-service"])
+    end
+
     %{"ok" => true} = json_cli("frame-control", ["state"])
     %{"ok" => true} = json_cli("frame-observer", ["diagnostics", "health"])
     {_, 69} = cli("frame-observer", ["state"])

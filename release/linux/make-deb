@@ -9,8 +9,8 @@ stage=/runtime/root
 [ -f "$stage/usr/share/doc/frameshift/build-inputs.json" ]
 if find "$stage" -type l | grep -q .; then echo 'development package requires a self-contained regular tree' >&2; exit 1; fi
 # Current package scripts/public policy replace only the development runtime's copies.
-cp /linux/policy.sh /linux/provision-runtime /linux/launch-service "$stage/usr/lib/frameshift/"
-cp /linux/frameshiftctl /linux/frameshift-identity "$stage/usr/bin/"
+cp /linux/policy.sh /linux/provision-runtime /linux/launch-service /linux/maintenance-entrypoint "$stage/usr/lib/frameshift/"
+cp /linux/frameshiftctl /linux/frameshift-identity /linux/frameshift-maintenance "$stage/usr/bin/"
 cp /linux/frameshift.service "$stage/usr/lib/systemd/system/"
 mkdir -p "$stage/DEBIAN" /out /package/debian
 printf 'Source: frameshift\nSection: graphics\nPriority: optional\nMaintainer: Frameshift development fixture <noreply@example.invalid>\n\nPackage: frameshift\nArchitecture: any\nDescription: private development fixture\n' >/package/debian/control
@@ -54,7 +54,7 @@ Section: graphics
 Priority: optional
 Maintainer: Frameshift development fixture <noreply@example.invalid>
 Installed-Size: $installed_size
-Depends: $libraries, ca-certificates, libsctp1, netbase, coreutils, adduser, systemd, init-system-helpers, avahi-daemon, avahi-utils, dbus
+Depends: $libraries, ca-certificates, libsctp1, netbase, coreutils, util-linux, adduser, systemd, init-system-helpers, avahi-daemon, avahi-utils, dbus
 Description: Frameshift development host and local CLI fixture
  Self-contained Ubuntu 24.04 runtime closure for local installation tests.
  This unreleased fixture has no customer-release, signing or hardware claim.

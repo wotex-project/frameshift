@@ -47,6 +47,8 @@ check_policy() {
     "$repository_root/release/linux/launch-service" \
     "$repository_root/release/linux/frameshiftctl" \
     "$repository_root/release/linux/frameshift-identity" \
+    "$repository_root/release/linux/frameshift-maintenance" \
+    "$repository_root/release/linux/maintenance-entrypoint" \
     "$repository_root/release/linux/build-tree" \
     "$repository_root/release/linux/check-closure" \
     "$repository_root/release/linux/check-deb" \

@@ -24,7 +24,7 @@ case "${1:-}" in
     frameshift_ids
     adduser frameshift frameshift-control
     adduser frameshift frameshift-observer
-    /usr/lib/frameshift/provision-runtime
+    /usr/lib/frameshift/provision-runtime --maintenance
     umask 077
     stamp=/var/lib/frameshift/.installed-version
     if [ -e "$stamp" ] || [ -L "$stamp" ]; then

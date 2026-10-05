@@ -1,0 +1,38 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+LC_ALL=C
+export LC_ALL
+if [ -L /usr/lib/frameshift/policy.sh ] || [ ! -f /usr/lib/frameshift/policy.sh ] ||
+  [ "$(stat -c '%u:%g:%a' /usr/lib/frameshift/policy.sh)" != '0:0:644' ]; then
+  printf '%s\n' 'frameshift: installed public policy unavailable' >&2
+  exit 69
+fi
+# shellcheck source=release/linux/policy.sh
+. /usr/lib/frameshift/policy.sh
+frameshift_policy
+[ "$(id -u)" = "$fs_uid" ] || frameshift_refuse
+frameshift_data_custody
+operation=${1:-}
+case "$#:$operation" in 2:backup|2:verify|3:restore) ;; *)
+  printf '%s\n' 'usage: frameshift-maintenance backup DESTINATION | verify BACKUP | restore BACKUP DESTINATION' >&2
+  exit 64 ;;
+esac
+for argument do [ "${#argument}" -le 8192 ] || exit 64; done
+if [ "$operation" != verify ] && [ -d /run/systemd/system ]; then
+  state=$(env -i PATH=/usr/bin:/bin LANG=C.UTF-8 /usr/bin/timeout --signal=KILL 2 \
+    /usr/bin/systemctl show --property=ActiveState --value frameshift.service) || frameshift_refuse
+  [ "$state" = inactive ] || frameshift_refuse
+fi
+umask 077
+set -- env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
+  ERL_FLAGS='+S 2:2 +SDcpu 2 +SDio 2' \
+  ERL_CRASH_DUMP=/dev/null ERL_CRASH_DUMP_SECONDS=0 \
+  TMPDIR=/var/lib/frameshift/tmp FRAMESHIFT_DATA_DIR=/var/lib/frameshift \
+  FRAMESHIFT_SOCKET_PATH=/run/frameshift/control/c.sock \
+  /usr/lib/frameshift/maintenance-entrypoint "$@"
+case "$operation" in
+  verify) exec "$@" ;;
+  *) exec /usr/bin/flock --exclusive --nonblock --conflict-exit-code 69 /var/lib/frameshift "$@" ;;
+esac

@@ -23,3 +23,7 @@ frameshift_policy() {
   case "$fs_groups" in *" $fs_control "*) ;; *) frameshift_refuse ;; esac
   case "$fs_groups" in *" $fs_observer "*) ;; *) frameshift_refuse ;; esac
 }
+frameshift_data_custody() {
+  [ ! -L /var/lib/frameshift ] && [ -d /var/lib/frameshift ] &&
+    [ "$(stat -c '%u:%g:%a' /var/lib/frameshift)" = "$fs_uid:$fs_gid:700" ] || frameshift_refuse
+}

@@ -4,7 +4,7 @@ dpkg -i /archives/*fixture1*.deb
 dpkg-query -W -f '${binary:Package} ${Version}\n'
 case "${ERL_FLAGS:-}" in
   '') ;;
-  '+JMsingle true') sed -i "s/ERL_FLAGS='/ERL_FLAGS='+JMsingle true /" /usr/lib/frameshift/launch-service /usr/bin/frameshiftctl /usr/bin/frameshift-identity ;;
+  '+JMsingle true') sed -i "s/ERL_FLAGS='/ERL_FLAGS='+JMsingle true /" /usr/lib/frameshift/launch-service /usr/bin/frameshiftctl /usr/bin/frameshift-identity /usr/bin/frameshift-maintenance ;;
   *) exit 64 ;;
 esac
 [ "$(cat /var/lib/frameshift/.installed-version)" = '0.1.0~dev+fixture1' ]

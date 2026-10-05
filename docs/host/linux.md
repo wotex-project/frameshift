@@ -104,6 +104,15 @@ bundled VM; it never inherits service cookies, private keys or runtime service
 configuration. The separate identity launcher requires the service UID and reads
 its bounded PEM from stdin under the existing protected-file contract.
 
+Offline backup/restore uses the same admitted data-directory lock as the managed
+service launch, through the service-UID-only `frameshift-maintenance` command.
+Package configuration additionally provisions a private `/var/backups/frameshift`
+root without admitting or resetting existing mismatched custody. Artwork exports
+exclude credentials, package watermark and abandoned import/native files; restore
+publishes only an absent candidate. Removal/purge retain those explicit backups.
+See [administrative backup and restore](../architecture/library-backup.md#ubuntu-administrative-entrypoint)
+for commands, limits, concurrency and deliberate adoption/identity recovery.
+
 The systemd unit confines writes to the managed state/runtime roots, denies home
 access and privilege escalation, bounds file descriptors, process count and
 memory, and applies finite stop/restart limits. Stop kills the entire service

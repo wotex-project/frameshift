@@ -1,5 +1,6 @@
 #!/bin/sh
 set -eu
+case "$#:${1:-}" in 0:) maintenance=0 ;; 1:--maintenance) maintenance=1 ;; *) exit 64 ;; esac
 PATH=/usr/sbin:/usr/bin:/sbin:/bin
 export PATH
 if [ -L /usr/lib/frameshift/policy.sh ] || [ ! -f /usr/lib/frameshift/policy.sh ] ||
@@ -32,3 +33,7 @@ directory /var/lib/frameshift/credentials "$fs_gid" 700
 directory /run/frameshift "$fs_gid" 711
 directory /run/frameshift/control "$fs_control" 710
 directory /run/frameshift/observer "$fs_observer" 710
+if [ "$maintenance" = 1 ]; then
+  ancestor /var/backups
+  directory /var/backups/frameshift "$fs_gid" 700
+fi

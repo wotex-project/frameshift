@@ -110,5 +110,35 @@ and execution to avoid Docker overlay lower-directory rename restrictions.
 Removal/purge in the product scripts retain all private state.
 
 Stable tag/version inputs, booted systemd, native amd64, installed failure and
-storage/power tests, protected administrative recovery, complete license notices,
+storage/power and encrypted-key recovery, complete license notices,
 signing and public publication/readback remain required.
+
+## Offline Ubuntu maintenance
+
+Stop the complete service with `sudo systemctl stop frameshift.service`, then
+use `sudo runuser -u frameshift -- /usr/bin/frameshift-maintenance backup
+/var/backups/frameshift/EXPORT` (one shell command). `verify BACKUP` reads only
+the named backup; `restore BACKUP DESTINATION` publishes an absent candidate,
+for example under that same private backup root. The operator chooses each
+path explicitly; existing stores/exports are never overwritten. Stop/status,
+role and directory-lock admission are owned by the
+[Library maintenance contract](../docs/architecture/library-backup.md#ubuntu-administrative-entrypoint).
+Control/observer membership does not grant offline data or credential access.
+
+The clean nonroot command uses the installed Library backup format and target
+SQLite. Verification can run alongside the host; backup/restore refuse early or
+live concurrent managed ownership. The private backup root is provisioned by
+package configuration and retained by removal/purge. It is outside the registered
+object quota, so the administrator manages its capacity. Artwork exports omit
+credentials, package version and unknown temporary custody. Adopting a restored
+candidate or restoring a separately encrypted identity is a deliberate stopped
+administrator operation; maintenance never resets those installation records.
+
+`linux-deb` checks exact PNG/JPEG/pixel/actor-receipt backup and fresh-VM restore,
+corrupt/existing destination refusal, literal paths, caller-environment isolation,
+private-root refusal and lock release after actual VM exit. A real certificate/key
+PEM passes installed stdin import/replay and protected service-UID resolution;
+package lifecycle preserves its bytes while artwork exports exclude it.
+Controlled manager states, query failure and deadline complement these checks.
+Booted systemd, native amd64/default JIT, physical storage/power and separately
+encrypted key recovery remain unqualified.

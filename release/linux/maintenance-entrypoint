@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+operation=$1
+shift
+case "$operation:$#" in
+  backup:1)
+    export FRAMESHIFT_MAINTENANCE_DESTINATION="$1"
+    unset FRAMESHIFT_MAINTENANCE_SOURCE ;;
+  verify:1)
+    export FRAMESHIFT_MAINTENANCE_SOURCE="$1"
+    unset FRAMESHIFT_MAINTENANCE_DESTINATION ;;
+  restore:2)
+    export FRAMESHIFT_MAINTENANCE_SOURCE="$1"
+    export FRAMESHIFT_MAINTENANCE_DESTINATION="$2" ;;
+  *) exit 64 ;;
+esac
+export FRAMESHIFT_MAINTENANCE_OPERATION="$operation"
+release_root=/usr/lib/frameshift/core
+erts_version=''
+release_version=''
+IFS=' ' read -r erts_version release_version <"$release_root/releases/start_erl.data" || :
+case "$release_version" in ''|*[!0-9A-Za-z.+-]*) exit 69 ;; esac
+case "$erts_version" in ''|*[!0-9.]*) exit 69 ;; esac
+exec "$release_root/releases/$release_version/elixir" \
+  --boot "$release_root/releases/$release_version/start_clean" \
+  --boot-var RELEASE_LIB "$release_root/lib" \
+  --eval 'Frameshift.Library.Maintenance.run()'

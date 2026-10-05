@@ -4,6 +4,13 @@ set -eu
 printf '%s\n' "$*" >>/tmp/fixture-systemctl.log
 for argument do
   case "$argument" in
+    show)
+      [ ! -f /tmp/fixture-query-fails ] || exit 1
+      if [ -f /tmp/fixture-query-sleeps ]; then sleep 10; fi
+      if [ -f /tmp/fixture-unit-state ]; then cat /tmp/fixture-unit-state
+      elif [ -f /tmp/fixture-service-active ]; then printf 'active\n'
+      else printf 'inactive\n'; fi
+      exit 0 ;;
     is-active) [ -f /tmp/fixture-service-active ]; exit ;;
     is-enabled) printf 'disabled\n'; exit 1 ;;
     daemon-reload) exit 0 ;;

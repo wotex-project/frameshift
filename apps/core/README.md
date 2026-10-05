@@ -110,6 +110,10 @@ fixture; its exact source/pixel/restart and unsafe-custody checks complement the
 [platform contract](../../docs/host/linux.md#initial-deb-runtime-and-service-contract).
 The `linux-deb` lane installs actual development archives, exercises package
 lifecycle/refusals and retains data, credential sentinels and crash custody.
+The same DEB lane joins service-UID-only offline backup/verify/restore, shared
+directory locking and protected stdin identity import/replay/resolve. Exact
+restored artwork/actor receipts and private key/backup retention pass; artwork
+exports exclude credentials, package watermark and unknown temporary custody.
 Booted systemd and native installed acceptance remain required.
 
 The Linux group endpoint joins private upload staging, this codec and exact

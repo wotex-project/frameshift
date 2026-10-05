@@ -5,6 +5,7 @@ defmodule FrameshiftLinuxDEBFixture do
     # The joined release fixture qualifies actual installed bytes and leaves
     # deliberate crash custody for package lifecycle preservation below.
     Code.require_file("/fixtures/closure-check.exs")
+    Code.require_file("/fixtures/maintenance-check.exs")
     credential = "/var/lib/frameshift/credentials/retained-fixture"
     File.write!(credential, "private credential custody sentinel")
     {service_uid, 0} = System.cmd("id", ["-u", "frameshift"])
@@ -85,7 +86,7 @@ defmodule FrameshiftLinuxDEBFixture do
   defp snapshot do
     root = "/var/lib/frameshift"
 
-    files(root)
+    (files(root) ++ files("/var/backups/frameshift"))
     |> Enum.reject(&(&1 == Path.join(root, ".installed-version")))
     |> Map.new(fn path ->
       stat = File.lstat!(path)
@@ -109,8 +110,9 @@ defmodule FrameshiftLinuxDEBFixture do
         0 =
           command("sed", [
             "-i",
-            "s/ERL_FLAGS='/ERL_FLAGS='+JMsingle true /",
-            "/usr/bin/frameshiftctl"
+            "s/ERL_FLAGS='+S/ERL_FLAGS='+JMsingle true +S/",
+            "/usr/bin/frameshiftctl",
+            "/usr/bin/frameshift-maintenance"
           ])
     end
 
@@ -132,6 +134,10 @@ defmodule FrameshiftLinuxDEBFixture do
     File.rename!(tool, tool <> "-retained")
     File.cp!("/fixtures/fixture-systemctl", tool)
     File.chmod!(tool, 0o755)
+    File.write!("/tmp/fixture-systemctl.log", "")
+    {gid, 0} = System.cmd("id", ["-g", "frameshift"])
+    File.chgrp!("/tmp/fixture-systemctl.log", gid |> String.trim() |> String.to_integer())
+    File.chmod!("/tmp/fixture-systemctl.log", 0o660)
     File.mkdir_p!("/run/systemd/system")
 
     try do
@@ -147,6 +153,8 @@ defmodule FrameshiftLinuxDEBFixture do
       true = File.exists?("/tmp/fixture-service-active")
       false = File.exists?("/run/frameshift-package-active")
       false = File.exists?("/etc/systemd/system/multi-user.target.wants/frameshift.service")
+      installed_cli()
+      maintenance_manager_query()
 
       stamp = "/var/lib/frameshift/.installed-version"
       File.chmod!(stamp, 0o644)
@@ -204,6 +212,40 @@ defmodule FrameshiftLinuxDEBFixture do
       )
 
     status
+  end
+
+  defp maintenance_manager_query do
+    backup = "/var/backups/frameshift/exact backup $() `literal`"
+    args = ["-u", "frameshift", "--", "/usr/bin/frameshift-maintenance", "backup", backup]
+    # Active and unknown manager states refuse before the maintenance VM starts.
+    for state <- ["active", "activating", "deactivating", "failed", "unknown"] do
+      File.write!("/tmp/fixture-unit-state", state <> "\n")
+      File.chmod!("/tmp/fixture-unit-state", 0o644)
+      69 = command("runuser", args)
+    end
+
+    File.write!("/tmp/fixture-unit-state", "inactive\n")
+    1 = command("runuser", args, [{"DBUS_SYSTEM_BUS_ADDRESS", "invalid"}])
+    File.write!("/tmp/fixture-query-fails", "")
+    69 = command("runuser", args)
+
+    0 =
+      command("runuser", [
+        "-u",
+        "frameshift",
+        "--",
+        "/usr/bin/frameshift-maintenance",
+        "verify",
+        backup
+      ])
+
+    File.rm!("/tmp/fixture-query-fails")
+    File.write!("/tmp/fixture-query-sleeps", "")
+    started = System.monotonic_time(:millisecond)
+    69 = command("runuser", args)
+    true = System.monotonic_time(:millisecond) - started < 6_000
+    File.rm!("/tmp/fixture-query-sleeps")
+    File.rm!("/tmp/fixture-unit-state")
   end
 
   defp command(executable, args, env \\ []) do

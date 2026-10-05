@@ -13,6 +13,7 @@ for revision in 1 2; do
 done
 cp "$repository_root/release/linux/closure-check.exs" "$repository_root/release/linux/verify-store.exs" \
   "$repository_root/release/linux/check-deb" "$repository_root/release/linux/deb-check.exs" \
+  "$repository_root/release/linux/maintenance-check.exs" "$repository_root/release/linux/verify-maintenance.exs" \
   "$repository_root/release/linux/fixture-systemctl" "$context/fixtures/"
 cp "$repository_root/apps/core/test/fixtures/canonical-jpeg.jpg" "$repository_root/apps/core/test/fixtures/canonical-jpeg.rgba" "$context/fixtures/"
 cp "$repository_root/release/linux/deb-check.Dockerfile" "$context/Dockerfile"

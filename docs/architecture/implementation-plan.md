@@ -228,9 +228,17 @@ refusal, removal/purge/reinstall and retained UID/data/credential-sentinel/crash
 custody pass on arm64 and emulated amd64. Ubuntu's actual helper joins controlled
 manager responses for stop/start failure, policy refusal and active-but-disabled
 error-unwind. This is container/package-script evidence.
-Next implement the packaged offline backup/restore and protected identity
-provisioning join, then qualify booted systemd/native CPU and resource/failure
-behavior. A missing external machine or signing identity does not block those
+The R3 administrative slice now joins service-UID-only packaged backup/verify/
+restore to a shared data-directory lock and fixed private custody. Early/live
+contention, exact PNG/JPEG/actor-receipt restore, corrupt/existing destination
+refusal, clean environment, literal paths and protected stdin identity import/
+replay/resolve pass through actual DEBs. Backups and private keys survive package
+lifecycle; artwork exports exclude identity, watermark and unknown custody.
+Controlled manager states, errors and deadlines refuse offline writes; this
+remains software/container evidence.
+Continue R1 exact-tag/version/build-input refusal and independent native/provider
+work while booted systemd/native CPU, resource/failure, encrypted-key backup
+and physical identity/storage recovery retain their separate qualification. A missing external machine or signing identity does not block those
 software recovery/refusal paths. Development container artifacts remain separate
 from stable tagged, licensed, signed and
 publicly read-back releases. Preserve independent platform progress and do not

@@ -11,8 +11,10 @@ fi
 . /usr/lib/frameshift/policy.sh
 frameshift_policy
 [ "$(id -u)" = "$fs_uid" ] || frameshift_refuse
+frameshift_data_custody
 umask 077
-exec env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
+exec /usr/bin/flock --exclusive --nonblock --conflict-exit-code 69 /var/lib/frameshift \
+  env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
   ERL_FLAGS='+S 4:4 +SDcpu 4 +SDio 4' \
   ERL_CRASH_DUMP=/dev/null ERL_CRASH_DUMP_SECONDS=0 \
   RELEASE_DISTRIBUTION=none RELEASE_TMP=/var/lib/frameshift/tmp \
