@@ -1174,6 +1174,19 @@ This qualifies the local merger with real SDK bytes and cross-compiled native
 fixture roles; it does not establish a full native Intel producer, source-bound
 universal host, installed update or production signing.
 
+The independent updater source receipt uses SwiftPM's real `dump-package`
+parser, rather than a source-text approximation, to bind the exact binary URL
+and checksum to the frozen package manifest hash. Actual admitted ZIP/cache
+facts and the verifier-source observation join the frozen product/tag/version/
+commit/source-input digest in a canonical private record. Five groups pass real
+Git/Mix/SwiftPM/SDK producer and independently pinned consumer checks, unchanged
+inode/time on replay, wrong source/pin/profile/schema/digest, hard-link/alias/
+unknown/partial output refusal and a same-byte cache rewrite during the second
+manifest child. That last case requires pre/post inode/time custody as well as
+hash equality and leaves the incomplete receipt marker retained. This is input
+receipt evidence; captured compiler/native candidates, transported material,
+application update behavior and remote/installed/rights proof remain separate.
+
 ### AppKit owned-core quit and modal-loop delivery
 
 **Observation:** 2026-10-06. Apple's current

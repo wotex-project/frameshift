@@ -256,6 +256,39 @@ approved locks; it does not authenticate publishers, approve licenses or prove
 compiler/generated-code/runtime/other-component qualification. Join these
 receipts to producer inputs separately.
 
+## Pinned Mac updater source material
+
+`scripts/check-sparkle-source TAG COMMIT SOURCE_RECORD ARCHIVE FRAMEWORK OUTPUT`
+creates a private input receipt without fetching, compiling application code,
+thinning, signing or updating an app. First verify the exact frozen source and
+use SwiftPM's bounded `dump-package` parser on its Mac manifest. Require the
+single Sparkle binary target's exact approved URL and ZIP checksum and bind the
+manifest file hash. Then apply the
+[pinned updater material admission](../host/macos.md#pinned-updater-material-and-private-cpu-derivation)
+to the independently supplied ZIP and actual cached framework. Preserve their
+custody through source/manifest/cache rechecks before completing the receipt.
+
+The canonical mode `0600` `sparkle-material.json` in an owned mode `0700` output
+binds product/tag/version/commit/source-input hash, parsed binary identity,
+manifest hash, verifier-source observation, exact archive and framework/native
+facts, with publication authority `none`. Bound it to 64 KiB and all work to a
+six-minute software budget, with each manifest child limited to one minute and
+512 KiB output. Require the fixed 85 regular files, 57 directories, nine
+aliases and five two-CPU native roles. A separately pinned receipt consumer
+checks source/schema/manifest/archive/profile and canonical custody before any
+candidate input join; it performs no SDK extraction or compiler invocation.
+Receipt assertions do not independently authenticate producer execution or
+upstream build derivation.
+
+An identical rerun verifies retained bytes without rewriting the receipt.
+Unknown, partial, changed, aliased, unsafe or conflicting output refuses and is
+retained. Refuse overlap with source/cache/archive custody and refuse an output
+inside tracked source. Acceptance uses actual frozen Git/Mix/SwiftPM producers,
+the exact upstream ZIP/cache, independent receipt digests and unchanged replay,
+plus source/manifest/cache/namespace changes, wrong profile/digest/schema and
+partial or aliased output. The later native build/captured-input and transport
+joins must consume this receipt before claiming a full updater candidate.
+
 ## Captured core lexer/parser derivation
 
 `scripts/check-core-generated TAG COMMIT SOURCE_RECORD HEX_CACHE CORE_RECEIPT

@@ -745,6 +745,17 @@ refusal. This closes the local SDK merge mechanism; the full native Intel/arm64
 source-bound host cohort, updater client, installed OS/update and production
 signing remain required.
 
+The separate pinned-updater source receipt now binds the frozen Mac package
+manifest, actual SwiftPM binary-target parsing, independently admitted ZIP and
+all cached framework/native facts to the exact source identity. Five groups
+pass real Git/Mix/SwiftPM/SDK producers, independent receipt digests, unchanged
+replay, wrong frozen pins/source, same-byte cache mutation during the second
+manifest child, strict schema/profile/custody and incomplete-output refusal.
+Receipts have authority `none`; they do not authenticate remote execution or
+upstream derivation. Continue wiring them into captured native compiler inputs,
+candidate/material archive receivers and the application updater. The receipt
+alone does not close those joins or installed/release acceptance.
+
 S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned
 Argon2id costs. Private account/token resources, all-token persistence, 12-hour

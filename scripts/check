@@ -63,6 +63,7 @@ check_policy() {
     "$repository_root/scripts/collect-dependency-notices" \
     "$repository_root/scripts/check-cargo-material" \
     "$repository_root/scripts/check-sdk-resources" \
+    "$repository_root/scripts/check-sparkle-source" \
     "$repository_root/scripts/collect-codec-notices" \
     "$repository_root/scripts/check-gleam-material" \
     "$repository_root/scripts/prepare-gleam-metadata" \

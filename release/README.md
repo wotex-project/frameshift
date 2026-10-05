@@ -126,6 +126,14 @@ inputs, merged native/controller execution on arm64, every nested seal,
 unchanged replay and common-resource/seal conflicts. Cross-compiled Intel
 metadata does not qualify a full native Intel host or an installed update.
 
+`scripts/check-sparkle-source TAG COMMIT SOURCE_RECORD ARCHIVE FRAMEWORK OUTPUT`
+binds actual SwiftPM manifest parsing and admitted SDK/cache bytes to frozen
+source in a private `sparkle-material.json`. It performs no fetch, app compile,
+thinning, signing or update. Replays verify unchanged receipt custody. The
+independent digest consumer preserves strict source/profile/schema bounds; the
+native/captured-input/transport joins must still consume that receipt. See the
+[updater source contract](../docs/architecture/release-manifest.md#pinned-mac-updater-source-material).
+
 The plan is compact JSON with one trailing newline, such as:
 
 ```json
