@@ -1062,6 +1062,16 @@ separates the declared OS from qualification. Final app/version/key/updater
 joining, signed feed, Developer ID/notarization, real tap, public readback and
 installed update/removal remain open.
 
+Apple's current [CFBundleVersion contract](https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleversion),
+read as its official Markdown representation on this date, defines one to three
+numeric components, including non-negative zero values, and requires increasing
+build identity before distribution. Frameshift uses its stable three-component
+version for both build/display fields. Native producers check source, built and
+copied plist values; source-bound receivers recheck them before/after joining.
+Compiler fixtures refuse a clean tagged source with counter `1`, a changed built
+counter and a resealed/fully admitted received app with the wrong counter. These
+checks do not modify any retained archive or establish a running updater.
+
 ### Locked core dependency source admission
 
 **Observation:** 2026-10-05. Inspected Hex 2.5.1

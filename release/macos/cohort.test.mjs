@@ -50,10 +50,14 @@ test('candidate aliases, noncanonical/oversized records and changed app refuse a
   put(f.intelCandidate, 'Frameshift.app/Contents/Resources/changed', 'retained mutation'); await assert.rejects(macSourceCohort(f)); assert.equal(existsSync(f.output), false); assert.ok(readFileSync(path).equals(original));
 });
 
-test('an admitted closure with wrong runtime descriptors still refuses the actual version consumer', mac, async t => {
-  const f = await fixture(t), record = structuredClone(f.candidates[1].record), app = join(f.intelCandidate, 'Frameshift.app');
-  put(app, 'Contents/Resources/core/releases/start_erl.data', '17.1 0.2.0'); run('/usr/bin/codesign', ['--force', '--sign', '-', app]); record.bundle = await auditMacBundle(app, 'x86_64');
-  await assert.rejects(macSourceCohort(changed(f, record))); assert.equal(existsSync(f.output), false);
+test('an admitted closure with wrong runtime or bundle build version refuses the actual version consumer', mac, async t => {
+  for (const mutation of ['runtime', 'bundle-build']) {
+    const f = await fixture(t), record = structuredClone(f.candidates[1].record), app = join(f.intelCandidate, 'Frameshift.app');
+    if (mutation === 'runtime') put(app, 'Contents/Resources/core/releases/start_erl.data', '17.1 0.2.0');
+    else run('/usr/bin/plutil', ['-replace', 'CFBundleVersion', '-string', '1', join(app, 'Contents/Info.plist')]);
+    run('/usr/bin/codesign', ['--force', '--sign', '-', app]); record.bundle = await auditMacBundle(app, 'x86_64');
+    await assert.rejects(macSourceCohort(changed(f, record))); assert.equal(existsSync(f.output), false);
+  }
 });
 
 test('hidden source or candidate change during actual merge retains the incomplete cohort and refuses replay', mac, async t => {

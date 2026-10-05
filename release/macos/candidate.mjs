@@ -95,8 +95,9 @@ function tools(repository, architecture, execute) {
 }
 function declaredVersion(repository, expected, execute, plist = join(repository, 'apps/macos/App/Info.plist')) {
   const version = execute('/usr/bin/plutil', ['-extract', 'CFBundleShortVersionString', 'raw', plist], { cwd: repository });
+  const buildVersion = execute('/usr/bin/plutil', ['-extract', 'CFBundleVersion', 'raw', plist], { cwd: repository });
   const identifier = execute('/usr/bin/plutil', ['-extract', 'CFBundleIdentifier', 'raw', plist], { cwd: repository });
-  if (version !== expected || identifier !== 'io.frameshift.app') fail('Mac bundle version differs from source');
+  if (version !== expected || buildVersion !== expected || identifier !== 'io.frameshift.app') fail('Mac bundle version differs from source');
 }
 function nativeSignatures(root, observation, repository, execute) {
   verifyDevelopmentSignatures(root, observation, (command, args, timeout) => {

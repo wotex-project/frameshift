@@ -351,8 +351,13 @@ Developer ID, hardened runtime, notarization or installed DMG/update behavior.
 builds an ad-hoc single-CPU app from the exact clean tagged checkout and the
 independently retained source record under
 [release inputs](../architecture/release-manifest.md#frozen-source-inputs).
-Source, lock/toolchain files, package recipe, declared bundle version and core
-application version must agree before creating output. Refuse dirty/moved/hidden
+Source, lock/toolchain files, package recipe, both `CFBundleShortVersionString`
+and `CFBundleVersion`, and core application version must equal the stable tag's
+three-component version before creating output. The producer checks both plist
+fields in source, built and copied apps; receivers repeat the same join before
+and after assembly. A fixed build counter cannot identify successive Sparkle
+updates. Development fixtures use the same version grammar; this does not
+qualify an installed updater or alter retained source-bound archives. Refuse dirty/moved/hidden
 source, unsupported CPU and architecture mismatch before a build. The native
 build execution must match the physical host CPU; Rosetta is not native Intel
 producer evidence.

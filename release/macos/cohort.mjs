@@ -75,7 +75,7 @@ export async function inspectMacCandidate({ repository, source, candidate, expec
   const app = join(candidate, 'Frameshift.app'), bundle = await auditMacBundle(app, architecture);
   if (bundle.natives.some(file => file.slices.length !== 1 || file.slices[0].arch !== architecture) || !isDeepStrictEqual(bundle, record.bundle)) fail('Mac candidate bundle differs');
   verifyDevelopmentSignatures(app, bundle, tool);
-  for (const [name, expected] of [['CFBundleIdentifier', source.product], ['CFBundleShortVersionString', source.version]]) {
+  for (const [name, expected] of [['CFBundleIdentifier', source.product], ['CFBundleShortVersionString', source.version], ['CFBundleVersion', source.version]]) {
     if (tool('/usr/bin/plutil', ['-extract', name, 'raw', join(app, 'Contents/Info.plist')]).stdout.trim() !== expected) fail('Mac candidate product version differs');
   }
   if (tool('mise', ['exec', '--', 'elixir', join(repository, 'release/linux/verify-version.exs'), join(app, 'Contents/Resources/core'), source.version], 60_000).stdout.trim() !== 'runtime version: verified') fail('Mac candidate core version differs');

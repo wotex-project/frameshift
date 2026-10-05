@@ -10,7 +10,7 @@ import { fixture as nativeFixture, temporary } from './fixture.mjs';
 
 const owner = resolve(new URL('../..', import.meta.url).pathname), mac = { skip: process.platform !== 'darwin' || process.arch !== 'arm64' };
 function put(root, relative, bytes) { const path = join(root, relative); mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, bytes); }
-async function fixture(t) {
+async function fixture(t, buildVersion = '0.1.0') {
   const repository = temporary(t), prototype = nativeFixture(t), git = args => execFileSync('git', args, { cwd: repository, encoding: 'utf8', stdio: 'pipe' }).trim();
   for (const path of ['.mise.toml', 'release/read-version.exs', 'release/linux/verify-version.exs']) {
     mkdirSync(dirname(join(repository, path)), { recursive: true }); copyFileSync(join(owner, path), join(repository, path));
@@ -20,6 +20,7 @@ async function fixture(t) {
   put(repository, 'apps/core/mix.exs', 'defmodule Fixture do\n  @moduledoc false\n\n  use Mix.Project\n  def project, do: [app: :frameshift_core, version: "0.1.0"]\nend\n');
   const plist = join(prototype.root, 'Contents/Info.plist');
   writeFileSync(plist, readFileSync(plist, 'utf8').replace('io.frameshift.closure-fixture', 'io.frameshift.app'));
+  if (buildVersion !== '0.1.0') execFileSync('/usr/bin/plutil', ['-replace', 'CFBundleVersion', '-string', buildVersion, plist]);
   mkdirSync(join(repository, 'apps/macos/App'), { recursive: true }); copyFileSync(plist, join(repository, 'apps/macos/App/Info.plist'));
   put(repository, 'scripts/package-macos', '#!/bin/sh\nexit 0\n');
   put(repository, 'packages/decision-kernel/manifest.toml', 'packages = [\n  { name = "example", version = "1.0.0", build_tools = ["gleam"], requirements = [], source = "hex", outer_checksum = "' + 'A'.repeat(64) + '" },\n  { name = "helper", version = "2.0.0", build_tools = ["gleam"], requirements = [], source = "hex", outer_checksum = "' + 'B'.repeat(64) + '" },\n]\n\n[requirements]\nexample = { version = "~> 1.0" }\nhelper = { version = "~> 2.0" }\n');
@@ -50,6 +51,7 @@ function executor(f, mutation = '') {
       if (mutation === 'source') { f.git(['update-index', '--assume-unchanged', 'README.md']); put(f.repository, 'README.md', 'hidden source mutation'); }
       if (mutation === 'material') put(f.repository, 'apps/core/deps/example/source.c', 'changed dependency');
       if (mutation === 'version') put(app, 'Contents/Resources/core/releases/start_erl.data', '17.1 0.2.0');
+      if (mutation === 'bundle-version') execFileSync('/usr/bin/plutil', ['-replace', 'CFBundleVersion', '-string', '1', join(app, 'Contents/Info.plist')]);
       if (mutation === 'metadata-order') put(f.repository, 'packages/decision-kernel/build/packages/packages.toml', '[packages]\nhelper = "2.0.0"\nexample = "1.0.0"\n\n[git]\n');
       if (mutation === 'metadata-version') put(f.repository, 'packages/decision-kernel/build/packages/packages.toml', '[packages]\nexample = "1.0.1"\nhelper = "2.0.0"\n\n[git]\n');
       return '';
@@ -83,8 +85,17 @@ test('wrong source, physical CPU and mutable artifact overlap refuse before buil
   assert.equal(builds, 0); assert.equal(existsSync(f.output), false);
 });
 
+test('a clean stable source with a fixed bundle build counter refuses before packaging', mac, async t => {
+  const f = await fixture(t, '1'); let builds = 0;
+  await assert.rejects(macBuildCandidate(f, (command, args, options) => {
+    if (command.endsWith('/scripts/package-macos')) builds++;
+    return candidateCommand(command, args, options);
+  }), /bundle version differs/);
+  assert.equal(builds, 0); assert.equal(existsSync(f.output), false);
+});
+
 test('source, material, tool, version and copied bytes changing during work retain incomplete output', mac, async t => {
-  for (const mutation of ['source', 'material', 'tool', 'version', 'copy', 'metadata-version']) {
+  for (const mutation of ['source', 'material', 'tool', 'version', 'bundle-version', 'copy', 'metadata-version']) {
     const f = await fixture(t);
     await assert.rejects(macBuildCandidate(f, executor(f, mutation)));
     assert.ok(existsSync(join(f.output, 'build.pending'))); assert.equal(existsSync(join(f.output, 'candidate.json')), false);

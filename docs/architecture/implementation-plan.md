@@ -682,10 +682,13 @@ signed manifest's unique universal DMG after verification of its separate
 Sparkle signature. Eight fixture groups cover real Ruby/XML parsing, identity,
 tamper, strict encoding/custody, declared OS bounds and retained replay. Actual
 Sparkle 2.10.0 and Node 26.9 sign/verify the same ephemeral-key message in both
-directions. This renderer has no publication authority. Continue the stable
-`CFBundleVersion` binding, signed-feed and installed Sparkle integration, then
-final app/minimum-OS/Developer-ID qualification, real tap, public bytes and
-channel promotion. Supplied declarations do not complete those joins.
+directions. This renderer has no publication authority. The native producer
+and source-bound receiver now bind both displayed and build plist versions to
+the exact stable source version. A fixed counter refuses before packaging; a
+changed built/received counter refuses despite an admitted native closure.
+Continue signed-feed and installed Sparkle integration, then final
+app/minimum-OS/Developer-ID qualification, real tap, public bytes and channel
+promotion. Supplied declarations do not complete those joins.
 
 S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned
