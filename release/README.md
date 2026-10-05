@@ -166,6 +166,43 @@ Controlled manager states, query failure and deadline complement these checks.
 Booted systemd, native amd64/default JIT, physical storage/power and separately
 encrypted key recovery remain unqualified.
 
+## Booted Ubuntu qualification
+
+The root-only `release/linux/booted-check.exs` fixture uses two independently
+pinned private stable candidates (0.1.0 then 0.1.1) in a disposable booted Ubuntu
+24.04 arm64 machine. These tags/archives have publication authority none. Verify
+candidate/source records and copied archive SHA-256 before installation; keep
+root-owned unaliased 0600 copies as `/root/lower.deb` and `/root/upper.deb`.
+Install the lower archive through APT with its real unit active, then immediately
+restart it and require command readiness. Provider hardening restoration, if
+needed, applies only to this unit and must be recorded explicitly.
+
+Prepare three fixture accounts: `frame-control` belongs to both installed public
+groups, `frame-observer` only to `frameshift-observer`, and `frame-denied` to
+neither. Installation itself grants no human membership. Extract the accepted
+lower archive into an absent root-private `/root/frameshift-validator`; its
+runtime must survive removal of the installed product. Copy `booted-check.exs`
+as root-owned 0600 `/root/lifecycle.exs`. Under root-owned 0755
+`/run/frameshift-qualification-fixtures`, install `verify-booted-store.exs` and
+`apps/core/test/fixtures/canonical-jpeg.jpg`/`.rgba` as 0644 files named
+`verify-booted-store.exs`, `original.jpg` and `original.rgba`, and install
+`codec-stop-check` as 0755. These contain only public fixture data/code.
+
+Run the validator's bundled `releases/0.1.0/elixir` with its own `start_clean`
+boot and `RELEASE_LIB` path, a clean environment (`PATH=/usr/sbin:/usr/bin:/sbin:/bin`,
+`LANG=C.UTF-8`, `ERL_FLAGS=+S 2:2 +SDcpu 2 +SDio 2`, crash dump `/dev/null`),
+then `/root/lifecycle.exs /root/lower.deb /root/upper.deb LOWER_SHA256 UPPER_SHA256`.
+The [owning contract](../docs/host/linux.md#booted-package-and-native-stop-fixture)
+defines comparisons, exact unloaded-unit reset handling and actual native stop.
+Require absent fixture caller/backup/output paths; a partial run retains them and
+must not be restarted by deleting data or lowering the watermark. The last phase
+intentionally leaves intake fenced and prior receipts readable. Preserve that
+state for inspection; this is acceptance tooling, not customer recovery.
+
+The current observed shared-kernel arm64 qualification is split by disk-pressure
+VM interruption. Its exercised phases pass; an uninterrupted complete fresh run,
+stock Ubuntu/native amd64 and physical/production acceptance remain open.
+
 ## Stable source input capture
 
 `./scripts/record-release-inputs vX.Y.Z COMMIT OUTPUT` records a clean existing

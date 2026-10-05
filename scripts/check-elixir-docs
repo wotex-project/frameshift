@@ -29,7 +29,8 @@ find "$repository_root/apps" "$repository_root/packages" \
 
       hidden = FILENAME ~ /\/test\// || FILENAME ~ /_test\.exs$/ || \
         FILENAME ~ /\/migrations[\/.]/ || FILENAME ~ /\/simulator\/container\/receiver\.exs$/ || \
-        FILENAME ~ /\/release\/linux\/(closure|deb|maintenance)-check\.exs$/
+        FILENAME ~ /\/release\/linux\/(closure|deb|maintenance|booted)-check\.exs$/ || \
+        FILENAME ~ /\/release\/linux\/verify-booted-store\.exs$/
 
       if (hidden && $0 !~ /^[[:space:]]*@moduledoc false[[:space:]]*$/) {
         print location ": migration and test modules require @moduledoc false" > "/dev/stderr"

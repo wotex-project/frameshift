@@ -36,6 +36,7 @@ check_policy() {
     "$repository_root/scripts/check-linux-release" \
     "$repository_root/scripts/check-linux-deb" \
     "$repository_root/release/linux/check-systemd" \
+    "$repository_root/release/linux/codec-stop-check" \
     "$repository_root/scripts/check-linux-candidate" \
     "$repository_root/codec/vendor/jpeg-decoder/check-source" \
     "$repository_root/scripts/format" \

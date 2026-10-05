@@ -1701,6 +1701,56 @@ has publication authority `none`; fresh standard-command builds and installed
 lifecycle qualification remain separate. If those exports remain incomplete,
 retain the failure and investigate rather than accepting or patching its bytes.
 
+### Source-bound booted lifecycle and actual codec stop
+
+**Observation:** 2026-10-05. Fresh standard-command candidates rooted at the
+artifact/readiness/mixed-stop implementation join these private source identities:
+
+| Fixture version | Frozen source commit | Source-input SHA-256 | Candidate record SHA-256 | DEB SHA-256 |
+| --- | --- | --- | --- | --- |
+| 0.1.0 | `15eb563ee74a98735f8839aac33d73f5c46d046f` | `b82d85cb5a11dc1fa64f3488a93b925b49a645e60ab1ff9c6af2e1376cd0ca58` | `23b308b50f1e71776a5719e803af5dd5f7245528f6fb0a7098c0adc0458dc0c3` | `83f16c67ef13f304681a9e53ee48843ca6397f729cf1d56fce2f141f1dfd1d70` |
+| 0.1.1 | `99f4f493444a79db176d0966bd214497f42257c7` | `1d5685278d61bb04dfea246f5562f7e72513789b812e2877dd9ed2e49f6ff5cb` | `391646cde91296a6e11bd10ae4c4ad87269d883b471cf0a5e605ac892f25791e` | `cd7da0eb63bdfb340e95575ed886f56c0df6464997ed4cd9791861e947ea0cab` |
+
+The copied archives verify independently. Installed unit, `check-ready`,
+`launch-service`, `frameshiftctl` and `policy.sh` match frozen source. Unit SHA-256
+is `dc6290adb88bb9e0930f98c7393d60c9c7f6be1eba5bbcf3e491ec95c1b8591f`.
+Actual APT install and immediate managed restart pass with default JIT on Ubuntu
+24.04.5 arm64/systemd 255.4 and the previously identified shared OrbStack kernel.
+Declared hardening is restored only for the tested unit.
+
+The repository booted fixture passes exact original PNG/JPEG/group admission,
+created 0400 identity and service-UID resolution, offline backup/verify/restore,
+live maintenance refusal, active-but-disabled 0.1.0-to-0.1.1 upgrade, downgrade
+before unpack/error-unwind and post-downgrade retained comparison. It then stops
+because `reset-failed` refuses an inactive disabled unit that the manager has
+unloaded. Exact [systemd v255 reset source](https://github.com/systemd/systemd/blob/v255/src/core/dbus-manager.c#L870-L874)
+explains that reset does not load an absent unit because it cannot retain failed
+state. This source was read with gh. The fixture now accepts only that exact
+C-locale response, continuing to normal start; every other reset error refuses.
+The finite installed start budget remains unchanged.
+
+Disk pressure interrupts the VM and prevents a fresh machine's rootfs extraction.
+An explicit resumed fixture uses the exact stopped installation after the prior
+retained comparison; noncustodial `/tmp` and `/run` fixture inputs are recreated,
+with no installed data/watermark/fence reset. Actual remove, purge, lower-version
+reinstall refusal and higher-version reinstall preserve immutable bytes, owners,
+modes, authoritative tables, retained audits, key, UID, backups and unknown
+sentinel. A new original import succeeds. The validator runs from its separately
+extracted protected runtime, independent of removed product files.
+
+The final phase SIGSTOPs the actual codec worker after executable/cgroup/PID-start
+matching. Managed stop succeeds, that identity disappears, the group empties and
+the interrupted CLI exits 75. Authoritative tables remain unchanged: decoding
+had not reached Library receipt admission. Restart keeps prior completed receipts
+readable; interrupted status and new import refuse with 69 while uncertain intake
+custody stays retained. This qualifies actual worker ownership/refusal, not
+pre-decode durable claims or automatic recovery.
+
+All exercised phases pass across the explicitly split run. The corrected full
+repository fixture has not completed uninterrupted from a fresh installation.
+Stock Ubuntu/native amd64, host OOM recovery, physical storage/power and production
+acceptance remain open. These private candidates grant no release authority.
+
 ### Timezone-independent protected identity custody
 
 **Observation:** 2026-10-05. The booted arm64 identity command validates its PEM,

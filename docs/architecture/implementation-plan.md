@@ -637,49 +637,43 @@ toolchain/native/SDK/OS material gates, vendor derivation and distributed closur
 review. This private technical inventory grants no rights or publication
 authority and does not modify candidate transports or installed packages.
 
-The installed Linux launchers preserve a usable caller directory and refuse
-relative-file reinterpretation before fallback to `/`. Three POSIX groups pass.
-A freshly source-bound arm64 DEB installs through actual APT/dpkg; its launchers
-match frozen bytes and booted-manager control/observer, identity and new absolute/
-literal-relative PNG imports pass with default JIT. A repeatable native canary
-joins installed-unit confinement, 4096 descriptors, 512 tasks, positive memory-high
+The Linux launchers preserve usable caller directories and refuse relative-path
+reinterpretation before fallback to `/`; three POSIX fixture groups pass. Exact
+POSIX timestamps preserve protected credential custody across UTC/non-UTC
+processes. All 15 Linux IPC groups and the core quality/release gates pass.
+Previously uncertain keys and import state remain retained for inspection.
+
+The managed VM inherits its directory lease through `flock --no-fork` and is
+systemd's main process. Mixed stop gives OTP custody of native shutdown before
+whole-group final termination; OOM stop is explicit. Bounded read-only post-start
+command readiness joins first install and immediate restart, without attesting
+model/frame/credential readiness or repairing fences. Four native canary phases
+exercise restored confinement, 4096 descriptors, 512 tasks, positive memory-high
 throttling, the unchanged 1 GiB hard ceiling after explicit canary-only throttle
-relaxation, manager OOM stop and whole-group native-child stop within the declared
-40-second deadline.
-The isolated OrbStack userspace shares a kernel and restores provider-disabled
-hardening only for the tested units. Continue real codec-child stop and booted
-numeric-version update/removal/administrative recovery. Stock Ubuntu/native amd64,
-physical power/storage, rights/signing and production acceptance remain open.
+relaxation, manager OOM stop and whole-group child stop within 40 seconds.
 
-The managed launcher now execs the actual VM through `flock --no-fork`, preserving
-its directory lease while making it systemd's main process. `KillMode=mixed`
-allows OTP's native helper shutdown before group-wide final termination;
-`OOMPolicy=stop` is explicit. An exact fixture overlay passes main-VM identity,
-live lease contention, all four revised kernel canaries, two successful managed
-stops, released private custody and new imports across restarts. Forced/unknown
-termination still preserves fences. Continue fresh source-bound package and
-booted lifecycle joins; overlay evidence does not qualify an unchanged archive.
+Final Linux runtime/DEB artifact stages bypass cache reuse while compilation
+keeps its existing policy. Cached directory and TAR exports omit required files;
+the cache/export boundary is implicated without an established upstream mechanism.
+All source/namespace/byte/handoff gates remain authoritative, incomplete outputs
+remain retained and shared caches are not pruned. Two fresh standard-command
+arm64 candidates join these fixes to exact frozen source/package bytes.
 
-Managed start now includes a service-UID, clean-environment read-only command
-readiness helper inside the existing manager deadline. This prevents the package
-start from returning during initial native setup. The helper bounds polling and
-final termination, refuses wrong roles and does not repair import custody. Fresh
-source-bound packages must join first install and immediate managed restart;
-the finite start-rate budget remains in force.
+Actual booted APT install/immediate restart, PNG/JPEG/role/identity, offline exact
+backup/restore, active-but-disabled numeric upgrade and post-downgrade retained
+comparison pass. After a disk-pressure VM interruption, an explicit resumed check
+passes remove/purge/reinstall, unchanged state/key/backups/unknown custody/UID,
+new import and suspended-codec stop. Prior receipts remain readable; pre-decode
+receipt fabrication is absent and uncertain intake refuses new work/status.
+The repeatable fixture retains partial state and accepts only the manager's exact
+unloaded-unit reset response; the real start budget remains unchanged.
 
-Linux runtime and DEB builders now bypass cache reuse only for their final
-artifact stage. The same frozen source and dependency inputs produce a complete
-verified candidate after cached directory and TAR exports omit required files.
-The export boundary is implicated; its upstream failure mechanism is unproven.
-Keep all source/byte/handoff gates and retained incomplete outputs. Continue
-fresh standard-command packages and the booted lifecycle join.
-
-Protected identity resolution now compares pathname and descriptor timestamps
-as POSIX seconds. The Linux credential/installation/pinned-TLS fixture runs fresh
-UTC and non-UTC processes; the reproduced uncertain-publication failure becomes
-15 passing Linux IPC groups without weakening file custody or key proof. Continue
-fresh fixed-DEB identity and administrative/lifecycle joins before installed
-acceptance; previously uncertain key bytes stay preserved for inspection.
+This qualifies the observed Ubuntu 24.04.5/systemd 255.4 configuration on the
+shared OrbStack arm64 kernel, with declared hardening restored only for the tested
+units. Continue an uninterrupted fresh fixture when space permits, stock Ubuntu/
+native amd64/default JIT, actual host OOM recovery, physical power/storage,
+rights/signing and production acceptance. Split runs, kernel canaries and source
+assertions do not complete those remaining gates.
 
 ## Shared contracts
 

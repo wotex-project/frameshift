@@ -242,6 +242,41 @@ systemd manager, native amd64 JIT, installed clean-VM update/removal, cgroup/OOM
 behavior, power loss, signing/notices or Pi hardware. Installed systemd and native
 CPU acceptance remain mandatory before a customer package is advertised.
 
+### Booted package and native-stop fixture
+
+`release/linux/booted-check.exs LOWER_DEB UPPER_DEB LOWER_SHA256 UPPER_SHA256`
+qualifies private 0.1.0/0.1.1 arm64 candidates in a disposable booted Ubuntu
+24.04 machine. Run its root validator from a separately extracted lower runtime,
+so package removal cannot remove lazily loaded validator modules. Independently
+pin both source-bound candidate archives; require root-owned unaliased regular
+0600 inputs. Prepare explicit control/observer/denied actors, public exact JPEG
+fixtures and the two readback/stop helpers as described in the
+[fixture instructions](../../release/README.md#booted-ubuntu-qualification).
+The real package must already be installed, ready and confined by its declared
+unit. Restore any provider-disabled hardening only for the tested unit.
+
+The fixture joins literal/absolute original imports, a separately retained 0400
+identity, offline exact backup/restore and live refusal to actual active-but-disabled
+upgrade, downgrade/error-unwind, remove/purge and higher-version reinstall.
+Compare immutable bytes, ownership/modes, authoritative SQLite tables, prior
+audit rows and account IDs. Mutable diagnostics/metrics, SQLite physical layout
+and the increasing installation watermark are checked under their own contracts.
+Reset the unit's failure/start-rate state only between independent acceptance
+phases. An exact C-locale `reset-failed` response that the unit is not loaded
+permits the subsequent start to load it; every other reset error refuses. The
+unit's real three-start/120-second policy and filesystem fences stay unchanged.
+
+Finally suspend the actual codec worker after matching its executable, cgroup
+and start identity, then stop the whole managed host. Require successful manager
+stop within 40 seconds, disappearance of that PID identity, an empty group and
+CLI unknown-outcome exit 75. Before decoding has completed, no Library receipt
+may be fabricated. Restart preserves prior completed receipts while unknown
+intake custody refuses status/new import with exit 69. Retain this fenced final
+state and all fixture outputs; this is not automatic recovery or a customer
+installation procedure. A partial run never resets or deletes its retained data.
+Stock Ubuntu/native amd64, physical storage/power and production acceptance
+remain separate from the observed shared-kernel fixture.
+
 ### Captured dependency source receipts
 
 The retained Ubuntu candidate's build-input assertions now have a separate

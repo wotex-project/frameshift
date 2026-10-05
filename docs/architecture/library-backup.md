@@ -143,6 +143,16 @@ roles. Backup/restore and remove/purge preserve private identity bytes without
 including them in an artwork export. Booted systemd, physical storage and
 administrator encrypted-key restore remain separate acceptance tiers.
 
+The source-bound booted arm64 fixture separately joins actual manager ownership,
+service-UID backup/verification/restore, exact PNG/JPEG/receipt readback and
+created-key resolution to the numeric-version package lifecycle. Byte/mode/owner,
+authoritative-table and retained-audit comparisons pass across the exercised
+update/remove/purge/reinstall phases. The qualification is split by a VM disk-pressure
+interruption; an uninterrupted fresh fixture remains required. Restored artwork
+continues to exclude private keys, watermark and temporary custody. This evidence
+covers the observed shared kernel and filesystem; it does not qualify encrypted
+identity restore, physical power loss or another Ubuntu configuration.
+
 APFS, supported Linux filesystems, Pi storage, full-disk behavior, and
 power-interruption durability require target-specific qualification before a
 release claim. This contract does not authorize repository visibility changes.

@@ -1,0 +1,46 @@
+#!/bin/sh
+# Root-only fixture for the declared unit in a disposable booted machine.
+# Preserve source, output and uncertain import fences after the observed stop.
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+umask 077
+[ "$(id -u)" = 0 ]
+[ "$(cat /proc/1/comm)" = systemd ]
+[ "$(systemctl show frameshift.service --property=ActiveState --value)" = active ]
+[ "$(systemctl show frameshift.service --property=KillMode --value)" = mixed ]
+[ ! -e /root/frameshift-booted-codec-stop-output ] && [ ! -L /root/frameshift-booted-codec-stop-output ]
+runuser -u frame-control -- /usr/bin/frameshiftctl import /tmp/frameshift-booted-caller/codec-stop.png --id booted-codec-stop >/root/frameshift-booted-codec-stop-output 2>&1 &
+caller=$!
+worker=''
+count=0
+while [ -z "$worker" ]; do
+  for candidate in $(pgrep -x worker || :); do
+    [ "$(readlink "/proc/$candidate/exe" || :)" = /var/lib/frameshift/tmp/frameshift-codec-custody/worker ] || continue
+    [ "$(cat "/proc/$candidate/cgroup")" = '0::/system.slice/frameshift.service' ] || exit 1
+    start=$(cut -d ' ' -f22 "/proc/$candidate/stat")
+    kill -STOP "$candidate"
+    worker=$candidate
+    break
+  done
+  count=$((count+1)); [ "$count" -lt 2000 ]
+  sleep 0.001
+done
+# Retain only process identity, never command arguments or service cookies.
+[ "$(cut -d ' ' -f3 "/proc/$worker/stat")" = T ]
+[ "$(cut -d ' ' -f22 "/proc/$worker/stat")" = "$start" ]
+before=$(date +%s)
+systemctl stop frameshift.service
+elapsed=$(($(date +%s)-before))
+[ "$elapsed" -le 40 ]
+if [ -f "/proc/$worker/stat" ] && [ "$(cut -d ' ' -f22 "/proc/$worker/stat")" = "$start" ]; then exit 1; fi
+[ "$(systemctl show frameshift.service --property=ActiveState --value)" = inactive ]
+group=/sys/fs/cgroup/system.slice/frameshift.service
+[ ! -e "$group/cgroup.procs" ] || [ -z "$(cat "$group/cgroup.procs")" ]
+[ "$(systemctl show frameshift.service --property=Result --value)" = success ]
+set +e
+wait "$caller"
+caller_status=$?
+set -e
+[ "$caller_status" = 75 ]
+printf 'native-codec stop passed: worker stopped then killed/reaped; empty group; elapsed=%ss; CLI=%s\n' "$elapsed" "$caller_status"
