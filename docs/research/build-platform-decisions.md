@@ -1,6 +1,6 @@
 # Build Platform Technical Decision Research
 
-**Updated:** 2026-10-04; earlier source observations retain their recorded dates.
+**Updated:** 2026-10-05; earlier source observations retain their recorded dates.
 **Evidence:** repository/source inspection and attributed published measurements.
 **Not performed:** Frameshift model benchmarks, paid inference, Maude proof runs, live provider qualification or physical hardware validation.
 
@@ -35,6 +35,71 @@ The selected frontend is Svelte 5/SvelteKit through [phoenix-assets](https://git
 The earlier Refpath inspection found Beamlens optional for development/test and an observability owner capable of starting it when available. A production host must declare the dependency, select one supervisor and avoid a duplicate instance. Bound investigation frequency, concurrency, context and execution. Diagnostic failure cannot remove ordinary logs, metrics or alerts, and diagnostic models cannot mutate product/commitment state.
 
 The planned shared operated deployment uses GreptimeDB-oriented metrics and bounded structured logs/traces without ELK. GreptimeDB ingestion and any log/trace features require exact-version qualification; the existing exporter remains. This is host configuration, not a dependency of pure product decisions. Heavy CAD/model processing must not starve authoritative application/reconciliation work.
+
+## Private account and token boundary, 2026-10-05
+
+The requirement is an optional server account for the companion workbench,
+independent of local composition and native artwork custody. The existing Ash
+Access domain owns credentials and token persistence. The bounded first-party
+password direction avoids introducing a second authorization engine. OIDC is a
+possible replacement only after an actual provider, identity-linking policy and
+joined consumer are selected; no provider is configured or contacted here.
+
+The admitted stable dependency is
+[Ash Authentication 4.15.0](https://github.com/team-alembic/ash_authentication/tree/d6b2be35cf8f0b8ab84e7a934cfb0d91de0a3c17),
+the peeled `v4.15.0` source commit checked with `gh`. Its
+[changelog](https://github.com/team-alembic/ash_authentication/blob/d6b2be35cf8f0b8ab84e7a934cfb0d91de0a3c17/CHANGELOG.md)
+adds session renewal and strengthens revocation/current-token handling.
+Use its existing password preparation, token issuance, session consumer and
+expiry supervisor. Store every token and require its presence; ordinary resource
+policies refuse access outside the authentication interaction. OAuth, reset,
+remember-me and short-lived sign-in-token flows are not enabled. The Phoenix
+LiveView authentication package is unnecessary for the existing Svelte consumer.
+
+The source contract for
+[token revocation](https://github.com/team-alembic/ash_authentication/blob/d6b2be35cf8f0b8ab84e7a934cfb0d91de0a3c17/lib/ash_authentication/token_resource/revoke_token_change.ex)
+explicitly leaves signature verification to the caller. The host verifies with
+`AshAuthentication.Jwt.verify/4` before `AshAuthentication.TokenResource.Actions.revoke/3`;
+decoding a claim alone cannot revoke another session. The
+[session helper](https://github.com/team-alembic/ash_authentication/blob/d6b2be35cf8f0b8ab84e7a934cfb0d91de0a3c17/lib/ash_authentication/plug/helpers.ex)
+verifies the token, requires a `user`-purpose row and resolves the current account.
+Its finite refusal also covers failed storage reads; it does not distinguish
+every storage outage from incorrect credentials. No refusal grants authority.
+
+The selected password implementation is
+[argon2_elixir 4.1.3](https://hex.pm/packages/argon2_elixir/4.1.3), through the
+upstream `AshAuthentication.Argon2Provider`. The admitted package's
+`lib/argon2/base.ex` defaults to Argon2id, time cost 3, 64 MiB and parallelism 4;
+this is per hash, before concurrent-work limits. The published source changelog
+retrieved for the 4.1.3 cohort describes releases only through 4.1.1, so it does
+not establish a complete 4.1.3 change account. Exact package source and actual
+hash verification are the integration evidence. The new dependency closure adds
+seven packages without changing existing lock entries. Bcrypt and Assent remain
+upstream transitive dependencies; no product strategy selects them.
+
+[NIST SP 800-63B-4](https://pages.nist.gov/800-63-4/sp800-63b.html) supports a
+15-character minimum for single-factor passwords and acceptance of long
+passwords. The host accepts exactly 15–128 Unicode code points without trimming
+or silent truncation. This bounded choice and native hashing do not establish
+NIST conformance, mailbox ownership, account recovery or production identity
+assurance. Password/token SQL parameters are excluded from query logs; bounded
+database timing telemetry remains enabled.
+
+Original CREATE migrations own both private tables and their indexes; a separate
+INSTALL migration owns citext. Ash snapshots are checked against those schemas.
+The pre-existing test database retains an older migration ledger and is preserved;
+qualification uses a new isolated PostgreSQL fixture through the test-only database
+selector. The [account/session specification](../architecture/build-platform.md#account-and-browser-session-boundary)
+and S5 plan require database/native hashing refusal tests first, then HTTP cookie,
+CSRF, origin, revocation and work-budget tests, and finally the Svelte consumer.
+Authentication never supplies a catalog/operator role or opens composition writes.
+
+Qualification passes twelve focused database/native-hash cases and the full
+47-test platform suite, warning-free compilation, formatter and strict Credo.
+The three new migrations roll back and reapply on the isolated fixture.
+Dependency audits retain only the existing scoped advisory exceptions; the
+new credential/token closure reports no additional advisory. HTTP/browser
+acceptance is still a separate implementation gate.
 
 ## Gleam and ExMaude
 

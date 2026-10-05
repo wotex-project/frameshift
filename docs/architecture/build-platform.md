@@ -118,6 +118,54 @@ one service per package or one application fork per operator.
   inspector, procedure and explanation components resolve to authorized commands;
   a model may propose data or an approved configuration, never executable code.
 
+### Account and browser-session boundary
+
+The first-party account/session implementation uses Ash Authentication's public
+password/token boundary in the existing Access domain, with Argon2id hashing.
+A private account UUID identifies the credential holder; a login email is not
+proof of mailbox ownership, an operator role or permission to use another user's
+composition. Account provisioning, confirmation/recovery and browser presentation
+are explicit host operations. Local composition, public catalog reads and the
+native artwork app require no account.
+
+Passwords are opaque, untrimmed strings of 15–128 Unicode code points; confirmation
+must match exactly. Persist only the salted hash. Store all issued 12-hour tokens
+in the private token resource and require both cryptographic verification and
+stored-token presence for authentication. Expired, revoked, changed or missing
+tokens and unavailable storage refuse. Per-request account resolution uses the
+current stored account rather than browser claims. Hashing and token handling
+stay with the admitted upstream implementation; no product authentication engine
+or alternate provider fallback is introduced.
+
+The browser session uses an encrypted, signed, HttpOnly cookie, Secure in
+production, SameSite Strict and Path `/`, with a fresh session on successful
+sign-in. Tokens never enter JSON, URLs, frontend storage, public projections or
+logs. State-changing session requests require the matching CSRF token and the
+configured same origin. Sign-out revokes the stored token before clearing the
+session; failed revocation cannot report completed sign-out. Use finite errors
+and `no-store` responses. Rate limits and concurrent-password-work bounds must
+pass before an externally accessible password route is enabled.
+
+| Entry point | Trusted authority | Allowed behavior |
+| --- | --- | --- |
+| Public catalog/health/guide | None | Existing deliberate public projections |
+| Account/token actions | Ash Authentication interaction or explicit trusted provisioning | Credential authentication and private token lifecycle |
+| Authenticated session | Verified current account and current server membership | Its own finite session state; no caller-supplied actor/role/scope |
+| Catalog write | Existing typed editor/research-worker policy | Internal actions; a login alone grants no catalog role |
+| Composition save/share/assets | Current server membership plus S4/S5 command/resource qualification | Unavailable until its profile, identity, receipt/revision and private-asset gates pass |
+| Operator action | Current operator membership and producer admission/fence | Remains independently gated; no role inferred from email or token claims |
+
+Deliver account/token resources first, then bounded HTTP session/CSRF/revocation
+and the Svelte consumer. Keep browser writes closed while those consumers and
+composition gates are unqualified. Acceptance uses actual PostgreSQL and Argon2,
+unique private identities, incorrect credentials, password/confirmation bounds,
+plaintext exclusion, cryptographic tamper/expiry, stored-token removal/revocation,
+current-role refusal and storage failure. Joined HTTP/browser fixtures add forged
+cookie/role/scope, login CSRF, fixation, origin, logout failure and budget/capacity
+refusal. Fixture accounts and tokens grant no live identity-provider or release
+authority. Recovery/delivery and production HTTPS configuration require their
+own actual consumer evidence.
+
 **BP-07 — Domain ownership.** Keep explicit consistency/API boundaries:
 
 | Domain | Responsibility | State/dependency |

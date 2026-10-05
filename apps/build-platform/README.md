@@ -42,6 +42,10 @@ The lane checks Svelte types/lint/build, dependency advisories, Elixir format/co
 generated-contract drift, phoenix-assets production checks and migration drift.
 Tests use a separate database and sandbox transactions. CI provisions the same
 pinned PostgreSQL image. No provider credentials or frame hardware are needed.
+`FRAMESHIFT_PLATFORM_TEST_DATABASE` selects another isolated test database when
+an existing fixture retains an older original-migration layout; it defaults to
+`frameshift_platform_test`. This does not change the development database or
+erase the prior fixture.
 
 Before the first release, edit original migrations instead of adding alteration
 migrations. Use `<timestamp>_install_<integration>.exs` for dependency installers
@@ -68,6 +72,14 @@ glob imports refuse at this boundary.
 - Catalog writes are internal Ash actions requiring a typed editor or research
   worker actor. Constructing an actor is not authentication. There is no HTTP
   write route; an authenticated command boundary must precede browser writes.
+- Private accounts use the Access domain's Ash Authentication password/token
+  actions and Argon2id. Internal registration preserves 15–128 Unicode code
+  points, matching confirmation and case-insensitive unique email identifiers.
+  All 12-hour tokens are stored; authentication verifies signature, expiry,
+  revocation, presence and the current account. A login grants no catalog role.
+  The account and token resources have no public routes or generated types.
+  Browser cookies, CSRF, origin and password-work budgets are the next consumer
+  gate; confirmation and recovery delivery remain separate host operations.
 - URI/revision identities cannot be replaced. Source and audit records commit
   together. An HTTPS locator and digest do not qualify the source's claims or
   authorize fetching it; source acquisition has a separate admission boundary.
@@ -97,8 +109,9 @@ with unresolved assembly constraints.
 
 ## Deployment inputs
 
-Production requires `DATABASE_URL`, `PHX_HOST`, `SECRET_KEY_BASE` and `CLOAK_KEY`
-(base64 encoding exactly 32 random bytes); optional
+Production requires `DATABASE_URL`, `PHX_HOST`, `SECRET_KEY_BASE`, `CLOAK_KEY`
+and `AUTH_TOKEN_SIGNING_SECRET` (each key base64-encodes exactly 32 independently
+generated random bytes); optional
 `PORT` and `POOL_SIZE` default to 4080 and 10. Serve behind the deployment's HTTPS
 termination. Database migrations and the frontend build are explicit deployment
 steps. Production never falls back to the local database or development secret.

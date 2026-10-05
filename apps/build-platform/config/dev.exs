@@ -1,5 +1,9 @@
 import Config
 
+config :frameshift_platform,
+       :authentication_signing_secret,
+       "frameshift-development-auth-key-not-for-production-0000000000000000"
+
 config :refpath, Refpath.Security.Vault,
   ciphers: [aes_gcm: {Cloak.Ciphers.AES.GCM, tag: "AES.GCM.V1", key: <<0::256>>, iv_length: 12}]
 

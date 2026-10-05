@@ -1,5 +1,9 @@
 import Config
 
+config :frameshift_platform,
+       :authentication_signing_secret,
+       "frameshift-isolated-auth-test-key-not-for-production-000000000000000"
+
 config :refpath, Refpath.Security.Vault,
   ciphers: [aes_gcm: {Cloak.Ciphers.AES.GCM, tag: "AES.GCM.V1", key: <<1::256>>, iv_length: 12}]
 
@@ -8,7 +12,7 @@ config :frameshift_platform, FrameshiftPlatform.Repo,
   port: 54329,
   username: "frameshift_dev",
   password: "frameshift_local_only",
-  database: "frameshift_platform_test",
+  database: System.get_env("FRAMESHIFT_PLATFORM_TEST_DATABASE", "frameshift_platform_test"),
   pool: Ecto.Adapters.SQL.Sandbox,
   pool_size: 10
 

@@ -3,6 +3,13 @@ import Config
 config :frameshift_platform, :metrics_token, System.get_env("FRAMESHIFT_METRICS_TOKEN")
 
 if config_env() == :prod do
+  authentication_key = System.fetch_env!("AUTH_TOKEN_SIGNING_SECRET") |> Base.decode64!()
+
+  if byte_size(authentication_key) != 32,
+    do: raise("AUTH_TOKEN_SIGNING_SECRET must encode exactly 32 bytes")
+
+  config :frameshift_platform, :authentication_signing_secret, authentication_key
+
   cloak_key = System.fetch_env!("CLOAK_KEY") |> Base.decode64!()
 
   if byte_size(cloak_key) != 32, do: raise("CLOAK_KEY must encode exactly 32 bytes")

@@ -11,8 +11,10 @@ defmodule FrameshiftPlatform.Repo do
   ## Database requirements
 
   The Repo advertises PostgreSQL 18 and the installed Ash helper-function
-  extension. Schema ownership and fresh-install/rollback behavior are verified
-  through platform migrations. This database is independent of the native
+  and citext extensions. SQL query logging is disabled because bind parameters
+  can contain account identifiers and credentials; bounded timing telemetry
+  remains available. Schema ownership and fresh-install/rollback behavior are
+  verified through platform migrations. This database is independent of the native
   `Frameshift.Library` SQLite store; the platform never opens that local store.
   """
 
@@ -34,7 +36,7 @@ defmodule FrameshiftPlatform.Repo do
   end
 
   @impl true
-  def installed_extensions, do: ["ash-functions"]
+  def installed_extensions, do: ["ash-functions", "citext"]
 
   @impl true
   def min_pg_version, do: %Version{major: 18, minor: 0, patch: 0}

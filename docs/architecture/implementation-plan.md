@@ -675,6 +675,18 @@ native amd64/default JIT, actual host OOM recovery, physical power/storage,
 rights/signing and production acceptance. Split runs, kernel canaries and source
 assertions do not complete those remaining gates.
 
+S5's independent authentication groundwork uses the existing Access domain and
+Ash Authentication's public password/token actions with explicitly pinned
+Argon2id costs. Private account/token resources, all-token persistence, 12-hour
+expiry, verified revocation and current-account resolution are implemented.
+Twelve focused cases and the 47-test platform suite pass against an isolated
+PostgreSQL database; original CREATE/INSTALL migrations preserve existing
+fixtures. The host specification freezes the browser cookie/CSRF and server-only
+role/resource matrix. Next join bounded HTTP sessions and the Svelte consumer,
+with origin, fixation, revocation and resource-budget acceptance. No browser
+catalog/composition writes open from a successful login alone. Composition and
+operator authority still require their qualified producer/profile boundaries.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

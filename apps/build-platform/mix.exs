@@ -65,6 +65,8 @@ defmodule FrameshiftPlatform.MixProject do
       {:phoenix, "~> 1.8.15"},
       {:phoenix_assets, "~> 1.1.1"},
       {:ash, "~> 3.34.0"},
+      {:ash_authentication, "4.15.0"},
+      {:argon2_elixir, "4.1.3"},
       {:ash_postgres,
        git: "https://github.com/futhr/ash_postgres.git",
        ref: "528177429ab9bd72ab6ee7bfdf278f94c9fd8252",

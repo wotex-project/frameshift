@@ -84,6 +84,25 @@ not complete semantic conformance, frame-rule coverage, v1 migration, a joined
 guide procedure, another browser/OS or physical/operated qualification.
 No catalog identity or existing compiler authority changes.
 
+### Private account and token foundation, 2026-10-05
+
+`FrameshiftPlatform.AuthenticationTest` passes twelve cases against a new isolated
+PostgreSQL 18.6 fixture on macOS arm64, Elixir 1.20.4/OTP 29.1. Actual Argon2id
+hashes use 64 MiB, time cost 3 and parallelism 4. Tests cover independent salts,
+case-insensitive identity uniqueness, matching confirmation, exact whitespace,
+128 Unicode code points, finite invalid/missing credentials, issued 12-hour
+tokens, cryptographic tamper, expiry, stored-token removal, current-account
+resolution, missing accounts, forged revocation, successful revocation, ordinary
+Ash policy refusal, missing signer, storage failure and credential log exclusion.
+The full platform suite passes 47 cases. The older fixture is preserved.
+
+This is private account/token groundwork for BP-06/S5. Browser cookies, CSRF,
+origin, password-work budgets and the Svelte consumer remain the next gates;
+mailbox confirmation/recovery and production HTTPS need their own evidence.
+Login supplies no catalog/operator membership and opens no composition writes.
+The [source and decision record](../research/build-platform-decisions.md#private-account-and-token-boundary-2026-10-05)
+retains the exact dependency and verification-before-revocation contract.
+
 ### Frame successor profile refusal, 2026-10-04
 
 The [thirteen-stage S2 mapping](physical-build-contract.md#s2-successor-obligation-mapping)
