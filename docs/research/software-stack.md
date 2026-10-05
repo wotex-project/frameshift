@@ -1161,6 +1161,19 @@ pass. This closes the local archive/cache/derivation experiment. Frozen
 source/compiler joins, final app sealing, universal SDK assembly, runtime client,
 upstream build derivation, license review and installed update remain separate.
 
+The universal merger now compares complete fixed alias inventories and admits
+differences in only the four actual SDK `CodeResources` paths. They encode
+per-CPU nested seals and are regenerated after actual native merging; every
+other SDK resource/header/plist remains byte-bound. Native and all four nested
+container seals verify before and after assembly. Three actual-archive groups
+and fourteen existing universal/DMG groups pass on the same Mac: twelve native
+fixture roles with both CPUs, exact aliases, strict signatures, real arm64
+stopped-controller execution, immutable no-effect replay, conflicting headers/
+unknown signature paths and an outer-app-only reseal with corrupt nested bytes.
+This qualifies the local merger with real SDK bytes and cross-compiled native
+fixture roles; it does not establish a full native Intel producer, source-bound
+universal host, installed update or production signing.
+
 ### AppKit owned-core quit and modal-loop delivery
 
 **Observation:** 2026-10-06. Apple's current

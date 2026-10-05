@@ -141,7 +141,9 @@ Join separately built development CPU bundles before creating a universal image:
 ```
 
 Both admitted ad-hoc inputs must have matching directories, common bytes and
-product identities. Every native file is merged and signed again in the new
+product identities. Updater inputs also require identical fixed aliases; only
+their four verified nested resource seals may differ and are regenerated.
+Every native file and fixed nested container is signed again in the new
 private output. The record binds both input observations and the final
 universal bundle. A rerun verifies retained custody without merging or signing
 again. Differing resources, incomplete output and changed source/output refuse.

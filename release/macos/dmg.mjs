@@ -3,6 +3,7 @@ import { constants, chmodSync, closeSync, fstatSync, fsyncSync, lstatSync, mkdir
 import { basename, dirname, join, resolve } from 'node:path';
 import { createHash } from 'node:crypto';
 import { readReleaseInput, withReleaseInput } from '../files.mjs';
+import { sparkleContainers } from '../macos-framework.mjs';
 import { auditMacBundle } from './closure.mjs';
 
 const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
@@ -50,6 +51,7 @@ async function imageFacts(path) {
 }
 export function verifyDevelopmentSignatures(root, observation, tool = macImageTool) {
   for (const native of observation.natives) tool('/usr/bin/codesign', ['--verify', '--strict', join(root, native.path)]);
+  if (observation.links) for (const path of sparkleContainers) tool('/usr/bin/codesign', ['--verify', '--strict', join(root, path)]);
   tool('/usr/bin/codesign', ['--verify', '--deep', '--strict', root]);
   const signature = tool('/usr/bin/codesign', ['--display', '--verbose=2', root]);
   if (!/^Signature=adhoc$/m.test(signature.stderr)) fail('ad-hoc development app required');

@@ -704,7 +704,7 @@ pass; the actual pinned SDK round-trips through BSD USTAR with unchanged closure
 and strict nested seals. All eight Ubuntu candidate groups preserve the source
 and retained-output contracts; all seventeen Mac/Linux candidate and receipt
 receiver groups pass with private CLI replay. Continue frozen binary
-SDK/compiler/source joining, universal SDK merging and application Sparkle
+SDK/compiler/source joining and application Sparkle
 integration with required signed-feed settings, then
 installed update qualification and final
 app/minimum-OS/Developer-ID qualification, real tap, public bytes and channel
@@ -734,6 +734,16 @@ The archive and shared cache stay unchanged. This is archive/cache/derivation
 evidence; wire these facts into frozen source/native producers, before/after
 Swift builds, universal merging and the application updater before claiming a
 source-bound SDK candidate. No hosted provenance or production authority follows.
+
+The independent SDK universal join now requires identical admitted aliases and
+permits only the four fixed SDK resource seals to differ before regenerating
+them. Every native and nested container seal verifies independently. Three
+actual-archive groups and fourteen existing universal/DMG groups pass all
+twelve merged fixture native roles, both CPU metadata, arm64 stopped-controller
+execution, unchanged no-effect replay and SDK common-resource/nested-seal
+refusal. This closes the local SDK merge mechanism; the full native Intel/arm64
+source-bound host cohort, updater client, installed OS/update and production
+signing remain required.
 
 S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned

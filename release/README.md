@@ -120,6 +120,12 @@ source/compiler joining remain independent. Run all six material tests with
 groups are explicitly excluded when it is absent. See
 [pinned updater material](../docs/host/macos.md#pinned-updater-material-and-private-cpu-derivation).
 
+The same explicit archive input enables the three actual SDK groups in
+`release/macos/sparkle-universal.test.mjs`. They exercise both thinned CPU
+inputs, merged native/controller execution on arm64, every nested seal,
+unchanged replay and common-resource/seal conflicts. Cross-compiled Intel
+metadata does not qualify a full native Intel host or an installed update.
+
 The plan is compact JSON with one trailing newline, such as:
 
 ```json

@@ -3,6 +3,7 @@ import { constants, chmodSync, closeSync, fsyncSync, lstatSync, mkdirSync, mkdte
 import { basename, dirname, join, resolve } from 'node:path';
 import { isDeepStrictEqual } from 'node:util';
 import { readReleaseInput } from '../files.mjs';
+import { sparkleResourceSeals } from '../macos-framework.mjs';
 import { auditMacBundle } from './closure.mjs';
 import { prepareDevelopmentBundle } from './prepare.mjs';
 import { macImageTool, verifyDevelopmentSignatures } from './dmg.mjs';
@@ -43,6 +44,8 @@ function pair(arm, intel) {
   }
   if (!isDeepStrictEqual(arm.files.map(file => file.path), intel.files.map(file => file.path))) fail('universal source file sets differ');
   if (!isDeepStrictEqual(arm.directories, intel.directories)) fail('universal source directories differ');
+  if (!isDeepStrictEqual(arm.links ?? [], intel.links ?? [])) fail('universal source framework aliases differ');
+  const seals = new Set([...ignored, ...(arm.links ? sparkleResourceSeals : [])]);
   const aNative = new Map(arm.natives.map(file => [file.path, file])), iNative = new Map(intel.natives.map(file => [file.path, file]));
   if (!isDeepStrictEqual([...aNative.keys()], [...iNative.keys()])) fail('universal native roles differ');
   let estimate = 0;
@@ -55,7 +58,7 @@ function pair(arm, intel) {
       if (bytes > 128 * 1024 * 1024) fail('universal native byte estimate exceeds closure limit');
       estimate += bytes;
     } else {
-      if (!ignored.has(a.path) && !isDeepStrictEqual(a, i)) fail('universal common bytes differ');
+      if (!seals.has(a.path) && !isDeepStrictEqual(a, i)) fail('universal common bytes differ');
       estimate += Math.max(a.bytes, i.bytes);
     }
   }

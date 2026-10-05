@@ -16,6 +16,11 @@ export const sparkleContainers = [
   `${sparkleRoot}/Versions/B/XPCServices/Installer.xpc`,
   `${sparkleRoot}/Versions/B/Updater.app`, sparkleRoot,
 ];
+export const sparkleResourceSeals = [
+  `${sparkleRoot}/Versions/B/_CodeSignature/CodeResources`,
+  ...sparkleContainers.filter(path => path !== sparkleRoot)
+    .map(path => `${path}/Contents/_CodeSignature/CodeResources`),
+];
 export const sparkleArchive = Object.freeze({
   version: '2.10.0',
   commit: 'eef1a539a373c1f1a320624b1130fc5de7b2e100',

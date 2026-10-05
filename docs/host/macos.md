@@ -765,7 +765,12 @@ CPU in every native file, and pass closure and all native/app seal checks.
 Their directory paths/modes and relative file sets must agree. Every non-native
 byte and mode must agree,
 except the enclosing app's regenerated `Contents/_CodeSignature/CodeResources`
-and `Contents/Info.plist`. Parse both plists with Apple's parser and require
+and `Contents/Info.plist`. For the complete admitted Sparkle profile, require
+identical exact alias inventories and permit differences only in its four
+fixed framework/Updater/Downloader/Installer `CodeResources` files, whose seals
+must verify independently before merging and be regenerated after merging.
+Do not ignore other SDK resources, headers, plists or arbitrary signature paths.
+Parse both plists with Apple's parser and require
 equal properties except `LSMinimumSystemVersion`, with matching nonempty bundle
 ID, version and build number. Refuse differing BEAM files, configuration,
 resources, dependency versions, native roles or file types; never pick one
@@ -774,7 +779,9 @@ architecture's conflicting common bytes silently.
 Copy the admitted common tree into a private stage and merge every native
 file with `lipo`, preserving its mode. Do not keep one architecture's OTP
 helpers or NIFs. Admit both slices in every result, derive the greatest actual
-native OS minimum, and sign the merged leaves before the app. Re-read both
+native OS minimum, and sign merged leaves, then the fixed nested SDK containers
+and framework, before the app. Preserve and recheck every alias and verify every
+native/container and enclosing seal. Re-read both
 sources before completion. Sync the final app and a bounded private record
 binding both complete input observations to the exact universal observation;
 its publication authority is `none`. A retained rerun verifies inputs, output,
@@ -790,6 +797,10 @@ compiled arm64/x86_64 inputs, merged executable and dylib slices, native arm64
 fixture execution, final seals, unchanged replay, resource/plist/CPU/type/input
 mutation and interrupted/failed-merge refusal. The exact merged fixture can
 then enter the development DMG readback gate.
+The updater join additionally requires both actually thinned SDK inputs, all
+twelve merged fixture native roles, arm64 real-controller initialization with
+the updater stopped, unchanged replay and SDK resource/alias/seal refusals.
+Intel metadata and cross-compilation remain distinct from native Intel execution.
 
 This join checks byte custody and static structure, not semantic equivalence
 of separately compiled CPU code. Exact tagged source, reproducible common
