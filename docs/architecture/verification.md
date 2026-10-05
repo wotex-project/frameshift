@@ -153,6 +153,32 @@ types/lint/build, generated-contract and migration drift. Policy and rendered
 development/release/assembled documentation checks pass. Two fresh dependency
 audits retain only the existing scoped Gun/cowlib exceptions.
 
+### Current catalog membership groundwork, 2026-10-05
+
+Ten `FrameshiftPlatform.MembershipsTest` cases and two
+`FrameshiftPlatform.MembershipConcurrencyTest` cases use actual PostgreSQL 18.6
+and native session verification on the same macOS/Elixir/OTP fixture. They cover
+no-role login, trusted administrator refusal, input/role/reference bounds,
+unchanged grant/revoke replay, changed-input and duplicate-active conflict,
+one-way versioning, direct stale Ash update refusal, preserved attribution,
+held-actor revocation/regrant, account/role/version mismatch, token removal,
+ordinary resource policies, public-schema exclusion, foreign-key/lifecycle/role
+constraints and storage outage/recovery. A nested Ash rollback initially escaped
+as a raw changeset; the repeated boundary test now receives only finite conflict.
+
+Two independent unsandboxed fixture connections prove actual PostgreSQL lock
+contention before release of the first account lock; only one active grant
+commits. Concurrent exact grant and revoke retry return one retained row and
+identical persisted timestamps/attribution. Fixture cleanup removes only those
+owned accounts, tokens and grants. The original membership creation migration
+rolls back and reapplies on the isolated database. Existing anonymous catalog and
+trusted local actor paths remain separate from account-derived references.
+
+This qualifies private global catalog permission lookup/current-reference
+policies. The existing operator role reads only catalog audit. It establishes no
+browser domain writes, composition sharing/private assets, generic operator or
+project scope, atomic command lease or external identity assurance.
+
 ### Frame successor profile refusal, 2026-10-04
 
 The [thirteen-stage S2 mapping](physical-build-contract.md#s2-successor-obligation-mapping)

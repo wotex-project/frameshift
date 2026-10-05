@@ -104,6 +104,13 @@ glob imports refuse at this boundary.
   Limiter/task-supervisor restart or replacement and abnormal worker exit close
   admission until a full VM restart. Multiple-instance traffic needs a qualified
   shared admission boundary. Session authentication supplies no domain role.
+- Private catalog memberships have stable grant UUIDs, administrator attribution
+  and a one-way version 1-to-2 revoke transition. Trusted local `access_admin`
+  actors provision/revoke them; accounts cannot assign themselves roles. Verified
+  session lookup derives a current grant reference, which existing Ash catalog
+  policies recheck. Revoked/replaced or mismatched references refuse. The existing
+  `operator` grant reads catalog audit only. There is no membership or catalog
+  write HTTP route; browser command/transaction qualification remains separate.
 - URI/revision identities cannot be replaced. Source and audit records commit
   together. An HTTPS locator and digest do not qualify the source's claims or
   authorize fetching it; source acquisition has a separate admission boundary.

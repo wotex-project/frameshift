@@ -12,6 +12,11 @@ defmodule FrameshiftPlatform.Access do
   server boundaries may turn an account into a current permission context;
   issuance or possession of a token does not grant a catalog/operator role.
 
+  `FrameshiftPlatform.Access.Membership` retains attributed catalog grants and
+  one-way revocation. `FrameshiftPlatform.Access.Memberships` owns trusted local
+  provisioning, verified-session role lookup and exact current-reference checks.
+  Membership IDs and roles are excluded from public browser projections.
+
   ## Actor boundary
 
   `FrameshiftPlatform.Access.Actor` carries a trusted UUID and role from the
@@ -26,6 +31,7 @@ defmodule FrameshiftPlatform.Access do
     resource FrameshiftPlatform.Access.AuditEvent
     resource FrameshiftPlatform.Access.User
     resource FrameshiftPlatform.Access.Token
+    resource FrameshiftPlatform.Access.Membership
     resource FrameshiftPlatformWeb.SessionView
   end
 end

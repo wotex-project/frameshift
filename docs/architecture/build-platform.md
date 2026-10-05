@@ -150,7 +150,7 @@ pass before an externally accessible password route is enabled.
 | --- | --- | --- |
 | Public catalog/health/guide | None | Existing deliberate public projections |
 | Account/token actions | Ash Authentication interaction or explicit trusted provisioning | Credential authentication and private token lifecycle |
-| Authenticated session | Verified current account and current server membership | Its own finite session state; no caller-supplied actor/role/scope |
+| Authenticated session | Verified current account | Its own finite session state; no caller-supplied actor/role/scope |
 | Catalog write | Existing typed editor/research-worker policy | Internal actions; a login alone grants no catalog role |
 | Composition save/share/assets | Current server membership plus S4/S5 command/resource qualification | Unavailable until its profile, identity, receipt/revision and private-asset gates pass |
 | Operator action | Current operator membership and producer admission/fence | Remains independently gated; no role inferred from email or token claims |
@@ -208,13 +208,57 @@ Keyboard operation, named fields, live status, narrow/high-zoom/reduced-motion
 layout, real HTTP login/renewal/logout, refresh and outage checks qualify this
 consumer; frontend compilation alone does not establish that join.
 
+### Current catalog membership boundary
+
+S5's independent permission groundwork covers the existing global catalog only.
+Private membership grants bind one account UUID to `catalog_editor`,
+`research_worker` or the existing `operator` audit-reader role. The latter grants
+only catalog-audit reads; it grants no Refpath operator/project or composition
+authority. Roles, account IDs and membership references never enter public
+catalog/session projections. A login has no membership by default.
+
+An explicit trusted local administrator actor with `access_admin` may provision
+or revoke grants. This bootstrap authority is supplied by trusted server code,
+never a password account, email, JWT claim or browser input. It has no HTTP route
+and cannot itself be assigned through membership provisioning. Preserve the
+existing explicitly trusted administrative/worker actor path; an authenticated
+lookup must never fall back to constructing such an actor after refusal.
+
+A caller-chosen stable grant UUID binds exactly one account, role and granting
+administrator. Creation is version 1 and retains its timestamp and attribution.
+Same-ID/same-input retry returns retained state without another grant; conflicting
+input refuses. At most one unrevoked grant exists per account/role. Revocation
+requires expected version 1, records its administrator/time and transitions once
+to version 2. Same-input retry preserves that result; another revoker or revision
+conflicts. A revoked grant never reactivates. Regrant needs a new UUID, invalidating
+all old permission references. Keep grant/revocation attribution; account removal
+with retained grants refuses until a separate retention/deletion contract exists.
+
+Permission lookup takes a cryptographically verified current session and one
+server-selected catalog role. It derives the account UUID, reads current stored
+membership and returns an actor carrying the exact grant/version reference.
+Existing Ash role policies recheck that reference on each action; revocation or
+replacement refuses held actors. Missing membership is unauthorized; failed
+storage is unavailable and grants no permission. No role or membership cache is
+used. This lookup is permission groundwork, not an atomic command admission lease:
+browser writes still require command identity, payload/revision, transaction and
+private-resource qualification before exposure.
+
+Acceptance uses actual PostgreSQL constraints/transactions and native session
+verification. Exercise absent/forged/account-mismatched memberships, role/ID/input
+bounds, unchanged grant/revoke replay, changed-input conflict, duplicate active
+roles, concurrent grant/revoke, regrant invalidation, token/current-account loss,
+ordinary Ash-policy refusal, private-schema exclusion and storage failure.
+Current catalog policy joins must reject revoked references while preserving
+anonymous reads and the existing trusted local seed/worker path.
+
 **BP-07 — Domain ownership.** Keep explicit consistency/API boundaries:
 
 | Domain | Responsibility | State/dependency |
 | --- | --- | --- |
 | Product Catalog & Evidence | Frame sources, claims, profiles and current assessments; consume Conjunct generic semantics | Immutable sources/profiles implemented; assessment and federation open |
 | Composition & Instructions | Frame rules and content, Conjunct consumer adapter, authorized product storage and installation handoff | Retained v1 checks exist; Conjunct selection, reports, projection and instruction consumers open |
-| Access & Policy | Actor/operator authorization, external decision references, retention and audit access | Private account/session foundation implemented; current membership and browser domain writes open |
+| Access & Policy | Actor/operator authorization, external decision references, retention and audit access | Private account/session and current global catalog memberships implemented; browser domain writes and operator/project scope open |
 | Product Research | Frameshift source/task mappings, rubrics and evaluations through Refpath | Packs and joined runtime conformance open |
 | Service Commitments & Care | Optional exact accepted provider plans, production/packaging/fulfillment observations and cases | Deferred F |
 | Financial Integration | Product-event and commitment references through Rivure public commands/results | Deferred F; no Frameshift ledger or provider engine |

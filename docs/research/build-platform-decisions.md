@@ -155,6 +155,35 @@ HTTP/Argon2, reload, storage outage and failed-revocation recovery are qualified
 through the isolated browser fixture described in the verification ledger;
 production transport and identity assurance remain separate gates.
 
+### Current catalog permission references
+
+The existing catalog actors identify trusted local editors/workers and an audit
+reader. The account consumer must derive those permissions from private stored
+membership rather than email or token claims. The bounded product slice adds
+stable attributed catalog grants with one revocation transition and no HTTP
+provisioning/write route. A revoked grant never reactivates; replacement uses a
+new UUID so held references cannot inherit permission.
+
+The pinned Ash
+[optimistic-lock change](https://github.com/ash-project/ash/blob/5800aa41f03a34f8be4aaaaf596456b2527576ce/lib/ash/resource/change/optimistic_lock.ex)
+was inspected with `gh`: it filters the update by the loaded version and advances
+that field, rejecting a stale update. Actual PostgreSQL adds partial active-role
+uniqueness, role/lifecycle checks and account foreign-key custody. Provisioning
+serializes on the account row; revocation serializes on the grant row. Native
+constraint failures can escape Ash's nested rollback as changesets, so the outer
+transaction result is also reduced to finite host failures. Exact grant/revoke
+retry preserves stored attribution/times, including after revocation.
+
+Verified-session lookup returns a private grant/version reference; every existing
+catalog Ash role check rechecks it without a membership cache. This is current
+permission lookup, not atomic command admission. It supplies no generic Refpath
+operator/project scope and introduces no second producer admission journal.
+Browser writes remain behind their stable command, revision, transaction and
+private-resource gates. The [owning contract](../architecture/build-platform.md#current-catalog-membership-boundary)
+and [verification ledger](../architecture/verification.md#current-catalog-membership-groundwork-2026-10-05)
+record twelve real PostgreSQL/session cases, independent connection contention,
+concurrent retry and original-migration rollback/reapply.
+
 ## Gleam and ExMaude
 
 Existing Frameshift Gleam code shares selected host/guide decisions. The

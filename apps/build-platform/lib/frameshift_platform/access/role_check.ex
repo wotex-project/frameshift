@@ -13,6 +13,12 @@ defmodule FrameshiftPlatform.Access.RoleCheck do
   invoking boundary must establish the actor first; action parameters cannot
   replace that context. `describe/1` supplies the policy's human-readable role
   requirement for Ash diagnostics.
+
+  Account-derived actors carry a private grant/version reference. The check calls
+  `FrameshiftPlatform.Access.Memberships.current?/1` against current PostgreSQL
+  state; revoked, replaced, mismatched references and unavailable storage refuse.
+  The existing explicit local actor path remains separate. This policy check
+  provides no command identity, transaction lease or browser authentication.
   """
 
   use Ash.Policy.SimpleCheck
@@ -22,5 +28,8 @@ defmodule FrameshiftPlatform.Access.RoleCheck do
   def describe(opts), do: "actor has one of #{inspect(opts[:roles])}"
 
   @impl true
-  def match?(actor, _, opts), do: Actor.allowed?(actor, Keyword.fetch!(opts, :roles))
+  def match?(actor, _, opts) do
+    Actor.allowed?(actor, Keyword.fetch!(opts, :roles)) and
+      FrameshiftPlatform.Access.Memberships.current?(actor)
+  end
 end

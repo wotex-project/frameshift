@@ -692,6 +692,16 @@ Confirmation/recovery delivery and production HTTPS need their own evidence. No 
 catalog/composition writes open from a successful login alone. Composition and
 operator authority still require their qualified producer/profile boundaries.
 
+S5's independent global catalog membership lifecycle is implemented under
+[BP-06](build-platform.md#current-catalog-membership-boundary): private, attributed
+versioned grants, explicit trusted provisioning, verified-session lookup and
+current-reference Ash-policy refusal. Twelve real PostgreSQL/session cases cover
+exact replay, conflict, held-reference revocation/regrant, storage refusal and
+independent connection contention/concurrent retry. The original creation
+migration rolls back and reapplies on the isolated fixture. Browser domain writes
+still require command/revision/transaction qualification. Composition sharing,
+Refpath operator scope and atomic review-through-command admission remain gated.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:
