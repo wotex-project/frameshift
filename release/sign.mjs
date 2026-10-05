@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFile } from 'node:fs/promises';
+import { readPinnedFingerprint } from './files.mjs';
 import { signRelease } from './signer.mjs';
 
 const [planPath, artifactDirectory, privateKeyPath, trustFile, outputDirectory] =
@@ -10,11 +10,11 @@ if (process.argv.length !== 7) {
 }
 
 try {
-  const trustedKeyDigest = (await readFile(trustFile, 'utf8')).trim();
+  const trustedKeyDigest = await readPinnedFingerprint(trustFile);
   const result = await signRelease({ planPath, artifactDirectory, privateKeyPath,
     trustedKeyDigest, outputDirectory });
   process.stdout.write(`signed ${result.version}: ${result.artifactCount} exact artifacts\n`);
-} catch (error) {
-  process.stderr.write(`release signing refused: ${error.message}\n`);
+} catch {
+  process.stderr.write('release signing refused: invalid input, trust or custody\n');
   process.exitCode = 1;
 }

@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { generateKeyPairSync, sign } from 'node:crypto';
-import { spawnSync } from 'node:child_process';
+import { execFileSync, spawnSync } from 'node:child_process';
 import { chmodSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
@@ -74,6 +74,31 @@ function release(f, dev, version = '1.2.3', sourceCommit = 'b'.repeat(40), bytes
 
 const publicBytes = async () => new Response('fixture archive', { headers: { 'content-length': '15' } });
 const retainedFiles = site => inventory(site).filter(file => file.path.startsWith('docs/v') || file.path.startsWith('release-records/'));
+
+test('assembly CLI refuses FIFO and oversized signed metadata before replacing the previous site', async t => {
+  const f = fixture(t);
+  const dev = development(f);
+  const output = join(f.root, 'site');
+  await assembleSite({ development: dev, output });
+  const before = inventory(output);
+  const r = release(f, dev);
+  const saved = readFileSync(r.manifestPath);
+  for (const kind of ['fifo', 'oversized']) {
+    rmSync(r.manifestPath);
+    if (kind === 'fifo') execFileSync('mkfifo', [r.manifestPath]);
+    else writeFileSync(r.manifestPath, Buffer.alloc(64 * 1024 + 1));
+    const result = spawnSync(process.execPath, [fileURLToPath(new URL('./assemble.mjs', import.meta.url)),
+      'release', dev, r.candidate, output, r.manifestPath, r.signaturePath, r.publicKeyPath, r.artifactDirectory, f.trustFile, r.sourceCommit],
+      { encoding: 'utf8', timeout: 2000, killSignal: 'SIGKILL' });
+    assert.equal(result.error, undefined, `${kind} must refuse before the child deadline`);
+    assert.equal(result.status, 1);
+    assert.deepEqual(inventory(output), before);
+    assert.equal(existsSync(output + '.lock'), false);
+    assert.equal(existsSync(output + '.previous'), false);
+    rmSync(r.manifestPath);
+    writeFileSync(r.manifestPath, saved);
+  }
+});
 
 test('no-release assembly refuses previews and preserves custody on a foreign lock or dangling output', async t => {
   const f = fixture(t);

@@ -70,6 +70,36 @@ Developer ID/notarization, Sparkle and Cask acceptance, licenses/notices,
 installed platform tests, and applicable frame evidence. Repository visibility
 does not change to publish release artifacts.
 
+### Local file admission
+
+All local manifest, signature, public key, signing plan, private key, trust
+fingerprint and archive inputs MUST be regular files. Refuse a nonregular final
+name before opening; use no-follow/nonblocking descriptor admission and compare
+the named file with its descriptor before and after reading. A replaced name,
+changed byte count/mode/timestamp or growing file refuses. Fixed-position reads
+cannot allocate beyond the admitted metadata size; archives stream in bounded
+chunks and cannot consume more than their admitted initial size. These checks
+do not promise to interrupt a filesystem syscall or defeat same-user debugger
+access. Public verification never needs or reads a private signing key.
+
+Admit at most 64 KiB for manifest/plan, exactly 64 signature bytes, at most
+16 KiB for either PEM key and 64 lowercase hexadecimal fingerprint bytes with
+one optional trailing LF. The private signing key must belong to the operator
+and have mode 0400 or 0600.
+The fingerprint file must belong to the operator or root and refuse group/world
+writes. Parse failures and release CLI refusal must emit fixed
+non-secret diagnostics without file paths, contents or crypto exception terms.
+Use finite processing budgets, preserving the manifest's existing 8 GiB archive
+limit and the separate publication-channel limit. Hashing compares the actual
+read count and named/descriptor identity; a digest alone cannot prove custody.
+
+Acceptance covers real regular inputs and signed verification, each metadata
+limit, symlink/FIFO/device/directory refusal, final-name replacement and growth
+during reads, strict fingerprint grammar, private-key modes and sanitized CLI
+failure. Test FIFOs in bounded child processes so a regression cannot hang the
+verification lane. Public readback and native installed/signing evidence remain
+independent.
+
 ## Frozen source inputs
 
 Before a stable installer build, `scripts/record-release-inputs TAG COMMIT OUTPUT`

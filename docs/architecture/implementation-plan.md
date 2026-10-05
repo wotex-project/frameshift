@@ -261,7 +261,13 @@ the prior record; malformed archives and changed/interrupted custody refuse.
 Real GNU USTAR joins both retained full-product candidate architectures; the
 workflow checks its archive before upload and records the expected transport
 identity. Hosted downstream provenance, signing/promotion and independent
-native/provider work remain. Booted systemd/native CPU,
+native/provider work remain. Local signer/verifier and guide/site consumers now
+admit bounded regular metadata and archive descriptors, strict pinned trust
+files and exact private-key modes. Special files and changed named custody
+refuse; release CLI errors expose no private path/content or crypto terms.
+Fixtures preserve prior guide/site output on malformed metadata and exercise
+real descriptor mutation. These are local release boundaries, independent of
+production keys, hosted signing and public publication. Booted systemd/native CPU,
 resource/failure, encrypted-key backup and physical identity/storage recovery
 retain their separate qualification. A missing external machine or signing identity does not block those
 software recovery/refusal paths. Development container artifacts remain separate

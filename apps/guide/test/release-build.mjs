@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { createHash, generateKeyPairSync, sign } from 'node:crypto';
 import { execFileSync, spawnSync } from 'node:child_process';
-import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 
@@ -56,7 +56,19 @@ try {
   assert.notEqual(refused.status, 0);
   assert.match(refused.stderr, /Incomplete signed release inputs/);
   assert.match(readFileSync(htmlPath, 'utf8'), /Verified host release 1\.2\.3/);
-  process.stdout.write('Signed fixture guide build and fail-closed partial input passed\n');
+  for (const kind of ['alias', 'fifo', 'oversized']) {
+    const path = join(directory, `invalid-trust-${kind}`);
+    if (kind === 'alias') symlinkSync(join(directory, 'trusted.sha256'), path);
+    else if (kind === 'fifo') execFileSync('mkfifo', [path]);
+    else writeFileSync(path, Buffer.alloc(66));
+    const invalid = spawnSync(process.execPath, ['apps/guide/build.mjs'], {
+      cwd: root, env: { ...env, FRAMESHIFT_RELEASE_TRUST_FILE: path }, encoding: 'utf8', timeout: 2000, killSignal: 'SIGKILL'
+    });
+    assert.equal(invalid.error, undefined, `${kind} must refuse without a stalled reader`);
+    assert.notEqual(invalid.status, 0);
+    assert.equal(readFileSync(htmlPath, 'utf8'), html);
+  }
+  process.stdout.write('Signed fixture guide build, partial input and bounded trust refusal preserve previous output\n');
 } finally {
   build(cleanEnv);
   rmSync(directory, { recursive: true, force: true });

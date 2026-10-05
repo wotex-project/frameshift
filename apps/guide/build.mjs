@@ -2,6 +2,7 @@ import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, lstat
 import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { verifyRelease } from '../../release/manifest.mjs';
+import { readPinnedFingerprint } from '../../release/files.mjs';
 import { installVerifiedRelease } from './release-markup.mjs';
 
 const guide = dirname(fileURLToPath(import.meta.url));
@@ -26,7 +27,7 @@ if (releaseInputs.some(Boolean)) {
   if (!releaseInputs.every(Boolean)) throw new Error('Incomplete signed release inputs');
   const [manifestPath, signaturePath, publicKeyPath, artifactDirectory, trustFile] =
     releaseInputs;
-  const trustedKeyDigest = readFileSync(trustFile, 'utf8').trim();
+  const trustedKeyDigest = await readPinnedFingerprint(trustFile);
   releaseManifest = await verifyRelease({ manifestPath, signaturePath, publicKeyPath,
     artifactDirectory, trustedKeyDigest });
 }

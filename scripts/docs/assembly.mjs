@@ -1,6 +1,7 @@
 import { constants, closeSync, cpSync, fsyncSync, lstatSync, mkdirSync, mkdtempSync, openSync, readFileSync, readdirSync, renameSync, rmSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, resolve } from 'node:path';
 import { verifyManifestSignature, verifyPublishedArtifacts, verifyRelease } from '../../release/manifest.mjs';
+import { readPinnedFingerprint, readReleaseInput } from '../../release/files.mjs';
 import { installVerifiedRelease } from '../../apps/guide/release-markup.mjs';
 import { pathExists, checkLinks, digest, documentationPolicy, headersForPath, inventory, siteHeaders, validateDevelopmentOutput, validateReleaseDocumentationOutput } from './site.mjs';
 
@@ -35,14 +36,19 @@ function syncTree(path) {
   syncDirectory(path);
 }
 
-function trustedDigest(path) {
+async function trustedDigest(path) {
   if (!path) throw new Error('Retained release validation requires the separately pinned trust file');
   const stat = lstatSync(path);
   if (!stat.isFile() || stat.size > 128 || ![0, process.getuid()].includes(stat.uid) ||
       (stat.mode & 0o022) !== 0) throw new Error('Invalid pinned trust file custody');
-  const value = readFileSync(path, 'utf8').trim();
-  if (!hash(value)) throw new Error('Invalid pinned trust digest');
-  return value;
+  return readPinnedFingerprint(path);
+}
+
+const signedBounds = { manifestPath: { minimum: 2, maximum: 64 * 1024 },
+  signaturePath: { minimum: 64, maximum: 64 }, publicKeyPath: { maximum: 16 * 1024 } };
+async function signedBytes(paths) {
+  return Object.fromEntries(await Promise.all(Object.entries(signedBounds)
+    .map(async ([key, bounds]) => [key, await readReleaseInput(paths[key], bounds)])));
 }
 
 function developmentBundle(directory) {
@@ -100,10 +106,10 @@ export async function validateAssembly(directory, trustFile) {
     const route = `/docs/v${entry.version}/`;
     validateDocumentation(directory, { ...entry, route });
     if (digest(readFileSync(join(directory, route.slice(1), 'build.json'))) !== entry.documentationSha256 ||
-        digest(readFileSync(releasePaths(directory, entry.version).manifestPath)) !== entry.manifestSha256) {
+        digest(await readReleaseInput(releasePaths(directory, entry.version).manifestPath, signedBounds.manifestPath)) !== entry.manifestSha256) {
       throw new Error('Retained release provenance changed');
     }
-    const signed = await verifyManifestSignature({ ...releasePaths(directory, entry.version), trustedKeyDigest: trustedDigest(trustFile) });
+    const signed = await verifyManifestSignature({ ...releasePaths(directory, entry.version), trustedKeyDigest: await trustedDigest(trustFile) });
     if (signed.version !== entry.version) throw new Error('Retained signed version mismatch');
   }
   const actual = inventory(directory).filter(file => /^docs\/v[^/]+\//.test(file.path));
@@ -178,19 +184,20 @@ export async function assembleSite({ development, output, release, trustFile }, 
     rmSync(join(stage, 'docs/dev'), { recursive: true });
     cpSync(join(development, 'docs/dev'), join(stage, 'docs/dev'), { recursive: true });
     const releases = [...(old?.releases || [])];
-    const signedInputs = release ? Object.fromEntries(['manifestPath', 'signaturePath', 'publicKeyPath']
-      .map(key => [key, digest(readFileSync(release[key]))])) : null;
+    const retainedSignedBytes = release ? await signedBytes(release) : null;
+    const signedInputs = retainedSignedBytes ? Object.fromEntries(Object.entries(retainedSignedBytes)
+      .map(([key, bytes]) => [key, digest(bytes)])) : null;
     let baseHeaders = guideHeaders(old ? output : development);
     let latest = old?.latest || null;
     let candidateHash;
     if (release) {
       const { candidate, sourceCommit, ...verification } = release;
-      const signed = await verifyRelease({ ...verification, trustedKeyDigest: trustedDigest(trustFile) });
+      const signed = await verifyRelease({ ...verification, trustedKeyDigest: await trustedDigest(trustFile) });
       privateDirectory(candidate);
       validateReleaseDocumentationOutput(candidate, { commit: sourceCommit, version: signed.version, tag: `v${signed.version}` });
       const entry = { version: signed.version, commit: sourceCommit,
         documentationSha256: digest(readFileSync(join(candidate, `docs/v${signed.version}/build.json`))),
-        manifestSha256: digest(readFileSync(verification.manifestPath)) };
+        manifestSha256: signedInputs.manifestPath };
       validateDocumentation(candidate, { ...entry, route: `/docs/v${signed.version}/` });
       candidateHash = manifestHash(candidate);
       await verifyPublishedArtifacts(signed, fetcher);
@@ -201,7 +208,7 @@ export async function assembleSite({ development, output, release, trustFile }, 
         cpSync(join(candidate, `docs/v${signed.version}`), join(stage, `docs/v${signed.version}`), { recursive: true });
         const paths = releasePaths(stage, signed.version);
         mkdirSync(dirname(paths.manifestPath), { recursive: true, mode: 0o700 });
-        for (const key of ['manifestPath', 'signaturePath', 'publicKeyPath']) cpSync(verification[key], paths[key]);
+        for (const [key, bytes] of Object.entries(retainedSignedBytes)) writeFileSync(paths[key], bytes, { flag: 'wx', mode: 0o600 });
         releases.push(entry);
       }
       if (!latest || compareVersions(signed.version, latest) > 0) {
@@ -241,11 +248,12 @@ export async function assembleSite({ development, output, release, trustFile }, 
       throw new Error('Site inputs changed during assembly');
     }
     if (release) {
-      const signed = await verifyRelease({ ...release, trustedKeyDigest: trustedDigest(trustFile) });
+      const signed = await verifyRelease({ ...release, trustedKeyDigest: await trustedDigest(trustFile) });
       validateReleaseDocumentationOutput(release.candidate, { commit: release.sourceCommit, version: signed.version, tag: `v${signed.version}` });
+      const currentSigned = await signedBytes(release);
       if (manifestHash(release.candidate) !== candidateHash ||
-          Object.entries(signedInputs).some(([key, value]) => digest(readFileSync(release[key])) !== value) ||
-          digest(readFileSync(release.manifestPath)) !== releases.find(entry => entry.version === signed.version)?.manifestSha256) {
+          Object.entries(signedInputs).some(([key, value]) => digest(currentSigned[key]) !== value) ||
+          digest(currentSigned.manifestPath) !== releases.find(entry => entry.version === signed.version)?.manifestSha256) {
         throw new Error('Site inputs changed during assembly');
       }
     }

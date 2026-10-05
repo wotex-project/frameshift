@@ -1,8 +1,8 @@
 import { createHash, createPrivateKey, createPublicKey, sign } from 'node:crypto';
-import { constants } from 'node:fs';
-import { lstat, mkdir, open, rm, writeFile } from 'node:fs/promises';
+import { lstat, mkdir, rm, writeFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
 import { artifactFacts, parseManifest, verifyRelease } from './manifest.mjs';
+import { readReleaseInput } from './files.mjs';
 
 const decoder = new TextDecoder('utf-8', { fatal: true });
 const planKeys = ['schemaVersion', 'product', 'version', 'artifacts'];
@@ -12,24 +12,6 @@ function exactKeys(value, keys) {
   return value !== null && typeof value === 'object' && !Array.isArray(value) &&
     Object.keys(value).length === keys.length &&
     keys.every(key => Object.hasOwn(value, key));
-}
-
-async function readStableFile(handle, before) {
-  const bytes = Buffer.alloc(Number(before.size));
-  let offset = 0;
-  while (offset < bytes.length) {
-    const result = await handle.read(bytes, offset, bytes.length - offset, offset);
-    if (result.bytesRead === 0) throw new Error('release input changed while reading');
-    offset += result.bytesRead;
-  }
-  const extra = await handle.read(Buffer.alloc(1), 0, 1, offset);
-  const after = await handle.stat({ bigint: true });
-  if (extra.bytesRead !== 0 || before.size !== after.size ||
-      before.mtimeNs !== after.mtimeNs || before.ctimeNs !== after.ctimeNs ||
-      before.ino !== after.ino || before.dev !== after.dev) {
-    throw new Error('release input changed while reading');
-  }
-  return bytes;
 }
 
 export function parsePlan(bytes) {
@@ -62,35 +44,17 @@ export function parsePlan(bytes) {
 }
 
 async function readPlan(path) {
-  const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const before = await handle.stat({ bigint: true });
-    if (!before.isFile() || before.size < 2n || before.size > 64n * 1024n) {
-      throw new Error('invalid release plan file');
-    }
-    return parsePlan(await readStableFile(handle, before));
-  } finally {
-    await handle.close();
-  }
+  return parsePlan(await readReleaseInput(path, { minimum: 2, maximum: 64 * 1024 }));
 }
 
 async function readSigningKey(path) {
-  const handle = await open(path, constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const stat = await handle.stat({ bigint: true });
-    if (!stat.isFile() || stat.size < 1n || stat.size > 16n * 1024n ||
-        stat.uid !== BigInt(process.getuid()) || (stat.mode & 0o077n) !== 0n) {
-      throw new Error('unsafe release private key file');
-    }
-    return createPrivateKey(await readStableFile(handle, stat));
-  } finally {
-    await handle.close();
-  }
+  const bytes = await readReleaseInput(path, { maximum: 16 * 1024, privateKey: true });
+  try { return createPrivateKey(bytes); } catch { throw new Error('invalid release private key'); }
 }
 
 function signingIdentity(key, trustedKeyDigest) {
   if (key.asymmetricKeyType !== 'ed25519' ||
-      typeof trustedKeyDigest !== 'string' || !/^[0-9a-f]{64}$/.test(trustedKeyDigest)) {
+      typeof trustedKeyDigest !== 'string' || trustedKeyDigest.length !== 64 || !/^[0-9a-f]{64}$/.test(trustedKeyDigest)) {
     throw new Error('invalid release signing identity');
   }
   const publicKey = createPublicKey(key);

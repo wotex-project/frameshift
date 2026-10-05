@@ -27,6 +27,17 @@ building a guide with download links. A failed check leaves the previous
 `apps/guide/dist` untouched. It prepares static files; deployment and release
 acceptance remain separate actions.
 
+Local metadata and archives use bounded regular-file descriptor admission.
+Manifest/plan inputs are at most 64 KiB, signatures exactly 64 bytes and PEM keys
+at most 16 KiB. The fingerprint file is exactly 64 lowercase hex bytes with one
+optional LF, owned by the operator or root and protected from group/world writes.
+Private signing keys use mode 0400 or 0600. Symlink/FIFO/device/directory inputs,
+changed named custody and oversized metadata refuse before acceptance; release
+CLI failures do not print private paths, contents or crypto exception terms.
+The guide and site assembler use the same admission rather than rereading signed
+metadata through unrestricted file APIs. See
+[local file admission](../docs/architecture/release-manifest.md#local-file-admission).
+
 The local [site assembler](../docs/architecture/install-and-guide.md#site-assembly-and-local-recovery)
 uses the same verifier before promoting versioned documentation and download
 links. Retained records use `verifyManifestSignature` to recheck the pinned key

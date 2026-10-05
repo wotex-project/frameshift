@@ -1,7 +1,7 @@
 import { createHash, createPublicKey, verify } from 'node:crypto';
-import { constants } from 'node:fs';
-import { lstat, open, readFile } from 'node:fs/promises';
+import { lstat } from 'node:fs/promises';
 import { join } from 'node:path';
+import { hashReleaseArchive, readReleaseInput } from './files.mjs';
 
 const manifestKeys = ['schemaVersion', 'product', 'version', 'artifacts'];
 const artifactKeys = ['platform', 'architecture', 'format', 'file', 'url', 'bytes', 'sha256'];
@@ -35,7 +35,7 @@ function validArtifact(artifact, version) {
       artifact.bytes > 8 * 1024 * 1024 * 1024) {
     throw new Error('invalid release byte count');
   }
-  if (typeof artifact.sha256 !== 'string' || !/^[0-9a-f]{64}$/.test(artifact.sha256)) {
+  if (typeof artifact.sha256 !== 'string' || artifact.sha256.length !== 64 || !/^[0-9a-f]{64}$/.test(artifact.sha256)) {
     throw new Error('invalid release digest');
   }
   if (typeof artifact.url !== 'string') throw new Error('invalid release URL');
@@ -89,26 +89,17 @@ export function parseManifest(bytes) {
 }
 
 export async function artifactFacts(directory, file) {
-  const directoryStat = await lstat(directory);
-  if (!directoryStat.isDirectory()) throw new Error('invalid release artifact directory');
-  const handle = await open(join(directory, file), constants.O_RDONLY | constants.O_NOFOLLOW);
-  try {
-    const before = await handle.stat({ bigint: true });
-    if (!before.isFile() || before.size < 1n || before.size > BigInt(8 * 1024 * 1024 * 1024)) {
-      throw new Error(`invalid release artifact: ${file}`);
-    }
-    const hash = createHash('sha256');
-    for await (const chunk of handle.createReadStream({ autoClose: false })) hash.update(chunk);
-    const after = await handle.stat({ bigint: true });
-    if (before.dev !== after.dev || before.ino !== after.ino ||
-        before.size !== after.size || before.mtimeNs !== after.mtimeNs ||
-        before.ctimeNs !== after.ctimeNs) {
-      throw new Error(`release artifact changed while reading: ${file}`);
-    }
-    return { bytes: Number(after.size), sha256: hash.digest('hex') };
-  } finally {
-    await handle.close();
+  if (typeof file !== 'string' || file.length > 128 || !/^[A-Za-z0-9]/.test(file) || /[^A-Za-z0-9._-]/.test(file) || file.includes('..')) {
+    throw new Error('invalid release archive name');
   }
+  const directoryStat = await lstat(directory, { bigint: true });
+  if (!directoryStat.isDirectory()) throw new Error('invalid release artifact directory');
+  const facts = await hashReleaseArchive(join(directory, file));
+  const final = await lstat(directory, { bigint: true });
+  if (!final.isDirectory() || ['dev', 'ino', 'mode', 'uid', 'gid'].some(key => directoryStat[key] !== final[key])) {
+    throw new Error('release artifact directory changed');
+  }
+  return facts;
 }
 
 async function verifyArtifact(directory, artifact) {
@@ -125,14 +116,17 @@ async function verifyArtifact(directory, artifact) {
 // that local archives or public bytes were checked during this invocation.
 export async function verifyManifestSignature({ manifestPath, signaturePath, publicKeyPath,
                                                 trustedKeyDigest }) {
-  if (typeof trustedKeyDigest !== 'string' || !/^[0-9a-f]{64}$/.test(trustedKeyDigest)) {
+  if (typeof trustedKeyDigest !== 'string' || trustedKeyDigest.length !== 64 || !/^[0-9a-f]{64}$/.test(trustedKeyDigest)) {
     throw new Error('missing pinned release key fingerprint');
   }
   const [bytes, signature, pem] = await Promise.all([
-    readFile(manifestPath), readFile(signaturePath), readFile(publicKeyPath),
+    readReleaseInput(manifestPath, { minimum: 2, maximum: 64 * 1024 }),
+    readReleaseInput(signaturePath, { minimum: 64, maximum: 64 }),
+    readReleaseInput(publicKeyPath, { maximum: 16 * 1024 }),
   ]);
   const manifest = parseManifest(bytes);
-  const key = createPublicKey(pem);
+  let key;
+  try { key = createPublicKey(pem); } catch { throw new Error('invalid release public key'); }
   const keyDigest = createHash('sha256').update(key.export({ type: 'spki', format: 'der' })).digest('hex');
   if (key.asymmetricKeyType !== 'ed25519' || keyDigest !== trustedKeyDigest ||
       signature.length !== 64 || !verify(null, bytes, key, signature)) {

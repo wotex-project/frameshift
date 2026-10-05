@@ -727,3 +727,30 @@ full-product arm64 and emulated-amd64 candidates to exact-source verification,
 unchanged no-build replay and wrong-digest refusal. This is archive/software
 evidence, not a hosted Actions transfer, native installed service, signing,
 license review or public-channel release.
+
+### Local manifest input custody
+
+**Observation:** 2026-10-05. Exact
+[Node 26.9.0 filesystem documentation](https://github.com/nodejs/node/blob/v26.9.0/doc/api/fs.md)
+(blob `315ecdb97c430c5b1c38c3519ea609ac3784a9f4`, inspected using `gh`)
+defines no-follow/nonblocking flags and fixed-position descriptor reads. Its
+abort documentation explicitly distinguishes cancelled buffering from an
+interrupted operating-system request. Local processing budgets therefore do
+not establish a hard filesystem-syscall deadline.
+
+Source inspection found unrestricted metadata/trust reads in the manifest
+verifier and guide, blocking descriptor opens in the signer/archive reader,
+and raw signed-input reads/copies in the site assembler. Real fixtures reproduced
+accepted metadata symlinks, a stalled FIFO without a writer, loose trust-file
+whitespace and direct archive-name traversal. A size test also distinguishes
+bounded admission from rejecting oversized JSON only after loading it.
+
+`release/files.mjs` now owns shared local release input admission. It refuses
+nonregular names before opening, bounds descriptor reads, matches named/descriptor
+identity and actual count, and enforces separately protected trust/private-key
+custody. Guide and assembler consumers use that same boundary, retaining bounded
+public metadata bytes for staging instead of copying unadmitted names. Raw
+filesystem mutation fixtures and bounded CLI FIFO children pass. These findings
+and checks establish local software behavior; they do not qualify a production
+trust root, installed signing identity, hostile administrator, storage device
+or public release channel.

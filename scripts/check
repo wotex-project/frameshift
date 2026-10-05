@@ -178,6 +178,7 @@ check_guide() {
 
 check_release() {
   mise exec -- node --check "$repository_root/release/manifest.mjs"
+  mise exec -- node --check "$repository_root/release/files.mjs"
   mise exec -- node --check "$repository_root/release/verify.mjs"
   mise exec -- node --check "$repository_root/release/signer.mjs"
   mise exec -- node --check "$repository_root/release/sign.mjs"
@@ -195,6 +196,7 @@ check_release() {
   mise exec -- node --test \
     "$repository_root/release/manifest.test.mjs" \
     "$repository_root/release/signer.test.mjs" \
+    "$repository_root/release/files.test.mjs" \
     "$repository_root/release/inputs.test.mjs" \
     "$repository_root/release/linux/candidate.test.mjs" \
     "$repository_root/release/linux/ustar.test.mjs" \

@@ -77,7 +77,7 @@ test('signer bounds the plan file before reading it', async t => {
   const options = await fixture(t);
   await writeFile(options.planPath, Buffer.alloc(64 * 1024 + 1));
   await assert.rejects(signRelease({ ...options, outputDirectory: join(options.root, 'signed') }),
-    /invalid release plan file/);
+    /invalid release input size/);
   assert.throws(() => parsePlan(Buffer.alloc(64 * 1024 + 1)), /invalid release plan size/);
 });
 

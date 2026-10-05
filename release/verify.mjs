@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-import { readFile } from 'node:fs/promises';
+import { readPinnedFingerprint } from './files.mjs';
 import { verifyPublishedArtifacts, verifyRelease } from './manifest.mjs';
 
 const [manifestPath, signaturePath, publicKeyPath, artifactDirectory, trustFile, publicOption] =
@@ -12,12 +12,12 @@ if (!manifestPath || !signaturePath || !publicKeyPath || !artifactDirectory || !
 }
 
 try {
-  const trustedKeyDigest = (await readFile(trustFile, 'utf8')).trim();
+  const trustedKeyDigest = await readPinnedFingerprint(trustFile);
   const manifest = await verifyRelease({ manifestPath, signaturePath, publicKeyPath,
     trustedKeyDigest, artifactDirectory });
   if (publicOption) await verifyPublishedArtifacts(manifest);
   process.stdout.write(`verified ${manifest.version}: ${manifest.artifacts.length} exact artifacts${publicOption ? ' and public URLs' : ''}\n`);
-} catch (error) {
-  process.stderr.write(`release verification refused: ${error.message}\n`);
+} catch {
+  process.stderr.write('release verification refused: invalid input, trust or custody\n');
   process.exitCode = 1;
 }
