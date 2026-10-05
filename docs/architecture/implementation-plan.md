@@ -704,7 +704,7 @@ pass; the actual pinned SDK round-trips through BSD USTAR with unchanged closure
 and strict nested seals. All eight Ubuntu candidate groups preserve the source
 and retained-output contracts; all seventeen Mac/Linux candidate and receipt
 receiver groups pass with private CLI replay. Continue frozen binary
-SDK admission, architecture thinning/merging and application Sparkle
+SDK/compiler/source joining, universal SDK merging and application Sparkle
 integration with required signed-feed settings, then
 installed update qualification and final
 app/minimum-OS/Developer-ID qualification, real tap, public bytes and channel
@@ -723,6 +723,17 @@ main run loop. Fresh ad-hoc packaging, native closure/seals, authenticated IPC
 and offline maintenance pass. This closes the normal idle-core software join;
 active native-worker quit, interactive uncertain/retry and keyboard/VoiceOver,
 installed updater/background lifecycle and production acceptance remain open.
+
+The updater-material consumer independently admits the exact upstream ZIP,
+compares all 85 regular files, 57 directories and nine aliases with actual
+SwiftPM compilation inputs, and derives each single-CPU SDK only in a private
+unpublished package stage. All six fixture groups pass actual ZIP/cache/CLI
+admission, same-size tamper, alias/permission/namespace refusal and both real
+`lipo` derivations, including native metadata and preserved per-slice signatures.
+The archive and shared cache stay unchanged. This is archive/cache/derivation
+evidence; wire these facts into frozen source/native producers, before/after
+Swift builds, universal merging and the application updater before claiming a
+source-bound SDK candidate. No hosted provenance or production authority follows.
 
 S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned

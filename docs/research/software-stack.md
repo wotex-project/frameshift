@@ -1138,6 +1138,29 @@ create a frozen SDK source receipt, a source-bound full updater candidate or an
 installed release. The fixed framework profile lives beside the shared archive
 reader so isolated Linux receivers include its transitive source input.
 
+A separate Swift 6.4 binary-target consumer pins the exact upstream URL/checksum,
+imports the public updater controller and compiles in release mode. SwiftPM
+workspace schema seven records that binary origin. Its copied framework is
+byte-identical to the source artifact, including the original ad-hoc signatures,
+and retains both CPUs. The linked Swift executable imports the expected
+`@rpath/Sparkle.framework/Versions/B/Sparkle`; it also contains Apple's Swift
+system path, a selected-toolchain path and the explicitly supplied owned
+Frameworks path. This compiler observation does not establish a self-contained
+running app; packaging must admit the actual cache and eliminate the unwanted
+external search path under a bounded rule.
+
+The material consumer now verifies archive size/hash before invoking extraction
+on those fixed admitted bytes, compares all 85 regular files, 57 directories and
+nine aliases with the actual SwiftPM framework, and preserves pre/post archive
+and cache custody. Six groups pass exact archive/cache/CLI admission and
+same-size changed archive/cache, extra/missing member, altered alias, hard link,
+unsafe mode, nonprivate stage and unsupported CPU refusal. Real `lipo` derives
+all five native files for both CPUs in private unpublished stages; loader
+metadata, every common file and alias, and per-slice signature verification
+pass. This closes the local archive/cache/derivation experiment. Frozen
+source/compiler joins, final app sealing, universal SDK assembly, runtime client,
+upstream build derivation, license review and installed update remain separate.
+
 ### AppKit owned-core quit and modal-loop delivery
 
 **Observation:** 2026-10-06. Apple's current

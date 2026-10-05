@@ -105,6 +105,21 @@ The [framework custody contract](../docs/host/macos.md#embedded-sparkle-framewor
 owns this bounded profile; missing SDK provenance and unsupported transports
 remain refused.
 
+Admit actual cached Swift compilation bytes against the same pinned archive:
+
+```sh
+mise exec -- node release/macos/sparkle-material.mjs verify SPARKLE_SPM_ZIP CACHED_SPARKLE_FRAMEWORK
+```
+
+`stage SPARKLE_SPM_ZIP PRIVATE_APP arm64|x86_64` derives the five native SDK
+files only in an unpublished `.package.*` stage. It preserves all common files
+and aliases and refuses an existing Frameworks directory. The JSON observations
+have publication authority `none`; final app signing/closure and frozen
+source/compiler joining remain independent. Run all six material tests with
+`FRAMESHIFT_SPARKLE_ARCHIVE` set to the exact pinned ZIP; the three actual-input
+groups are explicitly excluded when it is absent. See
+[pinned updater material](../docs/host/macos.md#pinned-updater-material-and-private-cpu-derivation).
+
 The plan is compact JSON with one trailing newline, such as:
 
 ```json

@@ -439,6 +439,36 @@ inside-out ad-hoc preparation and strict nested signature verification. A
 successful local join does not establish installed update, production signing,
 Gatekeeper, older OS execution or a public channel.
 
+### Pinned updater material and private CPU derivation
+
+Before using a cached updater framework for compilation or packaging, admit the
+exact 10,193,895-byte upstream Swift-package ZIP against the checksum above.
+Copy admitted bytes into an owner-only temporary directory, then extract only
+its fixed `Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework` member tree.
+Hash and compare every regular file, directory mode and exact admitted alias
+with the framework actually used by the compiler. A version string or SwiftPM
+workspace declaration cannot replace this byte comparison. Refuse extra,
+missing, aliased, changed, unsafe, oversized or special members. Retain the
+archive and cache unchanged; a missing or altered cache is not repaired by the
+admission consumer. Independently bound extraction time and tree processing.
+
+Single-CPU development packaging derives the five SDK native files with actual
+`lipo -thin` operations in an unpublished private `.package.*` stage. Keep all
+other files, permissions and nine aliases from the admitted archive; never thin
+or sign the shared compiler cache. Confirm the exact requested CPU, native file
+type and unchanged loader metadata before later inside-out signing. Refuse an
+existing framework or output outside that private stage. Archive identity and
+pre/post derived inventories must be available to the source-bound producer;
+final seals and app closure remain separate checks. These local inputs do not
+establish upstream build derivation, license clearance or production authority.
+
+Acceptance compares the actual pinned archive and cached framework, checks
+same-size archive/cache changes, missing/extra/retargeted aliases and unsafe
+custody, derives both CPU profiles, and verifies requested slices and preserved
+common bytes. Later compiler/cache/source joining, universal assembly and the
+running update client must consume these checks before claiming a full updater
+candidate.
+
 ### Tagged native Mac build candidate
 
 `scripts/package-macos-candidate TAG COMMIT SOURCE_RECORD arm64|x86_64 OUTPUT`
