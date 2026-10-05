@@ -88,6 +88,34 @@ Fixture pixels establish that boundary only. Next qualify a platform codec and
 the exact SDK/model cohort, then expose provider selection, model admission and
 cancellation through native Settings and the authenticated host command owner.
 
+### Provider callback logging and failure boundary
+
+**Observation:** 2026-10-05, pinned Elixir 1.20.4/OTP 29.1 source and real core
+fixtures. `gh` identifies the
+[task supervisor source](https://github.com/elixir-lang/elixir/blob/v1.20.4/lib/elixir/lib/task/supervised.ex#L103-L138)
+as blob `c34a05daba8c1bc7d0ae757aae2138dd5a5961e7`. Its fault path logs a raw
+exception, thrown term or exit reason before reporting task exit to the caller.
+Returning `provider_crashed` afterward cannot remove that earlier event.
+The [OTP Logger source](https://github.com/erlang/otp/blob/OTP-29.1/lib/kernel/src/logger.erl#L1877-L1903),
+blob `cf69ea0349479cb1ba69b927d06f30efa3c390c2`, merges process metadata into
+each record. The existing primary private-process filter can therefore suppress
+the owned callback task's records before every handler. The selected trusted
+adapter must preserve that marker; independently owned children/native output
+are outside this process's protection.
+
+Regression fixtures first reproduced raw provider-context/fault logging,
+private arbitrary error replies and a malformed-reply caller crash. The corrected
+coordinator admits and marks the task before callbacks, exposes only finite
+error classes, and catches rejected task admission without changing Library
+objects. Actual raw-handler fixtures cover preflight/generation raise, throw and
+exit with private context and verified edit input, while ordinary host logs
+remain visible. Filter conflict preserves policy and cache reads; real task
+capacity refusal/recovery and deadline worker exit pass. These are core software
+observations. They do not admit a live SDK/model, cancel native/cloud effects or
+establish Keychain/installed logging qualification. The
+[owning callback contract](../architecture/content-pipeline.md#generation-callback-privacy-and-refusal)
+keeps those acceptance tiers explicit.
+
 ### Nano Banana
 
 Google's current native image family includes Gemini 3.1 Flash Lite Image,

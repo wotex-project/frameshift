@@ -525,6 +525,13 @@ they do not qualify a production codec, SDK or model. The
 [dated provider/source inspection](../research/ai-image-generation.md#exact-source-and-local-inspection-2026-10-04)
 records the selected next adapter cohort and the live-generation evidence gap.
 
+The callback boundary now admits the existing exact Logger privacy filter before
+private preflight/edit work, returns finite provider errors and refuses task
+capacity without crashing the caller. Raw-handler/fault and saturation fixtures
+cover this core boundary. Continue exact SDK/model and native-child/cloud
+cancellation qualification before adding provider commands or model-download UI;
+BEAM task exit alone cannot qualify that lifecycle.
+
 **Exit:** local-only mode emits no provider traffic; no automatic cloud switch;
 cached repeat avoids provider call; secrets remain in Keychain.
 

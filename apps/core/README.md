@@ -66,7 +66,8 @@ The implemented core currently provides:
   canonical sRGB RGBA8, then binds durable masters to composition recipes,
   cached artifacts, outboxes, and simulator convergence;
 - an explicit still-generation provider contract with preflight, deadline,
-  canonical cache, provenance, and no retry or fallback;
+  canonical cache, provenance, private callback/fault logging, finite errors,
+  task-capacity refusal, and no retry or fallback;
 - a persistent frame simulator with bounded storage, desired/current state,
   sleeping pull convergence, still playlists, redundant metadata records, and
   injected contact, transfer, display, storage, timing, and power-loss failures.

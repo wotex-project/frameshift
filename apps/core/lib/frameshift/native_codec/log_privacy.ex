@@ -1,6 +1,6 @@
 defmodule Frameshift.NativeCodec.LogPrivacy do
   @moduledoc """
-  Prevents marked codec-process fault reports from exposing original image bytes.
+  Prevents marked private-process logs and faults from exposing artwork or secrets.
 
   Exile owns a bounded input chunk in its GenServer state while native stdin is
   blocked. An upstream callback fault could include that chunk in OTP's crash
@@ -9,6 +9,8 @@ defmodule Frameshift.NativeCodec.LogPrivacy do
   are sent. Startup faults before marking contain no original artwork.
   Upload finish tasks use `mark_current/0` before reading their private stage;
   task fault reports cannot become an alternative source or custody channel.
+  `Frameshift.Generation` admits this same filter before provider callbacks and
+  marks its task before preflight can inspect credentials or edit-source bytes.
 
   ## Scope and refusal
 
@@ -49,7 +51,7 @@ defmodule Frameshift.NativeCodec.LogPrivacy do
     _, _ -> {:error, :codec_log_privacy_unavailable}
   end
 
-  @doc "Marks an owned original-byte task before reading source or retaining upload custody."
+  @doc "Marks an owned private task before processing source bytes or provider credentials."
   @spec mark_current() :: :ok
   def mark_current, do: :logger.update_process_metadata(%{@marker => true})
 

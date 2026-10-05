@@ -11,7 +11,7 @@ defmodule Frameshift.Generation do
   ## Execution and result custody
 
   Provider work runs under the core task supervisor with a finite deadline.
-  Timeout terminates the task; there is no automatic retry, alternate provider or
+  Timeout terminates the BEAM task; there is no automatic retry, alternate provider or
   silent cloud fallback. Returned still bytes and dimensions are bounded before
   the library records a canonical master package or parent-linked variant with
   its recipe. The selected platform adapter must supply decoded canonical RGBA8
@@ -24,15 +24,33 @@ defmodule Frameshift.Generation do
   for the canonical recipe, not proof that a provider is available or that a
   best-effort model can regenerate identical bytes. Credentials remain outside
   persistent provenance and diagnostic output.
+
+  ## Private callbacks and finite failure
+
+  Provider preflight/generation and result normalization run in a marked private
+  task under `Frameshift.NativeCodec.LogPrivacy`; its raw messages and OTP fault
+  reports never reach Logger handlers. Conflicting privacy policy refuses new
+  work with `:provider_privacy_unavailable`, while verified cached masters remain
+  readable. Unavailable task admission returns `:provider_unavailable`.
+
+  Only the declared `Frameshift.Generation.Provider` error atoms reach callers.
+  Other error terms map to `:failed`, malformed replies to `:invalid_response`,
+  faults to `:provider_crashed` and deadline expiry to `:provider_timeout`. These
+  refusals create no generated master and never replace parent/cache bytes. The
+  task's exit does not establish native or cloud cancellation; adapter children,
+  external effects and their recovery retain independent qualification.
   """
 
   alias Frameshift.Digest
   alias Frameshift.Generation.NormalizedResult
   alias Frameshift.Library
   alias Frameshift.MasterPackage
+  alias Frameshift.NativeCodec.LogPrivacy
 
   @maximum_instruction_bytes 16 * 1024
   @default_timeout_ms 120_000
+  @provider_errors ~w(not_available authentication_failed quota_exhausted refused
+    unsupported_model unsupported_request download_required cancelled failed)a
   @required_request_fields ~w(
     adapter_revision application_revision base_instruction base_instruction_revision
     decoder_id decoder_revision disclosure instruction mode model model_revision negative_instruction parameters provider_id
@@ -214,30 +232,60 @@ defmodule Frameshift.Generation do
         end
 
       :not_found ->
-        with {:ok, derived} <- NormalizedResult.source_request(library, request) do
+        with :ok <- admit_privacy(),
+             {:ok, derived} <- NormalizedResult.source_request(library, request) do
           run_provider(library, provider, derived, context, timeout, recipe_hash)
         end
     end
   end
 
   defp run_provider(library, provider, request, context, timeout, recipe_hash) do
+    with {:ok, task} <- start_provider_task(provider, request, context) do
+      case Task.yield(task, timeout) || Task.shutdown(task, :brutal_kill) do
+        {:ok, {:ok, result}} -> persist_result(library, request, recipe_hash, result)
+        {:ok, {:normalization_error, reason}} -> {:error, reason}
+        {:ok, {:provider_error, code}} -> {:error, {:provider, code}}
+        {:ok, {:error, reason}} -> {:error, {:provider, reason}}
+        {:ok, _} -> {:error, {:provider, :invalid_response}}
+        {:exit, _} -> {:error, :provider_crashed}
+        nil -> {:error, :provider_timeout}
+      end
+    end
+  end
+
+  defp admit_privacy do
+    case LogPrivacy.install() do
+      :ok -> :ok
+      _ -> {:error, :provider_privacy_unavailable}
+    end
+  end
+
+  defp start_provider_task(provider, request, context) do
     task =
       Task.Supervisor.async_nolink(Frameshift.TaskSupervisor, fn ->
-        with {:ok, preflight} <- provider.preflight(context),
+        :ok = LogPrivacy.mark_current()
+
+        with {:ok, preflight} <- provider_reply(provider.preflight(context)),
              :ok <- validate_preflight(preflight, request),
-             {:ok, result} <- provider.generate(request, context) do
+             {:ok, result} <- provider_reply(provider.generate(request, context)) do
           normalize_result(result, request)
         end
       end)
 
-    case Task.yield(task, timeout) || Task.shutdown(task, :brutal_kill) do
-      {:ok, {:ok, result}} -> persist_result(library, request, recipe_hash, result)
-      {:ok, {:normalization_error, reason}} -> {:error, reason}
-      {:ok, {:error, reason}} -> {:error, {:provider, reason}}
-      {:exit, _} -> {:error, :provider_crashed}
-      nil -> {:error, :provider_timeout}
-    end
+    {:ok, task}
+  rescue
+    _ -> {:error, :provider_unavailable}
+  catch
+    :exit, _ -> {:error, :provider_unavailable}
   end
+
+  defp provider_reply({:ok, _} = result), do: result
+
+  defp provider_reply({:error, reason}) when reason in @provider_errors,
+    do: {:provider_error, reason}
+
+  defp provider_reply({:error, _}), do: {:provider_error, :failed}
+  defp provider_reply(_), do: {:provider_error, :invalid_response}
 
   defp normalize_result(result, request) do
     case NormalizedResult.package(result, request) do

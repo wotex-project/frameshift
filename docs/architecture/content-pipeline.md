@@ -77,6 +77,38 @@ source derivation, timeout and joined generated-master-to-Zig rendering. Native
 codec and live model conformance remain separate evidence requirements; fixture
 canonical pixels do not prove a production decoder or model.
 
+### Generation callback privacy and refusal
+
+Before invoking a provider's preflight or generation callback, the coordinator
+MUST admit the existing exact private-process primary Logger filter and mark
+the callback task. Records from that task, including raw provider messages and
+OTP exception/throw/exit reports, are dropped before any handler. Other host
+records retain their logging policy. A conflicting filter returns
+`provider_privacy_unavailable` without invoking a callback or replacing that
+configuration. A valid cached master remains readable without this admission.
+The static provider identifier callback receives no private request or context.
+
+Adapters return only finite error atoms: `not_available`,
+`authentication_failed`, `quota_exhausted`, `refused`, `unsupported_model`,
+`unsupported_request`, `download_required`, `cancelled` or `failed`.
+The coordinator returns these as `{:error, {:provider, code}}`; any other error
+term maps to `failed`, without retaining or exposing raw provider text. A
+malformed callback reply returns `{:error, {:provider, :invalid_response}}`.
+Coordinator-generated preflight mismatch details retain their existing finite
+codes and missing-field names. Task admission failure returns
+`provider_unavailable`; a fault returns `provider_crashed`; deadline expiry
+returns `provider_timeout`. None triggers retry or a destination change, creates
+a generated master, or changes a verified parent/cache object.
+
+This protects the owned callback process. Adapters must independently protect
+any child/native process or external service they use. BEAM task exit proves
+neither native-worker exit nor cloud cancellation; those acknowledgements and
+uncertain-effect recovery require the exact SDK/model cohort's qualification.
+Acceptance uses a raw Logger handler, actual raised/thrown/exited callbacks with
+private context and verified edit bytes, malformed and private error replies,
+conflicting-filter/cache replay and real task-supervisor saturation/recovery.
+These are core software fixtures, not live-model or Keychain acceptance.
+
 ### Composition recipe
 
 Records target frame/profile, crop rectangle, focal point, rotation, mat-safe

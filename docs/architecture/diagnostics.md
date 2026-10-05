@@ -253,6 +253,22 @@ unified-log persistence, so it is not the audit store. Ubuntu sends sanitized
 operational logs to journald for `journalctl`. The Nerves Pi appliance has no
 journal and uses a bounded OTP circular disk log.
 
+### Private callback logging
+
+The [generation callback boundary](content-pipeline.md#generation-callback-privacy-and-refusal)
+admits the same primary private-process filter used by original-byte codec and
+upload tasks. It marks its owned task before provider preflight or generation.
+Raw messages, private metadata and OTP fault reports from that process MUST be
+dropped before all handlers, rather than relying on one sink's formatter.
+Other operational records keep their existing policy. A conflicting filter
+refuses new provider work without replacing unrelated configuration; verified
+cached results stay usable. Provider error replies expose only the declared
+finite classes, never arbitrary exception or service-response terms. Independent
+adapter children/native workers require their own private-output qualification.
+Raw-handler fixtures establish this callback process's protection; they do not
+establish live-model, Keychain, external-effect cancellation or installed logging
+acceptance.
+
 ### Fallback handler failure and custody
 
 The Mac fallback uses OTP `logger_std_h` at error level with the existing

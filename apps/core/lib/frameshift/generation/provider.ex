@@ -25,10 +25,35 @@ defmodule Frameshift.Generation.Provider do
   the coordinator does not persist or log it. Persisted request/result provenance
   must describe reproducibility and source lineage without embedding secrets.
   The callback contract does not authorize frame delivery or physical acceptance.
+
+  ## Errors and operational privacy
+
+  `c:id/0` returns a static identifier without inspecting private configuration or
+  performing provider IO. `c:preflight/1` and `c:generate/2` execute in a marked
+  private task: primary Logger policy drops that task's messages and fault reports
+  before any handler. Adapters must protect private data in any separately owned
+  child or native process; this task policy does not propagate that guarantee.
+
+  Return `t:error/0` atoms for availability, authentication, quota, refusal and
+  unsupported work. Raw provider exception text, account identifiers, response
+  bodies or credential terms are not error detail. The coordinator maps undeclared
+  errors to `:failed` and malformed replies to `:invalid_response`, without retry.
+  A callback fault or deadline does not attest cancellation of native/cloud work;
+  that requires the selected adapter's independent acknowledgement and recovery.
   """
 
   @type request :: map()
   @type context :: term()
+  @type error ::
+          :not_available
+          | :authentication_failed
+          | :quota_exhausted
+          | :refused
+          | :unsupported_model
+          | :unsupported_request
+          | :download_required
+          | :cancelled
+          | :failed
   @type result :: %{
           required(:bytes) => binary(),
           required(:canonical_rgba) => binary(),
@@ -52,6 +77,6 @@ defmodule Frameshift.Generation.Provider do
         }
 
   @callback id() :: String.t()
-  @callback preflight(context()) :: {:ok, preflight()} | {:error, term()}
-  @callback generate(request(), context()) :: {:ok, result()} | {:error, term()}
+  @callback preflight(context()) :: {:ok, preflight()} | {:error, error()}
+  @callback generate(request(), context()) :: {:ok, result()} | {:error, error()}
 end

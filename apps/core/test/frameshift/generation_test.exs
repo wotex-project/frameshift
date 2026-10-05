@@ -3,6 +3,8 @@ defmodule Frameshift.GenerationTest do
 
   use ExUnit.Case, async: false
 
+  require Logger
+
   alias Frameshift.ContentStore
   alias Frameshift.Generation
   alias Frameshift.Library
@@ -85,9 +87,78 @@ defmodule Frameshift.GenerationTest do
     end
 
     @impl true
-    def generate(_, _) do
+    def generate(_, context) do
+      send(context.test_pid, {:slow_provider_worker, self()})
       Process.sleep(1_000)
       {:error, :unexpected_completion}
+    end
+  end
+
+  defmodule FaultProvider do
+    @moduledoc false
+
+    @behaviour Frameshift.Generation.Provider
+
+    @impl true
+    def id, do: FixtureProvider.id()
+
+    @impl true
+    def preflight(context) do
+      fault(:preflight, nil, context)
+      FixtureProvider.preflight(context)
+    end
+
+    @impl true
+    def generate(request, context) do
+      fault(:generate, request, context)
+      FixtureProvider.generate(request, context)
+    end
+
+    defp fault(stage, request, %{stage: stage} = context) do
+      send(context.test_pid, {:fault_callback, stage, self()})
+      private = {context.secret, request}
+      Logger.error("private-provider-fixture", private_provider_context: private)
+
+      case context.fault do
+        :raise -> raise inspect(private)
+        :throw -> throw(private)
+        :exit -> exit(private)
+      end
+    end
+
+    defp fault(_, _, _), do: :ok
+  end
+
+  defmodule InvalidResponseProvider do
+    @moduledoc false
+
+    @behaviour Frameshift.Generation.Provider
+
+    @impl true
+    def id, do: FixtureProvider.id()
+
+    @impl true
+    def preflight(%{stage: :preflight} = context) do
+      send(context.test_pid, :invalid_callback)
+      context.response
+    end
+
+    def preflight(context), do: FixtureProvider.preflight(context)
+
+    @impl true
+    def generate(_, context) do
+      send(context.test_pid, :invalid_callback)
+      context.response
+    end
+  end
+
+  defmodule RawLogHandler do
+    @moduledoc false
+
+    @spec log(:logger.log_event(), map()) :: :ok
+    def log(event, %{config: %{pid: pid, reference: reference}}) do
+      send(pid, {reference, event})
+      :ok
     end
   end
 
@@ -343,7 +414,184 @@ defmodule Frameshift.GenerationTest do
     slow_request = request(%{provider_id: "slow-fixture", seed: 9})
 
     assert {:error, :provider_timeout} =
-             Generation.generate(library, SlowProvider, slow_request, timeout_ms: 10)
+             Generation.generate(library, SlowProvider, slow_request,
+               timeout_ms: 50,
+               provider_context: %{test_pid: self()}
+             )
+
+    assert_receive {:slow_provider_worker, worker}
+    refute Process.alive?(worker)
+    assert Library.search(library, "") == []
+  end
+
+  test "preflight and edit callback faults cannot reach any raw Logger handler", c do
+    original = "private-edit-original-fixture"
+    {:ok, package} = MasterPackage.encode(original, @rgba, 16, 16)
+    {:ok, parent} = Library.import_master(c.library, package, imported_attributes())
+    handler = :frameshift_generation_raw_fixture
+    reference = make_ref()
+
+    :ok =
+      :logger.add_handler(handler, RawLogHandler, %{
+        level: :error,
+        config: %{pid: self(), reference: reference}
+      })
+
+    on_exit(fn -> :logger.remove_handler(handler) end)
+
+    for stage <- [:preflight, :generate], fault <- [:raise, :throw, :exit] do
+      private_request =
+        request(%{
+          instruction: "private-prompt-fixture",
+          mode: "edit",
+          parent_digest: parent["digest"],
+          seed: System.unique_integer([:positive])
+        })
+
+      assert {:error, :provider_crashed} =
+               Generation.generate(c.library, FaultProvider, private_request,
+                 provider_context: %{
+                   test_pid: self(),
+                   stage: stage,
+                   fault: fault,
+                   secret: "private-provider-token-fixture"
+                 }
+               )
+
+      assert_receive {:fault_callback, ^stage, worker}
+      refute Process.alive?(worker)
+    end
+
+    Logger.error("ordinary-generation-log-fixture")
+    assert_receive {^reference, %{msg: {:string, "ordinary-generation-log-fixture"}}}
+    refute_receive {^reference, _}, 30
+    assert [master] = Library.search(c.library, "")
+    assert master["digest"] == parent["digest"]
+  end
+
+  test "malformed callback responses return a finite refusal without exposing private terms", c do
+    for stage <- [:preflight, :generate],
+        response <- ["private-response-fixture", {:ok, :ignored, "private-response-fixture"}] do
+      assert {:error, {:provider, :invalid_response}} =
+               Generation.generate(c.library, InvalidResponseProvider, request(),
+                 provider_context: %{
+                   test_pid: self(),
+                   stage: stage,
+                   secret: "private-token-fixture",
+                   response: response
+                 }
+               )
+
+      assert_receive :invalid_callback
+    end
+
+    assert Library.search(c.library, "") == []
+  end
+
+  test "provider errors expose only declared finite classes", c do
+    for stage <- [:preflight, :generate],
+        {reason, expected} <- [
+          {"private-provider-error-fixture", :failed},
+          {{:quota_exhausted, "private-account-fixture"}, :failed},
+          {:not_available, :not_available},
+          {:authentication_failed, :authentication_failed},
+          {:quota_exhausted, :quota_exhausted},
+          {:refused, :refused},
+          {:unsupported_model, :unsupported_model},
+          {:unsupported_request, :unsupported_request},
+          {:download_required, :download_required},
+          {:cancelled, :cancelled},
+          {:failed, :failed}
+        ] do
+      assert {:error, {:provider, ^expected}} =
+               Generation.generate(c.library, InvalidResponseProvider, request(),
+                 provider_context: %{
+                   test_pid: self(),
+                   stage: stage,
+                   secret: "private-token-fixture",
+                   response: {:error, reason}
+                 }
+               )
+
+      assert_receive :invalid_callback
+    end
+
+    assert Library.search(c.library, "") == []
+  end
+
+  test "a conflicting privacy filter refuses provider work but preserves cached reads", c do
+    context = %{test_pid: self(), secret: "unused"}
+
+    assert {:ok, master} =
+             Generation.generate(c.library, FixtureProvider, request(), provider_context: context)
+
+    assert_receive :provider_preflight
+    assert_receive {:provider_generate, _}
+    filter = :frameshift_native_codec_privacy
+    previous = List.keyfind(:logger.get_primary_config().filters, filter, 0)
+    :ok = :logger.remove_primary_filter(filter)
+    conflict = {fn _, _ -> :ignore end, :independent_policy}
+    :ok = :logger.add_primary_filter(filter, conflict)
+
+    on_exit(fn ->
+      :logger.remove_primary_filter(filter)
+      if previous, do: :logger.add_primary_filter(filter, elem(previous, 1))
+    end)
+
+    assert {:error, :provider_privacy_unavailable} =
+             Generation.generate(c.library, FixtureProvider, request(%{seed: 42}),
+               provider_context: context
+             )
+
+    refute_receive :provider_preflight, 20
+    assert {^filter, ^conflict} = List.keyfind(:logger.get_primary_config().filters, filter, 0)
+
+    assert {:ok, cached} =
+             Generation.generate(c.library, FixtureProvider, request(), provider_context: context)
+
+    assert cached[:cache] == :hit
+    assert cached["digest"] == master["digest"]
+    refute_receive :provider_preflight, 20
+  end
+
+  test "real task capacity refusal leaves Library available and recovers after a child exits",
+       c do
+    tasks =
+      Enum.reduce_while(1..64, [], fn _, tasks ->
+        case Task.Supervisor.start_child(Frameshift.TaskSupervisor, fn ->
+               receive do
+                 :finish -> :ok
+               end
+             end) do
+          {:ok, task} -> {:cont, [task | tasks]}
+          {:error, :max_children} -> {:halt, tasks}
+        end
+      end)
+
+    on_exit(fn ->
+      Enum.each(tasks, &Task.Supervisor.terminate_child(Frameshift.TaskSupervisor, &1))
+    end)
+
+    assert tasks != []
+
+    assert {:error, :max_children} =
+             Task.Supervisor.start_child(Frameshift.TaskSupervisor, fn -> :ok end)
+
+    context = %{test_pid: self(), secret: "unused"}
+
+    assert {:error, :provider_unavailable} =
+             Generation.generate(c.library, FixtureProvider, request(), provider_context: context)
+
+    refute_receive :provider_preflight, 20
+    assert Library.search(c.library, "") == []
+    :ok = Task.Supervisor.terminate_child(Frameshift.TaskSupervisor, hd(tasks))
+
+    assert {:ok, master} =
+             Generation.generate(c.library, FixtureProvider, request(), provider_context: context)
+
+    assert master[:cache] == :miss
+    assert_receive :provider_preflight
+    assert_receive {:provider_generate, _}
   end
 
   test "provider identity, invalid requests, and motion results are rejected", %{library: library} do
