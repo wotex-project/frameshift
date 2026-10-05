@@ -667,6 +667,13 @@ final termination, refuses wrong roles and does not repair import custody. Fresh
 source-bound packages must join first install and immediate managed restart;
 the finite start-rate budget remains in force.
 
+Linux runtime and DEB builders now bypass cache reuse only for their final
+artifact stage. The same frozen source and dependency inputs produce a complete
+verified candidate after cached directory and TAR exports omit required files.
+The export boundary is implicated; its upstream failure mechanism is unproven.
+Keep all source/byte/handoff gates and retained incomplete outputs. Continue
+fresh standard-command packages and the booted lifecycle join.
+
 Protected identity resolution now compares pathname and descriptor timestamps
 as POSIX seconds. The Linux credential/installation/pinned-TLS fixture runs fresh
 UTC and non-UTC processes; the reproduced uncertain-publication failure becomes

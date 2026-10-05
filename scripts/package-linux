@@ -19,7 +19,7 @@ case "$architecture:$daemon_architecture" in
   *) fixture_erl_flags='+JMsingle true' ;;
 esac
 mise exec -- node "$repository_root/release/linux/record-inputs.mjs" "$repository_root" "$context" "$architecture" "$gleam_hash"
-docker build --platform "linux/$architecture" --file "$context/linux/build.Dockerfile" \
+docker build --no-cache-filter artifact --platform "linux/$architecture" --file "$context/linux/build.Dockerfile" \
   --build-arg "FIXTURE_ERL_FLAGS=$fixture_erl_flags" --target artifact \
   --output "type=local,dest=$output" "$context"
 printf 'Ubuntu %s development closure: %s\n' "$architecture" "$output"

@@ -63,6 +63,8 @@ function executor(f, mutation = '') {
       if (mutation === 'prepared') put(context, 'apps/core/lib/source.ex', 'substituted source');
     } else if (command === 'docker' && args[0] === 'info') return 'aarch64';
     else if (command === 'docker') {
+      assert.equal(args.filter(value => value === '--no-cache-filter').length, 1);
+      assert.equal(args[args.indexOf('--no-cache-filter') + 1], 'artifact');
       const context = args.at(-1);
       const destination = args[args.indexOf('--output') + 1].slice('type=local,dest='.length);
       if (args.includes('EXPECTED_VERSION=1.2.3')) {

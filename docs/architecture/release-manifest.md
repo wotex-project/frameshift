@@ -514,6 +514,12 @@ as captured bytes, not as proof of its provenance or license. Target compilation
 and ELF closure still run inside the selected Ubuntu image. Emulated build JIT
 settings are recorded and never added to shipped launchers.
 
+Runtime and DEB builders explicitly bypass cache reuse for the final `artifact`
+stage with `--no-cache-filter artifact`. Compilation and dependency stages keep
+their existing cache policy. This narrow export policy does not replace source,
+namespace, version, byte, mode or handoff verification; incomplete exports refuse
+and remain retained. Do not prune shared caches as part of candidate production.
+
 Consult the generated core `.app`, release `.rel` and `start_erl.data` before
 runtime export and again before DEB assembly. Refuse a mismatched version,
 architecture or source-record digest. Hash the runtime before copying it into

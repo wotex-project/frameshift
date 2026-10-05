@@ -1672,6 +1672,35 @@ remain joined to the installed host. Startup readiness and application lifecycle
 require their separate actual host fixture. Fresh source-bound packages must
 qualify first install, immediate restart and the complete retained-data lifecycle.
 
+### Linux final artifact export cache boundary
+
+**Observation:** 2026-10-05. Docker 29.4.0 with the overlayfs store and Buildx
+0.33.0 (`f7897eba028583e0071642db3c011e860444f8cf`) repeatedly exports an incomplete
+runtime from the same frozen private arm64 source cohort. Later cached local
+exports contain 1,070 files and omit the installed unit and build-input record;
+three consecutive bounded inventories remain unchanged. A diagnostic TAR export
+also omits those required files. These outputs refuse and remain retained without
+a final candidate record. This does not establish delayed copying or a local-only
+export fault.
+
+Independent Node 26.9 runtime copies preserve the admitted file inventory and
+bytes. Repeating both runtime and DEB builds with cache reuse disabled only for
+the final `artifact` stage produces a complete candidate and passes the existing
+source, runtime-copy, packaging, release-version and final-record checks. The
+experiment changes only the Docker arguments; it does not substitute a prior
+runtime, repair missing files, weaken admission or prune shared caches. This
+implicates the cache/export boundary, but the precise upstream failure mechanism
+remains unproven.
+
+The exact [Buildx 0.33.0 build reference](https://github.com/docker/buildx/blob/v0.33.0/docs/reference/buildx_build.md#no-cache-filter),
+read with gh on the observation date, defines `--no-cache-filter` for named
+stages. All Linux builders now use `--no-cache-filter artifact` for runtime and
+package exports, retaining the existing compilation/dependency cache policy.
+Source/namespace/byte verification stays authoritative. The completed experiment
+has publication authority `none`; fresh standard-command builds and installed
+lifecycle qualification remain separate. If those exports remain incomplete,
+retain the failure and investigate rather than accepting or patching its bytes.
+
 ### Timezone-independent protected identity custody
 
 **Observation:** 2026-10-05. The booted arm64 identity command validates its PEM,

@@ -103,7 +103,7 @@ export async function buildCandidate({ repository, tag, commit, sourcePath, arch
     const emulated = architecture === 'arm64' ? !['aarch64', 'arm64'].includes(daemon) : !['x86_64', 'amd64'].includes(daemon);
     const jit = emulated ? '+JMsingle true' : '';
     const runtime = join(output, 'runtime');
-    execute('docker', ['build', '--platform', `linux/${architecture}`, '--file', join(context, 'linux/build.Dockerfile'),
+    execute('docker', ['build', '--no-cache-filter', 'artifact', '--platform', `linux/${architecture}`, '--file', join(context, 'linux/build.Dockerfile'),
       '--build-arg', `FIXTURE_ERL_FLAGS=${jit}`, '--build-arg', `EXPECTED_VERSION=${source.version}`, '--target', 'artifact',
       '--output', `type=local,dest=${runtime}`, context]);
     if (!equal(material, inventory(context, contextNames))) throw new Error('build material changed');
@@ -116,7 +116,7 @@ export async function buildCandidate({ repository, tag, commit, sourcePath, arch
     if (!equal(runtimeFiles, inventory(packaging, ['root']))) throw new Error('runtime handoff changed');
     execute(process.execPath, [join(repository, 'release/linux/record-package.mjs'), repository, packaging, architecture, 'candidate', sourcePath, tag, commit]);
     const packageMaterial = inventory(packaging);
-    execute('docker', ['build', '--platform', `linux/${architecture}`, '--file', join(packaging, 'linux/deb.Dockerfile'),
+    execute('docker', ['build', '--no-cache-filter', 'artifact', '--platform', `linux/${architecture}`, '--file', join(packaging, 'linux/deb.Dockerfile'),
       '--build-arg', 'PACKAGE_MODE=--candidate', '--build-arg', `PACKAGE_VERSION=${source.version}`,
       '--build-arg', `FIXTURE_ERL_FLAGS=${jit}`, '--target', 'artifact',
       '--output', `type=local,dest=${join(output, 'package')}`, packaging]);
