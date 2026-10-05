@@ -1,0 +1,34 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+if [ -L /usr/lib/frameshift/policy.sh ] || [ ! -f /usr/lib/frameshift/policy.sh ] ||
+  [ "$(stat -c '%u:%g:%a' /usr/lib/frameshift/policy.sh)" != '0:0:644' ]; then
+  printf '%s\n' 'frameshift: installed public policy unavailable' >&2
+  exit 69
+fi
+# shellcheck source=release/linux/policy.sh
+. /usr/lib/frameshift/policy.sh
+[ "$(id -u)" = 0 ] || frameshift_refuse
+frameshift_policy
+umask 077
+
+ancestor() {
+  [ ! -L "$1" ] && [ -d "$1" ] && [ "$(stat -c '%u:%a' -- "$1")" = '0:755' ] || frameshift_refuse
+}
+directory() {
+  if [ -e "$1" ] || [ -L "$1" ]; then
+    [ ! -L "$1" ] && [ -d "$1" ] &&
+      [ "$(stat -c '%u:%g:%a' -- "$1")" = "$fs_uid:$2:$3" ] || frameshift_refuse
+  else
+    mkdir -m "$3" -- "$1" || frameshift_refuse
+    chown "$fs_uid:$2" -- "$1" || frameshift_refuse
+  fi
+}
+for fs_parent in /var /var/lib /run /usr /usr/lib /usr/lib/frameshift; do ancestor "$fs_parent"; done
+directory /var/lib/frameshift "$fs_gid" 700
+directory /var/lib/frameshift/tmp "$fs_gid" 700
+directory /var/lib/frameshift/credentials "$fs_gid" 700
+directory /run/frameshift "$fs_gid" 711
+directory /run/frameshift/control "$fs_control" 710
+directory /run/frameshift/observer "$fs_observer" 710

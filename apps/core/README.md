@@ -100,6 +100,15 @@ custody preserves its replacement fence. Core tests join actual PNG/JPEG normali
 to immutable package/SQLite readback and Zig rendering. `scripts/check linux-codec`
 also builds target SQLite/Exile NIFs/helpers against pinned OTP headers and exercises
 nonroot arm64/amd64 worker deadlines, shutdown and abrupt-owner refusal.
+
+The Ubuntu development closure compiles this core, SQLite/Exile and the codec
+against pinned Ubuntu 24.04 / OTP 29.1, with a target-baseline Zig worker and
+bundled runtime. The installed service/CLI launchers select fixed public group
+policy and private persistent temporary custody. `scripts/check linux-release`
+uses each staged architecture in a clean, read-only/network-disabled Ubuntu
+fixture; its exact source/pixel/restart and unsafe-custody checks complement the
+[platform contract](../../docs/host/linux.md#initial-deb-runtime-and-service-contract).
+Booted systemd and installed DEB/update acceptance remain required.
 The Linux group endpoint joins private upload staging, this codec and exact
 actor-bound Library results. Configure `FRAMESHIFT_CODEC_PATH` and an existing
 service-owned real `0700` temporary directory. Missing or abandoned custody

@@ -61,6 +61,72 @@ interface.
   upgrade, downgrade rejection, database migration, full-disk, power-loss, and
   backup/restore tests run on amd64 and arm64.
 
+### Initial DEB runtime and service contract
+
+The first packaging qualification target is **Ubuntu 24.04 LTS**, independently
+for amd64 and arm64. Other Ubuntu versions remain candidates until the same
+closure and installed lifecycle pass there. The package is `frameshift`; it
+installs the self-contained core at `/usr/lib/frameshift/core`, with the exact
+codec and raster worker in `/usr/lib/frameshift/bin`. Language compilers and Mix
+are build tools, not installed dependencies. System libraries remain explicit
+DEB dependencies, checked from every shipped ELF executable/shared object in a
+clean target image; bundling OTP does not eliminate its OS ABI requirements.
+Locked upstream source is compiled against target OTP headers. A host-built NIF,
+helper or BEAM containing a build-time native path cannot establish this closure.
+
+The fixed service account is `frameshift`, with no login and a distinct primary
+group. `frameshift-control` grants local mutations and `frameshift-observer`
+grants diagnostics. The service belongs to both; installation adds no human
+account automatically. Numeric IDs are resolved from the installed account/group
+database and validated before launch, never copied from a build machine or a
+socket response. Accounts/groups are retained on removal to prevent numeric UID
+reuse from granting custody over retained data. Root remains the administrator.
+
+A root-owned provisioning helper runs as a service pre-start maintenance action.
+It validates managed ancestors and creates only absent final directories:
+`/var/lib/frameshift` (0700), `tmp` and `credentials` beneath it (0700),
+`/run/frameshift` (0711, traversal only), and distinct `control`/`observer`
+children (0710 with their respective groups). Existing symlinks, wrong owners,
+groups or modes refuse without chmod, recursive chown, deletion or target
+access. Initial directory publication may fail partway; a retry admits only
+already-correct directories. It never creates a credential or resets SQLite.
+The listeners still own stale/live socket admission and 0660 socket modes.
+Private import/codec custody lives in persistent `tmp`, outside the registered
+object quota. Abrupt-owner fences survive service restart and reboot; recovery
+requires a stopped service, receipt inspection and explicit administrator action.
+No startup or package removal recursively clears these files.
+
+The service launcher runs with the dedicated nonroot identity and a clean,
+non-distributed OTP environment. It sets fixed data/socket/credential/native
+paths, private TMPDIR, finite redacted logging and disabled crash dumps. The
+installed CLI supplies only public numeric policy and socket paths in a clean
+bundled VM; it never inherits service cookies, private keys or runtime service
+configuration. The separate identity launcher requires the service UID and reads
+its bounded PEM from stdin under the existing protected-file contract.
+
+The systemd unit confines writes to the managed state/runtime roots, denies home
+access and privilege escalation, bounds file descriptors, process count and
+memory, and applies finite stop/restart limits. Stop kills the entire service
+control group, including native workers. Declared memory limits are containment
+policy, not measured idle or maximum working-set evidence. JIT and native
+helpers must pass with the actual unit restrictions; blanket executable-memory
+or syscall restrictions cannot be asserted without that join. Journald consumes
+the existing redacted console format; durable audit remains SQLite.
+
+DEB maintainer scripts must be idempotent, refuse unsupported OS/architecture and
+version downgrade before unpack, and preserve data/credentials on update,
+removal and purge. Removal stops/disables the unit and removes packaged files;
+intentional data destruction is a separate administrator operation. No upgrade
+claims transactional rollback across package bytes, SQLite and external delivery.
+The unreleased schema remains original CREATE/INSTALL definitions.
+
+Acceptance first joins fresh target builds and actual nonroot launch, peer/group
+CLI, PNG/JPEG import, persistence/restart, unsafe-directory refusal and native
+ELF closure in pinned Ubuntu containers. Those tests do not establish a booted
+systemd manager, native amd64 JIT, installed clean-VM update/removal, cgroup/OOM
+behavior, power loss, signing/notices or Pi hardware. Installed systemd and native
+CPU acceptance remain mandatory before a customer package is advertised.
+
 ### Group-owned diagnostic endpoint
 
 The initial group boundary is read-only diagnostics. Configure an explicit numeric

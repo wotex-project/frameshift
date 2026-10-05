@@ -1,0 +1,36 @@
+#!/bin/sh
+set -eu
+stage=/out/root
+mkdir -p "$stage/usr/lib/frameshift/bin" "$stage/usr/bin" "$stage/usr/lib/systemd/system" "$stage/usr/share/doc/frameshift"
+cp -R /src/apps/core/_build/prod/rel/frameshift_core "$stage/usr/lib/frameshift/core"
+cp /src/codec/target/release/frameshift-codec /src/frameshift-raster "$stage/usr/lib/frameshift/bin/"
+cp /src/release/linux/policy.sh /src/release/linux/provision-runtime /src/release/linux/launch-service "$stage/usr/lib/frameshift/"
+cp /src/release/linux/frameshiftctl /src/release/linux/frameshift-identity "$stage/usr/bin/"
+cp /src/release/linux/frameshift.service "$stage/usr/lib/systemd/system/"
+cp /src/inputs.json "$stage/usr/share/doc/frameshift/build-inputs.json"
+dpkg-query -W -f='${Package}\t${Version}\t${Architecture}\n' | sort >/out/build-packages.txt
+cp /out/build-packages.txt "$stage/usr/share/doc/frameshift/build-packages.txt"
+# Every ELF is inspected, including ERTS programs, OTP NIFs and dependency helpers.
+: >/out/elf-closure.txt
+case "$(dpkg --print-architecture)" in
+  arm64) machine=AArch64 ;;
+  amd64) machine='Advanced Micro Devices X86-64' ;;
+  *) exit 64 ;;
+esac
+find "$stage/usr/lib/frameshift" -type f | sort | while IFS= read -r binary; do
+  if readelf -h "$binary" >/dev/null 2>&1; then
+    test "$(readelf -h "$binary" | sed -n 's/.*Machine: *//p')" = "$machine"
+    printf '%s\n' "${binary#"$stage"}" >>/out/elf-closure.txt
+    readelf -d "$binary" | sed -n '/NEEDED/p' >>/out/elf-closure.txt
+    ldd "$binary" >>/out/elf-closure.txt 2>&1 || {
+      # Static Zig output has no dynamic section and ldd reports failure.
+      readelf -d "$binary" | grep -q 'There is no dynamic section' || exit 1
+    }
+  fi
+done
+if grep -q 'not found' /out/elf-closure.txt; then cat /out/elf-closure.txt >&2; exit 1; fi
+# No Frameshift test BEAM, source checkout or fixture-only JPEG encoder.
+# Upstream telemetry_test is its documented runtime event-assertion helper.
+if find "$stage/usr/lib/frameshift/core/lib" -type f -path '*/core/lib/frameshift_*-*/*' -name '*_test.beam' | grep -q .; then exit 1; fi
+if find "$stage" -type f -name '*.rs' | grep -q .; then exit 1; fi
+cp /out/elf-closure.txt "$stage/usr/share/doc/frameshift/elf-closure.txt"

@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+# Test tooling is in this disposable image; customer launchers need only bundled OTP.
+for tool in gcc cc cargo rustc elixir erl zig gleam mix; do
+  if command -v "$tool" >/dev/null 2>&1; then echo "unexpected global compiler/runtime: $tool" >&2; exit 1; fi
+done
+find /usr/lib/frameshift -type f | sort | while IFS= read -r binary; do
+  if readelf -h "$binary" >/dev/null 2>&1; then
+    ldd "$binary" >/tmp/fixture-ldd 2>&1 || {
+      readelf -d "$binary" | grep -q 'There is no dynamic section' || exit 1
+    }
+    if grep -q 'not found' /tmp/fixture-ldd; then cat /tmp/fixture-ldd >&2; exit 1; fi
+  fi
+done
+version=$(cut -d ' ' -f2 /usr/lib/frameshift/core/releases/start_erl.data)
+exec /usr/lib/frameshift/core/releases/"$version"/elixir \
+  --boot /usr/lib/frameshift/core/releases/"$version"/start_clean \
+  --boot-var RELEASE_LIB /usr/lib/frameshift/core/lib /fixtures/closure-check.exs

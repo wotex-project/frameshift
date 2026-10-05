@@ -171,6 +171,14 @@ It also joins authenticated private upload and exact Library results to freshly
 built Linux SQLite/Exile NIF/helper artifacts against pinned OTP headers.
 Fresh CLI original imports and receipt recovery pass; installed DEBs remain separate work.
 
+The Ubuntu 24.04 development runtime closure is built separately with
+`./scripts/package-linux --development arm64` (or `amd64`). It writes a new
+`var/linux-<architecture>-development/` tree with exact build inputs and ELF
+inspection; an existing output refuses. `./scripts/check linux-release` joins
+both trees to clean Ubuntu images, nonroot service/CLI, group admission,
+PNG/JPEG import and crash/restart recovery. These local artifacts are not DEBs
+or customer releases; booted systemd and installed lifecycle remain separate.
+
 The Docker-backed live receiver and Linux peer-credential checks are separate
 lanes in CI. Run them locally with `./scripts/check container` and
 `./scripts/check linux-ipc` when a Docker-compatible daemon is available.

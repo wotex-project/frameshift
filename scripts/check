@@ -32,12 +32,21 @@ check_policy() {
     "$repository_root/scripts/check-packaged-app" \
     "$repository_root/scripts/check-platform-observability" \
     "$repository_root/scripts/check-linux-codec-owner" \
+    "$repository_root/scripts/check-linux-release" \
     "$repository_root/codec/vendor/jpeg-decoder/check-source" \
     "$repository_root/scripts/format" \
     "$repository_root/scripts/frameshift-maintenance" \
     "$repository_root/scripts/index" \
     "$repository_root/scripts/launch-bundled-core" \
     "$repository_root/scripts/package-macos" \
+    "$repository_root/scripts/package-linux" \
+    "$repository_root/release/linux/policy.sh" \
+    "$repository_root/release/linux/provision-runtime" \
+    "$repository_root/release/linux/launch-service" \
+    "$repository_root/release/linux/frameshiftctl" \
+    "$repository_root/release/linux/frameshift-identity" \
+    "$repository_root/release/linux/build-tree" \
+    "$repository_root/release/linux/check-closure" \
     "$repository_root/apps/core/test/fixtures/hanging-worker.sh" \
     "$repository_root/apps/core/rel/overlays/bin/frameshiftctl" \
     "$repository_root/apps/core/rel/overlays/bin/frameshift-identity"
@@ -84,6 +93,16 @@ check_linux_codec() {
   docker run --rm --platform linux/amd64 --network none --read-only \
     frameshift-codec-amd64:fixture
   "$repository_root/scripts/check-linux-codec-owner" amd64
+}
+
+check_linux_release() {
+  mise exec -- node --check "$repository_root/release/linux/record-inputs.mjs"
+  (
+    cd "$repository_root/apps/core"
+    mise exec -- mix format --check-formatted ../../release/linux/*.exs
+  )
+  "$repository_root/scripts/check-linux-release" arm64
+  "$repository_root/scripts/check-linux-release" amd64
 }
 
 check_platform() {
@@ -299,6 +318,7 @@ case "${1:-all}" in
   renderer) check_renderer ;;
   codec) check_codec ;;
   linux-codec) check_linux_codec ;;
+  linux-release) check_linux_release ;;
   kernel) check_kernel ;;
   build-spec) "$repository_root/scripts/check-build-spec" ;;
   conjunct) mise exec -- node "$repository_root/scripts/conjunct/run.mjs" ;;
@@ -314,7 +334,7 @@ case "${1:-all}" in
   linux-discovery) check_linux_discovery ;;
   keychain-pairing) "$repository_root/scripts/check-keychain-pairing" ;;
   *)
-    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|codec|linux-codec|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
+    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|codec|linux-codec|linux-release|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
     exit 64
     ;;
 esac

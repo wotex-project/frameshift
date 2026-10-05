@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+case "${1:-}" in arm64|amd64) architecture=$1 ;; *) echo 'usage: check-linux-release arm64|amd64' >&2; exit 64 ;; esac
+output="$repository_root/var/linux-$architecture-development"
+[ -d "$output/root" ] || { echo 'build the explicit development closure first with package-linux' >&2; exit 69; }
+context=$(mktemp -d "${TMPDIR:-/tmp}/frameshift-ubuntu-check.XXXXXXXX")
+trap 'rm -rf "$context"' EXIT HUP INT TERM
+cp -R "$output/root" "$context/root"
+mkdir "$context/fixtures"
+cp "$repository_root/release/linux/check-closure" "$repository_root/release/linux/closure-check.exs" "$repository_root/release/linux/verify-store.exs" "$context/fixtures/"
+cp "$repository_root/apps/core/test/fixtures/canonical-jpeg.jpg" "$repository_root/apps/core/test/fixtures/canonical-jpeg.rgba" "$context/fixtures/"
+cp "$repository_root/release/linux/check.Dockerfile" "$context/Dockerfile"
+daemon_architecture=$(docker info --format '{{.Architecture}}')
+case "$architecture:$daemon_architecture" in
+  amd64:x86_64|amd64:amd64|arm64:aarch64|arm64:arm64) fixture_erl_flags='' ;;
+  *) fixture_erl_flags='+JMsingle true' ;;
+esac
+docker build --platform "linux/$architecture" --build-arg "FIXTURE_ERL_FLAGS=$fixture_erl_flags" --tag "frameshift-ubuntu-$architecture:fixture" "$context"
+docker run --rm --platform "linux/$architecture" --network none --read-only \
+  --memory 1g --memory-swap 1g --pids-limit 512 \
+  --tmpfs /var/lib:mode=0755,size=512m,exec --tmpfs /run:mode=0755,size=16m \
+  --tmpfs /tmp:mode=1777,size=64m "frameshift-ubuntu-$architecture:fixture"

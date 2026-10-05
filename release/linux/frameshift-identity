@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+if [ -L /usr/lib/frameshift/policy.sh ] || [ ! -f /usr/lib/frameshift/policy.sh ] ||
+  [ "$(stat -c '%u:%g:%a' /usr/lib/frameshift/policy.sh)" != '0:0:644' ]; then
+  printf '%s\n' 'frameshift: installed public policy unavailable' >&2
+  exit 69
+fi
+# shellcheck source=release/linux/policy.sh
+. /usr/lib/frameshift/policy.sh
+frameshift_policy
+[ "$(id -u)" = "$fs_uid" ] || frameshift_refuse
+umask 077
+exec env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
+  ERL_FLAGS='+S 2:2 +SDcpu 2 +SDio 2' \
+  ERL_CRASH_DUMP=/dev/null ERL_CRASH_DUMP_SECONDS=0 \
+  FRAMESHIFT_SERVICE_UID="$fs_uid" \
+  FRAMESHIFT_CREDENTIAL_DIRECTORY=/var/lib/frameshift/credentials \
+  /usr/lib/frameshift/core/bin/frameshift-identity "$@"

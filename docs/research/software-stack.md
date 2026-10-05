@@ -467,3 +467,50 @@ The stack is release-qualified only after these gates:
 6. prove the selected MCU toolchain and Wi-Fi/TLS path before naming any
    controller reference hardware, plus sleep current for Paper or refresh under
    load for Pixel when those tracks are chosen.
+
+### Ubuntu runtime and service source review
+
+**Observation:** 2026-10-05. Ubuntu's [release-cycle table](https://ubuntu.com/about/release-cycle)
+keeps 24.04 LTS in standard security maintenance through May 2029. Select it as
+the first bounded packaging baseline, rather than infer ABI compatibility from
+the existing Debian trixie fixtures or automatically add each newer LTS. This
+selection is an implementation target; it is not an installed qualification.
+
+The Hex-maintained `hexpm/elixir:1.20.4-erlang-29.1-ubuntu-noble-20260911`
+[image](https://hub.docker.com/r/hexpm/elixir/tags?name=1.20.4-erlang-29.1-ubuntu-noble)
+has immutable index digest
+`sha256:5b77ba2dec41d6d1716b354bbca92cd9359ed02b273f92eeabd0c92f9c9bdeee`,
+amd64 manifest `c86fb7f726be9f0407db55afe38a2450fe3c4836ecafe9871ad1d1a26c044fd7`
+and arm64 manifest `9fec2080e5bb7e287689eb3a39465b0d8683758b73e75fe7805f0337721cd205`.
+The current official `ubuntu:24.04` runtime index is pinned to
+`sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55`.
+Image tags are dated observations; the build must use these digests and check
+OS/version/architecture, not resolve a mutable tag on each run.
+
+The [Hex bob source](https://github.com/hexpm/bob/tree/f9a485b487a44c21fffa4571fcecae1e8fc1913e/priv/scripts/docker)
+uses target-native OTP builds with SSL and dirty schedulers and an OTP-major
+Elixir archive. Current bob source alone cannot establish the pinned image's
+producer inputs. An actual arm64
+probe reports Ubuntu 24.04.5, OTP 29.1 / ERTS 17.1 and Elixir 1.20.4. `ldd` on
+BEAM requires libtinfo, libstdc++, libm, libgcc and libc; crypto requires
+libcrypto.so.3. Inspect every final shipped ELF/NIF/helper and test the release
+in a clean runtime image; this sample does not establish the whole closure.
+
+Ubuntu noble's [systemd.exec](https://manpages.ubuntu.com/manpages/noble/man5/systemd.exec.5.html)
+255.4 documents that StateDirectory/RuntimeDirectory can recursively change
+ownership when existing owners differ and normalize final permissions. That
+behavior would hide a custody mismatch before application refusal. Use a small
+root-owned pre-start provisioning helper that validates fixed ancestors/final
+inodes, creates only missing directories and refuses mismatches. Persistent
+private temporary custody deliberately keeps unknown import/native fences across
+stops and reboot; a blanket systemd runtime cleanup would erase that evidence.
+
+The [systemd service](https://manpages.ubuntu.com/manpages/noble/man5/systemd.service.5.html)
+and [resource-control](https://manpages.ubuntu.com/manpages/noble/man5/systemd.resource-control.5.html)
+contracts supply a dedicated User/Group, privileged maintenance prefix, bounded
+restart/stop, control-group termination and explicit memory/task limits. Keep
+BEAM JIT and native helper execution inside actual acceptance instead of assuming
+any hardening directive is compatible. [Debian maintainer-script policy](https://www.debian.org/doc/debian-policy/ch-maintainerscripts.html)
+requires safe repeated execution and defines failed-install/upgrade argument
+forms. The DEB must retain private data and accounts on removal/purge and refuse
+downgrades before unpack; script success alone is not an installed systemd test.

@@ -45,3 +45,32 @@ The example URL is a fixture. The signer refuses symlinked archives, weak key
 permissions, mismatched trust fingerprints, unsafe output parents, and an
 existing output directory. A release operator must separately qualify and
 publish real archives, then run the public readback verifier.
+
+## Ubuntu development closure
+
+`./scripts/package-linux --development arm64` or `amd64` builds a new
+`var/linux-<architecture>-development/` runtime tree; an existing destination
+refuses. It snapshots source/locked dependency material without user/Hex config,
+records file hashes and the exact commit/dirty state, verifies pinned Gleam
+archives through `gh`, cross-builds the pinned Zig target, and freshly compiles
+OTP-header-dependent NIFs/helpers and the scalar codec in pinned Ubuntu images.
+`build-inputs.json`, `build-packages.txt` and `elf-closure.txt` accompany the tree.
+The latter inspects all 24 shipped ELF executables/shared objects and rejects
+wrong architecture or missing linked libraries. CA roots and dynamically loaded
+SCTP are explicit OS dependencies even though `ldd` alone does not expose them.
+
+Run `./scripts/check linux-release` after building both trees. The clean Ubuntu
+fixtures contain no globally installed Elixir/Erlang/compiler tools, and exercise
+packaged nonroot service and CLI, group separation, unsafe existing directories,
+caller-private PNG/JPEG uploads, exact SQLite/pixel/provenance readback, full VM
+restart and abandoned import-custody refusal. The service template is checked by
+Ubuntu's systemd parser, while Docker supplies read-only root, no network,
+1 GiB memory and 512-process containment. A fixture-only single-JIT mapping is
+used under amd64 emulation; shipped launchers retain native default mapping.
+No fixture proves a booted systemd manager or OOM/physical filesystem behavior.
+
+These are explicitly development trees, not stable tagged DEBs or published
+installers. DEB lifecycle, protected administrative backup/provisioning, native
+amd64/systemd, licenses/notices, signing and public readback remain required.
+The [Linux owner](../docs/host/linux.md#initial-deb-runtime-and-service-contract)
+defines private state, runtime traversal, group policy and conservative recovery.

@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+if [ -L /usr/lib/frameshift/policy.sh ] || [ ! -f /usr/lib/frameshift/policy.sh ] ||
+  [ "$(stat -c '%u:%g:%a' /usr/lib/frameshift/policy.sh)" != '0:0:644' ]; then
+  printf '%s\n' 'frameshift: installed public policy unavailable' >&2
+  exit 69
+fi
+# shellcheck source=release/linux/policy.sh
+. /usr/lib/frameshift/policy.sh
+frameshift_policy
+[ "$(id -u)" = "$fs_uid" ] || frameshift_refuse
+umask 077
+exec env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
+  ERL_FLAGS='+S 4:4 +SDcpu 4 +SDio 4' \
+  ERL_CRASH_DUMP=/dev/null ERL_CRASH_DUMP_SECONDS=0 \
+  RELEASE_DISTRIBUTION=none RELEASE_TMP=/var/lib/frameshift/tmp \
+  TMPDIR=/var/lib/frameshift/tmp FRAMESHIFT_DATA_DIR=/var/lib/frameshift \
+  FRAMESHIFT_SERVICE_UID="$fs_uid" FRAMESHIFT_CONTROL_GID="$fs_control" \
+  FRAMESHIFT_DIAGNOSTICS_GID="$fs_observer" \
+  FRAMESHIFT_SOCKET_PATH=/run/frameshift/control/c.sock \
+  FRAMESHIFT_DIAGNOSTICS_SOCKET_PATH=/run/frameshift/observer/d.sock \
+  FRAMESHIFT_CREDENTIAL_DIRECTORY=/var/lib/frameshift/credentials \
+  FRAMESHIFT_RENDERER_PATH=/usr/lib/frameshift/bin/frameshift-raster \
+  FRAMESHIFT_CODEC_PATH=/usr/lib/frameshift/bin/frameshift-codec \
+  /usr/lib/frameshift/core/bin/frameshift_core start
