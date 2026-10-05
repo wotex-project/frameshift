@@ -705,10 +705,24 @@ and strict nested seals. All eight Ubuntu candidate groups preserve the source
 and retained-output contracts; all seventeen Mac/Linux candidate and receipt
 receiver groups pass with private CLI replay. Continue frozen binary
 SDK admission, architecture thinning/merging and application Sparkle
-integration with required signed-feed settings and shutdown coordination, then
+integration with required signed-feed settings, then
 installed update qualification and final
 app/minimum-OS/Developer-ID qualification, real tap, public bytes and channel
 promotion. Supplied declarations do not complete those joins.
+
+The independent H3 owned-core termination slice now quiesces new exchanges and
+restart, signals the retained launcher once, and releases token/broker/log
+custody only after observed exit. A ten-second uncertain result cancels quit
+and retains the same process for read-only retry. Three real-process fixtures
+cover exit, ignored TERM/deadline/later recovery and cancelled observation;
+all 88 Swift tests and shell checks pass. A fresh packaged-core AppKit probe
+passes ready/deferred/confirmed events and actual OTP PID/PID-file removal,
+including quit nested inside an actor dispatch job. Its regression exposed a
+modal-loop scheduling hazard; the coordinator now delivers replies through the
+main run loop. Fresh ad-hoc packaging, native closure/seals, authenticated IPC
+and offline maintenance pass. This closes the normal idle-core software join;
+active native-worker quit, interactive uncertain/retry and keyboard/VoiceOver,
+installed updater/background lifecycle and production acceptance remain open.
 
 S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned

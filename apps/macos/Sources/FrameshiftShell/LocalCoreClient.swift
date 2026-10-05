@@ -256,7 +256,8 @@ public actor LocalCoreClient: CoreClient {
       .path
   }
 
-  public static func shutdownBundledCore() async {
+  @discardableResult
+  public static func shutdownBundledCore() async -> CoreShutdownResult {
     await BundledCore.shared.shutdown()
   }
 
@@ -385,8 +386,12 @@ private actor BundledCore {
   private var token: String?
   private var credentialBroker: KeychainCredentialBroker?
   private var logBridge: CoreLogBridge?
+  private var quiescing = false
+  private var stopSignalled = false
+  private var shutdownWork: (id: UUID, task: Task<CoreShutdownResult, Never>)?
 
   func ensureRunning(socketPath: String, force: Bool = false) async throws {
+    guard !quiescing else { throw CoreClientError.coreUnavailable }
     if !force, UnixSocket.isAccepting(path: socketPath) {
       if process?.isRunning == true { return }
       if process == nil, try loadExternalTokenIfAvailable() { return }
@@ -419,17 +424,43 @@ private actor BundledCore {
     return token
   }
 
-  func shutdown() {
-    if let process, process.isRunning {
-      process.terminate()
+  func shutdown() async -> CoreShutdownResult {
+    quiescing = true
+    guard let process else {
+      releaseCustody()
+      return .stopped
     }
+    let work: (id: UUID, task: Task<CoreShutdownResult, Never>)
+    if let active = shutdownWork {
+      work = active
+    } else {
+      if !stopSignalled, process.isRunning {
+        process.terminate()
+      }
+      stopSignalled = true
+      work = (UUID(), Task { await CoreProcessExit.observe(process, within: .seconds(10)) })
+      shutdownWork = work
+    }
+    let result = await work.task.value
+    if shutdownWork?.id == work.id {
+      shutdownWork = nil
+      if result == .stopped {
+        releaseCustody()
+        Self.logger.info("bundled core stopped")
+      } else {
+        Self.logger.warning("bundled core stop remains uncertain")
+      }
+    }
+    return result
+  }
+
+  private func releaseCustody() {
     self.process = nil
     token = nil
     credentialBroker?.stop()
     credentialBroker = nil
     logBridge?.stop()
     logBridge = nil
-    Self.logger.info("bundled core stopped")
   }
 
   private func launch(socketPath: String) throws -> (

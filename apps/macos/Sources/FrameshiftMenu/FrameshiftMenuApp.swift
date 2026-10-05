@@ -110,6 +110,7 @@ enum AppIcon {
 @MainActor
 private final class FrameshiftAppDelegate: NSObject, NSApplicationDelegate {
   private let outboxAdvertisement = OutboxAdvertisement()
+  private let termination = CoreTerminationCoordinator()
 
   func application(_ application: NSApplication, open urls: [URL]) {
     _ = application
@@ -126,14 +127,13 @@ private final class FrameshiftAppDelegate: NSObject, NSApplicationDelegate {
     }
   }
 
+  func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
+    outboxAdvertisement.stop()
+    return termination.requestTermination(sender)
+  }
+
   func applicationWillTerminate(_ notification: Notification) {
     _ = notification
     outboxAdvertisement.stop()
-    let stopped = DispatchSemaphore(value: 0)
-    Task.detached {
-      await LocalCoreClient.shutdownBundledCore()
-      stopped.signal()
-    }
-    _ = stopped.wait(timeout: .now() + 1)
   }
 }

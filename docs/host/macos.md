@@ -201,6 +201,48 @@ outbox availability. It does not poll powered frames aggressively. Sleeping
 frames control their own contact interval; the host reports “waiting for next
 contact,” not “offline.”
 
+### Owned core termination
+
+Normal quit and updater-triggered quit must quiesce the shell's owned core
+before releasing its process, token, credential broker or log bridge. Once
+termination starts, refuse new core exchanges and automatic restart. Signal
+the retained owned launcher once and observe its actual exit; never equate a
+successful signal send with a stopped core. Do not signal an externally supplied
+developer core that the shell did not launch.
+
+Use `applicationShouldTerminate(_:)` with `.terminateLater` and an asynchronous
+reply on the main actor. Share concurrent stop requests under one ten-second
+monotonic observation budget. The main actor must keep servicing events while
+waiting. Deliver the reply through the main run loop, including when AppKit's
+deferred-quit modal loop is nested inside an active main dispatch/actor job;
+queuing another job behind that caller must not deadlock termination.
+Only observed launcher exit permits cleanup and a positive termination
+reply. The launcher must continue waiting for its owned OTP child; library and
+native-worker shutdown still belong to that child, rather than an installer.
+
+If the deadline expires or observation is cancelled without confirmed exit,
+retain the launcher and credential/log custody, keep the shell quiescing, return
+an explicit uncertain result and cancel normal quit. Give a fixed explanation
+and explicit Retry Quit or Keep Open controls. A retry observes the same retained
+process without sending another signal or replaying a library command. Do not
+force-kill an unknown process, clear data or permit an update installation while
+exit remains unconfirmed. Forced OS termination and physical power loss require
+separate recovery evidence; this normal-quit handshake cannot prevent them.
+
+Acceptance requires real process exit, cooperative TERM, a TERM-ignoring
+process reaching the bounded uncertain result and later read-only recovery,
+cancelled observation, main-actor asynchronous termination behavior, and a fresh
+packaged host quit with its actual OTP/native children gone. Pure process fixtures
+do not establish the last product-level condition or installed Sparkle behavior.
+The maintained `core-quit-fixture.mjs` clones the freshly packaged app into a
+private diagnostic stage, substitutes the release-built check executable and
+uses the production coordinator. It requires ready/deferred/confirmed AppKit
+events, exit zero, the previously observed OTP PID gone, its PID file removed
+and unchanged original app/probe bytes. It invokes quit from an actor job to
+exercise modal-loop delivery; no OS UI input or installed updater is involved.
+An idle-core pass does not establish active native-worker shutdown, keyboard/
+VoiceOver quit interaction or the ten-second uncertain-alert interaction.
+
 ## Discovery and pairing
 
 The Swift layer uses Bonjour/Network framework to browse privacy-minimal WoT

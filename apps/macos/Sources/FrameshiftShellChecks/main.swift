@@ -12,6 +12,10 @@ private struct CheckFailure: Error, CustomStringConvertible {
 @main
 private struct FrameshiftShellChecks {
   static func main() async throws {
+    if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--owned-quit-probe" {
+      try runOwnedQuitProbe(URL(fileURLWithPath: CommandLine.arguments[2]))
+      return
+    }
     try await checkItemLifecycle()
     try checkDisconnectedState()
     try await checkInvalidIdentities()

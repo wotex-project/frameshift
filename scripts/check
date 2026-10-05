@@ -361,6 +361,10 @@ check_macos() {
   test -n "$(plutil -extract NSLocalNetworkUsageDescription raw "$app_bundle/Contents/Info.plist")"
 
   "$repository_root/scripts/check-packaged-app" "$app_bundle"
+  swift build --package-path "$repository_root/apps/macos" --configuration release --product frameshift-shell-checks
+  probe_directory=$(swift build --package-path "$repository_root/apps/macos" --configuration release --show-bin-path)
+  mise exec -- node "$repository_root/release/macos/core-quit-fixture.mjs" \
+    "$app_bundle" "$probe_directory/frameshift-shell-checks"
 }
 
 check_container() {

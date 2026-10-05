@@ -92,6 +92,13 @@ part of Command Line Tools, then builds and checks the packaged app.
 The IPC probe performs a real instruction and image-import round trip against a
 production core release. Neither check executable is copied into the app.
 
+The macOS lane also release-builds the check executable and uses it only in a
+private diagnostic clone of the fresh app. `core-quit-fixture.mjs` exercises the
+production deferred-termination coordinator with the packaged OTP launcher and
+requires observed exit before AppKit confirms quit. It preserves the original
+app and probe. Interactive keyboard/VoiceOver, active native-worker shutdown and
+installed updater qualification remain separate.
+
 `swift run frameshift-menu` launches the Swift executable directly, but the
 bundled core is available only in the packaged `.app`. The package script
 creates an ad-hoc-signed local artifact; release signing and notarization require

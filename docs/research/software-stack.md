@@ -1138,6 +1138,38 @@ create a frozen SDK source receipt, a source-bound full updater candidate or an
 installed release. The fixed framework profile lives beside the shared archive
 reader so isolated Linux receivers include its transitive source input.
 
+### AppKit owned-core quit and modal-loop delivery
+
+**Observation:** 2026-10-06. Apple's current
+[`applicationShouldTerminate(_:)`](https://developer.apple.com/documentation/appkit/nsapplicationdelegate/applicationshouldterminate(_:))
+and [`reply(toApplicationShouldTerminate:)`](https://developer.apple.com/documentation/appkit/nsapplication/reply(toapplicationshouldterminate:))
+contracts support a deferred termination decision and later main-thread reply.
+[`Process.terminate()`](https://developer.apple.com/documentation/foundation/process/terminate())
+sends SIGTERM, which a child may ignore;
+[`isRunning`](https://developer.apple.com/documentation/foundation/process/isrunning)
+reports actual launch/exit state rather than successful signal delivery. The
+shell retains only successfully launched `Process` objects, so false here is
+observed exit rather than an unlaunched object. Signalling and immediately
+clearing custody did not implement the existing safe-quit requirement.
+
+Three real-process fixtures pass cooperative exit, an explicitly TERM-ignoring
+child with readiness confirmation and bounded uncertain/later read-only recovery,
+and cancelled observation with the child still running. All 88 Swift tests in
+20 suites and shell checks pass on macOS 27.0.1 arm64 / Xcode 27 / Swift 6.4.
+A native diagnostic clone of the fresh ad-hoc package uses the production
+coordinator and actual OTP launcher. Quit invoked inside an actor job reproduced
+a deferred modal loop that prevented the queued main-actor observer from
+starting. Running observation off that actor and posting its reply through the
+main run loop fixes this fixture: ready/deferred/confirmed events, zero app exit,
+the recorded OTP PID gone and PID file removed all pass. Original app and probe
+bytes/seals remain unchanged. Fresh packaging, authenticated IPC and offline
+backup/verify/restore/refusal checks pass separately.
+
+This qualifies the programmatic AppKit/idle-core software join. The native UI
+provider did not expose the packaged agent; keyboard quit, VoiceOver and the
+uncertain-alert interaction remain unobserved. Active codec-child quit and
+installed Sparkle/background lifecycle remain separate evidence requirements.
+
 ### Locked core dependency source admission
 
 **Observation:** 2026-10-05. Inspected Hex 2.5.1
