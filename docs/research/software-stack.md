@@ -514,3 +514,48 @@ any hardening directive is compatible. [Debian maintainer-script policy](https:/
 requires safe repeated execution and defines failed-install/upgrade argument
 forms. The DEB must retain private data and accounts on removal/purge and refuse
 downgrades before unpack; script success alone is not an installed systemd test.
+
+### Ubuntu DEB lifecycle source and fixture review
+
+**Observation:** 2026-10-05. Current
+[Debian maintainer-script policy](https://www.debian.org/doc/debian-policy/ch-maintainerscripts.html)
+sections 6.2 and 6.5–6.6 require idempotency, bound which dependencies each phase
+may assume and define upgrade failure unwind. Pre-install cannot depend on the
+new package's files; post-removal must skip unavailable nonessential helpers.
+The unpack contract explicitly follows existing directory symlinks. Therefore
+pre-install embeds the archive's directory footprint and validates its root
+ownership, real type and expected mode before dpkg may write beneath it.
+It separately admits service-owned private state and a retained root-owned,
+bounded version watermark; removal/purge cannot enable lower-version adoption.
+Configuration revalidates that watermark before atomic synchronized publication,
+including retries that do not run pre-install.
+
+The selected Ubuntu 24.04 images install `init-system-helpers` **1.66ubuntu1**.
+Actual source inspection gives `/usr/bin/deb-systemd-helper` SHA-256
+`a895d5f077651960b6ca4ed9c53f8b36eae422ae170f61c972d0c6579e9f8732`
+and `/usr/bin/deb-systemd-invoke` SHA-256
+`92eadae89f4df4cd6088f6316f5390b685faf8d0e312a4e5af3a507caaf81bdb`.
+The [Ubuntu invoke contract](https://manpages.ubuntu.com/manpages/noble/man1/deb-systemd-invoke.1p.html)
+and selected source ask policy-rc.d before service actions. Policy status 101
+returns success without acting, so a live service must be checked again after
+stop; zero alone cannot authorize replacing runtime bytes. A disabled inactive
+unit is not started. A previously active but disabled unit needs an admitted
+private marker to restore its previous activity after stop or failed pre-install;
+never unmask or grant user memberships as part of that recovery.
+
+`release/linux/make-deb` inspects every ELF machine and derives versioned linked
+library dependencies with target `dpkg-shlibdeps`; CA certificates and dynamically
+loaded SCTP remain explicit dependencies. Avahi/D-Bus and runtime/provisioning
+helpers are separately declared. `record-package.mjs` rejects mismatched runtime
+identity and records every closure/packaging input, while the artifact records
+the actual build-package versions. Pinned image identity does not pin future apt
+repository contents; recorded installed versions are observations, not a claim
+of independently reproducible archive bytes.
+
+The `linux-deb` fixture performs actual dpkg lifecycle on both target architectures,
+with no customer language tools or execution network. It retains exact Library,
+credential sentinel, ownership/modes and unknown crash-custody bytes through
+upgrade/remove/purge/reinstall. Controlled systemctl responses additionally test
+Ubuntu helper and package-script refusal/error-unwind. This is joined package
+software evidence; it does not establish booted systemd, native amd64 JIT,
+physical storage/power, customer licensing/signing or publication.

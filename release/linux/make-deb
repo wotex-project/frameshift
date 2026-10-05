@@ -1,0 +1,65 @@
+#!/bin/sh
+set -eu
+case "${1:-}" in ''|0*|*[!0-9]*) exit 64 ;; esac
+[ "$1" -le 9999 ] && [ "$#" = 1 ] || exit 64
+version="0.1.0~dev+fixture$1"
+architecture=$(dpkg --print-architecture)
+case "$architecture" in arm64|amd64) ;; *) exit 64 ;; esac
+stage=/runtime/root
+[ -f "$stage/usr/share/doc/frameshift/build-inputs.json" ]
+if find "$stage" -type l | grep -q .; then echo 'development package requires a self-contained regular tree' >&2; exit 1; fi
+# Current package scripts/public policy replace only the development runtime's copies.
+cp /linux/policy.sh /linux/provision-runtime /linux/launch-service "$stage/usr/lib/frameshift/"
+cp /linux/frameshiftctl /linux/frameshift-identity "$stage/usr/bin/"
+cp /linux/frameshift.service "$stage/usr/lib/systemd/system/"
+mkdir -p "$stage/DEBIAN" /out /package/debian
+printf 'Source: frameshift\nSection: graphics\nPriority: optional\nMaintainer: Frameshift development fixture <noreply@example.invalid>\n\nPackage: frameshift\nArchitecture: any\nDescription: private development fixture\n' >/package/debian/control
+# Derive versioned OS library dependencies from target-native ELF symbol requirements.
+set --
+find "$stage/usr/lib/frameshift" -type f | sort >/package/files
+while IFS= read -r binary; do
+    if readelf -h "$binary" >/dev/null 2>&1; then
+      machine=$(readelf -h "$binary" | sed -n 's/^ *Machine: *//p')
+      case "$architecture:$machine" in arm64:AArch64|amd64:'Advanced Micro Devices X86-64') ;; *) echo 'target ELF architecture mismatch' >&2; exit 1 ;; esac
+    fi
+    if readelf -d "$binary" 2>/dev/null | grep -q '(NEEDED)'; then set -- "$@" -e "$binary"; fi
+done </package/files
+(
+  cd /package
+  dpkg-shlibdeps -O "$@"
+) >/out/shlibdeps.txt
+libraries=$(sed -n 's/^shlibs:Depends=//p' /out/shlibdeps.txt)
+[ -n "$libraries" ]
+# These bytes are developer metadata, not a selected project license or release notice set.
+printf '%s\n' 'Development fixture only. Project license, third-party release notices, signing and installed qualification remain publication gates.' >"$stage/usr/share/doc/frameshift/development-notice.txt"
+find "$stage/usr" -type d -printf '%p %m\n' | sort | sed "s|^$stage||" >/package/directories
+for script in preinst postinst prerm postrm; do
+  sed "s/@PACKAGE_VERSION@/$version/g; s/@ARCHITECTURE@/$architecture/g" "/linux/debian/$script" |
+    awk 'FNR==NR { directories[++count]=$0; next } /^# PACKAGE_DIRECTORIES$/ { for (i=1;i<=count;i++) print directories[i]; next } {print}' /package/directories - \
+    >"$stage/DEBIAN/$script"
+  chmod 755 "$stage/DEBIAN/$script"
+done
+printf '%s\n' "$version" >"$stage/usr/share/doc/frameshift/package-version"
+cp /out/shlibdeps.txt "$stage/usr/share/doc/frameshift/shlibdeps.txt"
+cp /packaging-inputs.json "$stage/usr/share/doc/frameshift/packaging-inputs.json"
+dpkg-query -W -f '${binary:Package} ${Version}\n' | sort >/out/package-build-packages.txt
+cp /out/package-build-packages.txt "$stage/usr/share/doc/frameshift/package-build-packages.txt"
+cp /packaging-inputs.json /out/packaging-inputs.json
+installed_size=$(du -sk "$stage/usr" | cut -f1)
+cat >"$stage/DEBIAN/control" <<CONTROL
+Package: frameshift
+Version: $version
+Architecture: $architecture
+Section: graphics
+Priority: optional
+Maintainer: Frameshift development fixture <noreply@example.invalid>
+Installed-Size: $installed_size
+Depends: $libraries, ca-certificates, libsctp1, netbase, coreutils, adduser, systemd, init-system-helpers, avahi-daemon, avahi-utils, dbus
+Description: Frameshift development host and local CLI fixture
+ Self-contained Ubuntu 24.04 runtime closure for local installation tests.
+ This unreleased fixture has no customer-release, signing or hardware claim.
+CONTROL
+# dpkg supplies the package scripts' fixed root ownership, independent of export UID.
+dpkg-deb --root-owner-group --build "$stage" "/out/frameshift_${version}_${architecture}.deb"
+cd /out
+sha256sum ./*.deb >archive.sha256

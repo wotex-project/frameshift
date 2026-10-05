@@ -1,0 +1,24 @@
+#!/bin/sh
+set -eu
+repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+case "${1:-}" in arm64|amd64) architecture=$1 ;; *) echo 'usage: check-linux-deb arm64|amd64 (requires development fixture revisions 1 and 2)' >&2; exit 64 ;; esac
+context=$(mktemp -d "${TMPDIR:-/tmp}/frameshift-deb-check.XXXXXXXX")
+trap 'rm -rf "$context"' EXIT HUP INT TERM
+mkdir -p "$context/archives" "$context/fixtures"
+for revision in 1 2; do
+  archive="$repository_root/var/linux-$architecture-deb-fixture$revision/frameshift_0.1.0~dev+fixture${revision}_$architecture.deb"
+  [ -f "$archive" ] && [ ! -L "$archive" ] || exit 69
+  (cd "$(dirname "$archive")"; shasum -a 256 -c archive.sha256)
+  cp "$archive" "$context/archives/"
+done
+cp "$repository_root/release/linux/closure-check.exs" "$repository_root/release/linux/verify-store.exs" \
+  "$repository_root/release/linux/check-deb" "$repository_root/release/linux/deb-check.exs" \
+  "$repository_root/release/linux/fixture-systemctl" "$context/fixtures/"
+cp "$repository_root/apps/core/test/fixtures/canonical-jpeg.jpg" "$repository_root/apps/core/test/fixtures/canonical-jpeg.rgba" "$context/fixtures/"
+cp "$repository_root/release/linux/deb-check.Dockerfile" "$context/Dockerfile"
+daemon_architecture=$(docker info --format '{{.Architecture}}')
+case "$architecture:$daemon_architecture" in amd64:x86_64|amd64:amd64|arm64:aarch64|arm64:arm64) fixture_erl_flags='' ;; *) fixture_erl_flags='+JMsingle true' ;; esac
+docker build --platform "linux/$architecture" --build-arg "FIXTURE_ERL_FLAGS=$fixture_erl_flags" --tag "frameshift-deb-$architecture:fixture" "$context"
+# dpkg needs to write /usr, /etc and its own database in this disposable container.
+# There is no booted systemd manager in this lane; unit lifecycle remains separate.
+docker run --rm --platform "linux/$architecture" --network none --memory 1g --memory-swap 1g --pids-limit 512 "frameshift-deb-$architecture:fixture"

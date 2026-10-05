@@ -1,0 +1,20 @@
+#!/bin/sh
+# Disposable package-script fixture only; this is not a systemd manager.
+set -eu
+printf '%s\n' "$*" >>/tmp/fixture-systemctl.log
+for argument do
+  case "$argument" in
+    is-active) [ -f /tmp/fixture-service-active ]; exit ;;
+    is-enabled) printf 'disabled\n'; exit 1 ;;
+    daemon-reload) exit 0 ;;
+    stop)
+      [ ! -f /tmp/fixture-stop-fails ] || exit 1
+      rm -f /tmp/fixture-service-active
+      exit 0 ;;
+    start)
+      [ ! -f /tmp/fixture-start-fails ] || exit 1
+      touch /tmp/fixture-service-active
+      exit 0 ;;
+  esac
+done
+exit 64

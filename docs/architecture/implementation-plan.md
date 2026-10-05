@@ -151,8 +151,8 @@ omits privacy/route/identity violations and returns no authenticated frame
 authority. Parser/CLI fixtures and real Linux helper deadlines join a separate
 pinned Avahi/D-Bus producer lane, including nonroot CLI and daemon restart.
 Original import now joins the canonical PNG/JPEG codec, authenticated byte intake
-and exact receipts through the CLI. Native Ubuntu closure,
-protected provisioning and installed package acceptance remain required.
+and exact receipts through the CLI. Booted Ubuntu service, protected
+provisioning and installed package acceptance remain required.
 
 Backup/restore and simulated pairing authority now require OTP directory
 synchronization through explicit directory handles. Parent-sync failure after
@@ -210,8 +210,8 @@ for the fixed JPEG cohort. Unknown extensions and unqualified color/coding
 profiles retain finite refusal. Dated RustSec advisory and source/patch checks
 complement these fixtures without establishing installed or physical proof.
 
-Next finish Ubuntu DEB packaging and installed
-lifecycle checks. Preserve the exact PNG/JPEG producer cohort, single-worker
+Continue Ubuntu installed lifecycle and administrative recovery checks. Preserve
+the exact PNG/JPEG producer cohort, single-worker
 custody, peer authorization and explicit CLI IDs/results through packaging.
 Physical filesystem power-loss, received frame interoperability and measured
 display color retain their separate evidence gates.
@@ -221,9 +221,18 @@ closures, root-owned refusal-preserving custody provisioning and clean service/C
 policy. All 24 shipped ELF objects resolve in clean images; PNG/JPEG, exact
 SQLite/pixel/producer readback, supplementary-group admission, full VM restart
 and abrupt-owner import refusal pass with no customer toolchain or network.
-Next qualify DEB install/update/remove/purge and downgrade refusal,
-then the booted systemd/native CPU and resource/failure matrix. Development
-container artifacts remain separate from stable tagged, licensed, signed and
+The R3 DEB slice now assembles bounded development revisions with exact input
+records and symbol-derived OS dependencies. Actual clean Ubuntu dpkg installation,
+upgrade/configuration retry, downgrade before unpack, unsafe prefix/watermark
+refusal, removal/purge/reinstall and retained UID/data/credential-sentinel/crash
+custody pass on arm64 and emulated amd64. Ubuntu's actual helper joins controlled
+manager responses for stop/start failure, policy refusal and active-but-disabled
+error-unwind. This is container/package-script evidence.
+Next implement the packaged offline backup/restore and protected identity
+provisioning join, then qualify booted systemd/native CPU and resource/failure
+behavior. A missing external machine or signing identity does not block those
+software recovery/refusal paths. Development container artifacts remain separate
+from stable tagged, licensed, signed and
 publicly read-back releases. Preserve independent platform progress and do not
 block implementable refusal on physical or signing evidence.
 

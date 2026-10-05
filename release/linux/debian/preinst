@@ -1,0 +1,48 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+version='@PACKAGE_VERSION@'
+refuse() { printf '%s\n' 'frameshift: package version, platform or existing custody refused' >&2; exit 1; }
+case "${1:-}" in install|upgrade) ;; abort-upgrade) exit 0 ;; *) refuse ;; esac
+[ "$(id -u)" = 0 ] && [ -z "${DPKG_ROOT:-}" ] || refuse
+# shellcheck disable=SC1091
+[ "$(. /etc/os-release; printf '%s:%s' "$ID" "$VERSION_ID")" = ubuntu:24.04 ] || refuse
+[ "$(dpkg --print-architecture)" = '@ARCHITECTURE@' ] || refuse
+if [ -n "${2:-}" ] && dpkg --compare-versions "$2" gt "$version"; then refuse; fi
+# dpkg follows existing directory symlinks; validate the entire archive footprint.
+while IFS=' ' read -r directory mode; do
+  if [ -e "$directory" ] || [ -L "$directory" ]; then
+    [ ! -L "$directory" ] && [ -d "$directory" ] &&
+      [ "$(stat -c '%u:%a' -- "$directory")" = "0:$mode" ] || refuse
+  fi
+done <<'DIRECTORIES'
+# PACKAGE_DIRECTORIES
+DIRECTORIES
+for directory in /var /var/lib /run; do
+  [ ! -L "$directory" ] && [ -d "$directory" ] && [ "$(stat -c '%u:%a' "$directory")" = '0:755' ] || refuse
+done
+state=/var/lib/frameshift
+stamp="$state/.installed-version"
+if [ -e "$state" ] || [ -L "$state" ]; then
+  uid=$(id -u frameshift) || refuse
+  gid=$(id -g frameshift) || refuse
+  [ "$uid" != 0 ] && [ ! -L "$state" ] && [ -d "$state" ] &&
+    [ "$(stat -c '%u:%g:%a' "$state")" = "$uid:$gid:700" ] || refuse
+  if [ -e "$stamp" ] || [ -L "$stamp" ]; then
+    [ ! -L "$stamp" ] && [ -f "$stamp" ] && [ "$(stat -c '%u:%g:%a' "$stamp")" = '0:0:600' ] || refuse
+    [ "$(stat -c '%s' "$stamp")" -le 64 ] && [ "$(wc -l <"$stamp")" = 1 ] || refuse
+    LC_ALL=C grep -qaxE '[0-9][0-9A-Za-z.+~:-]{0,62}' "$stamp" || refuse
+    installed=$(cat "$stamp")
+    dpkg --validate-version "$installed" >/dev/null 2>&1 || refuse
+    if dpkg --compare-versions "$installed" gt "$version"; then refuse; fi
+  elif [ -e "$state/metadata.sqlite" ] || [ -L "$state/metadata.sqlite" ]; then
+    refuse
+  fi
+fi
+# A manually launched or abandoned endpoint without a manager is never cleared here.
+if [ ! -d /run/systemd/system ]; then
+  for socket in /run/frameshift/control/c.sock /run/frameshift/observer/d.sock; do
+    if [ -e "$socket" ] || [ -L "$socket" ]; then refuse; fi
+  done
+fi

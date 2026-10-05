@@ -70,7 +70,45 @@ used under amd64 emulation; shipped launchers retain native default mapping.
 No fixture proves a booted systemd manager or OOM/physical filesystem behavior.
 
 These are explicitly development trees, not stable tagged DEBs or published
-installers. DEB lifecycle, protected administrative backup/provisioning, native
+installers. Booted DEB lifecycle, protected administrative backup/provisioning, native
 amd64/systemd, licenses/notices, signing and public readback remain required.
 The [Linux owner](../docs/host/linux.md#initial-deb-runtime-and-service-contract)
 defines private state, runtime traversal, group policy and conservative recovery.
+
+## Ubuntu development DEBs
+
+Build the runtime trees above, then use
+`./scripts/package-linux-deb --development arm64 1` (or `amd64`). Revisions are
+bounded to 1–9999 and identify `0.1.0~dev+fixtureN`; they do not change the
+`0.1.0-dev` application version or qualify for a stable manifest. Each new
+`var/linux-<architecture>-deb-fixtureN/` output contains the archive, its SHA-256,
+packaging-input hashes/commit/dirty state, symbol-derived dependencies and actual
+package-build environment versions. The archive retains both runtime and
+packaging records. Wrong runtime identity/architecture, ELF machine, linked
+library or redirected input refuses assembly; existing output refuses overwrite.
+
+Build revisions **1 and 2 for both architectures**, then run
+`./scripts/check linux-deb`. Apt first resolves the actual declared dependencies
+on a clean pinned Ubuntu 24.04 image without globally installed language tools.
+The network-disabled disposable container uses dpkg for installation, upgrade,
+downgrade refusal, removal, purge and reinstall. It verifies dedicated accounts,
+group admission, exact PNG/JPEG/SQLite results, clean CLI after replacement,
+retained file bytes/owners/modes, private credential sentinel and unknown custody.
+It also refuses unsafe/missing/version-regressing watermarks and redirected
+package directories before unpack. The service account is retained; human
+control/observer membership is never granted by installation.
+
+Package-script tests use Ubuntu `init-system-helpers` with controlled systemctl
+responses for active-but-disabled upgrade, failed pre-install error-unwind,
+policy-denied stop, actual stop failure, failed start and configuration recovery.
+These are simulated manager responses, not booted systemd acceptance. Native
+arm64 uses default JIT; emulated amd64 uses a fixture-only single mapping after
+replacement, leaving archive bytes unchanged. The writable container root is
+needed for dpkg; Docker supplies no network and 1 GiB/512-process limits.
+The fixture explicitly resets its own empty installation between image build
+and execution to avoid Docker overlay lower-directory rename restrictions.
+Removal/purge in the product scripts retain all private state.
+
+Stable tag/version inputs, booted systemd, native amd64, installed failure and
+storage/power tests, protected administrative recovery, complete license notices,
+signing and public publication/readback remain required.

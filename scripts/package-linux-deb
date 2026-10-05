@@ -1,0 +1,20 @@
+#!/bin/sh
+set -eu
+repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+case "${1:-}:${2:-}" in --development:arm64|--development:amd64) architecture=$2 ;; *) echo 'usage: package-linux-deb --development arm64|amd64 REVISION (1..9999)' >&2; exit 64 ;; esac
+[ "$#" = 3 ] || exit 64
+case "$3" in ''|0*|*[!0-9]*) exit 64 ;; esac
+[ "$3" -le 9999 ] || exit 64
+runtime="$repository_root/var/linux-$architecture-development"
+[ -d "$runtime/root" ] || { echo 'build the development runtime closure first' >&2; exit 69; }
+output="$repository_root/var/linux-$architecture-deb-fixture$3"
+[ ! -e "$output" ] && [ ! -L "$output" ] || { echo 'development DEB output already exists' >&2; exit 69; }
+context=$(mktemp -d "${TMPDIR:-/tmp}/frameshift-deb-build.XXXXXXXX")
+trap 'rm -rf "$context"' EXIT HUP INT TERM
+chmod 700 "$context"
+cp -R "$runtime/root" "$context/root"
+cp -R "$repository_root/release/linux" "$context/linux"
+mise exec -- node "$repository_root/release/linux/record-package.mjs" "$repository_root" "$context" "$architecture" "$3"
+docker build --platform "linux/$architecture" --file "$context/linux/deb.Dockerfile" \
+  --build-arg "PACKAGE_REVISION=$3" --target artifact --output "type=local,dest=$output" "$context"
+printf 'Development DEB %s revision %s: %s\n' "$architecture" "$3" "$output"

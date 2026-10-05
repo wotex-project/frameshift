@@ -108,7 +108,10 @@ policy and private persistent temporary custody. `scripts/check linux-release`
 uses each staged architecture in a clean, read-only/network-disabled Ubuntu
 fixture; its exact source/pixel/restart and unsafe-custody checks complement the
 [platform contract](../../docs/host/linux.md#initial-deb-runtime-and-service-contract).
-Booted systemd and installed DEB/update acceptance remain required.
+The `linux-deb` lane installs actual development archives, exercises package
+lifecycle/refusals and retains data, credential sentinels and crash custody.
+Booted systemd and native installed acceptance remain required.
+
 The Linux group endpoint joins private upload staging, this codec and exact
 actor-bound Library results. Configure `FRAMESHIFT_CODEC_PATH` and an existing
 service-owned real `0700` temporary directory. Missing or abandoned custody

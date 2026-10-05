@@ -1,0 +1,22 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+case "${1:-}" in
+  remove|purge)
+    marker=/run/frameshift-package-active
+    if [ -e "$marker" ] || [ -L "$marker" ]; then
+      [ ! -L "$marker" ] && [ -f "$marker" ] && [ "$(stat -c '%u:%g:%a' "$marker")" = '0:0:600' ] &&
+        [ "$(stat -c '%s' "$marker")" = 7 ] && [ "$(cat "$marker")" = active ] || exit 1
+      rm "$marker"
+    fi
+    if command -v deb-systemd-helper >/dev/null 2>&1; then
+      deb-systemd-helper disable frameshift.service
+      if [ "$1" = purge ]; then deb-systemd-helper purge frameshift.service; fi
+    fi
+    if [ -d /run/systemd/system ] && command -v systemctl >/dev/null 2>&1; then systemctl daemon-reload; fi
+    # Account IDs, private data, credentials, version and unknown custody stay.
+    ;;
+  upgrade|failed-upgrade|abort-install|abort-upgrade|disappear) ;;
+  *) printf '%s\n' 'frameshift: unsupported package removal phase' >&2; exit 1 ;;
+esac

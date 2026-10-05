@@ -1,0 +1,25 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+refuse() { printf '%s\n' 'frameshift: service stop failed; package bytes preserved' >&2; exit 1; }
+case "${1:-}" in remove|upgrade|deconfigure|failed-upgrade) ;; *) refuse ;; esac
+if [ -d /run/systemd/system ]; then
+  marker=/run/frameshift-package-active
+  if systemctl --quiet is-active frameshift.service; then
+    if [ -e "$marker" ] || [ -L "$marker" ]; then
+      [ ! -L "$marker" ] && [ -f "$marker" ] && [ "$(stat -c '%u:%g:%a' "$marker")" = '0:0:600' ] &&
+        [ "$(stat -c '%s' "$marker")" = 7 ] && [ "$(cat "$marker")" = active ] || refuse
+    else
+      umask 077
+      (set -C; printf 'active\n' >"$marker") || refuse
+    fi
+  fi
+  deb-systemd-invoke stop frameshift.service || refuse
+  # A policy-rc.d denial returns zero; a live host still forbids replacing bytes.
+  if systemctl --quiet is-active frameshift.service; then refuse; fi
+else
+  for socket in /run/frameshift/control/c.sock /run/frameshift/observer/d.sock; do
+    if [ -e "$socket" ] || [ -L "$socket" ]; then refuse; fi
+  done
+fi

@@ -169,15 +169,21 @@ The [isolated Linux codec](codec/README.md) has bounded static-PNG and JPEG prof
 runs the same corpus as a nonroot process with read-only root and no network.
 It also joins authenticated private upload and exact Library results to freshly
 built Linux SQLite/Exile NIF/helper artifacts against pinned OTP headers.
-Fresh CLI original imports and receipt recovery pass; installed DEBs remain separate work.
+Fresh CLI original imports and receipt recovery pass.
 
 The Ubuntu 24.04 development runtime closure is built separately with
 `./scripts/package-linux --development arm64` (or `amd64`). It writes a new
 `var/linux-<architecture>-development/` tree with exact build inputs and ELF
 inspection; an existing output refuses. `./scripts/check linux-release` joins
 both trees to clean Ubuntu images, nonroot service/CLI, group admission,
-PNG/JPEG import and crash/restart recovery. These local artifacts are not DEBs
-or customer releases; booted systemd and installed lifecycle remain separate.
+PNG/JPEG import and crash/restart recovery. Development DEBs build from those
+trees with
+`./scripts/package-linux-deb --development arm64 1` (or `amd64`), using a new
+`var/linux-<architecture>-deb-fixture1/` destination. Build revisions 1 and 2 for
+both architectures, then run `./scripts/check linux-deb` for actual dpkg
+install/upgrade/refusal/remove/purge/reinstall with retained data and custody.
+These are local development artifacts; booted systemd, native amd64 JIT,
+customer signing/notices and installed physical acceptance remain separate.
 
 The Docker-backed live receiver and Linux peer-credential checks are separate
 lanes in CI. Run them locally with `./scripts/check container` and

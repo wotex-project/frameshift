@@ -120,9 +120,52 @@ intentional data destruction is a separate administrator operation. No upgrade
 claims transactional rollback across package bytes, SQLite and external delivery.
 The unreleased schema remains original CREATE/INSTALL definitions.
 
+A root-owned 0600 `.installed-version` watermark beneath the private state root
+records the highest admitted Debian package version. Pre-install compares both
+that bounded single-line version and dpkg's prior version before unpacking.
+Removal/purge retain the watermark, so a lower reinstall cannot adopt newer data.
+Missing/unsafe watermark beside an existing metadata database refuses implicit
+adoption; restoring or admitting an unversioned development library is an
+explicit administrator recovery operation with its matching version evidence.
+Configuration synchronizes an exclusive temporary record and atomically replaces
+the admitted watermark before host startup, then synchronizes its filesystem.
+The watermark remains after a startup failure because migration effects may be
+uncertain. A sync/publication failure refuses configuration; no physical
+power-loss guarantee follows.
+
+Pre-install also validates every existing directory in the archive footprint as
+a real root-owned directory with the expected mode, because dpkg can follow an
+existing directory symlink when unpacking. It never follows a redirected package
+prefix or normalizes its target. State directories have their separately admitted
+nonroot owner. A live upgrade stops the unit before replacing runtime bytes;
+stop failure or a still-active unit refuses. Package error-unwind restores a
+previously active service when its retained runtime remains usable, preserving
+administrator masks/disablement. Installer service actions respect policy-rc.d;
+policy refusal is not treated as a successful stop of a live host.
+
+Package configuration creates only missing system accounts/groups, requires the
+fixed nonlogin account/home/primary-group contract, adds only the service to the
+control/observer groups, provisions exact directory custody and retains existing
+user grants. It enables the unit on first install while preserving later admin
+mask/disablement. Removal stops/disables packaged activation; purge removes
+package-manager activation state while retaining account IDs, Library, credentials,
+watermark and unknown custody. Journald records remain under system policy.
+Avahi/D-Bus clients/services are explicit OS dependencies for local discovery;
+unavailable discovery still returns its finite refusal without restarting daemons.
+
+Development DEBs identify the existing `0.1.0-dev` application with a bounded
+`0.1.0~dev+fixtureN` packaging revision. They cannot enter a stable manifest or
+customer download page. Stable app/package/tag/version agreement, licensing,
+signing, native installed lifecycle and public readback remain independent gates.
+
 Acceptance first joins fresh target builds and actual nonroot launch, peer/group
 CLI, PNG/JPEG import, persistence/restart, unsafe-directory refusal and native
-ELF closure in pinned Ubuntu containers. Those tests do not establish a booted
+ELF closure in pinned Ubuntu containers. The `linux-deb` lane additionally runs
+actual dpkg install/update/remove/purge/reinstall, retained-version downgrade
+refusal and configuration retry against the packaged bytes. Controlled systemctl
+responses exercise package-script stop/start/error-unwind and policy refusal
+through Ubuntu's actual helper, without claiming a running service manager.
+Those tests do not establish a booted
 systemd manager, native amd64 JIT, installed clean-VM update/removal, cgroup/OOM
 behavior, power loss, signing/notices or Pi hardware. Installed systemd and native
 CPU acceptance remain mandatory before a customer package is advertised.

@@ -1,0 +1,77 @@
+#!/bin/sh
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+version='@PACKAGE_VERSION@'
+refuse() { printf '%s\n' 'frameshift: package configuration or retained custody unavailable' >&2; exit 1; }
+[ "$(id -u)" = 0 ] && [ -z "${DPKG_ROOT:-}" ] || refuse
+case "${1:-}" in
+  configure)
+    for group in frameshift frameshift-control frameshift-observer; do
+      if ! getent group "$group" >/dev/null; then addgroup --system "$group"; fi
+    done
+    if ! getent passwd frameshift >/dev/null; then
+      adduser --system --no-create-home --home /var/lib/frameshift --shell /usr/sbin/nologin --ingroup frameshift --disabled-password frameshift
+    fi
+    entry=$(getent passwd frameshift)
+    [ "$(printf '%s' "$entry" | cut -d: -f6)" = /var/lib/frameshift ] &&
+      [ "$(printf '%s' "$entry" | cut -d: -f7)" = /usr/sbin/nologin ] &&
+      [ "$(id -g frameshift)" = "$(getent group frameshift | cut -d: -f3)" ] || refuse
+    [ ! -L /usr/lib/frameshift/policy.sh ] && [ -f /usr/lib/frameshift/policy.sh ] &&
+      [ "$(stat -c '%u:%g:%a' /usr/lib/frameshift/policy.sh)" = '0:0:644' ] || refuse
+    # shellcheck source=release/linux/policy.sh
+    . /usr/lib/frameshift/policy.sh
+    frameshift_ids
+    adduser frameshift frameshift-control
+    adduser frameshift frameshift-observer
+    /usr/lib/frameshift/provision-runtime
+    umask 077
+    stamp=/var/lib/frameshift/.installed-version
+    if [ -e "$stamp" ] || [ -L "$stamp" ]; then
+      [ ! -L "$stamp" ] && [ -f "$stamp" ] && [ "$(stat -c '%u:%g:%a' "$stamp")" = '0:0:600' ] || refuse
+      [ "$(stat -c '%s' "$stamp")" -le 64 ] && [ "$(wc -l <"$stamp")" = 1 ] || refuse
+      LC_ALL=C grep -qaxE '[0-9][0-9A-Za-z.+~:-]{0,62}' "$stamp" || refuse
+      installed=$(cat "$stamp")
+      dpkg --validate-version "$installed" >/dev/null 2>&1 || refuse
+      if dpkg --compare-versions "$installed" gt "$version"; then refuse; fi
+    elif [ -e /var/lib/frameshift/metadata.sqlite ] || [ -L /var/lib/frameshift/metadata.sqlite ]; then
+      refuse
+    fi
+    temporary=$(mktemp /var/lib/frameshift/.version.XXXXXXXX)
+    trap 'rm -f "$temporary"' EXIT HUP INT TERM
+    printf '%s\n' "$version" >"$temporary"
+    sync -f "$temporary"
+    mv -T "$temporary" "$stamp"
+    sync -f /var/lib/frameshift
+    trap - EXIT HUP INT TERM
+    if deb-systemd-helper --quiet was-enabled frameshift.service; then
+      deb-systemd-helper enable frameshift.service
+    else
+      deb-systemd-helper update-state frameshift.service
+    fi
+    ;;
+  abort-upgrade|abort-remove|abort-deconfigure) ;;
+  *) refuse ;;
+esac
+if [ -d /run/systemd/system ]; then
+  systemctl daemon-reload
+  # Preserve an active-but-disabled service across upgrade/error-unwind.
+  marker=/run/frameshift-package-active
+  if [ -e "$marker" ] || [ -L "$marker" ]; then
+    [ ! -L "$marker" ] && [ -f "$marker" ] && [ "$(stat -c '%u:%g:%a' "$marker")" = '0:0:600' ] || refuse
+    [ "$(stat -c '%s' "$marker")" = 7 ] && [ "$(cat "$marker")" = active ] || refuse
+    # Respect policy-rc.d, even if restarting a previously active unit is denied.
+    if [ -x /usr/sbin/policy-rc.d ]; then
+      set +e
+      /usr/sbin/policy-rc.d frameshift.service start
+      policy_status=$?
+      set -e
+      case "$policy_status" in 0|104) systemctl start frameshift.service ;; 101) ;; *) refuse ;; esac
+    else
+      systemctl start frameshift.service
+    fi
+    rm "$marker"
+  else
+    deb-systemd-invoke start frameshift.service
+  fi
+fi
