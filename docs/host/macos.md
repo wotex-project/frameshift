@@ -503,13 +503,26 @@ in the native candidate record; runner labels and version strings alone are
 not authenticated toolchain or installed acceptance. Hosted image changes that
 violate the inspected profile refuse rather than switching silently.
 
-Fetch exact locked project material, build with the frozen native producer,
-run the packaged IPC/import/restart/offline maintenance join, and recheck source
-and remote identity. Write a POSIX USTAR with AppleDouble metadata disabled,
-verify unchanged producer custody, stage that exact archive through the Mac
-receiver and retain its digests separately in the job summary. Upload only the
-single verified archive, preserving TAR bytes rather than an automatic ZIP
-directory transformation. Never overwrite an earlier attempt.
+Fetch exact locked project material, explicitly prepare generated Gleam metadata,
+then run the no-fetch core and Gleam source gates before building. Select the
+inspected Gleam 1.18.1 macOS archive cache below the existing user cache directory;
+an absent or differing cache refuses. Build with the frozen native producer and
+run the packaged IPC/import/restart/offline maintenance join. Replay both source
+receipts after the build and join their independently retained digests to the
+exact candidate record. These preparation/build/source consumers receive no
+GitHub token. Keep remote-identity checks in their own credentialed steps.
+
+Write two POSIX USTAR files with AppleDouble metadata disabled: the unchanged
+strict app-candidate profile and the separate source-receipt profile. Verify
+unchanged producer custody, stage the app archive, and stage the evidence archive
+against that received app using the independently retained candidate/core/Gleam/
+join digests. Recheck frozen source and remote identity after both receivers,
+then compare both archive digests before upload. Retain each single verified TAR
+under its own CPU/tag/run/attempt identity without automatic ZIP transformation
+or overwriting an earlier attempt. The job summary records source, candidate,
+both archive and all three receipt digests plus both artifact IDs. A downstream
+receiver requires these independent custody inputs; a filename or artifact ID
+alone cannot qualify received bytes.
 
 This workflow stages CPU candidates with publication authority `none`. It
 contains no signing/deployment credentials, GitHub Release/Cask/Sparkle/site

@@ -325,9 +325,12 @@ See the [Mac handoff contract](../docs/host/macos.md#native-candidate-archive-ha
 The manual [Mac candidate workflow](../.github/workflows/macos-candidate.yml)
 requires an existing stable tag and independent exact commit. A read-only source
 job freezes the shared record; native arm64/Intel target jobs assert the inspected
-macOS 26 / Xcode 26.6 / SDK 26.5 profile, build/check exact candidates, verify TAR
-receiver custody and retain one archive per independent attempt. Summaries retain
-source, candidate and archive digests. The workflow has publication authority
+macOS 26 / Xcode 26.6 / SDK 26.5 profile. Generated Gleam metadata is prepared
+before both source receipts; those receipts replay after the native build and
+join captured candidate inputs. The app and separate evidence TARs pass their
+receivers before independent per-attempt uploads. The evidence receiver uses
+the received app. Summaries retain source/candidate, both archive and all receipt
+digests plus both artifact IDs. The workflow has publication authority
 `none`; authoring/static/local software evidence is separate from hosted execution.
 See the [workflow contract](../docs/host/macos.md#native-mac-candidate-workflow).
 

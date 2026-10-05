@@ -505,7 +505,8 @@ Dependency Git queries now disable lazy fetch and use literal sparse paths; actu
 missing-promisor and pattern-name fixtures pass. This closes captured core/Gleam
 source comparison, with authority none; generated-code/toolchain, independent
 publisher/rights, native execution attestation, installed targets and production
-distribution remain separate. Continue workflow/producer receipt integration.
+distribution remain separate. The manual native workflow now carries this join
+under the source-evidence sequence below.
 
 The Mac dependency-source handoff now carries a separate four-member private
 USTAR beside the unchanged app archive. Its receiver requires independently
@@ -516,8 +517,8 @@ custody refuse without replacement. The full retained arm64 host's actual
 255,488-byte evidence archive admits the same 1,457 source facts and seven
 generated exceptions, with unchanged replay. This implements source-evidence
 transport, not publisher/runner authentication or production qualification.
-Integrate source checking and both archive receivers into the manual native
-workflow before recording any hosted execution claim.
+Both archives now enter the manual native source-evidence workflow below;
+hosted execution remains an independent acceptance requirement.
 
 Pinned Gleam dependency/build commands rewrite generated fetched metadata in
 varying package order. The candidate preparation profile now validates exact
@@ -530,10 +531,24 @@ Six preparation groups and seven native producer groups cover these boundaries,
 including five actual pinned Gleam dependency processes. A fresh full arm64 app
 builds with prepared metadata, replays both actual source receipts, joins all
 1,457 proved facts/seven exceptions and passes the packaged host checks.
-Upstream source/observed
-ordering variance is recorded in software-stack research. Integrate this explicit
-preparation before workflow source receipts, then replay those receipts after the
-native build; independent source/toolchain and release evidence remains separate.
+Upstream ordering variance is recorded in software-stack research. The manual
+workflow prepares this metadata before source receipts and replays those receipts
+after the native build; independent source/toolchain and release evidence remains
+separate.
+
+The manual Mac workflow now joins the complete source-evidence sequence:
+prepare generated metadata, check both dependency sources before building, replay
+their receipts after building, join captured inputs, and verify separate app and
+evidence TARs against the same received candidate. Execution/receipt/transport
+steps receive no GitHub token; remote checks have separate credentialed steps.
+Independent digests and artifact IDs are retained per CPU/tag/run/attempt. Nine
+remote/source/workflow fixtures, policy and the local full native library pipeline
+pass: a 40,908,288-byte app archive and 255,488-byte evidence archive rejoin all
+1,457 source facts/seven exceptions and replay without rewriting. These are
+authored workflow and local byte/consumer results; hosted macOS 26/Intel, runner/
+upstream authentication, rights, installed acceptance and production signing/
+distribution remain separate. Continue source receipt integration for other
+targets and compiler/generated-code qualification within their owning contracts.
 
 ## Shared contracts
 

@@ -1222,3 +1222,45 @@ Unchanged candidate/join replay and packaged IPC/import/restart/offline maintena
 checks pass. Publication authority remains `none`; compiler-lock,
 source/publisher authenticity, generated derivation, rights and release acceptance
 remain separate.
+
+### Native workflow source evidence sequence
+
+**Observation:** 2026-10-05. The manual Mac workflow now composes the existing
+source gates and receivers: exact locked fetch, explicit generated metadata
+preparation, both source receipts, native build/packaged checks, receipt replay,
+captured-source join, and separate app/evidence TAR verification. The evidence
+receiver operates against the received app and independent candidate/core/Gleam/
+joined-record digests. Token-free execution and transport steps surround separate
+read-only remote/source identity checks. Both archives have their own per-attempt
+artifact identities and independently retained SHA-256 values; partial retention
+does not establish a complete evidence pair or release authority.
+
+Pinned Gleam's
+[`global_package_cache_package_tarball`](https://github.com/gleam-lang/gleam/blob/4a83802ca33a8a96227a1b332768725f232f9779/compiler-core/src/paths.rs)
+selects `dirs_next::cache_dir()/gleam/hex/hexpm/packages`. Its locked
+`dirs-next` 2.0.0
+[`mac.rs`](https://github.com/xdg-rs/dirs/blob/1e1aae3136f09ae78495a806d3126a95ea0707dd/src/mac.rs)
+selects the existing user's `Library/Caches` directory. The workflow uses that
+inspected macOS path; a missing or differing checksum cache refuses instead of
+guessing another cache or bypassing admission.
+
+The pinned `actions/upload-artifact` v7.0.1
+[`README`](https://github.com/actions/upload-artifact/blob/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a/README.md)
+documents single-file non-ZIP upload, immutable attempt names, artifact IDs and
+permission loss for ordinary directory uploads. Each workflow artifact is one
+already verified TAR with `archive: false` and `overwrite: false`; receiver modes
+and bytes come from the bounded archive profile. An artifact ID identifies a
+retained attempt and does not replace the independent transport digest.
+
+Nine remote/source/workflow fixtures and policy checks pass. The local fresh
+arm64 library pipeline admits a 40,908,288-byte app TAR, SHA-256
+`9bb4258a4c490793c2ed3cd876ba4128b5b15e3d51a6004cbe1ab4c3c7f8bd6c`,
+and a 255,488-byte evidence TAR, SHA-256
+`ccc6f5e07ce9b912158a6795782096a70b4c17e7be4c0d2d37406dd7943de766`.
+The received evidence replays all 1,457 source facts/seven exceptions against
+the received app with unchanged handoff inode/timestamp. This exercises local
+macOS 27 library boundaries, not the workflow's macOS 26 hosted profile. No
+workflow was pushed or dispatched. The
+[workflow contract](../host/macos.md#native-mac-candidate-workflow) retains
+independent hosted/native Intel, runner/publisher/toolchain, rights, generated
+derivation, installed and production distribution gates.

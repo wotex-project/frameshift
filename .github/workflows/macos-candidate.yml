@@ -128,23 +128,67 @@ jobs:
           mix deps.get --check-locked
           cd ../../packages/decision-kernel
           gleam deps download
+      - name: Prepare and verify locked dependency sources
+        id: material
+        run: |
+          ./scripts/prepare-gleam-metadata "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json"
+          ./scripts/check-core-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$HEX_HOME/packages/hexpm" "$PWD/var/core-material"
+          ./scripts/check-gleam-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$HOME/Library/Caches/gleam/hex/hexpm/packages" "$PWD/var/gleam-material"
+          core_sha256=$(shasum -a 256 var/core-material/core-material.json | cut -d ' ' -f 1)
+          gleam_sha256=$(shasum -a 256 var/gleam-material/gleam-material.json | cut -d ' ' -f 1)
+          printf 'core_receipt_sha256=%s\ngleam_receipt_sha256=%s\n' "$core_sha256" "$gleam_sha256" >> "$GITHUB_OUTPUT"
       - name: Build the frozen native candidate
         run: ./scripts/package-macos-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/macos-candidate"
       - name: Join the exact packaged host
         run: ./scripts/check-packaged-app "$PWD/var/macos-candidate/Frameshift.app"
-      - name: Recheck remote identity and preserve exact candidate bytes
-        id: archive
+      - name: Replay source receipts and join captured dependency inputs
+        id: joined
+        env:
+          CORE_SHA256: ${{ steps.material.outputs.core_receipt_sha256 }}
+          GLEAM_SHA256: ${{ steps.material.outputs.gleam_receipt_sha256 }}
+        run: |
+          ./scripts/check-core-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$HEX_HOME/packages/hexpm" "$PWD/var/core-material"
+          ./scripts/check-gleam-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$HOME/Library/Caches/gleam/hex/hexpm/packages" "$PWD/var/gleam-material"
+          candidate_sha256=$(shasum -a 256 var/macos-candidate/candidate.json | cut -d ' ' -f 1)
+          ./scripts/check-macos-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/macos-candidate" "$candidate_sha256" "$PWD/var/core-material/core-material.json" "$CORE_SHA256" "$PWD/var/gleam-material/gleam-material.json" "$GLEAM_SHA256" "$PWD/var/dependency-inputs"
+          joined_sha256=$(shasum -a 256 var/dependency-inputs/dependency-inputs.json | cut -d ' ' -f 1)
+          printf 'candidate_record_sha256=%s\ndependency_inputs_sha256=%s\n' "$candidate_sha256" "$joined_sha256" >> "$GITHUB_OUTPUT"
+      - name: Recheck remote identity before transport
         env:
           GH_TOKEN: ${{ github.token }}
+        run: node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
+      - name: Preserve and receive exact app and source evidence bytes
+        id: archive
+        env:
+          CANDIDATE_SHA256: ${{ steps.joined.outputs.candidate_record_sha256 }}
+          CORE_SHA256: ${{ steps.material.outputs.core_receipt_sha256 }}
+          GLEAM_SHA256: ${{ steps.material.outputs.gleam_receipt_sha256 }}
+          JOIN_SHA256: ${{ steps.joined.outputs.dependency_inputs_sha256 }}
         run: |
-          node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
           COPYFILE_DISABLE=1 /usr/bin/tar --format ustar -cf var/macos-candidate.tar -C var macos-candidate
           ./scripts/package-macos-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/macos-candidate"
           archive_sha256=$(shasum -a 256 var/macos-candidate.tar | cut -d ' ' -f 1)
           ./scripts/stage-macos-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/macos-candidate.tar" "$archive_sha256" "$PWD/var/archive-handoff"
-          candidate_sha256=$(shasum -a 256 var/macos-candidate/candidate.json | cut -d ' ' -f 1)
-          node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
-          printf 'archive_sha256=%s\ncandidate_record_sha256=%s\n' "$archive_sha256" "$candidate_sha256" >> "$GITHUB_OUTPUT"
+          test "$(shasum -a 256 var/macos-candidate/candidate.json | cut -d ' ' -f 1)" = "$CANDIDATE_SHA256"
+          install -d -m 700 var/macos-material
+          install -m 600 var/core-material/core-material.json var/macos-material/core-material.json
+          install -m 600 var/gleam-material/gleam-material.json var/macos-material/gleam-material.json
+          install -m 600 var/dependency-inputs/dependency-inputs.json var/macos-material/dependency-inputs.json
+          COPYFILE_DISABLE=1 /usr/bin/tar --format ustar -cf var/macos-material.tar -C var macos-material
+          material_archive_sha256=$(shasum -a 256 var/macos-material.tar | cut -d ' ' -f 1)
+          ./scripts/stage-macos-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/archive-handoff/macos-candidate" "$CANDIDATE_SHA256" "$PWD/var/macos-material.tar" "$material_archive_sha256" "$CORE_SHA256" "$GLEAM_SHA256" "$JOIN_SHA256" "$PWD/var/material-handoff"
+          printf 'archive_sha256=%s\nmaterial_archive_sha256=%s\n' "$archive_sha256" "$material_archive_sha256" >> "$GITHUB_OUTPUT"
+      - name: Recheck remote identity after both receivers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
+      - name: Verify retained archive digests before upload
+        env:
+          ARCHIVE_SHA256: ${{ steps.archive.outputs.archive_sha256 }}
+          MATERIAL_ARCHIVE_SHA256: ${{ steps.archive.outputs.material_archive_sha256 }}
+        run: |
+          test "$(shasum -a 256 var/macos-candidate.tar | cut -d ' ' -f 1)" = "$ARCHIVE_SHA256"
+          test "$(shasum -a 256 var/macos-material.tar | cut -d ' ' -f 1)" = "$MATERIAL_ARCHIVE_SHA256"
       - name: Retain an independent native candidate attempt
         id: retain
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -155,14 +199,31 @@ jobs:
           overwrite: false
           if-no-files-found: error
           retention-days: 14
+      - name: Retain independent dependency source evidence
+        id: retain-material
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: macos-${{ matrix.architecture }}-material-${{ needs.source.outputs.tag }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: var/macos-material.tar
+          archive: false
+          overwrite: false
+          if-no-files-found: error
+          retention-days: 14
       - name: Record independent native handoff identities
         env:
           ARCHIVE_SHA256: ${{ steps.archive.outputs.archive_sha256 }}
-          CANDIDATE_SHA256: ${{ steps.archive.outputs.candidate_record_sha256 }}
+          CANDIDATE_SHA256: ${{ steps.joined.outputs.candidate_record_sha256 }}
+          MATERIAL_ARCHIVE_SHA256: ${{ steps.archive.outputs.material_archive_sha256 }}
+          CORE_SHA256: ${{ steps.material.outputs.core_receipt_sha256 }}
+          GLEAM_SHA256: ${{ steps.material.outputs.gleam_receipt_sha256 }}
+          JOIN_SHA256: ${{ steps.joined.outputs.dependency_inputs_sha256 }}
           ARTIFACT_ID: ${{ steps.retain.outputs.artifact-id }}
+          MATERIAL_ARTIFACT_ID: ${{ steps.retain-material.outputs.artifact-id }}
         run: |
           {
             printf 'Native candidate transport only; publication authority none\n\n'
             printf 'Architecture: %s\n\nSource tag: %s\n\nSource commit: %s\n\nSource record SHA-256: %s\n\n' "$TARGET_ARCHITECTURE" "$SOURCE_TAG" "$SOURCE_COMMIT" "$SOURCE_INPUTS_SHA256"
-            printf 'Archive SHA-256: %s\n\nCandidate record SHA-256: %s\n\nArtifact ID: %s\n\nRun: %s; attempt: %s\n' "$ARCHIVE_SHA256" "$CANDIDATE_SHA256" "$ARTIFACT_ID" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+            printf 'App archive SHA-256: %s\n\nCandidate record SHA-256: %s\n\nApp artifact ID: %s\n\n' "$ARCHIVE_SHA256" "$CANDIDATE_SHA256" "$ARTIFACT_ID"
+            printf 'Evidence archive SHA-256: %s\n\nCore receipt SHA-256: %s\n\nGleam receipt SHA-256: %s\n\nDependency join SHA-256: %s\n\nEvidence artifact ID: %s\n\n' "$MATERIAL_ARCHIVE_SHA256" "$CORE_SHA256" "$GLEAM_SHA256" "$JOIN_SHA256" "$MATERIAL_ARTIFACT_ID"
+            printf 'Run: %s; attempt: %s\n' "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
           } >> "$GITHUB_STEP_SUMMARY"
