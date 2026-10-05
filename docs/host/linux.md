@@ -122,6 +122,17 @@ publishes only an absent candidate. Removal/purge retain those explicit backups.
 See [administrative backup and restore](../architecture/library-backup.md#ubuntu-administrative-entrypoint)
 for commands, limits, concurrency and deliberate adoption/identity recovery.
 
+The managed launcher uses `flock --no-fork` so the exec chain replaces the lock
+launcher with the actual bundled VM. That VM retains the admitted directory lock
+and is systemd's main process. `KillMode=mixed` sends initial TERM only to that
+main process, allowing OTP to stop upload/codec/renderer owners and their native
+handshakes before helper processes are killed. On main-process exit or the finite
+stop deadline, systemd kills every remaining control-group process. Ordinary
+managed restart must release confirmed private worker/intake custody and permit
+new imports; forced termination or unknown native exit still retains its fences.
+Never clear those fences at startup. Explicit `OOMPolicy=stop` stops the unit on a
+kernel OOM notification; bounded on-failure restart retains uncertain custody.
+
 The systemd unit confines writes to the managed state/runtime roots, denies home
 access and privilege escalation, bounds file descriptors, process count and
 memory, and applies finite stop/restart limits. Stop kills the entire service

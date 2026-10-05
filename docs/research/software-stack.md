@@ -1566,6 +1566,9 @@ literal relative PNG import from its usable private directory and observer/
 outsider refusal pass. Both new imports resolve to the same item. Three POSIX
 launcher groups also exercise readable, unreadable and unlinked directories.
 
+The revised mixed-stop probes below use the explicit launcher/unit overlay
+described under [managed VM shutdown](#managed-vm-shutdown-and-private-custody),
+not the unchanged archive identified above.
 `release/linux/check-systemd` compiles `systemd-canary.c` with Ubuntu's native C
 compiler, outside shipped runtime material, and copies the independently pinned
 installed service into four temporary fixture units. It checks their resolved
@@ -1581,11 +1584,12 @@ EAGAIN, then reaps every child: the actual unit limit is 512 tasks.
 The memory probe first observes positive `memory.events high` under the actual
 805306368-byte high watermark. Only that disposable canary unit then relaxes its
 high watermark to exercise the unchanged 1073741824-byte `MemoryMax`; the manager
-reports `Result=oom-kill` and its observed `OOMPolicy=stop` terminates the unit.
+reports `Result=oom-kill` and explicit `OOMPolicy=stop` terminates the unit.
 Swap remains unlimited in the tested unit, so no total allocation or swap ceiling
-is claimed. A separate native child ignores TERM; the actual 40-second stop
-deadline and `KillMode=control-group` remove its process identity and empty/remove
-its cgroup. Current-invocation journal selection excludes prior fixture messages.
+is claimed. A separate native child ignores TERM; `KillMode=mixed` removes its
+process identity and empties/removes its cgroup after main-process exit, within
+the declared 40-second deadline. Current-invocation journal selection excludes
+prior fixture messages.
 The harness removes its reserved canary files/units and the host remains active.
 
 The upstream v255 contracts support the distinction between declared settings and
@@ -1599,6 +1603,34 @@ numeric-version update/removal and administrative backup/restore remain separate
 checks. Stock Ubuntu/native amd64, physical storage/power, rights/signing and
 production release acceptance remain independent gates. Publication authority is
 none; no model or physical frame is involved.
+
+### Managed VM shutdown and private custody
+
+**Observation:** 2026-10-05. A second isolated Ubuntu 24.04.5/systemd 255.4 arm64
+machine exposes a real routine-restart defect: simultaneous control-group TERM
+reaches the supervising flock process, OTP VM and native helper handshakes. The
+manager times out and kills the remaining VM/helpers; import and codec fences
+remain, correctly making new imports unavailable. Those uncertain bytes are
+retained for explicit stopped-service inspection, never erased by startup.
+
+The [util-linux 2.39.3 implementation](https://github.com/util-linux/util-linux/blob/v2.39.3/sys-utils/flock.c#L348-L381)
+execs the requested command without a supervising fork when `--no-fork` is set;
+its lock descriptor remains open across exec. The
+[systemd v255 kill contract](https://github.com/systemd/systemd/blob/v255/man/systemd.kill.xml#L64-L103)
+defines mixed termination: initial TERM reaches only the main process, then
+remaining group members receive final termination after main exit or the stop
+deadline. Both exact sources were read with gh on the observation date.
+
+The managed launcher uses that exec path and the unit declares `KillMode=mixed`
+and `OOMPolicy=stop`. In an explicit overlay fixture, systemd's main process is
+`beam.smp` and a competing directory lease exits 69. Two actual managed stops
+report success, release confirmed import/codec custody and the directory lock,
+and permit new imports across restarts. The revised four kernel canaries also
+pass with those exact unit properties, including the TERM-ignoring child and
+hard-ceiling OOM stop. This is the same shared OrbStack kernel, with declared
+hardening restored only for the fixture units. It is not unchanged-package,
+stock-kernel, native-amd64, physical-power or production acceptance. A fresh
+source-bound DEB and real codec-child/package lifecycle join remain required.
 
 ### Timezone-independent protected identity custody
 

@@ -13,7 +13,7 @@ frameshift_policy
 [ "$(id -u)" = "$fs_uid" ] || frameshift_refuse
 frameshift_data_custody
 umask 077
-exec /usr/bin/flock --exclusive --nonblock --conflict-exit-code 69 /var/lib/frameshift \
+exec /usr/bin/flock --no-fork --exclusive --nonblock --conflict-exit-code 69 /var/lib/frameshift \
   env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
   ERL_FLAGS='+S 4:4 +SDcpu 4 +SDio 4' \
   ERL_CRASH_DUMP=/dev/null ERL_CRASH_DUMP_SECONDS=0 \

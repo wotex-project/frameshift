@@ -644,11 +644,21 @@ match frozen bytes and booted-manager control/observer, identity and new absolut
 literal-relative PNG imports pass with default JIT. A repeatable native canary
 joins installed-unit confinement, 4096 descriptors, 512 tasks, positive memory-high
 throttling, the unchanged 1 GiB hard ceiling after explicit canary-only throttle
-relaxation, manager OOM stop and whole-group native-child stop at 40 seconds.
+relaxation, manager OOM stop and whole-group native-child stop within the declared
+40-second deadline.
 The isolated OrbStack userspace shares a kernel and restores provider-disabled
 hardening only for the tested units. Continue real codec-child stop and booted
 numeric-version update/removal/administrative recovery. Stock Ubuntu/native amd64,
 physical power/storage, rights/signing and production acceptance remain open.
+
+The managed launcher now execs the actual VM through `flock --no-fork`, preserving
+its directory lease while making it systemd's main process. `KillMode=mixed`
+allows OTP's native helper shutdown before group-wide final termination;
+`OOMPolicy=stop` is explicit. An exact fixture overlay passes main-VM identity,
+live lease contention, all four revised kernel canaries, two successful managed
+stops, released private custody and new imports across restarts. Forced/unknown
+termination still preserves fences. Continue fresh source-bound package and
+booted lifecycle joins; overlay evidence does not qualify an unchanged archive.
 
 Protected identity resolution now compares pathname and descriptor timestamps
 as POSIX seconds. The Linux credential/installation/pinned-TLS fixture runs fresh

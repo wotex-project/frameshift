@@ -92,9 +92,13 @@ unit from a bounded two-second, clean-environment status query; unknown, active,
 activating, deactivating or failed state refuses. Verification skips this check.
 
 The managed service and offline backup/restore take an exclusive nonblocking
-Linux flock on the real, admitted `/var/lib/frameshift` directory. A supervising
-flock process retains the lock while its VM runs; inherited custody may prolong
-refusal until those processes exit. Contention exits 69 before the child starts.
+Linux flock on the real, admitted `/var/lib/frameshift` directory. The managed
+service execs through `flock --no-fork`, so the actual systemd main VM inherits the
+lock descriptor. Offline backup/restore retain their supervising flock process.
+Inherited custody may prolong refusal until those processes exit. Contention
+exits 69 before the child starts. The managed unit initially signals only its main
+VM, then kills any remaining control-group processes after its exit or deadline;
+helpers must survive long enough for OTP's confirmed native shutdown.
 Use the directory inode rather than a writable/removable lock filename. Its
 service UID, primary GID and exact 0700 mode are checked before locking. Existing
 live/default command-socket checks remain required. This serializes managed

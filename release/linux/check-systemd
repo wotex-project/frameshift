@@ -17,10 +17,18 @@ installed=/usr/lib/systemd/system/frameshift.service
 [ -f "$installed" ] && [ ! -L "$installed" ] && [ "$(sha256sum "$installed" | cut -d ' ' -f1)" = "$2" ] || refuse
 systemctl --quiet is-active frameshift.service || refuse
 property() { systemctl show "$1" --property="$2" --value; }
-for setting in NoNewPrivileges=yes ProtectSystem=strict ProtectHome=yes PrivateTmp=yes PrivateDevices=yes ProtectKernelTunables=yes ProtectKernelModules=yes ProtectControlGroups=yes RestrictSUIDSGID=yes RestrictRealtime=yes LockPersonality=yes MemoryHigh=805306368 MemoryMax=1073741824 TasksMax=512 LimitNOFILE=4096 KillMode=control-group; do
+for setting in NoNewPrivileges=yes ProtectSystem=strict ProtectHome=yes PrivateTmp=yes PrivateDevices=yes ProtectKernelTunables=yes ProtectKernelModules=yes ProtectControlGroups=yes RestrictSUIDSGID=yes RestrictRealtime=yes LockPersonality=yes MemoryHigh=805306368 MemoryMax=1073741824 TasksMax=512 LimitNOFILE=4096 KillMode=mixed OOMPolicy=stop; do
   key=${setting%%=*}; expected=${setting#*=}
   [ "$(property frameshift.service "$key")" = "$expected" ] || refuse
 done
+main=$(property frameshift.service MainPID)
+printf '%s\n' "$main" | grep -Eq '^[1-9][0-9]{0,9}$' || refuse
+[ "$(cat "/proc/$main/comm")" = beam.smp ] || refuse
+set +e
+flock --nonblock --conflict-exit-code 69 /var/lib/frameshift /bin/true
+lock_status=$?
+set -e
+[ "$lock_status" = 69 ] || refuse
 # Every final name is absent before this fixture takes custody.
 for path in /usr/lib/frameshift-systemd-qualification /home/frameshift-systemd-qualification /tmp/frameshift-systemd-qualification /dev/frameshift-systemd-qualification /run/frameshift/.systemd-canary-child; do
   [ ! -e "$path" ] && [ ! -L "$path" ] || refuse
@@ -122,7 +130,7 @@ count=0
 while [ "$(property "$unit" ActiveState)" != failed ]; do
   count=$((count + 1)); [ "$count" -lt 30 ] || refuse; sleep 1
 done
-# The real manager's default OOMPolicy=stop terminates the parent and removes
+# The declared OOMPolicy=stop terminates the parent and removes
 # the cgroup; post-failure memory.events and a surviving parent are not required.
 [ "$(property "$unit" Result)" = oom-kill ] || refuse
 printf '%s\n' 'systemd-canary: declared hard ceiling and manager OOM stop passed'
@@ -138,7 +146,8 @@ printf '%s\n' "$child" | grep -Eq '^[1-9][0-9]{0,9}$' || refuse
 [ "$(cat "/proc/$child/comm")" = canary ] || refuse
 [ "$(cat "/proc/$child/cgroup")" = '0::/system.slice/frameshift-qualification-linger.service' ] || refuse
 start=$(cut -d ' ' -f22 "/proc/$child/stat")
-# Actual declared 40-second stop deadline: child ignores TERM and must be killed.
+# Child ignores TERM; mixed stop must kill it after main exit, within the
+# declared 40-second deadline, without leaving it outside manager custody.
 systemctl stop "$unit"
 if [ -f "/proc/$child/stat" ] && [ "$(cut -d ' ' -f22 "/proc/$child/stat")" = "$start" ]; then refuse; fi
 [ "$(property "$unit" ActiveState)" = inactive ] || [ "$(property "$unit" ActiveState)" = failed ] || refuse
