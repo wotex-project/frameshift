@@ -26,5 +26,6 @@ defmodule FrameshiftPlatform.Access do
     resource FrameshiftPlatform.Access.AuditEvent
     resource FrameshiftPlatform.Access.User
     resource FrameshiftPlatform.Access.Token
+    resource FrameshiftPlatformWeb.SessionView
   end
 end

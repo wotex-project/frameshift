@@ -171,6 +171,14 @@ check_platform() {
   )
 }
 
+check_platform_browser() {
+  (
+    cd "$repository_root/apps/build-platform"
+    mise exec -- node --check ops/session-browser.mjs
+    mise exec -- node ops/session-browser.mjs
+  )
+}
+
 check_kernel() {
   (
     cd "$repository_root/packages/decision-kernel"
@@ -419,6 +427,7 @@ case "${1:-all}" in
     ;;
   policy) check_policy ;;
   platform) check_platform ;;
+  platform-browser) check_platform_browser ;;
   platform-observability) "$repository_root/scripts/check-platform-observability" ;;
   renderer) check_renderer ;;
   codec) check_codec ;;
@@ -440,7 +449,7 @@ case "${1:-all}" in
   linux-discovery) check_linux_discovery ;;
   keychain-pairing) "$repository_root/scripts/check-keychain-pairing" ;;
   *)
-    echo "usage: scripts/check [all|policy|platform|platform-observability|renderer|codec|linux-codec|linux-release|linux-deb|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
+    echo "usage: scripts/check [all|policy|platform|platform-browser|platform-observability|renderer|codec|linux-codec|linux-release|linux-deb|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
     exit 64
     ;;
 esac

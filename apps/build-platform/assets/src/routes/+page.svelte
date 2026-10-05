@@ -1,5 +1,6 @@
 <script lang="ts">
 import { onMount } from "svelte"
+import AccountSession from "$lib/account/AccountSession.svelte"
 import type { ProfileRevision, SourceDocument } from "$phoenix/types"
 
 type Page<T> = { data: T[]; more: boolean; offset: number }
@@ -90,6 +91,7 @@ onMount(() => {
       <span>Component evidence</span>
     </a>
     <p class="catalog-state"><span aria-hidden="true"></span> Public catalog · Read only</p>
+    <AccountSession />
   </header>
 
   <section class="brief" aria-labelledby="page-heading">
@@ -211,11 +213,14 @@ onMount(() => {
     padding: 0 clamp(1rem, 4cqw, 3rem) 5rem;
   }
   .masthead {
+    position: relative;
     min-height: 5.25rem;
     display: flex;
     align-items: center;
     justify-content: space-between;
     gap: 1.5rem;
+    flex-wrap: wrap;
+    padding-block: 0.8rem;
     border-bottom: 1px solid var(--fs-line);
   }
   .brand {

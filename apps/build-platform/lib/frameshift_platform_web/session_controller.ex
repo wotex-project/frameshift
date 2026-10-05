@@ -87,7 +87,13 @@ defmodule FrameshiftPlatformWeb.SessionController do
 
   defp state(conn, authenticated),
     do:
-      json(conn, %{authenticated: authenticated, csrf_token: Plug.CSRFProtection.get_csrf_token()})
+      json(
+        conn,
+        FrameshiftPlatformWeb.SessionView.project(
+          authenticated,
+          Plug.CSRFProtection.get_csrf_token()
+        )
+      )
 
   defp error(conn, reason) do
     {status, public} =

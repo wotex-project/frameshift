@@ -98,7 +98,7 @@ Ash policy refusal, missing signer, storage failure and credential log exclusion
 The older database fixture is preserved; full-suite evidence is recorded below.
 
 This is private account/token groundwork for BP-06/S5. The HTTP/task join follows;
-the Svelte consumer remains the next gate, while
+the Svelte consumer has the joined evidence below, while
 mailbox confirmation/recovery and production HTTPS need their own evidence.
 Login supplies no catalog/operator membership and opens no composition writes.
 The [source and decision record](../research/build-platform-decisions.md#private-account-and-token-boundary-2026-10-05)
@@ -123,7 +123,35 @@ replacement of the task supervisor and abnormal worker exit refuse further work.
 The complete platform suite passes 61 tests, including the combining-character
 account regression. This establishes bounded single-VM HTTP/task behavior, not
 forced dirty-NIF cancellation, multiple-instance shared admission, production
-HTTPS, mailbox assurance or browser presentation. The Svelte consumer is next.
+HTTPS or mailbox assurance. Browser presentation has the joined evidence below.
+
+### Svelte account consumer, 2026-10-05
+
+The public `FrameshiftPlatformWeb.SessionView` schema generates the two-field
+TypeScript response; private account/token resources remain excluded. The Svelte
+panel uses generated routes with explicit sign-in, sign-out and manual status
+recovery. `scripts/check platform-browser` joins the real loopback endpoint,
+PostgreSQL transaction, Argon2 and an isolated Chrome 154.0.8037.95 profile on
+macOS 27.0.1 arm64. It exercises native
+keyboard input, named accessibility-tree controls, 390-pixel layout, reduced
+motion, 200% text, incorrect/correct credentials, password clearing, HttpOnly/
+SameSite cookie flags, refreshed current-account resolution, unavailable lookup
+and logout, preserved last verified state, recovery and verified revocation.
+Public catalog candidates remain readable during account storage outage.
+
+The browser observes exactly two explicit credential requests and two explicit
+logout requests. It reports no page exceptions, security-policy violations or
+credential URLs. Local storage is empty; SvelteKit's session storage contains
+only numeric navigation scroll coordinates and empty snapshots. Credentials,
+authentication tokens and CSRF state are excluded. This is local HTTP/software
+evidence, with production HTTPS, actual assistive-technology/high-browser-zoom
+acceptance and mailbox/recovery delivery still separate.
+
+After the [Ash security patch](../research/build-platform-decisions.md#ash-security-patch-2026-10-05),
+the complete platform lane passes 62 tests, strict static checks, frontend
+types/lint/build, generated-contract and migration drift. Policy and rendered
+development/release/assembled documentation checks pass. Two fresh dependency
+audits retain only the existing scoped Gun/cowlib exceptions.
 
 ### Frame successor profile refusal, 2026-10-04
 

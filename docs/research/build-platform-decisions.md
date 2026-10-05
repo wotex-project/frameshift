@@ -134,6 +134,27 @@ Limiter restart, task-supervisor replacement and abnormal admitted task exit hav
 finite refusal controls. This is software account/session evidence, not forced
 dirty-NIF cancellation, production HTTPS or provider identity assurance.
 
+### Browser projection and navigation storage
+
+The Svelte consumer shares the host's public `SessionView` Ash metadata through
+the existing phoenix-assets generator. Its two fields describe current state and
+CSRF protection; private credential/token resources generate no browser schema.
+Unknown HTTP outcomes require explicit status recovery, with no automatic
+credential or revocation retry and no fabricated logout completion.
+
+The pinned SvelteKit 2.70.3
+[navigation constants](https://github.com/sveltejs/kit/blob/d3dd898b10ef5132fef50948032abc06b692e609/packages/kit/src/runtime/client/constants.js)
+and [client persistence](https://github.com/sveltejs/kit/blob/d3dd898b10ef5132fef50948032abc06b692e609/packages/kit/src/runtime/client/client.js)
+were checked against the installed package and exact tag with `gh`. The client
+writes scroll coordinates and component snapshots on navigation/reload. Therefore
+the joined browser fixture checks their contents, rather than requiring all
+session storage to be empty. This panel supplies no snapshot capture; actual
+stored snapshots remain empty and scroll entries contain only finite coordinates.
+No credential, authentication token or CSRF state is stored there. Real native
+HTTP/Argon2, reload, storage outage and failed-revocation recovery are qualified
+through the isolated browser fixture described in the verification ledger;
+production transport and identity assurance remain separate gates.
+
 ## Gleam and ExMaude
 
 Existing Frameshift Gleam code shares selected host/guide decisions. The

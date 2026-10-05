@@ -685,7 +685,9 @@ fixtures. The host specification freezes the browser cookie/CSRF and server-only
 role/resource matrix. Bounded HTTP sessions implement origin, CSRF, encrypted
 cookie renewal, verified logout and two-worker/rate admission. Thirteen HTTP/work
 cases include the real 60-second window, disconnected callers, limiter restart,
-supervisor replacement and abnormal task exit. Next join the Svelte consumer.
+supervisor replacement and abnormal task exit. The Svelte account panel consumes
+the generated session schema/routes; real loopback Chrome checks qualify sign-in,
+reload, lookup/logout outages and explicit recovery without credential replay.
 Confirmation/recovery delivery and production HTTPS need their own evidence. No browser
 catalog/composition writes open from a successful login alone. Composition and
 operator authority still require their qualified producer/profile boundaries.

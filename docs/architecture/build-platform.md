@@ -196,6 +196,18 @@ session 401, and origin/CSRF refusal 403. These are one-VM admission limits; a
 deployment with multiple instances requires an independently qualified shared
 admission boundary before enabling password traffic across those instances.
 
+The Svelte account consumer uses the generated public session-view type and route
+helpers. It projects current session status, explicit sign-in/sign-out and a
+manual retry for unavailable state. Credentials remain in the form only for the
+explicit attempt; clear the password after every attempt and never retain it,
+authentication tokens or CSRF state in browser storage. Do not retry a credential
+or logout request automatically. A failed logout preserves its visible current
+state and explains that completion could not be confirmed. Failed session lookup
+must not fabricate signed-out status. Public catalog browsing remains usable.
+Keyboard operation, named fields, live status, narrow/high-zoom/reduced-motion
+layout, real HTTP login/renewal/logout, refresh and outage checks qualify this
+consumer; frontend compilation alone does not establish that join.
+
 **BP-07 — Domain ownership.** Keep explicit consistency/API boundaries:
 
 | Domain | Responsibility | State/dependency |

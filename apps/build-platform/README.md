@@ -47,6 +47,17 @@ an existing fixture retains an older original-migration layout; it defaults to
 `frameshift_platform_test`. This does not change the development database or
 erase the prior fixture.
 
+With frontend assets built and Chrome installed, run `./scripts/check platform-browser`
+from the root. `FRAMESHIFT_CHROME` can select another Chrome executable. The lane
+starts an ephemeral loopback test endpoint, provisions a private fixture account
+and reviewed catalog inside a rollback-only database transaction, and uses an
+isolated browser profile. Run it separately from database test suites. It checks
+keyboard/narrow/reduced-motion/200% text presentation, real credential refusal
+and sign-in, encrypted-cookie reload, lookup/logout outages and recovery, and
+exclusion of credentials from browser storage and URLs. It needs no provider or
+production account. `FRAMESHIFT_SESSION_SCREENSHOT` optionally saves the final
+anonymous panel for visual inspection.
+
 Before the first release, edit original migrations instead of adding alteration
 migrations. Use `<timestamp>_install_<integration>.exs` for dependency installers
 and `<timestamp>_create_<table>.exs` for tables; keep each table's indexes and
@@ -78,8 +89,10 @@ glob imports refuse at this boundary.
   All 12-hour tokens are stored; authentication verifies signature, expiry,
   revocation, presence and the current account. A login grants no catalog role.
   The account and token resources have no public routes or generated types.
-  Session HTTP enforces cookie, CSRF, origin and password-work budgets; the Svelte
-  account consumer is next. Confirmation/recovery delivery remain separate.
+  Session HTTP enforces cookie, CSRF, origin and password-work budgets. The Svelte
+  account panel consumes generated session types/routes, clears attempted passwords
+  and exposes manual status recovery without automatic credential/logout retries.
+  Confirmation/recovery delivery remain separate.
 - `GET /api/session` returns only an authenticated boolean and CSRF token.
   `POST /api/session` accepts exact JSON email/password; `DELETE /api/session`
   accepts an empty JSON body and revokes before clearing the session. Both writes

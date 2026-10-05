@@ -12,6 +12,11 @@ export type ProfileRevision = {
   recorded_at: string
 }
 
+export type SessionView = {
+  authenticated: boolean
+  csrf_token: string
+}
+
 export type SourceDocument = {
   content_sha256: string
   id: string
