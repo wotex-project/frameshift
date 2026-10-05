@@ -5,6 +5,7 @@ import { basename, dirname, join, resolve, sep } from 'node:path';
 import { verifyInputs } from '../inputs.mjs';
 import { releaseGit } from '../source.mjs';
 import { readReleaseInput, withReleaseInput } from '../files.mjs';
+import { inspectGleamMetadata, prepareGleamMetadata } from '../gleam-metadata.mjs';
 import { auditMacBundle } from './closure.mjs';
 import { verifyDevelopmentSignatures } from './dmg.mjs';
 
@@ -115,6 +116,12 @@ export async function macBuildCandidate({ repository, tag, commit, sourcePath, a
   repository = realpathSync(repository); output = resolve(output);
   const source = await verifyInputs(repository, tag, commit, sourcePath);
   const execution = tools(repository, architecture, execute); declaredVersion(repository, source.version, execute);
+  let exists = false;
+  try { lstatSync(output); exists = true; } catch (error) { if (error.code !== 'ENOENT') throw error; }
+  if (!exists) {
+    const metadata = await inspectGleamMetadata(repository);
+    if (!metadata.bytes.equals(metadata.canonical)) fail('canonical Gleam metadata preparation required before new Mac candidate');
+  }
   const material = await macMaterial(repository);
   const physical = join(realpathSync(dirname(output)), basename(output));
   const artifactRoot = join(repository, 'apps/macos/.build/artifacts');
@@ -131,8 +138,6 @@ export async function macBuildCandidate({ repository, tag, commit, sourcePath, a
     await verifyInputs(repository, tag, commit, sourcePath);
     if (!same(material, await macMaterial(repository)) || !same(execution, tools(repository, architecture, execute))) fail('Mac build inputs changed');
   };
-  let exists = false;
-  try { lstatSync(output); exists = true; } catch (error) { if (error.code !== 'ENOENT') throw error; }
   const summary = (bundle, bytes, disposition) => ({ schemaVersion: 1, publicationAuthority: 'none', tag, sourceCommit: commit, sourceInputsSha256: subject.sourceInputsSha256,
     architecture, minimumOS: bundle.declaredMinimum, recordSha256: hash(bytes), disposition });
   if (exists) {
@@ -151,6 +156,7 @@ export async function macBuildCandidate({ repository, tag, commit, sourcePath, a
   mkdirSync(output, { mode: 0o700 }); const created = outputDirectory(output);
   writeFileSync(join(output, 'build.pending'), 'incomplete tagged Mac candidate\n', { flag: 'wx', mode: 0o600 }); synchronize(join(output, 'build.pending')); synchronize(output, true);
   execute(join(repository, 'scripts/package-macos'), [], { cwd: repository, build: true, timeout: 30 * 60_000 });
+  await prepareGleamMetadata({ repository, tag, commit, sourcePath });
   await recheck();
   const built = join(repository, 'apps/macos/.build/artifacts/Frameshift.app'), bundle = await auditMacBundle(built, architecture);
   versions(built); nativeSignatures(built, bundle, repository, execute);

@@ -22,11 +22,15 @@ async function fixture(t) {
   writeFileSync(plist, readFileSync(plist, 'utf8').replace('io.frameshift.closure-fixture', 'io.frameshift.app'));
   mkdirSync(join(repository, 'apps/macos/App'), { recursive: true }); copyFileSync(plist, join(repository, 'apps/macos/App/Info.plist'));
   put(repository, 'scripts/package-macos', '#!/bin/sh\nexit 0\n');
+  put(repository, 'packages/decision-kernel/manifest.toml', 'packages = [\n  { name = "example", version = "1.0.0", build_tools = ["gleam"], requirements = [], source = "hex", outer_checksum = "' + 'A'.repeat(64) + '" },\n  { name = "helper", version = "2.0.0", build_tools = ["gleam"], requirements = [], source = "hex", outer_checksum = "' + 'B'.repeat(64) + '" },\n]\n\n[requirements]\nexample = { version = "~> 1.0" }\nhelper = { version = "~> 2.0" }\n');
   git(['init', '-b', 'main']); git(['add', '.']);
   git(['-c', 'user.name=Fixture', '-c', 'user.email=fixture@example.invalid', 'commit', '-m', 'test(mac): define exact tagged compiler fixture']);
   const commit = git(['rev-parse', 'HEAD']); git(['tag', 'v0.1.0']);
   put(repository, 'apps/core/deps/example/source.c', 'exact dependency material\n');
   put(repository, 'packages/decision-kernel/build/packages/example/source.gleam', 'exact Gleam material\n');
+  put(repository, 'packages/decision-kernel/build/packages/helper/source.gleam', 'exact helper material\n');
+  put(repository, 'packages/decision-kernel/build/packages/packages.toml', '[packages]\nexample = "1.0.0"\nhelper = "2.0.0"\n\n[git]\n');
+  put(repository, 'packages/decision-kernel/build/packages/gleam.lock', '');
   mkdirSync(join(repository, 'var'), { mode: 0o700 });
   await recordInputs(repository, 'v0.1.0', commit, join(repository, 'var/inputs'));
   const core = join(prototype.root, 'Contents/Resources/core');
@@ -46,6 +50,8 @@ function executor(f, mutation = '') {
       if (mutation === 'source') { f.git(['update-index', '--assume-unchanged', 'README.md']); put(f.repository, 'README.md', 'hidden source mutation'); }
       if (mutation === 'material') put(f.repository, 'apps/core/deps/example/source.c', 'changed dependency');
       if (mutation === 'version') put(app, 'Contents/Resources/core/releases/start_erl.data', '17.1 0.2.0');
+      if (mutation === 'metadata-order') put(f.repository, 'packages/decision-kernel/build/packages/packages.toml', '[packages]\nhelper = "2.0.0"\nexample = "1.0.0"\n\n[git]\n');
+      if (mutation === 'metadata-version') put(f.repository, 'packages/decision-kernel/build/packages/packages.toml', '[packages]\nexample = "1.0.1"\nhelper = "2.0.0"\n\n[git]\n');
       return '';
     }
     if (built && mutation === 'tool' && command === '/usr/bin/xcrun' && args[0] === '--show-sdk-version') return '999.0';
@@ -64,7 +70,7 @@ test('exact Git/Mix source and native compiler roles join retained descriptors, 
   });
   assert.equal(replay.disposition, 'retained-bytes-verified'); assert.equal(replay.recordSha256, record.recordSha256);
   assert.ok(readFileSync(path).equals(bytes)); assert.equal(lstatSync(path).mtimeMs, before.mtimeMs); assert.equal(before.mode & 0o7777, 0o600);
-  assert.equal(JSON.parse(bytes).bundle.natives.length, 7); assert.equal(JSON.parse(bytes).material.length, 2);
+  assert.equal(JSON.parse(bytes).bundle.natives.length, 7); assert.equal(JSON.parse(bytes).material.length, 5);
 });
 
 test('wrong source, physical CPU and mutable artifact overlap refuse before building or creating output', mac, async t => {
@@ -78,12 +84,24 @@ test('wrong source, physical CPU and mutable artifact overlap refuse before buil
 });
 
 test('source, material, tool, version and copied bytes changing during work retain incomplete output', mac, async t => {
-  for (const mutation of ['source', 'material', 'tool', 'version', 'copy']) {
+  for (const mutation of ['source', 'material', 'tool', 'version', 'copy', 'metadata-version']) {
     const f = await fixture(t);
     await assert.rejects(macBuildCandidate(f, executor(f, mutation)));
     assert.ok(existsSync(join(f.output, 'build.pending'))); assert.equal(existsSync(join(f.output, 'candidate.json')), false);
     if (mutation === 'copy') assert.ok(existsSync(join(f.output, 'Frameshift.app/Contents/Resources/substituted')));
   }
+});
+
+test('new producer normalizes only equivalent generated metadata and retained replay performs no preparation', mac, async t => {
+  const f = await fixture(t), before = await macMaterial(f.repository), result = await macBuildCandidate(f, executor(f, 'metadata-order'));
+  assert.equal(result.disposition, 'native-build-candidate'); assert.deepEqual(await macMaterial(f.repository), before);
+  const path = join(f.repository, 'packages/decision-kernel/build/packages/packages.toml');
+  writeFileSync(path, '[packages]\nhelper = "2.0.0"\nexample = "1.0.0"\n\n[git]\n'); const changed = readFileSync(path), stat = lstatSync(path);
+  await assert.rejects(macBuildCandidate(f, executor(f)), /inputs or bytes changed/);
+  assert.ok(readFileSync(path).equals(changed)); assert.equal(lstatSync(path).ino, stat.ino); assert.equal(lstatSync(path).mtimeMs, stat.mtimeMs);
+  const fresh = { ...f, output: join(f.repository, 'var/noncanonical') }; let builds = 0;
+  await assert.rejects(macBuildCandidate(fresh, (command, args, options) => { if (command.endsWith('/scripts/package-macos')) builds++; return candidateCommand(command, args, options); }), /preparation required/);
+  assert.equal(builds, 0); assert.equal(existsSync(fresh.output), false);
 });
 
 test('candidate aliases, unknown members and changed app custody refuse without replacing retained bytes', mac, async t => {

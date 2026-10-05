@@ -383,3 +383,16 @@ Partial/conflicting output stays retained; successful replay does not extract,
 fetch, build, sign or rewrite. The full arm64 receipt archive passes at 255,488
 bytes. The [receipt handoff contract](../docs/host/macos.md#dependency-source-receipt-archive-handoff)
 defines its fixed members, private modes, ceilings and remaining evidence gates.
+
+`scripts/prepare-gleam-metadata TAG COMMIT SOURCE_RECORD` prepares only the
+decision-kernel's generated ignored `packages.toml` for a new candidate. It
+validates the bounded supported literal pairs against frozen source and requires
+the exact fetched Hex namespace with empty Git state, then atomically writes
+ASCII name order while preserving mode. Incomplete work remains retained and
+refused. Canonical replay preserves inode/timestamp. It fetches or compiles
+nothing, holds no operating-system compiler lock and grants no source or release
+authority. Run it before core/Gleam receipts and native material capture; new
+native producers repeat preparation of equivalent metadata after building.
+Retained candidate replay performs no preparation. The
+[preparation contract](../docs/architecture/release-manifest.md#canonical-fetched-gleam-metadata-for-candidate-builds)
+keeps all dependency source, compiled bytes, manifests and receipts unchanged.

@@ -1177,3 +1177,48 @@ This is local byte/consumer evidence under the
 with publication authority `none`. It does not authenticate original producer
 execution, a publisher, licenses, generated code or toolchains, and does not
 establish hosted/native Intel, installed or production distribution acceptance.
+
+### Gleam fetched metadata reproducibility
+
+**Observation:** 2026-10-05. Pinned Gleam 1.18.1, revision
+`4a83802ca33a8a96227a1b332768725f232f9779`, stores fetched package versions in a
+`HashMap` and serializes it with `toml::to_string` in
+[`LocalPackages::write_to_disc`](https://github.com/gleam-lang/gleam/blob/4a83802ca33a8a96227a1b332768725f232f9779/compiler-cli/src/dependencies.rs).
+The dependency manager writes that metadata after resolving/downloading, even
+when package identities did not change. The actual
+[`command_build`](https://github.com/gleam-lang/gleam/blob/4a83802ca33a8a96227a1b332768725f232f9779/compiler-cli/src/lib.rs)
+invokes dependency download before compilation. Its inspected `build --help`
+has no option to bypass that operation.
+
+Five independent dependency-download processes against a disposable copy of the
+actual fetched decision-kernel packages produced both valid orders for
+`gleam_stdlib` 1.0.5 and `gleeunit` 1.11.0. Their raw metadata SHA-256 values were
+`11c186f4a7d943364df01fad48a36b1137b4909a48c36a4e8c05abd2d1ee801b`
+and `589c29e213f48d2437d713877438724defeac577ec1817f0b3101b5fff92eaa4`.
+Only row order changed. This is an actual upstream serialization observation;
+it explains a possible false refusal in a before/after raw-material comparison.
+
+The selected remedy admits the supported metadata syntax, exact locked versions,
+empty Git state and safe ignored namespace, then atomically prepares only this
+generated metadata in ASCII name order. It preserves mode and uses private
+pending/exclusive-file custody, source/byte/namespace rechecks and a no-write
+canonical replay. It does not normalize source, BEAM/native output or retained
+candidate/receipt bytes. New candidates require prepared metadata before capture
+and repeat preparation after the build; completed producer replay never prepares.
+Receipt hashes are bound to the prepared input before building and must replay
+afterward. Six preparation groups and seven actual native-role producer groups
+pass, including five pinned Gleam processes converging to one prepared hash and
+changed-version/partial/alias/mutation refusals. The
+[preparation contract](../architecture/release-manifest.md#canonical-fetched-gleam-metadata-for-candidate-builds)
+defines this build prerequisite. A fresh isolated full arm64 source/build cohort
+uses canonical metadata SHA-256
+`11c186f4a7d943364df01fad48a36b1137b4909a48c36a4e8c05abd2d1ee801b`,
+replays both actual dependency receipts after building and joins 1,457 facts with
+seven generated exceptions. Its candidate record SHA-256 is
+`319109ace4997cc88c805e8a7f13bd353428ee382fdd4e0fa31d1674c07ba3b4`;
+its joined record SHA-256 is
+`bbbfc71337f69fc89effd64ca256978f28e8cefe2567dec8e15386f99b7b2958`.
+Unchanged candidate/join replay and packaged IPC/import/restart/offline maintenance
+checks pass. Publication authority remains `none`; compiler-lock,
+source/publisher authenticity, generated derivation, rights and release acceptance
+remain separate.

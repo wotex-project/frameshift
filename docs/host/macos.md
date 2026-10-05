@@ -365,6 +365,14 @@ generated Exile/SQLite native outputs. Changed retained material refuses.
 These recorded cache bytes and installed-tool version strings do not prove
 upstream provenance, compiler authenticity or license admission.
 
+Before capturing a new candidate, require the
+[canonical fetched Gleam metadata](../architecture/release-manifest.md#canonical-fetched-gleam-metadata-for-candidate-builds)
+profile. The caller prepares only that generated ignored metadata before source
+receipts; the producer repeats preparation after the package child, then compares
+every captured material fact. Equivalent upstream table order is canonicalized;
+changed versions, source or other bytes still refuse. Retained candidate replay
+uses its original byte-bound material and performs no preparation.
+
 Build with the existing package recipe, check shell/core runtime version
 descriptors against the tag, copy the admitted app into a private mode `0700`
 output and verify its complete closure, signatures and exact copy identity.

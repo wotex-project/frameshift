@@ -256,6 +256,52 @@ approved locks; it does not authenticate publishers, approve licenses or prove
 compiler/generated-code/runtime/other-component qualification. Join these
 receipts to producer inputs separately.
 
+## Canonical fetched Gleam metadata for candidate builds
+
+Gleam 1.18.1 rewrites generated `build/packages/packages.toml` with package-map
+iteration order. Identical fetched versions can therefore produce different raw
+bytes, independently of source or compilation changes. Before freezing a new
+candidate's material and source receipts, use `scripts/prepare-gleam-metadata TAG
+COMMIT SOURCE_RECORD` to admit the supported bounded literal metadata against
+the exact frozen decision-kernel manifest and write ASCII name order. The
+canonical representation is `[packages]`, one literal name/version pair per
+line, one empty line, `[git]`, and a final newline. Empty Git state and the exact
+locked Hex package namespace are required. Do not normalize dependency source,
+compiler output, BEAMs, native code, manifests, candidate records or receipts.
+
+This is an explicit preparation of generated metadata in the ignored package
+cache of an exclusively operated build checkout. It fetches, compiles and
+publishes nothing and does not claim operating-system compiler-lock ownership
+or source authenticity. Admit a regular unaliased file of at most 64 KiB with
+owned safe path components, no special/group/world-write permissions and owner
+read access. Preserve its admitted mode. Require the empty regular compiler-lock
+file and exact package names; aliases, unsupported syntax, different versions/Git
+state, changed frozen source and unsafe namespaces refuse before replacement.
+
+Write a private pending marker and exclusive prepared file, sync them, and
+recheck source, old bytes/identity, directory custody and namespaces before atomic
+replacement. Final readback and directory sync precede removing the marker.
+Interrupted or conflicting preparation remains retained and refused; it must
+never silently resume or overwrite partial work. Already canonical metadata
+verifies source/custody without changing its inode or timestamp. Bound processing
+to one minute with the existing finite source-child limits; a stalled filesystem
+syscall is not guaranteed to be interrupted.
+
+New native Mac producers require canonical metadata before material capture.
+After the package child returns, canonicalize only admitted equivalent generated
+metadata before the full source/material/tool recheck. A changed version, source,
+mode or any other input still refuses. Completed candidate replay performs no
+metadata preparation or build effect. Source receipts must be produced from the
+canonical bytes and replay after building; their original hashes remain binding.
+
+Acceptance requires real temporary tagged source, supported reordered metadata
+with unchanged semantics, exact byte/mode identity and no-write replay, malformed/
+changed/aliased/unsafe/oversized/partial inputs and mutation refusals. Repeat the
+pinned Gleam dependency command against a disposable fetched package copy to
+observe the upstream ordering variance, then prepare each result and require
+one canonical hash. Join that hash to actual source admission and captured
+candidate facts separately; this preparation grants publication authority `none`.
+
 ## Ubuntu tagged build candidates
 
 `scripts/package-linux-candidate TAG COMMIT SOURCE_RECORD arm64|amd64 OUTPUT`

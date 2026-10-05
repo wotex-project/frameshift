@@ -519,6 +519,22 @@ transport, not publisher/runner authentication or production qualification.
 Integrate source checking and both archive receivers into the manual native
 workflow before recording any hosted execution claim.
 
+Pinned Gleam dependency/build commands rewrite generated fetched metadata in
+varying package order. The candidate preparation profile now validates exact
+frozen Hex identities and the ignored package namespace, then atomically writes
+only that metadata in ASCII name order. Canonical replay preserves inode/time;
+unsafe, changed or interrupted custody refuses. New native producers require
+canonical input before capture and prepare equivalent generated metadata after
+the build; retained producer replay preserves original bytes without preparation.
+Six preparation groups and seven native producer groups cover these boundaries,
+including five actual pinned Gleam dependency processes. A fresh full arm64 app
+builds with prepared metadata, replays both actual source receipts, joins all
+1,457 proved facts/seven exceptions and passes the packaged host checks.
+Upstream source/observed
+ordering variance is recorded in software-stack research. Integrate this explicit
+preparation before workflow source receipts, then replay those receipts after the
+native build; independent source/toolchain and release evidence remains separate.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:
