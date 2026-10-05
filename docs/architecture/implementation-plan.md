@@ -690,8 +690,16 @@ keys. These tools have no publication authority. The native producer
 and source-bound receiver now bind both displayed and build plist versions to
 the exact stable source version. A fixed counter refuses before packaging; a
 changed built/received counter refuses despite an admitted native closure.
-Continue application Sparkle integration with required signed-feed settings and
-installed update qualification, then final
+The independent framework-custody slice admits only Sparkle 2.10.0's nine exact
+aliases, five native roles and the shell's single explicit framework run path.
+Four new compiled fixture groups plus ten existing closure groups pass shape,
+identity, loader/refusal and inside-out signature checks. A separately pinned
+actual SDK fixture verifies both CPU metadata, nested ad-hoc seals and an arm64
+loader/controller initialization with the updater stopped. This is not SDK
+source admission or the application update interface. Continue frozen binary
+SDK admission, architecture/transport preservation and application Sparkle
+integration with required signed-feed settings and shutdown coordination, then
+installed update qualification and final
 app/minimum-OS/Developer-ID qualification, real tap, public bytes and channel
 promotion. Supplied declarations do not complete those joins.
 

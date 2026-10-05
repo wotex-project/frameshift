@@ -1,8 +1,9 @@
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
-import { lstat, readdir } from 'node:fs/promises';
+import { lstat, readdir, readlink } from 'node:fs/promises';
 import { join, posix, resolve } from 'node:path';
 import { readReleaseInput, withReleaseInput } from '../files.mjs';
+import { sparkleLinks, sparkleRoles, sparkleRoot } from './sparkle-framework.mjs';
 
 const limits = { entries: 8192, file: 128 * 1024 * 1024, total: 512 * 1024 * 1024, native: 128, commands: 1024 * 1024 };
 const fail = message => { throw new Error(message); };
@@ -19,13 +20,22 @@ const nativeMagic = new Set([0xcffaedfe, 0xfeedfacf, 0xcefaedfe, 0xfeedface, 0xc
 const safeMode = stat => { if ((stat.mode & 0o7022n) !== 0n) fail('unsafe bundle mode'); };
 
 async function inventory(root, budget) {
-  const files = [], directories = [];
+  const files = [], directories = [], links = [];
   let entries = 0, total = 0;
   async function visit(relative, depth) {
     budget();
     if (++entries > limits.entries || depth > 32 || Buffer.byteLength(relative) > 512 || /[\u0000-\u001f\u007f]/.test(relative)) fail('bundle inventory limit');
     const path = relative ? join(root, relative) : root;
     const before = await lstat(path, { bigint: true });
+    if (before.isSymbolicLink()) {
+      if (!sparkleLinks.has(relative) || before.nlink !== 1n ||
+          ![0n, BigInt(process.getuid())].includes(before.uid)) fail('bundle links and special files unavailable');
+      const target = await readlink(path), after = await lstat(path, { bigint: true });
+      if (target !== sparkleLinks.get(relative) || JSON.stringify(identity(before)) !== JSON.stringify(identity(after)) ||
+          await readlink(path) !== target) fail('framework link changed or unsupported');
+      links.push({ path: relative, target, identity: identity(after) });
+      return;
+    }
     safeMode(before);
     if (before.isDirectory()) {
       const names = (await readdir(path)).sort();
@@ -55,7 +65,33 @@ async function inventory(root, budget) {
     } else fail('bundle links and special files unavailable');
   }
   await visit('', 0);
-  return { files, directories };
+  return { files, directories, links };
+}
+
+// Resolve only the admitted fixed aliases, never a filesystem realpath or an
+// inherited dyld search stack. Directory aliases can occur inside a load path.
+function frameworkPath(path, links) {
+  for (let count = 0; count <= sparkleLinks.size; count++) {
+    const parts = path.split('/');
+    let changed = false;
+    for (let index = 1; index <= parts.length; index++) {
+      const prefix = parts.slice(0, index).join('/'), target = links.get(prefix);
+      if (target === undefined) continue;
+      path = posix.normalize(posix.join(posix.dirname(prefix), target, ...parts.slice(index)));
+      if (!path.startsWith(sparkleRoot + '/')) fail('outside framework alias');
+      changed = true; break;
+    }
+    if (!changed) return path;
+  }
+  fail('cyclic framework alias');
+}
+
+async function plistInfo(path, budget) {
+  const bytes = await readReleaseInput(path, { maximum: 64 * 1024 });
+  const parsed = spawnSync('/usr/bin/plutil', ['-convert', 'json', '-o', '-', '--', '-'], { input: bytes, encoding: 'utf8', timeout: 15_000, maxBuffer: 256 * 1024 });
+  budget();
+  if (parsed.error || parsed.status !== 0) fail('invalid bundle plist');
+  try { return JSON.parse(parsed.stdout); } catch { fail('invalid bundle plist'); }
 }
 
 const cpu = (type, subtype) => {
@@ -177,6 +213,21 @@ export async function auditMacBundle(input, architecture, { enforceMinimum = tru
     const found = natives.filter(file => pattern.test(file.path));
     if (found.length !== 1 || found[0].slices.some(slice => slice.filetype !== type)) fail('missing or ambiguous required native role');
   }
+  const aliases = new Map(before.links.map(link => [link.path, link.target]));
+  const framework = before.directories.some(directory => directory.path === sparkleRoot);
+  if (framework) {
+    if (aliases.size !== sparkleLinks.size) fail('missing framework link');
+    const members = new Set(before.files.concat(before.directories).map(member => member.path));
+    for (const path of aliases.keys()) if (!members.has(frameworkPath(path, aliases))) fail('dangling framework link');
+    const native = natives.filter(file => file.path.startsWith(sparkleRoot + '/'));
+    if (native.length !== sparkleRoles.size || native.some(file => !sparkleRoles.has(file.path) ||
+        file.slices.some(slice => slice.filetype !== sparkleRoles.get(file.path)))) fail('missing or unsupported framework native role');
+    const info = await plistInfo(join(root, sparkleRoot, 'Versions/B/Resources/Info.plist'), budget);
+    if (info.CFBundleIdentifier !== 'org.sparkle-project.Sparkle' || info.CFBundleExecutable !== 'Sparkle' ||
+        info.CFBundleShortVersionString !== '2.10.0') fail('unsupported framework identity');
+    const shell = natives.find(file => file.path === 'Contents/MacOS/Frameshift');
+    if (shell.slices.some(slice => !slice.dependencies.includes('@rpath/Sparkle.framework/Versions/B/Sparkle'))) fail('missing shell framework import');
+  } else if (aliases.size) fail('missing framework root');
   if (enforcePaths) {
     const byPath = new Map(natives.map(file => [file.path, file]));
     const directories = new Set(before.directories.map(directory => directory.path));
@@ -184,23 +235,26 @@ export async function auditMacBundle(input, architecture, { enforceMinimum = tru
       for (const path of slice.rpaths) if (!applePath(path) && !directories.has(localPath(file.path, slice, path))) fail('missing loader directory');
       for (const path of slice.dependencies) {
         if (applePath(path)) continue;
-        const target = byPath.get(localPath(file.path, slice, path));
+        let resolved;
+        if (path.startsWith('@rpath/')) {
+          if (!framework || file.path !== 'Contents/MacOS/Frameshift' || slice.filetype !== 2 ||
+              path !== '@rpath/Sparkle.framework/Versions/B/Sparkle' || slice.rpaths.length !== 1 ||
+              !['@loader_path/../Frameworks', '@executable_path/../Frameworks'].includes(slice.rpaths[0])) fail('unsupported or outside loader path');
+          resolved = `${sparkleRoot}/Versions/B/Sparkle`;
+        } else resolved = frameworkPath(localPath(file.path, slice, path), aliases);
+        const target = byPath.get(resolved);
         if (!target?.slices.some(candidate => candidate.arch === slice.arch && candidate.filetype === 6)) fail('missing bundled dylib');
       }
     }
   }
-  const plist = join(root, 'Contents/Info.plist');
-  const bytes = await readReleaseInput(plist, { maximum: 64 * 1024 });
-  const parsed = spawnSync('/usr/bin/plutil', ['-convert', 'json', '-o', '-', '--', '-'], { input: bytes, encoding: 'utf8', timeout: 15_000, maxBuffer: 256 * 1024 });
-  budget();
-  if (parsed.error || parsed.status !== 0) fail('invalid bundle plist');
-  let info;
-  try { info = JSON.parse(parsed.stdout); } catch { fail('invalid bundle plist'); }
+  const info = await plistInfo(join(root, 'Contents/Info.plist'), budget);
   if (info.CFBundleExecutable !== 'Frameshift' || typeof info.LSMinimumSystemVersion !== 'string') fail('unsupported bundle declaration');
   const declared = info.LSMinimumSystemVersion, minimum = Math.max(...natives.flatMap(file => file.slices.map(slice => versionNumber(slice.minimum))));
   if (enforceMinimum && versionNumber(declared) < minimum) fail('bundle understates minimum macOS');
   versionNumber(declared);
   const after = await inventory(root, budget);
   if (JSON.stringify(before) !== JSON.stringify(after)) fail('bundle changed during inspection');
-  return { schemaVersion: 2, publicationAuthority: 'none', architecture, declaredMinimum: declared, nativeMinimum: version(minimum), directories: before.directories.map(({ identity, ...directory }) => directory), files: before.files.map(({ identity, native, ...file }) => file), natives };
+  return { schemaVersion: 2, publicationAuthority: 'none', architecture, declaredMinimum: declared, nativeMinimum: version(minimum), directories: before.directories.map(({ identity, ...directory }) => directory),
+    ...(framework ? { links: before.links.map(({ identity, ...link }) => link) } : {}),
+    files: before.files.map(({ identity, native, ...file }) => file), natives };
 }

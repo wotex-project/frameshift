@@ -2,6 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { lstat } from 'node:fs/promises';
 import { basename, dirname, join, posix, resolve } from 'node:path';
 import { auditMacBundle } from './closure.mjs';
+import { sparkleContainers } from './sparkle-framework.mjs';
 
 const run = (command, args) => {
   const result = spawnSync(command, args, { encoding: 'utf8', timeout: 15_000, maxBuffer: 64 * 1024 });
@@ -31,6 +32,7 @@ export async function prepareDevelopmentBundle(input, architecture) {
   // codesign recognizes the main executable as its enclosing app. Sign every
   // other leaf first; the final app operation signs its main executable too.
   for (const file of admitted.natives.filter(file => file.path !== 'Contents/MacOS/Frameshift')) run('/usr/bin/codesign', ['--force', '--sign', '-', '--timestamp=none', join(root, file.path)]);
+  if (admitted.links) for (const path of sparkleContainers) run('/usr/bin/codesign', ['--force', '--sign', '-', '--timestamp=none', join(root, path)]);
   run('/usr/bin/codesign', ['--force', '--sign', '-', '--timestamp=none', root]);
   run('/usr/bin/codesign', ['--verify', '--deep', '--strict', root]);
   return auditMacBundle(root, architecture);

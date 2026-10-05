@@ -313,8 +313,9 @@ This initial closure profile accepts Apple system imports below `/usr/lib/`
 and `/System/Library/`, and bundle-contained loader-relative imports. An
 executable-relative import is admitted only in an executable, whose launch
 context is explicit. The target must be an inspected dylib with the matching
-CPU. Inherited `@rpath` imports are unavailable in this profile: an ambiguous
-run-path stack must never be guessed. Search paths outside the bundle or Apple
+CPU. Inherited `@rpath` imports are unavailable: an ambiguous run-path stack
+must never be guessed. The explicit Sparkle profile below admits its one shell
+import through the shell's own declared framework directory. Search paths outside the bundle or Apple
 system directories refuse, including unused developer-toolchain paths.
 System imports are recorded, not proved to exist or supply symbols on an older
 OS. Dynamically constructed loads still require their own runtime fixtures.
@@ -322,7 +323,8 @@ OS. Dynamically constructed loads still require their own runtime fixtures.
 Admission is bounded to 8,192 entries, 32 directory levels, 512-byte relative
 paths, 128 MiB per file, 512 MiB total file bytes, 128 native files, two CPU
 slices and 1 MiB of load commands per slice. Files and directories must be
-regular, without links or group/world writes. The reader checks descriptor and
+regular, without links or group/world writes, except the exact versioned
+framework symlinks below. The reader checks descriptor and
 named-file custody, records SHA-256 and modes, and repeats the entire inventory
 after inspection. Its two-minute monotonic processing budget is a software
 check, not a promise to interrupt a stalled filesystem syscall.
@@ -344,6 +346,56 @@ The real fresh development app must then pass closure and packaged IPC,
 import, restart and offline maintenance checks on the observed Mac. Those
 checks do not qualify macOS 14, Intel execution, universal OTP/NIF packaging,
 Developer ID, hardened runtime, notarization or installed DMG/update behavior.
+
+### Embedded Sparkle framework custody
+
+The initial updater profile pins Sparkle 2.10.0 at upstream commit
+`eef1a539a373c1f1a320624b1130fc5de7b2e100`, with binary-package SHA-256
+`17e28312b8e18ab7cdbbe09a6fb28cc55a5479ec6c371dbc07cdecd2a14fd959`.
+Source/SDK admission must independently bind that package to the frozen inputs;
+an embedded version string alone is not binary provenance. Preserve the
+upstream framework's symlinks and executable permissions when embedding it at
+`Contents/Frameworks/Sparkle.framework`. Do not flatten it or rewrite imported
+library names to bypass closure admission.
+
+Admit only its nine exact aliases: `Versions/Current` to `B`, and `Autoupdate`,
+`Headers`, `Modules`, `PrivateHeaders`, `Resources`, `Sparkle`, `Updater.app` and
+`XPCServices` to their corresponding `Versions/Current/` member. Record each
+relative path and exact target separately from regular files. Links count
+toward inventory limits; their targets must resolve through only these aliases
+to an inventoried real file or directory inside the bundle. Check link owner,
+single-link custody and unchanged identity/target before and after inspection.
+Link permission bits do not authorize writes to targets. Missing, altered,
+dangling, cyclic, absolute, outside-framework or unrelated symlinks refuse.
+
+Require the framework's real `Versions/B/Sparkle` dylib and four executables:
+`Versions/B/Autoupdate`, the nested `Updater.app` main executable, and the
+Downloader/Installer XPC main executables. Each must have the requested CPU(s)
+and recorded deployment minimum; unknown additional native roles inside this
+framework refuse. Check its plist's identifier, executable and exact 2.10.0
+display version. These shape/identity checks do not authenticate the SDK.
+
+Require the shell's exact `@rpath/Sparkle.framework/Versions/B/Sparkle` import.
+Resolve it only from that executable's single own `@loader_path/../Frameworks` or
+`@executable_path/../Frameworks` run path, with an inventoried real Frameworks
+directory and matching dylib CPU. Do not inherit parent run paths, search an
+SDK checkout, allow arbitrary `@rpath` imports or enable this exception for
+another executable/NIF. Every other import retains the original refusal rules.
+
+Private development preparation signs native leaves, nested updater/XPC
+containers, then the framework and outer app. Verify every nested signature and
+the complete app after the final seals. Architecture thinning/merging must use
+the actual slices and preserve aliases; transport admission must preserve and
+recheck those same link facts. A transport profile that cannot do so refuses
+the bundle. Old bundles without an updater retain their existing observation
+shape; updater observations also carry the exact link inventory.
+
+Acceptance uses actual compiled shell imports and the independently pinned SDK,
+both CPU metadata, exact alias inventory, framework/native/plist mismatch,
+missing/dangling/changed/extra link and forbidden run-path/import refusals,
+inside-out ad-hoc preparation and strict nested signature verification. A
+successful local join does not establish installed update, production signing,
+Gatekeeper, older OS execution or a public channel.
 
 ### Tagged native Mac build candidate
 

@@ -1090,6 +1090,41 @@ groups. This establishes local cryptographic/byte interoperability; application
 settings, native framework custody and installed update behavior need their own
 qualification.
 
+### Sparkle framework custody and native consumer
+
+**Observation:** 2026-10-06. The exact 2.10.0
+[`Package.swift`](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Package.swift)
+pins `Sparkle-for-Swift-Package-Manager.zip` with SHA-256
+`17e28312b8e18ab7cdbbe09a6fb28cc55a5479ec6c371dbc07cdecd2a14fd959`.
+The 10,193,895-byte asset fetched with `gh` matches that checksum. Its real
+framework uses `Versions/B` and nine symlinks. Five Mach-O files contain arm64
+and x86_64 slices, each declaring macOS 12.0; all inspected imports are Apple
+system paths and these files have no run paths. The framework plist identifies
+`org.sparkle-project.Sparkle`, display version 2.10.0 and build 2064. These are
+observations of exact fetched bytes, not independent upstream build derivation.
+
+The current [setup guide](https://sparkle-project.org/documentation/)
+requires custom packagers to preserve symlinks/permissions and supplies an
+explicit framework run path for non-Xcode builds. The
+[manual signing guide](https://sparkle-project.org/documentation/sandboxing/#code-signing)
+requires nested helpers/containers to be signed before their enclosing
+framework. The existing release gate's blanket link and inherited-run-path
+refusals therefore need a narrow evidenced profile, rather than flattened
+framework copies or a generic dyld search approximation. The owning Mac contract
+now defines that exact profile and records links separately from regular files.
+
+Four compiled framework fixture groups and ten existing closure groups pass on
+macOS 27.0.1 arm64 / Xcode 27. The actual pinned SDK fixture copies admitted
+archive bytes into a private stage, compiles a real Objective-C consumer, checks
+all nine aliases and both CPU metadata, signs nested code/containers outward,
+verifies strict complete seals, and runs the arm64 consumer. The real
+`SPUStandardUpdaterController` initializes with `startingUpdater: false` and
+has an updater; no update check, network channel or signing key is used. This
+qualifies this minimal native join, not the Frameshift application, Intel/older
+OS execution, Developer ID, installed update or publication. Frozen SDK source
+admission, architecture/transport preservation and app shutdown/settings remain
+independent work.
+
 ### Locked core dependency source admission
 
 **Observation:** 2026-10-05. Inspected Hex 2.5.1
