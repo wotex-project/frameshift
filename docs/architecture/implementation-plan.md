@@ -530,7 +530,13 @@ private preflight/edit work, returns finite provider errors and refuses task
 capacity without crashing the caller. Raw-handler/fault and saturation fixtures
 cover this core boundary. Continue exact SDK/model and native-child/cloud
 cancellation qualification before adding provider commands or model-download UI;
-BEAM task exit alone cannot qualify that lifecycle.
+BEAM task exit alone cannot qualify that lifecycle. The
+[exact SDK consumer inspection](../research/ai-image-generation.md#exact-sdk-consumer-boundary-2026-10-05)
+requires public-export builds, installed JSON resource custody, an explicit
+offline boundary and full weight identity before activation. The isolated SDK
+consumer resolved dependencies but compilation stopped at disk exhaustion;
+restore sufficient build capacity before repeating it. SDK local/ensure flags,
+downloaded status and cancellation requests do not replace those qualifications.
 
 **Exit:** local-only mode emits no provider traffic; no automatic cloud switch;
 cached repeat avoids provider call; secrets remain in Keychain.

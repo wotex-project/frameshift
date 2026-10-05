@@ -109,6 +109,26 @@ private context and verified edit bytes, malformed and private error replies,
 conflicting-filter/cache replay and real task-supervisor saturation/recovery.
 These are core software fixtures, not live-model or Keychain acceptance.
 
+### Local model preflight and activation
+
+Preflight MUST perform only offline inspection. It cannot call a weight-readiness
+or ensure helper whose offline flag protects only catalog lookup. A local
+inference backend does not itself attest absence of catalog/download traffic.
+Before enabling a selected adapter/model, qualify its explicit network-refusal
+boundary and independently verify every selected weight/dependency's full bytes
+against its admitted identity; filename, SDK `isDownloaded` or a cached expected
+digest alone cannot establish the exact model revision recorded in a recipe.
+
+Required SDK resources must come from the admitted revision and remain available
+inside the installed worker without a source checkout. Qualify process-wide
+model/cache state, private native outputs and actual cancellation/deadline
+completion before admitting concurrent or replacement work. Missing resources,
+bytes, disclosure, offline behavior or lifecycle evidence leaves generation
+unavailable without downloading, altering a model or switching destinations.
+The [exact SDK inspection](../research/ai-image-generation.md#exact-sdk-consumer-boundary-2026-10-05)
+records source-based candidates and failed-build evidence; it does not establish
+any of these runtime gates as passed.
+
 ### Composition recipe
 
 Records target frame/profile, crop rectangle, focal point, rotation, mat-safe

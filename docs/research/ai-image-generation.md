@@ -88,6 +88,56 @@ Fixture pixels establish that boundary only. Next qualify a platform codec and
 the exact SDK/model cohort, then expose provider selection, model admission and
 cancellation through native Settings and the authenticated host command owner.
 
+### Exact SDK consumer boundary, 2026-10-05
+
+`gh` still resolves the public wrapper to `8868a9685d9c299816f43ef53efd455ffca437f0`
+and its implementation dependency to `d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66`.
+An isolated Swift 6.4/macOS SDK 27 consumer resolves 33 dependency identities,
+then fails compilation with filesystem `ENOSPC` while compiling plugins/Clang
+modules. It supplies no successful API build, Intel build or runtime evidence.
+No model/helper is invoked and no weights are downloaded. Disposable build
+material and the newly fetched CCV cache were removed; the probe source, lock
+and finite failure log remain local research inputs. Check available space
+before repeating the full dependency/native build; there is no measured final
+build-space requirement yet.
+
+The exact source defines boundaries that the consumer must preserve:
+
+- [Pipeline construction](https://github.com/drawthingsai/draw-things-community/blob/d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66/Libraries/MediaGenerationKit/Sources/MediaGenerationPipeline.swift#L741-L778)
+  and its local backend pass `offline: false` to model/configuration resolution.
+  Resolution can fall through to remote catalogs. `.local` identifies the
+  inference backend; it is not a complete network refusal policy.
+- [Environment ensure](https://github.com/drawthingsai/draw-things-community/blob/d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66/Libraries/MediaGenerationKit/Sources/MediaGenerationEnvironment.swift#L71-L109)
+  uses `offline` for catalog resolution, then calls the weight-readiness helper
+  without that flag. Therefore `ensure(offline: true)` is not an offline
+  preflight and cannot authorize an undisclosed download.
+- [Weight verification](https://github.com/drawthingsai/draw-things-community/blob/d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66/Libraries/MediaGenerationKit/Sources/MediaGenerationEnvironment%2BEnsure.swift#L146-L194)
+  skips full hashing above 300 MiB and can trust a cached expected digest.
+  SDK `isDownloaded` and this cache do not prove exact model bytes. Frameshift
+  needs independently verified identities for every selected weight/dependency.
+- [Resource lookup](https://github.com/drawthingsai/draw-things-community/blob/d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66/Libraries/MediaGenerationKit/Sources/MediaGenerationResourceLoader.swift#L4-L19)
+  checks the main bundle, then a compile-time source path. The SwiftPM target
+  does not declare these JSON resources. Qualification must copy/check the
+  exact required resources and run after removing access to the source checkout;
+  a development source-path fallback cannot qualify an installed worker.
+- [Local execution](https://github.com/drawthingsai/draw-things-community/blob/d473a2f148b3e7dc9b90d0b7cfccc5cda999eb66/Libraries/MediaGenerationKit/Sources/MediaGenerationExecutionUtilities.swift#L157-L239)
+  queues native work and connects cancellation through callback feedback and a
+  generator cancellation closure. A requested Swift cancellation is not a
+  measured deadline or proof of worker exit; qualify actual completion/exit.
+  Environment/model roots and weight-cache settings have process-wide effects.
+
+The next consumer experiment must build the exact public exports on the claimed
+Mac architectures, freeze its resolved inputs, test offline catalog lookup and
+installed resource custody with an empty private model root, and observe attempted
+network operations. Before generation activation, qualify an explicit offline
+initialization/refusal boundary, full selected-model byte identity, private
+native ownership/output and cancellation/deadline completion. A public upstream
+offline initializer or qualified platform network denial are candidate ways to
+meet that boundary; assuming every known filename stays local is insufficient.
+Keep producer internals out of Frameshift and preserve unavailable/refusal until
+these checks pass. Model source/license/size disclosure and distribution license
+review remain separate admission gates.
+
 ### Provider callback logging and failure boundary
 
 **Observation:** 2026-10-05, pinned Elixir 1.20.4/OTP 29.1 source and real core
