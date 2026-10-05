@@ -158,3 +158,8 @@ for receiver/refusal and actual producer evidence boundaries.
 pinned POSIX USTAR, preserving exact member bytes/modes before source-cohort
 admission. Actual BSD archive fixtures and the full retained arm64 host pass;
 see the [handoff contract](../../docs/host/macos.md#native-candidate-archive-handoff).
+
+The manual [native candidate workflow](../../.github/workflows/macos-candidate.yml)
+binds explicit arm64/Intel runner and Apple-toolchain profiles to the frozen source,
+actual packaged host checks and verified TAR retention. It publishes no release
+and has not been dispatched. See the [workflow contract](../../docs/host/macos.md#native-mac-candidate-workflow).

@@ -1,0 +1,168 @@
+name: Mac native release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: Existing stable vX.Y.Z tag
+        required: true
+        type: string
+      source_commit:
+        description: Independently known exact 40-hex source commit
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: macos-candidate-${{ inputs.source_tag }}
+  cancel-in-progress: false
+
+jobs:
+  source:
+    name: Verify remote tag and freeze source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      tag: ${{ steps.freeze.outputs.tag }}
+      commit: ${{ steps.freeze.outputs.commit }}
+      source_inputs_sha256: ${{ steps.freeze.outputs.source_inputs_sha256 }}
+    env:
+      SOURCE_TAG: ${{ inputs.source_tag }}
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: 2026.9.11
+          persist_github_token: false
+          cache: false
+      - name: Refuse absent or moved remote source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node release/workflow-cli.mjs remote "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_commit }}
+          fetch-depth: 0
+          path: candidate-source
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: 2026.9.11
+          working_directory: candidate-source
+          persist_github_token: false
+          cache: false
+      - name: Freeze exact source and recheck remote identity
+        id: freeze
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          install -d -m 700 candidate-source/var
+          ./candidate-source/scripts/record-release-inputs "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/candidate-source/var/release-inputs"
+          mise exec -- node release/workflow-cli.mjs record "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/candidate-source" "$PWD/candidate-source/var/release-inputs/source-inputs.json" >> "$GITHUB_OUTPUT"
+
+  macos:
+    name: Native Mac ${{ matrix.architecture }} candidate
+    needs: source
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: arm64
+            runner: macos-26
+          - architecture: x86_64
+            runner: macos-26-intel
+    runs-on: ${{ matrix.runner }}
+    env:
+      SOURCE_TAG: ${{ needs.source.outputs.tag }}
+      SOURCE_COMMIT: ${{ needs.source.outputs.commit }}
+      SOURCE_INPUTS_SHA256: ${{ needs.source.outputs.source_inputs_sha256 }}
+      TARGET_ARCHITECTURE: ${{ matrix.architecture }}
+      DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: 2026.9.11
+          persist_github_token: false
+          cache: false
+      - name: Admit the inspected physical target and Apple toolchain
+        run: |
+          test "$(uname -s)" = Darwin
+          test "$(uname -m)" = "$TARGET_ARCHITECTURE"
+          case "$TARGET_ARCHITECTURE:$(sysctl -n hw.optional.arm64)" in
+            arm64:1|x86_64:0) ;;
+            *) exit 1 ;;
+          esac
+          case "$(sw_vers -productVersion)" in
+            26|26.*) ;;
+            *) exit 1 ;;
+          esac
+          test "$(xcodebuild -version)" = "$(printf 'Xcode 26.6\nBuild version 17F113')"
+          test "$(xcrun --show-sdk-version)" = 26.5
+      - name: Freeze and match source-job inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          install -d -m 700 var
+          ./scripts/record-release-inputs "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs"
+          node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
+      - name: Fetch exact locked build material
+        run: |
+          install -d -m 700 "$RUNNER_TEMP/frameshift-hex"
+          printf 'HEX_HOME=%s\n' "$RUNNER_TEMP/frameshift-hex" >> "$GITHUB_ENV"
+          export HEX_HOME="$RUNNER_TEMP/frameshift-hex"
+          cd apps/core
+          mix local.hex 2.5.1 --force
+          mix local.rebar --force
+          mix deps.get --check-locked
+          cd ../../packages/decision-kernel
+          gleam deps download
+      - name: Build the frozen native candidate
+        run: ./scripts/package-macos-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/macos-candidate"
+      - name: Join the exact packaged host
+        run: ./scripts/check-packaged-app "$PWD/var/macos-candidate/Frameshift.app"
+      - name: Recheck remote identity and preserve exact candidate bytes
+        id: archive
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
+          COPYFILE_DISABLE=1 /usr/bin/tar --format ustar -cf var/macos-candidate.tar -C var macos-candidate
+          ./scripts/package-macos-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/macos-candidate"
+          archive_sha256=$(shasum -a 256 var/macos-candidate.tar | cut -d ' ' -f 1)
+          ./scripts/stage-macos-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/macos-candidate.tar" "$archive_sha256" "$PWD/var/archive-handoff"
+          candidate_sha256=$(shasum -a 256 var/macos-candidate/candidate.json | cut -d ' ' -f 1)
+          node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
+          printf 'archive_sha256=%s\ncandidate_record_sha256=%s\n' "$archive_sha256" "$candidate_sha256" >> "$GITHUB_OUTPUT"
+      - name: Retain an independent native candidate attempt
+        id: retain
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: macos-${{ matrix.architecture }}-candidate-${{ needs.source.outputs.tag }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: var/macos-candidate.tar
+          archive: false
+          overwrite: false
+          if-no-files-found: error
+          retention-days: 14
+      - name: Record independent native handoff identities
+        env:
+          ARCHIVE_SHA256: ${{ steps.archive.outputs.archive_sha256 }}
+          CANDIDATE_SHA256: ${{ steps.archive.outputs.candidate_record_sha256 }}
+          ARTIFACT_ID: ${{ steps.retain.outputs.artifact-id }}
+        run: |
+          {
+            printf 'Native candidate transport only; publication authority none\n\n'
+            printf 'Architecture: %s\n\nSource tag: %s\n\nSource commit: %s\n\nSource record SHA-256: %s\n\n' "$TARGET_ARCHITECTURE" "$SOURCE_TAG" "$SOURCE_COMMIT" "$SOURCE_INPUTS_SHA256"
+            printf 'Archive SHA-256: %s\n\nCandidate record SHA-256: %s\n\nArtifact ID: %s\n\nRun: %s; attempt: %s\n' "$ARCHIVE_SHA256" "$CANDIDATE_SHA256" "$ARTIFACT_ID" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+          } >> "$GITHUB_STEP_SUMMARY"

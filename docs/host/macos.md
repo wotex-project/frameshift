@@ -400,6 +400,40 @@ No-build replay preserves its source and candidate hashes. This is a local
 test-purpose tag and captured source-cache cohort, not a public release or
 authenticated upstream dependency/Intel/installed-distribution qualification.
 
+### Native Mac candidate workflow
+
+`.github/workflows/macos-candidate.yml` is an explicit manual candidate workflow
+requiring an existing stable tag and independently known exact source commit.
+The read-only source job resolves the remote tag before checkout, freezes the
+clean source/version record and rechecks the remote identity. Both native target
+jobs must reproduce that exact source-record digest. Credentials are limited to
+explicit remote-identity steps; checkout does not retain them. Pin actions by
+full commit and use independent run/attempt artifact identities.
+
+Select explicit `macos-26` arm64 and `macos-26-intel` x86_64 profiles, with
+Xcode 26.6 (`17F113`) and SDK 26.5. Assert OS, selected Xcode/SDK and physical
+native CPU before fetching material or building. Capture actual tool/OS facts
+in the native candidate record; runner labels and version strings alone are
+not authenticated toolchain or installed acceptance. Hosted image changes that
+violate the inspected profile refuse rather than switching silently.
+
+Fetch exact locked project material, build with the frozen native producer,
+run the packaged IPC/import/restart/offline maintenance join, and recheck source
+and remote identity. Write a POSIX USTAR with AppleDouble metadata disabled,
+verify unchanged producer custody, stage that exact archive through the Mac
+receiver and retain its digests separately in the job summary. Upload only the
+single verified archive, preserving TAR bytes rather than an automatic ZIP
+directory transformation. Never overwrite an earlier attempt.
+
+This workflow stages CPU candidates with publication authority `none`. It
+contains no signing/deployment credentials, GitHub Release/Cask/Sparkle/site
+promotion or automatic push/fork trigger. Full source-bound universal assembly
+and independent native/installed acceptance remain subsequent gates. Acceptance
+includes pinned/read-only/manual workflow invariants, real shared remote/source
+refusal fixtures, and the local full producer/packaged/USTAR receiver joins.
+Record hosted execution separately; authoring or static checking this workflow
+does not count as an actual GitHub run.
+
 ### Native candidate archive handoff
 
 `scripts/stage-macos-candidate TAG COMMIT SOURCE_RECORD arm64|x86_64 ARCHIVE

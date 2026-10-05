@@ -459,11 +459,16 @@ The Mac candidate USTAR receiver now preserves those exact bytes/modes and sourc
 identities through a separately pinned transport archive. Both CPU compiler
 archives enter source-bound universal assembly; the full retained arm64 host and
 both Ubuntu GNU USTAR candidates pass exact member-byte replay. Same-size member
-substitution and namespace/source/transport/profile conflicts refuse. Continue
-native Intel production and native Mac candidate workflow automation before
-signing/notarization and installed channel acceptance; captured cache bytes do
-not establish upstream provenance or licenses, and local test tags do not
-establish public distribution.
+substitution and namespace/source/transport/profile conflicts refuse. The manual
+Mac candidate workflow now binds read-only remote/source checks to explicit
+native arm64/Intel macOS 26 / Xcode 26.6 / SDK 26.5 profiles, packaged host joins
+and verified single-file TAR retention with independent source/record/archive
+digests. It performs no public promotion. Local source/authority fixtures and
+policy checks validate the authored workflow; no hosted run is claimed. Continue
+the hosted native Intel/arm64 producer cohort and common-byte qualification
+before signing/notarization and installed channel acceptance; captured cache
+bytes do not establish upstream provenance or licenses, and local test tags do
+not establish public distribution.
 
 ## Shared contracts
 

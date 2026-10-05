@@ -146,3 +146,30 @@ test('the candidate workflow exposes only explicit manual staging and pinned act
   assert.match(workflow, /overwrite: false/);
   assert.match(workflow, /github\.run_attempt/);
 });
+
+test('Mac workflow stages explicit native candidates with pinned read-only authority and exact transport identities', () => {
+  const workflow = readFileSync(join(root, '.github/workflows/macos-candidate.yml'), 'utf8');
+  assert.match(workflow, /workflow_dispatch:/);
+  assert.doesNotMatch(workflow, /\b(?:pull_request|pull_request_target|workflow_run|push|secrets)\s*[:.]/);
+  assert.doesNotMatch(workflow, /\b(?:contents|actions|id-token)\s*:\s*write/);
+  assert.doesNotMatch(workflow, /persist(?:-credentials|_github_token):\s*true/);
+  assert.doesNotMatch(workflow, /\bgh\s+(?:release|workflow)\b|\b(?:notarytool|stapler|wrangler)\b/);
+  const uses = [...workflow.matchAll(/uses: ([^\s]+)\s/g)].map(match => match[1]);
+  assert.ok(uses.length > 0); assert.ok(uses.every(action => /@[0-9a-f]{40}$/.test(action)));
+  assert.match(workflow, /needs: source/); assert.match(workflow, /source_inputs_sha256/);
+  assert.match(workflow, /architecture: arm64\s+runner: macos-26\s/);
+  assert.match(workflow, /architecture: x86_64\s+runner: macos-26-intel\s/);
+  assert.doesNotMatch(workflow, /macos-latest/);
+  assert.match(workflow, /sysctl -n hw\.optional\.arm64/);
+  assert.match(workflow, /DEVELOPER_DIR: \/Applications\/Xcode_26\.6\.app\/Contents\/Developer/);
+  assert.match(workflow, /Build version 17F113/); assert.match(workflow, /--show-sdk-version\)" = 26\.5/);
+  assert.match(workflow, /mix deps\.get --check-locked/); assert.match(workflow, /gleam deps download/);
+  assert.match(workflow, /package-macos-candidate/); assert.match(workflow, /check-packaged-app/);
+  assert.match(workflow, /COPYFILE_DISABLE=1 \/usr\/bin\/tar --format ustar/);
+  assert.match(workflow, /stage-macos-candidate/);
+  assert.match(workflow, /steps\.archive\.outputs\.archive_sha256/); assert.match(workflow, /steps\.archive\.outputs\.candidate_record_sha256/);
+  assert.match(workflow, /steps\.retain\.outputs\.artifact-id/); assert.match(workflow, /GITHUB_STEP_SUMMARY/);
+  assert.match(workflow, /archive: false/); assert.match(workflow, /overwrite: false/); assert.match(workflow, /github\.run_attempt/);
+  const build = workflow.slice(workflow.indexOf('- name: Build the frozen native candidate'), workflow.indexOf('- name: Recheck remote identity'));
+  assert.doesNotMatch(build, /GH_TOKEN|secrets/);
+});

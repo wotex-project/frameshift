@@ -321,3 +321,12 @@ versions, candidate records, closures, seals and source identity reverify before
 completion; unchanged replay never extracts or rebuilds. Actual BSD TAR CPU
 fixtures and the full arm64 host pass, alongside retained Ubuntu GNU TAR replay.
 See the [Mac handoff contract](../docs/host/macos.md#native-candidate-archive-handoff).
+
+The manual [Mac candidate workflow](../.github/workflows/macos-candidate.yml)
+requires an existing stable tag and independent exact commit. A read-only source
+job freezes the shared record; native arm64/Intel target jobs assert the inspected
+macOS 26 / Xcode 26.6 / SDK 26.5 profile, build/check exact candidates, verify TAR
+receiver custody and retain one archive per independent attempt. Summaries retain
+source, candidate and archive digests. The workflow has publication authority
+`none`; authoring/static/local software evidence is separate from hosted execution.
+See the [workflow contract](../docs/host/macos.md#native-mac-candidate-workflow).

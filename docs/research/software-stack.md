@@ -424,6 +424,38 @@ local software transport, not hosted Actions/native Intel execution or upstream
 authentication; publication authority is `none`. See the
 [Mac archive contract](../host/macos.md#native-candidate-archive-handoff).
 
+### Native Mac workflow profile
+
+Observed 2026-10-05 using `gh` against runner-images commit
+`6d942e630479cd99a93dadfc766af11242bfa402`. The
+[runner labels](https://github.com/actions/runner-images/blob/6d942e630479cd99a93dadfc766af11242bfa402/README.md)
+select `macos-26` for arm64 and `macos-26-intel` for x64. The inspected
+[arm64 image](https://github.com/actions/runner-images/blob/6d942e630479cd99a93dadfc766af11242bfa402/images/macos/macos-26-arm64-Readme.md)
+reports 26.6.2 (`25G83`, image `20260907.0351.1`), while the
+[Intel image](https://github.com/actions/runner-images/blob/6d942e630479cd99a93dadfc766af11242bfa402/images/macos/macos-26-Readme.md)
+reports 26.6.1 (`25G76`, image `20260824.0517.1`). Both list Xcode 26.6
+(`17F113`) at `/Applications/Xcode_26.6.app` with SDK 26.5. These are dated
+provider declarations; the workflow asserts the selected profile and records
+actual tool/OS observations instead of assuming `macos-latest` is stable.
+
+Apple's inspected
+[XNU CPU selector](https://github.com/apple-oss-distributions/xnu/blob/f6217f891ac0bb64f3d375211650a4c1ff8ca1ea/bsd/kern/kern_mib.c)
+sets `arm64_flag` to 1 for the arm64 kernel and 0 otherwise, exposing it as
+`hw.optional.arm64`. Together with `uname -m`, this refuses an x86_64 process
+translated on an arm64 kernel. It does not independently authenticate hosted
+hardware or exclude every possible emulated environment.
+
+The authored manual workflow reuses exact read-only remote/tag/source admission,
+builds and checks the retained packaged host, writes BSD USTAR without
+AppleDouble metadata, runs archive receiver/replay checks, rechecks remote
+identity and uploads only the verified single file under a unique run/attempt.
+Source, archive and candidate digests remain explicit in the job summary.
+Credential/pinned/manual/target/transport invariants and the existing real
+source/refusal fixtures complement local full producer/consumer evidence.
+No hosted workflow was dispatched; full native Intel/common-byte acceptance,
+upstream provenance/licenses, signing and installed distribution remain open
+under the [workflow contract](../host/macos.md#native-mac-candidate-workflow).
+
 ## Zig boundary
 
 The existing project-owned host raster executable is Zig. It accepts a
