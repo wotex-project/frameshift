@@ -167,8 +167,9 @@ The [isolated Linux codec](codec/README.md) has a bounded static-PNG profile.
 `./scripts/check codec` runs its native format/static/debug/release gate;
 `./scripts/check linux-codec` builds the pinned Linux arm64/amd64 fixtures and
 runs the same corpus as a nonroot process with read-only root and no network.
-It also joins the host process owner to freshly built Linux NIF/helper artifacts
-against the pinned OTP headers. Streamed import and installed DEBs remain separate work.
+It also joins authenticated private upload and exact Library results to freshly
+built Linux SQLite/Exile NIF/helper artifacts against pinned OTP headers.
+CLI file streaming and installed DEBs remain separate work.
 
 The Docker-backed live receiver and Linux peer-credential checks are separate
 lanes in CI. Run them locally with `./scripts/check container` and

@@ -357,6 +357,14 @@ Linux joins freshly compile SQLite and Exile native dependencies for both
 architectures; Mac NIF reuse is not accepted. Installed Ubuntu/systemd resource,
 package/upgrade and filesystem power-loss evidence remains R3 acceptance.
 
+The implementation uses `Frameshift.Import.Intent`, `Stage` and `Upload` for
+this boundary. Explicit Linux group mode starts the upload owner; configure
+`FRAMESHIFT_CODEC_PATH` to the protected native executable and select an existing
+real service-owned `0700` temporary directory before startup. The upload owner
+links the codec lifetime. Missing configuration or abandoned custody reports
+import unavailable while the Library and diagnostics continue; status reads
+the durable writer directly. The CLI stream remains the next software slice.
+
 Requests retain 64 KiB/8 KiB framing bounds and responses 1 MiB/256 KiB bounds.
 The connection and send use finite deadlines; the response has one absolute
 30-second deadline, including all partial reads, and bounded duplicate-key-aware

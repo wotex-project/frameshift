@@ -7,6 +7,8 @@ defmodule Frameshift.NativeCodec.LogPrivacy do
   report. `install/0` admits one exact primary Logger filter; `mark/1` sets its
   process metadata through the public OTP system interface before source bytes
   are sent. Startup faults before marking contain no original artwork.
+  Upload finish tasks use `mark_current/0` before reading their private stage;
+  task fault reports cannot become an alternative source or custody channel.
 
   ## Scope and refusal
 
@@ -38,7 +40,7 @@ defmodule Frameshift.NativeCodec.LogPrivacy do
   @spec mark(Exile.Process.t()) :: :ok | {:error, :codec_log_privacy_unavailable}
   def mark(process) do
     :sys.replace_state(process.pid, fn state ->
-      :logger.update_process_metadata(%{@marker => true})
+      mark_current()
       state
     end)
 
@@ -46,6 +48,10 @@ defmodule Frameshift.NativeCodec.LogPrivacy do
   catch
     _, _ -> {:error, :codec_log_privacy_unavailable}
   end
+
+  @doc "Marks an owned original-byte task before reading source or retaining upload custody."
+  @spec mark_current() :: :ok
+  def mark_current, do: :logger.update_process_metadata(%{@marker => true})
 
   @doc "Drops marked private worker records and leaves every other event undecided."
   @spec filter(:logger.log_event(), term()) :: :stop | :ignore

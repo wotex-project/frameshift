@@ -18,10 +18,13 @@ esac
 context=$(mktemp -d "${TMPDIR:-/tmp}/frameshift-codec-join.XXXXXXXX")
 trap 'rm -rf "$context"' EXIT HUP INT TERM
 chmod 0700 "$context"
-mkdir -p "$context/exile"
+mkdir -p "$context/exile" "$context/exqlite"
 cp "$repository_root/apps/core/deps/exile/Makefile" "$context/exile/Makefile"
 cp -R "$repository_root/apps/core/deps/exile/c_src" "$context/exile/c_src"
 cp -R "$repository_root/apps/core/_build/test/lib/exile/ebin" "$context/exile/ebin"
+cp "$repository_root/apps/core/deps/exqlite/Makefile" "$context/exqlite/Makefile"
+cp -R "$repository_root/apps/core/deps/exqlite/c_src" "$context/exqlite/c_src"
+cp -R "$repository_root/apps/core/_build/test/lib/exqlite/ebin" "$context/exqlite/ebin"
 cp "$repository_root/apps/core/test/fixtures/native-codec-worker.c" "$context/native-codec-worker.c"
 cp "$repository_root/apps/core/test/fixtures/linux-codec-owner.Dockerfile" "$context/Dockerfile"
 
@@ -31,5 +34,5 @@ docker build --platform "linux/$architecture" \
 docker run --rm --platform "linux/$architecture" --network none --read-only \
   --env "ERL_FLAGS=$fixture_erl_flags" \
   --mount "type=bind,src=$repository_root/apps/core,dst=/src,readonly" \
-  --tmpfs /tmp/codec-service:mode=0700,uid=65534,gid=65534,size=16m,exec \
+  --tmpfs /tmp:mode=1777,size=32m,exec \
   "frameshift-codec-owner-$architecture:fixture"

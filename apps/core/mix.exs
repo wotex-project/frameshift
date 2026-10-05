@@ -43,7 +43,11 @@ defmodule FrameshiftCore.MixProject do
         "test/frameshift/local_ipc/linux_client_service.exs",
         "test/frameshift/local_ipc/linux_credential_service.exs",
         "test/frameshift/discovery/linux_avahi_join.exs",
-        "test/frameshift/native_codec/linux_owner_join.exs"
+        "test/frameshift/native_codec/linux_owner_join.exs",
+        "test/frameshift/import/linux_receipt_join.exs",
+        "test/frameshift/import/linux_upload_client.exs",
+        "test/frameshift/import/linux_upload_contract.exs",
+        "test/frameshift/import/linux_upload_service.exs"
       ],
       dialyzer: dialyzer()
     ]

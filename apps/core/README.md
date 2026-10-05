@@ -100,14 +100,18 @@ custody preserves its replacement fence. Core tests join actual PNG normalizatio
 to immutable package/SQLite readback and Zig rendering. `scripts/check linux-codec`
 also builds target Exile NIFs/helpers against pinned OTP headers and exercises
 nonroot arm64/amd64 worker deadlines, shutdown and abrupt-owner refusal.
-This owner is not yet an authenticated streamed-import command or a release package.
+The Linux group endpoint joins private upload staging, this codec and exact
+actor-bound Library results. Configure `FRAMESHIFT_CODEC_PATH` and an existing
+service-owned real `0700` temporary directory. Missing or abandoned custody
+leaves imports unavailable while Library/status/diagnostics continue. Regular
+file CLI streaming and installed release qualification remain separate work.
 
 The Library retains the exact imported master ID in the actor-bound command
 receipt, committed with registration and audit. Pending imports refuse replay;
 completed imports return their original result without restoring removed artwork.
 The unreleased original schema includes this result field. Existing development
 databases are preserved and are not automatically upgraded or reset; use a new
-data directory for fresh-schema fixtures. Streamed endpoint/CLI wiring follows
+data directory for fresh-schema fixtures. CLI streaming follows
 the [Linux import contract](../../docs/host/linux.md#streamed-original-import).
 
 The separate bundled `frameshift-identity import` command accepts one bounded

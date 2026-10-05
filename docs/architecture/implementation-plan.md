@@ -202,6 +202,14 @@ conflict and replay paths before the next one enables them. Preserve ordinary
 command/Mac behavior and edit the original unreleased receipt CREATE definition.
 JPEG and installed Ubuntu packaging/resource evidence follow these software joins.
 
+The first two import slices now retain exact SQLite results and join bounded
+private staging, owned native normalization and kernel-authenticated Unix
+operations. Fresh Linux arm64 and emulated amd64 SQLite/Exile artifacts pass
+the receipt and real different-UID PNG joins. Next add regular-descriptor CLI
+streaming and fresh-VM status/replay, including uncertain response, full-disk
+and immutable readback fixtures. JPEG qualification and installed Ubuntu
+service/package/resource closure remain separate requirements.
+
 ### Independent software delivery order
 
 Deliver S1 first, then inspect and exercise the exact S2/S3 mappings before

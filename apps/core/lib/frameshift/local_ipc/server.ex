@@ -39,6 +39,12 @@ defmodule Frameshift.LocalIPC.Server do
   authenticated UID. Caller-path imports and Apple observations refuse in that
   policy. Physical pairing uses a caller-retained command ID and actor-bound receipt;
   pending or completed replay never repeats the physical secret exchange.
+
+  Linux streamed imports use the private `Frameshift.Import.Upload` owner.
+  Begin/chunk/finish/cancel each bind the kernel actor; caller paths, pixels,
+  geometry and actor fields refuse. Durable import status reads the Library
+  independently, including when the upload owner is unavailable. This dispatcher
+  never retries a finish or converts a pending receipt into permission to decode.
   """
 
   use GenServer
@@ -46,6 +52,8 @@ defmodule Frameshift.LocalIPC.Server do
   require Logger
 
   alias Frameshift.Digest
+  alias Frameshift.Import.Intent
+  alias Frameshift.Import.Upload
   alias Frameshift.Library
   alias Frameshift.LocalAPI
   alias Frameshift.LocalIPC.PeerIdentity
@@ -72,7 +80,12 @@ defmodule Frameshift.LocalIPC.Server do
     "pair" =>
       ~w(version requestId operation auth commandId bootstrap discoveredId origin credentialRef),
     "recoverPair" =>
-      ~w(version requestId operation auth commandId bootstrap discoveredId origin credentialRef)
+      ~w(version requestId operation auth commandId bootstrap discoveredId origin credentialRef),
+    "importBegin" => ~w(version requestId operation auth intent),
+    "importChunk" => ~w(version requestId operation auth uploadToken offset bytes),
+    "importFinish" => ~w(version requestId operation auth uploadToken),
+    "importCancel" => ~w(version requestId operation auth uploadToken),
+    "importStatus" => ~w(version requestId operation auth commandId)
   }
 
   defmodule State do
@@ -113,7 +126,12 @@ defmodule Frameshift.LocalIPC.Server do
     token = Keyword.get(options, :token)
     library = Keyword.get(options, :library, Frameshift.Library)
     task_supervisor = Keyword.get(options, :task_supervisor, Frameshift.TaskSupervisor)
-    pairing = Keyword.get(options, :pairing, Application.get_env(:frameshift_core, :pairing, []))
+
+    pairing = %{
+      pairing:
+        Keyword.get(options, :pairing, Application.get_env(:frameshift_core, :pairing, [])),
+      upload: Keyword.get(options, :upload_owner, Upload)
+    }
 
     with {:ok, policy} <- prepare_policy(path, token, Keyword.get(options, :group_gid)),
          {:ok, listener} <- listen_owned(path, policy) do
@@ -314,7 +332,7 @@ defmodule Frameshift.LocalIPC.Server do
          :ok <- authenticate(request, policy),
          :ok <- authorize_operation(request, policy),
          {:ok, response} <-
-           execute_request(Map.put(request, :actor_uid, actor_uid), library, pairing) do
+           execute_operation(Map.put(request, :actor_uid, actor_uid), library, pairing) do
       response
     else
       {:error, {request_id, code}} -> error_response(request_id, code)
@@ -354,7 +372,8 @@ defmodule Frameshift.LocalIPC.Server do
          :ok <- validate_query_shape(request, operation, request_id),
          :ok <- validate_preview_shape(request, operation, request_id),
          :ok <- validate_library_read(request, operation, request_id),
-         :ok <- validate_pairing_shape(request, operation, request_id) do
+         :ok <- validate_pairing_shape(request, operation, request_id),
+         :ok <- validate_import_shape(request, operation, request_id) do
       {:ok, request}
     end
   end
@@ -385,6 +404,11 @@ defmodule Frameshift.LocalIPC.Server do
               "command",
               "pair",
               "recoverPair",
+              "importBegin",
+              "importChunk",
+              "importFinish",
+              "importCancel",
+              "importStatus",
               "outboxStatus"
             ],
        do: :ok
@@ -500,6 +524,26 @@ defmodule Frameshift.LocalIPC.Server do
 
   defp validate_pairing_shape(_, _, _), do: :ok
 
+  defp validate_import_shape(request, "importBegin", id) do
+    case Intent.validate(request["intent"]) do
+      :ok -> :ok
+      _ -> {:error, {id, :invalid_import_intent}}
+    end
+  end
+
+  defp validate_import_shape(request, "importStatus", id) do
+    if Intent.command_id?(request["commandId"]), do: :ok, else: {:error, {id, :invalid_request}}
+  end
+
+  defp validate_import_shape(request, operation, id)
+       when operation in ["importChunk", "importFinish", "importCancel"] do
+    token = request["uploadToken"]
+    valid = is_binary(token) and Regex.match?(~r/\A[0-9a-f]{64}\z/, token)
+    if valid, do: :ok, else: {:error, {id, :invalid_upload_token}}
+  end
+
+  defp validate_import_shape(_, _, _), do: :ok
+
   defp safe_request_id(request_id)
        when is_binary(request_id) and byte_size(request_id) in 1..64,
        do: request_id
@@ -540,6 +584,16 @@ defmodule Frameshift.LocalIPC.Server do
        )
        when operation in ["pair", "recoverPair"], do: {:error, {id, :invalid_request}}
 
+  defp authorize_operation(%{"operation" => operation, "requestId" => id}, {:token, _})
+       when operation in [
+              "importBegin",
+              "importChunk",
+              "importFinish",
+              "importCancel",
+              "importStatus"
+            ],
+       do: {:error, {id, :operation_unavailable}}
+
   defp authorize_operation(_, {:token, _}), do: :ok
 
   defp authorize_operation(
@@ -574,6 +628,52 @@ defmodule Frameshift.LocalIPC.Server do
   end
 
   defp secure_equal?(_, _), do: false
+
+  defp execute_operation(
+         %{"operation" => operation, "requestId" => id} = request,
+         library,
+         services
+       )
+       when operation in [
+              "importBegin",
+              "importChunk",
+              "importFinish",
+              "importCancel",
+              "importStatus"
+            ] do
+    library_read_response(id, "import", execute_import(request, library, services.upload))
+  catch
+    _, _ ->
+      code =
+        if operation == "importFinish", do: :command_outcome_unknown, else: :import_unavailable
+
+      {:error, {id, code}}
+  end
+
+  defp execute_operation(request, library, %{pairing: pairing}),
+    do: execute_request(request, library, pairing)
+
+  defp execute_import(%{"operation" => "importBegin"} = request, _, owner),
+    do: Upload.begin_upload(owner, request["intent"], request[:actor_uid])
+
+  defp execute_import(%{"operation" => "importChunk"} = request, _, owner),
+    do:
+      Upload.append(
+        owner,
+        request["uploadToken"],
+        request["offset"],
+        request["bytes"],
+        request[:actor_uid]
+      )
+
+  defp execute_import(%{"operation" => "importFinish"} = request, _, owner),
+    do: Upload.finish(owner, request["uploadToken"], request[:actor_uid])
+
+  defp execute_import(%{"operation" => "importCancel"} = request, _, owner),
+    do: Upload.cancel(owner, request["uploadToken"], request[:actor_uid])
+
+  defp execute_import(%{"operation" => "importStatus"} = request, library, _),
+    do: Library.command_receipt_as(library, request["commandId"], request[:actor_uid])
 
   defp execute_request(
          %{"requestId" => request_id, "operation" => "snapshot"} = request,

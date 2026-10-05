@@ -80,6 +80,39 @@ defmodule Frameshift.LocalIPC.ServerTest do
     assert Bitwise.band(File.stat!(Path.dirname(context.socket_path)).mode, 0o777) == 0o700
   end
 
+  test "Linux streamed operations refuse private Mac authority before staging or claims",
+       context do
+    intent = %{
+      "kind" => "importOriginal",
+      "id" => "streamed",
+      "title" => "Original",
+      "originalFilename" => "source.png",
+      "sourceByteCount" => 1,
+      "sourceDigest" => Digest.sha256("V")
+    }
+
+    for {operation, fields} <- [
+          {"importBegin", %{"intent" => intent}},
+          {"importChunk", %{"uploadToken" => @token, "offset" => 0, "bytes" => "Vg=="}},
+          {"importFinish", %{"uploadToken" => @token}},
+          {"importCancel", %{"uploadToken" => @token}},
+          {"importStatus", %{"commandId" => "streamed"}}
+        ] do
+      assert %{"ok" => false, "error" => %{"code" => "operation_unavailable"}} =
+               request(
+                 context.socket_path,
+                 Map.merge(fields, %{
+                   "version" => 1,
+                   "requestId" => "private-import",
+                   "operation" => operation
+                 })
+               )
+    end
+
+    assert :not_found = Library.command_receipt_as(context.library, "streamed", nil)
+    assert Library.audit_page(context.library)["entries"] == []
+  end
+
   test "storage read and revision-bound command retain authentication and replay custody", c do
     read = %{"version" => 1, "requestId" => "storage-read", "operation" => "libraryStorage"}
     assert %{"ok" => true, "storage" => before} = request(c.socket_path, read)

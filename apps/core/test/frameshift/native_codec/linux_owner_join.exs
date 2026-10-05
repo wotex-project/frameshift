@@ -1,6 +1,6 @@
 Code.prepend_paths(
   Path.wildcard("/src/_build/test/lib/*/ebin")
-  |> Enum.reject(&(Path.basename(Path.dirname(&1)) == "exile"))
+  |> Enum.reject(&(Path.basename(Path.dirname(&1)) in ["exile", "exqlite"]))
 )
 
 Code.prepend_path("/opt/exile/ebin")

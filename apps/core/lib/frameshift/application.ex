@@ -32,6 +32,13 @@ defmodule Frameshift.Application do
   diagnostics owns a separate seventeen-child supervisor so command/task pressure
   cannot consume its acceptor and sixteen client slots. Listener-local limits
   still apply; neither process bound establishes measured memory or disk behavior.
+
+  Explicit Linux group mode starts an upload owner with `FRAMESHIFT_CODEC_PATH`.
+  That owner links its snapshotted codec and private staging lifetime; missing,
+  unsafe or abandoned custody leaves imports unavailable while the Library and
+  diagnostics stay running. It never launches the codec for a private Mac path
+  import. The installed service must supply a real service-owned 0700 temporary
+  directory before Exile can admit its native descriptor handshake.
   """
 
   use Application
@@ -50,7 +57,9 @@ defmodule Frameshift.Application do
     children =
       [
         {Task.Supervisor, name: Frameshift.TaskSupervisor, max_children: 64}
-      ] ++ library_children() ++ metrics_children() ++ renderer_children() ++ local_ipc_children()
+      ] ++
+        library_children() ++
+        metrics_children() ++ renderer_children() ++ import_children() ++ local_ipc_children()
 
     case Supervisor.start_link(children, strategy: :one_for_one, name: Frameshift.Supervisor) do
       {:ok, _} = started ->
@@ -91,6 +100,15 @@ defmodule Frameshift.Application do
   defp metrics_children do
     if Application.fetch_env!(:frameshift_core, :start_library) do
       [Metrics]
+    else
+      []
+    end
+  end
+
+  defp import_children do
+    if System.get_env("FRAMESHIFT_CONTROL_GID") &&
+         Application.fetch_env!(:frameshift_core, :start_local_ipc) do
+      [{Frameshift.Import.Upload, codec_path: System.get_env("FRAMESHIFT_CODEC_PATH")}]
     else
       []
     end

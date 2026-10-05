@@ -142,7 +142,65 @@ defmodule Frameshift.LocalIPC.Client do
         id == request["discoveredId"]
 
   defp valid_payload?("frame", _, _), do: false
+  defp valid_payload?("import", value, request), do: valid_import?(value, request)
   defp valid_payload?(_, value, _), do: is_map(value)
+
+  defp valid_import?(
+         %{"status" => "uploading", "uploadToken" => token, "offset" => offset} = value,
+         request
+       ) do
+    valid =
+      map_size(value) == 3 and is_binary(token) and Regex.match?(~r/\A[0-9a-f]{64}\z/, token) and
+        is_integer(offset) and offset in 0..134_217_728
+
+    valid and upload_reply?(request, token, offset)
+  end
+
+  defp valid_import?(%{"status" => "cancelled"} = value, %{"operation" => "importCancel"}),
+    do: map_size(value) == 1
+
+  defp valid_import?(
+         %{"status" => status, "errorCode" => code, "importedItemID" => id} = value,
+         request
+       ) do
+    map_size(value) == 3 and
+      request["operation"] in ["importBegin", "importFinish", "importStatus"] and
+      receipt_reply?(status, code, id)
+  end
+
+  defp valid_import?(_, _), do: false
+
+  defp upload_reply?(%{"operation" => "importBegin", "intent" => intent}, _, offset),
+    do:
+      is_map(intent) and is_integer(intent["sourceByteCount"]) and
+        offset <= intent["sourceByteCount"]
+
+  defp upload_reply?(
+         %{
+           "operation" => "importChunk",
+           "uploadToken" => token,
+           "offset" => previous,
+           "bytes" => encoded
+         },
+         token,
+         offset
+       ) do
+    with true <- is_integer(previous) and is_binary(encoded),
+         {:ok, bytes} <- Base.decode64(encoded) do
+      byte_size(bytes) in 1..6_144 and offset == previous + byte_size(bytes)
+    else
+      _ -> false
+    end
+  end
+
+  defp upload_reply?(_, _, _), do: false
+  defp receipt_reply?("succeeded", nil, id), do: Frameshift.Digest.valid_sha256?(id)
+  defp receipt_reply?("pending", nil, nil), do: true
+
+  defp receipt_reply?("failed", code, nil),
+    do: is_binary(code) and Regex.match?(~r/\A[a-z0-9_]{1,64}\z/, code)
+
+  defp receipt_reply?(_, _, _), do: false
 
   defp response_key("command"), do: "snapshot"
   defp response_key("snapshot"), do: "snapshot"
@@ -150,10 +208,21 @@ defmodule Frameshift.LocalIPC.Client do
   defp response_key("libraryRecovery"), do: "recovery"
   defp response_key("libraryStorage"), do: "storage"
   defp response_key(operation) when operation in ["pair", "recoverPair"], do: "frame"
+
+  defp response_key(operation)
+       when operation in [
+              "importBegin",
+              "importChunk",
+              "importFinish",
+              "importCancel",
+              "importStatus"
+            ],
+       do: "import"
+
   defp response_key(_), do: nil
 
   defp uncertain_code(%{"operation" => operation})
-       when operation in ["command", "pair", "recoverPair"],
+       when operation in ["command", "pair", "recoverPair", "importFinish"],
        do: :command_outcome_unknown
 
   defp uncertain_code(_), do: :unavailable

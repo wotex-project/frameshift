@@ -1,7 +1,7 @@
 # SQLite and Elixir boundary
 
 **Status:** prototype-selected
-**Updated:** 2026-09-22
+**Updated:** 2026-10-05
 
 ## Decision
 
@@ -44,7 +44,7 @@ need for ownership and migration code.
 
 ## Evidence
 
-### Exqlite 0.40.0
+### Locked Exqlite 0.42.0
 
 Exqlite exposes supervised connections, parameterized queries, and transaction
 functions. Its documentation warns that prepared statements are mutable and
@@ -53,6 +53,28 @@ simultaneous writing through the driver. Those constraints fit one
 Frameshift-owned store process. The package is MIT-licensed and includes a
 precompiled macOS NIF path. This is upstream source and package evidence, not a
 notarized Frameshift bundle result.
+
+The current lock selects Exqlite 0.42.0, exact upstream tag commit
+`991c71fe354c07b11e109dd5263bc8a4686911a3`. Nineteen published source files
+(`Makefile`, `mix.exs`, license, `lib/` and `c_src/`) match the tag's Git blobs.
+The [release notes](https://github.com/elixir-sqlite/exqlite/releases/tag/v0.42.0)
+identify nonblocking statement cleanup for a busy connection; the
+[C implementation](https://github.com/elixir-sqlite/exqlite/blob/991c71fe354c07b11e109dd5263bc8a4686911a3/c_src/sqlite3_nif.c)
+and current single-writer rollback tests are the applicable boundary evidence.
+Observation and source comparison: 2026-10-05.
+
+The bundled amalgamation reports SQLite `3.53.4` with source ID
+`2026-07-24 19:02:57 bf7c7f30031888f4e796e429ab3978879485813aaca6f641c7b33e4e09459bcc`.
+`scripts/check-linux-codec-owner` copies only locked native source and portable
+BEAM files into its private build context. The pinned Rust/Debian builder
+compiles SQLite and Exile against the pinned Linux OTP 29.1.1 headers using
+their upstream Makefiles; host Mac NIFs are excluded. The resulting nonroot
+arm64 and emulated amd64 joins check SQLite version, FTS5, thread-safe mode and
+integrity, actual actor-bound PNG registration and fourteen receipt tests for
+rollback, restart, exact result replay and verified backup/restore. These are
+Debian/Linux software joins, not installed Ubuntu, hardened Mac or filesystem
+power-loss qualification. The amd64 emulator's documented single JIT mapping
+does not establish native amd64 default-mapping behavior.
 
 ### SQLite transactions and WAL
 
@@ -93,7 +115,7 @@ current, or previous-known-good object.
 
 **State:** prototype-selected
 
-Use Exqlite 0.40.x behind one supervised `Frameshift.Library` process. Enable
+Use the locked Exqlite 0.42.0 behind one supervised `Frameshift.Library` process. Enable
 foreign keys, WAL, and full synchronous writes. Exercise transaction rollback,
 process restart, database reopen, orphan reconciliation, and protected-object
 collection in automated tests.
@@ -113,12 +135,12 @@ or the final project license review rejects a transitive component.
 
 ## References
 
-- [Exqlite 0.40.0 API](https://exqlite.hexdocs.pm/Exqlite.html), retrieved
-  2026-09-22.
+- [Exqlite locked source](https://github.com/elixir-sqlite/exqlite/tree/991c71fe354c07b11e109dd5263bc8a4686911a3), inspected
+  2026-10-05.
 - [Exqlite README and caveats](https://exqlite.hexdocs.pm/readme.html),
   retrieved 2026-09-22.
-- [Exqlite 0.40.0 package](https://hex.pm/packages/exqlite/0.40.0), retrieved
-  2026-09-22.
+- [Exqlite 0.42.0 package](https://hex.pm/packages/exqlite/0.42.0), source matched
+  2026-10-05.
 - [SQLite write-ahead logging](https://www.sqlite.org/wal.html), retrieved
   2026-09-22.
 - [SQLite PRAGMA reference](https://www.sqlite.org/pragma.html), retrieved
