@@ -419,6 +419,17 @@ defines bounds, refusal and partial-custody recovery. This covers the two locked
 dependency source scopes; full distributed closure and rights approval remain
 required, with publication authority `none`.
 
+`scripts/check-cargo-material TAG COMMIT SOURCE_RECORD CRATE_CACHE REGISTRY_SOURCES
+OUTPUT` checks the codec's frozen crates.io lock against existing compressed
+archives and every delivered source file. It does not fetch or invoke Cargo.
+Bounded Node children admit the fixed GNU/USTAR profile without extracting or
+executing source. Cargo's unpack marker is a separate generated fact; its
+presence never substitutes for byte checks. Local codec/vendor packages retain
+frozen manifest references. Private completion and unchanged replay follow the
+[Cargo source contract](../docs/architecture/release-manifest.md#locked-codec-cargo-registry-source-bytes).
+The current 27-package cohort matches 1,499 files. Target consumption, compiler
+trust, notices and rights remain separate; publication authority is `none`.
+
 `scripts/check-macos-material TAG COMMIT SOURCE_RECORD arm64|x86_64 CANDIDATE
 CANDIDATE_SHA256 CORE_RECEIPT CORE_SHA256 GLEAM_RECEIPT GLEAM_SHA256 OUTPUT`
 compares separately pinned core/Gleam source receipts with an admitted native

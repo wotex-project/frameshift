@@ -1455,3 +1455,48 @@ materials. It changes no retained app/DEB/candidate and is not an installed noti
 bundle. Full closure and rights review remain required; publication authority is
 none. Continue the separate input-source gates before attaching broader release
 claims to notice inventories.
+
+### Locked codec Cargo registry source bytes
+
+**Observation:** 2026-10-05. Rust 1.97.1 pins Cargo source revision
+`c980f4866141969fab6254a680546a277789d6f0`, matching the installed Cargo identity.
+The [registry unpack implementation](https://github.com/rust-lang/cargo/blob/c980f4866141969fab6254a680546a277789d6f0/src/cargo/sources/registry/mod.rs#L623-L682)
+reuses an unpacked directory when its `.cargo-ok` JSON marker has version one.
+That branch does not recompare every source file with the locked archive. The
+marker is therefore a generated cache observation, not independent source proof.
+The [package producer](https://github.com/rust-lang/cargo/blob/c980f4866141969fab6254a680546a277789d6f0/src/cargo/ops/cargo_package/mod.rs#L895)
+uses GNU TAR headers. The admitted profile must cover that actual layout;
+accepting only USTAR would exclude the current producer's archives.
+
+The 27 current locked crates contain 1,499 regular GNU members, totaling
+3,148,593 compressed bytes, 17,129,472 expanded TAR bytes and 15,924,462 source
+bytes. No extended or directory headers occur in this cohort; 1,498 files have
+mode 0644 and one has mode 0755. Ordinary GNU extension fields are zero; ignored
+UID/GID fields can be all NUL. Each existing source tree has the exact seven-byte
+`{"v":1}` root marker and no `.cargo-checksum.json`. These are dated cache
+observations, not a general promise about future Cargo layouts.
+
+The [bounded source gate](../architecture/release-manifest.md#locked-codec-cargo-registry-source-bytes)
+checks locked archive SHA-256 before parsing, uses a fixed private Node child,
+and compares every delivered byte/mode without extracting or executing source.
+The normalized manifest preamble identifies the locked name/version; it is not
+a general TOML parser. The two local packages retain frozen project manifest
+references rather than being represented as registry archives. Source and
+marker custody, frozen Git/Mix identity and namespaces reverify after children.
+Partial outputs remain retained; successful replay invokes no Cargo and leaves
+the completed record inode/time unchanged.
+
+The full cohort receipt SHA-256 is
+`5e429ac652d760c089fba62bc3f2b04ffc462d0544160973457200fa14cea4bc`.
+Seven fixture groups pass across targeted runs: actual Cargo-produced archives,
+GNU/USTAR profile handling and inherited Node-option clearing, literal lock
+refusal, checksum-before-parser, malformed headers/path/type/padding/identity,
+bounded 128 MiB inflation, missing/extra/aliased/unsafe sources and markers,
+partial or changed/aliased/unsafe completed custody and source/cache/frozen-lock/output mutation during parsing.
+The complete cohort and unchanged replay pass separately from those fixtures.
+
+This qualifies existing cache bytes against the approved lock. It does not prove
+publisher/registry trust, target compilation consumption, native output identity,
+compiler authenticity, notices, rights or installed-release acceptance. Continue
+Rust/native notice collection and those independent build/evidence gates;
+publication authority remains none.

@@ -617,6 +617,17 @@ other tool/native/SDK materials and the project license decision; authority is
 none. Continue those independent material gates and candidate evidence retention
 without treating this private inventory as installed release notices.
 
+The codec Cargo source gate now binds each crates.io archive to the frozen lock
+before bounded GNU/USTAR parsing and compares every delivered source byte/mode.
+The generated unpack marker remains separate from source authenticity; the two
+local packages retain frozen manifest references. Actual Cargo/Git/Mix fixtures
+cover unsupported lock/header/source identity, bounded inflation, aliases,
+partial custody and late source/namespace changes. The full 27-registry-package
+cohort matches 1,499 files and replays without Cargo or output writes. Continue
+Rust/native notice collection and target-consumption/toolchain qualification.
+Neither the cache marker nor this private source receipt supplies publisher,
+rights, compiler, installed or release authority.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

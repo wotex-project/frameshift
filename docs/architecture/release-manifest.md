@@ -349,6 +349,63 @@ independent identity, bounds, aliases, incomplete custody, mutation and unchange
 CLI replay. A full current dependency cohort exercises the same collector; this
 evidence does not close release licensing or distribution acceptance.
 
+## Locked codec Cargo registry source bytes
+
+`scripts/check-cargo-material TAG COMMIT SOURCE_RECORD CRATE_CACHE REGISTRY_SOURCES
+OUTPUT` admits already fetched codec registry sources against the frozen
+`codec/Cargo.lock`. Support its bounded literal version-four generated lock form,
+the exact crates.io registry source, unique name/version identities and unambiguous
+locked dependency references. Refuse unsupported registries/Git/path packages,
+duplicate or unconsumed syntax and checksum conflicts. The two existing local
+packages retain explicit references to frozen project manifests; this registry
+receipt does not replace project/vendor source review or qualify a target build.
+
+Compare each existing `name-version.crate` descriptor's SHA-256 with the locked
+checksum before parsing. A fixed private Node 26.9.0 child reads bounded stdin,
+checks that digest again and inflates the admitted gzip into bounded memory.
+Accept only checksum-correct POSIX USTAR or ordinary GNU TAR regular files and
+directories within the exact locked root. GNU extension fields must be zero;
+long-name, PAX and sparse extensions remain unsupported. Require safe unique
+paths, ordinary readable non-writable-by-group/world
+modes, zero padding and a complete zero terminator with no trailing material.
+Refuse links, special/extended/sparse headers, reserved `.cargo-ok` members,
+unsafe numbers, truncated payloads and conflicting file/directory names. Do not
+extract to disk or execute manifests, Rust source or build scripts. The archive's
+supported normalized `Cargo.toml` package preamble must name the locked package
+and version; this bounded identity profile is not a general TOML interpreter.
+
+Every archive-delivered file must match the fetched source's raw bytes and mode,
+including publisher-generated manifests and VCS metadata. Parent/archive
+directories must match the bounded expected namespace; undeclared files or empty
+directories refuse. Cargo 1.97.1's root `.cargo-ok` marker is a distinct generated
+cache fact: require its exact `{"v":1}` bytes, ordinary 0644 mode and unaliased
+regular custody. It establishes no source authenticity. Do not accept cached
+source merely because this marker exists. Source timestamps are not normalized.
+
+Bound the lock to 64 KiB/128 packages, compressed archive input to 64 MiB,
+expanded archive and individual source files to 128 MiB, aggregate registry
+material to 512 MiB/8,192 entries and the private receipt to 16 MiB. Each parser
+child has a 30-second deadline and 16 MiB output ceiling; the software operation
+has a three-minute budget. Record helper/Node/zlib observations. Clear inherited
+Node preload/path/coverage options. Byte/deadline/heap policy does not establish
+whole-process RSS or compiler peak memory.
+
+Synchronize a new 0700 output and 0600 pending marker/receipt. Complete replay
+compares exact retained bytes without fetching, running Cargo, compiling,
+starting the application or rewriting. Partial/conflicting output remains for
+inspection. Final static frozen source, archive/source/marker bytes, helper and
+namespace checks must follow parser/version children; aliases, changed custody
+and resource excess refuse without replacing retained evidence.
+
+Acceptance joins actual Cargo-produced GNU archives, supported USTAR fixtures and
+frozen Git/Mix identity
+to every delivered source fact, with checksum-before-parser, malformed header/
+path/type/padding/identity, extra/missing/aliased/changed sources and markers,
+resource/child-time refusal and unchanged successful CLI replay. Exercise all
+current locked registry packages separately from publisher/registry rights and
+trust, target compiler/runtime execution, complete notices, installed lifecycle
+and production release acceptance. Publication authority remains none.
+
 ## Canonical fetched Gleam metadata for candidate builds
 
 Gleam 1.18.1 rewrites generated `build/packages/packages.toml` with package-map
