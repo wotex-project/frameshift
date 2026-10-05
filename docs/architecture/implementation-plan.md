@@ -660,6 +660,13 @@ stops, released private custody and new imports across restarts. Forced/unknown
 termination still preserves fences. Continue fresh source-bound package and
 booted lifecycle joins; overlay evidence does not qualify an unchanged archive.
 
+Managed start now includes a service-UID, clean-environment read-only command
+readiness helper inside the existing manager deadline. This prevents the package
+start from returning during initial native setup. The helper bounds polling and
+final termination, refuses wrong roles and does not repair import custody. Fresh
+source-bound packages must join first install and immediate managed restart;
+the finite start-rate budget remains in force.
+
 Protected identity resolution now compares pathname and descriptor timestamps
 as POSIX seconds. The Linux credential/installation/pinned-TLS fixture runs fresh
 UTC and non-UTC processes; the reproduced uncertain-publication failure becomes

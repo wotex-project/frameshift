@@ -68,7 +68,9 @@ for path in /tmp/frameshift-systemd-qualification /dev/frameshift-systemd-qualif
 done
 for mode in policy tasks oom linger; do
   unit="frameshift-qualification-$mode.service"
-  sed "s|^ExecStart=.*|ExecStart=$fixture/canary $mode|; s/^Restart=on-failure$/Restart=no/" "$installed" >"/run/systemd/system/$unit"
+  # The canary replaces the host executable; host IPC readiness is separately
+  # qualified and cannot run inside its intentionally saturated task cgroup.
+  sed "s|^ExecStart=.*|ExecStart=$fixture/canary $mode|; /^ExecStartPost=/d; s/^Restart=on-failure$/Restart=no/" "$installed" >"/run/systemd/system/$unit"
   created_units="$created_units $unit"
   mkdir "/run/systemd/system/$unit.d"
   # Restore precisely the declared restrictions if the fixture provider weakens

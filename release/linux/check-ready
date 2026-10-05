@@ -1,0 +1,24 @@
+#!/bin/sh
+# Systemd start completes only after the installed command boundary responds.
+set -eu
+PATH=/usr/sbin:/usr/bin:/sbin:/bin
+export PATH
+if [ -L /usr/lib/frameshift/policy.sh ] || [ ! -f /usr/lib/frameshift/policy.sh ] ||
+  [ "$(stat -c '%u:%g:%a' /usr/lib/frameshift/policy.sh)" != '0:0:644' ]; then
+  printf '%s\n' 'frameshift: installed public policy unavailable' >&2
+  exit 69
+fi
+# shellcheck source=release/linux/policy.sh
+. /usr/lib/frameshift/policy.sh
+frameshift_policy
+[ "$#" = 0 ] && [ "$(id -u)" = "$fs_uid" ] || frameshift_refuse
+if /usr/bin/env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
+  /usr/bin/timeout --signal=TERM --kill-after=1 35 /bin/sh -eu -c '
+    while ! /usr/bin/frameshiftctl state >/dev/null 2>&1; do
+      /bin/sleep 0.25
+    done
+  '; then
+  exit 0
+fi
+printf '%s\n' 'frameshift: managed command readiness unavailable' >&2
+exit 69

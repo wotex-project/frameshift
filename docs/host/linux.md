@@ -133,6 +133,16 @@ new imports; forced termination or unknown native exit still retains its fences.
 Never clear those fences at startup. Explicit `OOMPolicy=stop` stops the unit on a
 kernel OOM notification; bounded on-failure restart retains uncertain custody.
 
+The exec-style unit completes start only after its service-UID `ExecStartPost`
+helper receives a successful read-only `frameshiftctl state` response. A clean
+environment, 250 ms retry interval and 35-second TERM/one-second final-kill bound
+keep this inside the declared 60-second manager start deadline. Refusal emits a
+finite readiness error and fails activation; it never repairs fences or attempts
+an import. This attests availability of the command/Library boundary, not frame,
+credential, codec or model readiness. In particular, a fenced import owner may
+coexist with available catalog/diagnostics. An exec alone is not application
+readiness; package start must not return during initial native setup.
+
 The systemd unit confines writes to the managed state/runtime roots, denies home
 access and privilege escalation, bounds file descriptors, process count and
 memory, and applies finite stop/restart limits. Stop kills the entire service

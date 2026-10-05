@@ -22,7 +22,7 @@ release="$stage/usr/lib/frameshift/core/releases/$application_version"
 "$release/elixir" --boot "$release/start_clean" --boot-var RELEASE_LIB "$stage/usr/lib/frameshift/core/lib" \
   /linux/verify-version.exs "$stage/usr/lib/frameshift/core" "$application_version"
 # Current package scripts/public policy replace only the development runtime's copies.
-cp /linux/policy.sh /linux/provision-runtime /linux/launch-service /linux/maintenance-entrypoint "$stage/usr/lib/frameshift/"
+cp /linux/policy.sh /linux/provision-runtime /linux/launch-service /linux/check-ready /linux/maintenance-entrypoint "$stage/usr/lib/frameshift/"
 cp /linux/frameshiftctl /linux/frameshift-identity /linux/frameshift-maintenance "$stage/usr/bin/"
 cp /linux/frameshift.service "$stage/usr/lib/systemd/system/"
 mkdir -p "$stage/DEBIAN" /out /package/debian

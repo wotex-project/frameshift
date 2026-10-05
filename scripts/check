@@ -68,6 +68,7 @@ check_policy() {
     "$repository_root/release/linux/policy.sh" \
     "$repository_root/release/linux/provision-runtime" \
     "$repository_root/release/linux/launch-service" \
+    "$repository_root/release/linux/check-ready" \
     "$repository_root/release/linux/frameshiftctl" \
     "$repository_root/release/linux/frameshift-identity" \
     "$repository_root/release/linux/frameshift-maintenance" \

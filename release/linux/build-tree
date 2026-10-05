@@ -5,7 +5,7 @@ mkdir -p "$stage/usr/lib/frameshift/bin" "$stage/usr/bin" "$stage/usr/lib/system
 cp -R /src/apps/core/_build/prod/rel/frameshift_core "$stage/usr/lib/frameshift/core"
 elixir /src/release/linux/verify-version.exs "$stage/usr/lib/frameshift/core" "$FRAMESHIFT_BUILD_VERSION"
 cp /src/codec/target/release/frameshift-codec /src/frameshift-raster "$stage/usr/lib/frameshift/bin/"
-cp /src/release/linux/policy.sh /src/release/linux/provision-runtime /src/release/linux/launch-service /src/release/linux/maintenance-entrypoint "$stage/usr/lib/frameshift/"
+cp /src/release/linux/policy.sh /src/release/linux/provision-runtime /src/release/linux/launch-service /src/release/linux/check-ready /src/release/linux/maintenance-entrypoint "$stage/usr/lib/frameshift/"
 cp /src/release/linux/frameshiftctl /src/release/linux/frameshift-identity /src/release/linux/frameshift-maintenance "$stage/usr/bin/"
 cp /src/release/linux/frameshift.service "$stage/usr/lib/systemd/system/"
 cp /src/inputs.json "$stage/usr/share/doc/frameshift/build-inputs.json"

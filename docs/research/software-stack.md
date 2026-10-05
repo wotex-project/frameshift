@@ -1632,6 +1632,46 @@ hardening restored only for the fixture units. It is not unchanged-package,
 stock-kernel, native-amd64, physical-power or production acceptance. A fresh
 source-bound DEB and real codec-child/package lifecycle join remain required.
 
+### Managed command readiness
+
+**Observation:** 2026-10-05. A fresh installed arm64 package's exec-style start
+returns while its initial native setup is still running. An immediate fixture
+restart reaches the stop deadline, kills remaining processes and retains unknown
+import/codec custody. Once the command boundary is ready, managed stop succeeds.
+The retained bytes remain available for stopped-service inspection; this fixture
+does not qualify clean install by clearing them.
+
+The [systemd v255 service contract](https://github.com/systemd/systemd/blob/v255/man/systemd.service.xml#L182-L191)
+considers an exec-style service started after executing its binary, independently
+of application readiness. Its
+[post-start contract](https://github.com/systemd/systemd/blob/v255/man/systemd.service.xml#L413-L450)
+includes a failing post-start command in activation failure and ordering.
+These exact sources were read with gh on the observation date.
+
+The unit now runs the installed `check-ready` helper as its service UID before
+completing start. It admits the existing public numeric policy, clears the child
+environment and polls only `frameshiftctl state`, discarding response bytes.
+The interval is 250 ms; a 35-second TERM deadline and one-second final-kill bound
+fit inside the manager's 60-second deadline. Wrong identity refuses before
+polling; absent command availability returns a finite readiness error. No private
+identity, model, frame, import, fence deletion or replacement is authorized by
+this read. Command availability can coexist with a fenced intake owner.
+
+An explicit unit/helper overlay passes immediate ready restart and successful
+managed stop. The wrong-role helper exits 69 before polling; with the real host
+stopped, its missing-boundary check exits 69 after 35,038 ms with fixed error text.
+The existing three-start/120-second budget also refuses excess rapid fixture
+starts; resetting that budget is an explicit fixture operation, not a product
+change. Previously unknown custody stays retained. This is actual installed
+runtime/manager evidence on the observed shared arm64 kernel, with an overlay;
+it does not qualify an unchanged archive, stock kernel or native amd64.
+
+The native canary replaces the host executable and omits only this host-IPC
+post-start command; otherwise its confinement, identity and resource fields
+remain joined to the installed host. Startup readiness and application lifecycle
+require their separate actual host fixture. Fresh source-bound packages must
+qualify first install, immediate restart and the complete retained-data lifecycle.
+
 ### Timezone-independent protected identity custody
 
 **Observation:** 2026-10-05. The booted arm64 identity command validates its PEM,

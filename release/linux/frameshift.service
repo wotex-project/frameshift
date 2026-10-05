@@ -11,6 +11,7 @@ Group=frameshift
 SupplementaryGroups=frameshift-control frameshift-observer
 ExecStartPre=+/usr/lib/frameshift/provision-runtime
 ExecStart=/usr/lib/frameshift/launch-service
+ExecStartPost=/usr/lib/frameshift/check-ready
 WorkingDirectory=/
 UMask=0077
 Restart=on-failure
