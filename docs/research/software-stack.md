@@ -1500,3 +1500,36 @@ publisher/registry trust, target compilation consumption, native output identity
 compiler authenticity, notices, rights or installed-release acceptance. Continue
 Rust/native notice collection and those independent build/evidence gates;
 publication authority remains none.
+
+### Locked codec notice-file collection
+
+**Observation:** 2026-10-05. The admitted 27 Cargo registry packages and two
+frozen local package scopes now have a separate private notice collector. It
+replays the original Cargo source receipt before selection and after copying.
+Selection uses the existing conventional filename profile and retains raw
+normalized/original Cargo manifests as separate metadata. Local codec and vendor
+sources retain their original tracked paths and Git modes; filename matching
+does not infer license terms or patch derivation.
+
+The full 29-package inventory contains 115 files and 402,640 raw bytes:
+59 conventional notice candidates and 56 manifest metadata files. Its SHA-256 is
+`c5efc0b8ef7d9d781622991568b8e0059e8425ec0d037ce498636f256ed43d2d`.
+The local frameshift-codec 0.1.0 scope has no matching notice name; its empty
+notice list is distinct from the retained manifest. This is not a licensing
+determination or a project license selection. Successful full replay preserves
+the record inode/time, invokes no Cargo and changes no original receipt/source.
+
+Seven fixture groups pass using actual Cargo/Git/Mix and frozen local inputs.
+They cover raw binary copies, metadata roles, explicit unmatched names, private
+unchanged CLI replay, independently wrong/forged/missing source receipts,
+source-admitted 1 MiB/16 MiB/512-entry excess, changed/aliased/unsafe/extra/partial
+copy and inventory custody, and source/copy/receipt/frozen-source/output mutation
+during the final archive parsers. The full cohort and replay pass separately.
+
+The [collection contract](../architecture/release-manifest.md#locked-codec-notice-file-collection)
+keeps raw binary copies, independent source-receipt identity, fixed local scope,
+metadata roles and unmatched names explicit. Its limits and private custody do
+not establish target build consumption, publisher rights, vendor archive/patch
+qualification, complete inline/transitive/distributed closure or installed
+release notices. Toolchain, SDK/model and OS materials remain independent gates.
+Publication authority is none; rights review remains required.

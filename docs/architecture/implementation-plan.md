@@ -628,6 +628,15 @@ Rust/native notice collection and target-consumption/toolchain qualification.
 Neither the cache marker nor this private source receipt supplies publisher,
 rights, compiler, installed or release authority.
 
+The codec notice collector now replays the independently pinned Cargo source
+gate and collects raw conventional notice files plus manifest metadata from
+registry packages and the two fixed local scopes. The full 29-package cohort
+retains 115 files/402,640 raw bytes; frameshift-codec has an explicit empty notice
+list. Completed replay preserves inventory inode/time. Continue the remaining
+toolchain/native/SDK/OS material gates, vendor derivation and distributed closure
+review. This private technical inventory grants no rights or publication
+authority and does not modify candidate transports or installed packages.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

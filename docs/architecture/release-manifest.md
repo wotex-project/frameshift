@@ -406,6 +406,51 @@ current locked registry packages separately from publisher/registry rights and
 trust, target compiler/runtime execution, complete notices, installed lifecycle
 and production release acceptance. Publication authority remains none.
 
+## Locked codec notice-file collection
+
+`scripts/collect-codec-notices TAG COMMIT SOURCE_RECORD CRATE_CACHE
+REGISTRY_SOURCES CARGO_RECEIPT CARGO_SHA256 OUTPUT` collects private technical
+notice candidates from the separately pinned codec source receipt. Replay the
+original completed Cargo source output before selection and after copying;
+never create a missing receipt, fetch, run Cargo, compile or start the host.
+The received source identity and expected digest must agree with frozen inputs.
+
+Apply the existing conventional notice filename profile to every admitted
+registry package. Retain raw `Cargo.toml` and optional `Cargo.toml.orig` as
+separate package-metadata files. Neither metadata nor a filename match establishes
+licensing or notice completeness. Every package inventory must explicitly list
+its notice candidates, including an empty list when no name matches.
+
+The two local packages remain distinct frozen-project scopes. Select their
+tracked manifests and conventionally named files from `codec/` excluding its
+`vendor/` subtree for frameshift-codec, and from `codec/vendor/jpeg-decoder/` for
+the local decoder. Do not imply that these files qualify the upstream vendor
+archive, patch derivation, project license choice or full distributed closure.
+Keep source Git modes, locked local revisions and original paths in the inventory.
+
+Retain exact raw copies under package/version-specific paths without decoding,
+normalization, execution or rendering. Bound each selected file to 1 MiB,
+aggregate bytes to 16 MiB, selected files to 512, inventory to 1 MiB and operation
+to six minutes. The source gate's archive, entry and child limits still apply.
+Private output directories use 0700 and copies/record/pending marker use 0600.
+Synchronize completion; partial or conflicting output remains for inspection.
+Completed replay verifies copies and exact retained inventory without rewriting.
+
+After all parser/version children, recheck pinned source receipt, all frozen
+source bytes, selected source files, copied bytes and input/output namespaces.
+Refuse wrong/forged/changed identities, aliases, special files, unsafe modes,
+resource excess and unknown directories/files without replacing retained proof.
+Publication authority is `none` and rights review remains required. This fixed
+codec scope does not modify the existing core/Gleam collector or candidate
+transports, and creates no installed notices bundle.
+
+Acceptance joins actual Cargo archives and frozen Git/Mix/local files, checks
+binary candidates and metadata separation, missing-name reporting, independent
+receipt refusal, file/aggregate/entry bounds, partial/changed/aliased/unsafe
+copy/output refusal, late parser-time mutations and unchanged successful CLI
+replay. Exercise the full current codec cohort separately from publisher rights,
+target consumption, installed execution and production release acceptance.
+
 ## Canonical fetched Gleam metadata for candidate builds
 
 Gleam 1.18.1 rewrites generated `build/packages/packages.toml` with package-map

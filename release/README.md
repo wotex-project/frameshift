@@ -430,6 +430,17 @@ frozen manifest references. Private completion and unchanged replay follow the
 The current 27-package cohort matches 1,499 files. Target consumption, compiler
 trust, notices and rights remain separate; publication authority is `none`.
 
+`scripts/collect-codec-notices TAG COMMIT SOURCE_RECORD CRATE_CACHE REGISTRY_SOURCES
+CARGO_RECEIPT CARGO_SHA256 OUTPUT` replays the original pinned Cargo source gate
+and retains exact conventional notice candidates plus manifest metadata from
+registry sources and the two fixed frozen-project scopes. Empty notice lists stay
+explicit. Private binary copies and unchanged replay follow the
+[codec collection contract](../docs/architecture/release-manifest.md#locked-codec-notice-file-collection).
+The current 29-package inventory contains 115 files/402,640 raw bytes and one
+scope without a matching notice name. This technical collection does not select
+the project license, qualify vendor patch derivation or supply installed notices
+and rights approval; publication authority is `none`.
+
 `scripts/check-macos-material TAG COMMIT SOURCE_RECORD arm64|x86_64 CANDIDATE
 CANDIDATE_SHA256 CORE_RECEIPT CORE_SHA256 GLEAM_RECEIPT GLEAM_SHA256 OUTPUT`
 compares separately pinned core/Gleam source receipts with an admitted native
