@@ -290,32 +290,49 @@ known exact commit. The source job uses `gh` against the current repository to
 resolve the remote tag, peeling a bounded annotated-tag chain, and refuses a
 different commit, unavailable reference or unsupported object. It then checks
 out that commit and freezes its actual source/app-version record. Remote tag
-identity is checked again around source verification and after target work.
+identity is checked again around source verification and target transport.
 
 The Ubuntu 24.04 amd64/arm64 matrix depends on that source job. Each target
-recomputes the same deterministic source-record digest before building, uses
-the pinned native target images and runs exact candidate/container acceptance.
-Wrong target CPU, source digest, moved tag, failed build/check or changed artifact
-prevents an artifact upload. Source and final archives remain bound to their
-records; the target source tools are invoked with data arguments rather than
-interpolated expressions in workflow shell commands.
+recomputes the same deterministic source-record digest, admits the physical/native
+runner and Docker architecture, and fetches exact locked dependencies with pinned
+Hex. Use private runner-temporary Hex and absolute XDG Gleam checksum-cache roots.
+Prepare only admitted generated Gleam metadata, then emit core/Gleam source
+receipts before copying/building. The target builder uses pinned native images;
+exact candidate/container acceptance must pass. Reverify both source receipts
+without rewriting afterward and join captured dependency facts against the exact
+candidate record. Generated and retained Git metadata stay outside source proof.
+
+Recheck remote/source identity in a separate read-only step before transport.
+Create and verify one candidate USTAR, then a separate fixed-profile source-evidence
+USTAR. The evidence receiver must join against the **received** candidate using
+independently retained candidate/core/Gleam/join hashes. Recheck remote identity
+after both receivers; compare both final archive digests before upload. Wrong CPU,
+source/receipt identity, moved tag, failed acceptance or changed artifact prevents
+uploads. A partial artifact pair is incomplete evidence. Target source tools take
+data arguments rather than interpolated workflow expressions in shell commands.
 
 The workflow has contents-read permission, no signing/deployment secret or
 protected publication job. Checkout credentials are not persisted and mise's
-GitHub token stays inside its action. An explicit read-only job token is scoped
-to steps that use `gh`. Successful outputs are short-lived candidate TARs,
-preserving private record and executable modes, with distinct run/attempt names.
-No rerun overwrites an earlier candidate artifact; a fresh runner's rebuild is
-another candidate, not proof of identical released bytes. Actions artifact IDs
-and hashes are staging metadata. A later release consumes accepted exact bytes,
-verifies handoffs and retains them before signing/promotion.
+GitHub token stays inside its action. Read-only job tokens are scoped to remote
+`gh` checks and the Ubuntu preparation/build step's public pinned Gleam release
+download; source gates, candidate acceptance/replay and TAR/evidence receivers
+receive no job token. That build/preparation credential is not a publisher or
+execution attestation. Successful outputs are two separate single-file non-ZIP
+TAR artifacts per CPU, preserving internal private/executable modes, with distinct
+run/attempt identities and `overwrite: false`. Retain both artifact IDs and
+source/candidate/core/Gleam/join/archive SHA-256 values in the job summary. A fresh
+runner rebuild is another candidate; it does not establish identical released
+bytes. A later release consumes accepted exact bytes and revalidates their
+handoffs before signing/promotion.
 
-Acceptance includes remote-ref/annotated-tag/error/moved-tag fixtures, exact
-source-digest checks, workflow syntax and permission checks, plus the existing
-candidate builders and container joins. A local passing fixture does not count
-as an executed GitHub runner or installed native/systemd qualification. License/
-notices, stable accepted-byte rerun, Mac signing/DMG/Cask/Sparkle, public-channel
-readback and site promotion remain the release pipeline's separate work.
+Acceptance includes remote-ref/annotated-tag/error/moved-tag and exact source-digest
+fixtures; workflow syntax, step-order, permissions and credential-scope checks;
+and both candidate/source-evidence receivers joined to full retained target
+artifacts. Authoring/static/local container evidence is separate from a hosted
+GitHub run, native amd64/default JIT, booted systemd and installed qualification.
+No workflow push or dispatch follows from implementing this sequence. Publisher/
+rights, generated/toolchain, signing, public readback and channel/site promotion
+remain separate release gates, with publication authority none.
 
 ### Candidate archive handoff
 

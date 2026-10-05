@@ -1328,3 +1328,33 @@ This does not authenticate a hosted workflow or compiler execution; the
 [handoff contract](../host/linux.md#dependency-source-receipt-archive-handoff)
 keeps rights/publisher, generated/toolchain, installed/systemd and production
 release acceptance separate, with publication authority none.
+
+### Ubuntu workflow source evidence sequence
+
+**Observation:** 2026-10-05. The manual Ubuntu workflow now composes source
+receipt admission, prepared fetched metadata, target/container acceptance,
+receipt replay and captured-source joining before separate candidate/evidence
+USTAR receivers. Independently retained hashes bind the received source evidence
+to the received candidate. Separate remote checks surround token-free transport;
+source gates and candidate acceptance receive no job token. The existing Ubuntu
+build/preparation step still uses a read-only token for its public pinned Gleam
+`gh release download`, so the build is not described as credential-free.
+
+Pinned Gleam's inspected checksum-cache function uses `dirs_next::cache_dir()`.
+Locked `dirs-next` 2.0.0
+[`lin.rs`](https://github.com/xdg-rs/dirs/blob/1e1aae3136f09ae78495a806d3126a95ea0707dd/src/lin.rs)
+uses an absolute `XDG_CACHE_HOME` or the user's `.cache` fallback. The workflow
+selects a private absolute runner-temporary XDG root before fetching and admits
+archives at `gleam/hex/hexpm/packages` below it; private Hex inputs have their own
+runner-temporary root. Missing/differing fetched archives refuse. Both final
+archives have separate unchanged-digest checks and single-file non-ZIP uploads,
+with distinct run/attempt identities, `overwrite: false` and both IDs/hashes in
+the summary, under the previously inspected pinned upload-artifact contract.
+
+Nine remote/source/workflow fixtures and policy checks pass. Actual full GNU TAR
+source-evidence joins/replays for both received target candidates are recorded
+above; they exercise library/container boundaries, not an executed hosted matrix.
+No workflow was pushed or dispatched. The
+[workflow contract](../architecture/install-and-guide.md#ubuntu-candidate-workflow)
+keeps hosted/native CPU/systemd/installed, publisher/rights, generated/compiler and
+production release evidence independent, with publication authority none.

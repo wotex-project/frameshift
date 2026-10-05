@@ -209,6 +209,8 @@ check_release() {
   mise exec -- node --check "$repository_root/release/workflow.mjs"
   mise exec -- node --check "$repository_root/release/workflow-cli.mjs"
   mise exec -- node --check "$repository_root/release/ustar.mjs"
+  mise exec -- node --check "$repository_root/release/material-receipts.mjs"
+  mise exec -- node --check "$repository_root/release/material-handoff.mjs"
   for source in "$repository_root"/release/linux/*.mjs; do mise exec -- node --check "$source"; done
   for source in "$repository_root"/release/macos/*.mjs; do mise exec -- node --check "$source"; done
   (

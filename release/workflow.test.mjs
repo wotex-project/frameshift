@@ -145,6 +145,24 @@ test('the candidate workflow exposes only explicit manual staging and pinned act
   assert.match(workflow, /archive: false/);
   assert.match(workflow, /overwrite: false/);
   assert.match(workflow, /github\.run_attempt/);
+  assert.match(workflow, /steps\.archive\.outputs\.material_archive_sha256/);
+  assert.match(workflow, /steps\.material\.outputs\.core_receipt_sha256/); assert.match(workflow, /steps\.material\.outputs\.gleam_receipt_sha256/);
+  assert.match(workflow, /steps\.joined\.outputs\.candidate_record_sha256/); assert.match(workflow, /steps\.joined\.outputs\.dependency_inputs_sha256/);
+  assert.match(workflow, /stage-linux-material[^\n]+archive-handoff\/ubuntu-candidate/);
+  const stages = ['Fetch exact locked build material', 'Prepare and verify locked dependency sources', 'Build the tagged target candidate', 'Install and check exact candidate bytes', 'Replay source receipts and join captured dependency inputs', 'Recheck remote identity before transport', 'Preserve and receive exact candidate and source evidence bytes', 'Recheck remote identity after both receivers', 'Verify retained archive digests before upload', 'Retain an independent candidate attempt', 'Retain independently verified source evidence'];
+  const positions = stages.map(name => workflow.indexOf('- name: ' + name));
+  assert.ok(positions.every((position, index) => position >= 0 && (index === 0 || position > positions[index - 1])));
+  const fetch = workflow.slice(positions[0], positions[1]), preparation = workflow.slice(positions[1], positions[2]), build = workflow.slice(positions[2], positions[3]), replay = workflow.slice(positions[4], positions[5]), transport = workflow.slice(positions[6], positions[7]);
+  assert.match(fetch, /RUNNER_TEMP\/frameshift-hex/); assert.match(fetch, /RUNNER_TEMP\/frameshift-gleam-cache/);
+  assert.match(fetch, /XDG_CACHE_HOME/); assert.match(fetch, /mix local\.hex 2\.5\.1/); assert.match(fetch, /mix deps\.get --check-locked/);
+  assert.match(preparation, /prepare-gleam-metadata/); assert.match(preparation, /check-core-material/); assert.match(preparation, /check-gleam-material/);
+  assert.match(preparation, /\$XDG_CACHE_HOME\/gleam\/hex\/hexpm\/packages/);
+  assert.match(replay, /check-core-material/); assert.match(replay, /check-gleam-material/); assert.match(replay, /check-linux-material/);
+  assert.match(build, /GH_TOKEN/); // Existing public pinned Gleam download in preparation.
+  assert.doesNotMatch(fetch + preparation + replay + transport, /GH_TOKEN|secrets/);
+  const uploaded = [...workflow.matchAll(/path: (var\/[^\n]+)\n\s+archive: false/g)].map(match => match[1]).sort();
+  assert.deepEqual(uploaded, ['var/ubuntu-candidate.tar', 'var/ubuntu-material.tar']);
+  assert.match(workflow, /steps\.retain-material\.outputs\.artifact-id/);
 });
 
 test('Mac workflow stages explicit native candidates with pinned read-only authority and exact transport identities', () => {

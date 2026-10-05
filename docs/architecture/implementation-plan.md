@@ -559,10 +559,10 @@ inside an asserted Git source proof, source/schema/byte/custody conflicts and
 child-time mutation refuse; final static checks follow all children. The full
 retained arm64 and amd64 container candidates each join 1,457 source facts, seven
 generated inputs and 45 captured Git metadata facts with unchanged replay.
-Integrate source admission and verified receipt transport into Ubuntu's manual
-candidate workflow next. Compiler/generated execution, independent publisher/
-rights, hosted/native installed and production distribution remain separate
-gates with publication authority none.
+The manual Ubuntu workflow now carries source admission and verified receipt
+transport under the sequence below. Compiler/generated execution, independent
+publisher/rights, hosted/native installed and production distribution remain
+separate gates with publication authority none.
 
 Ubuntu source-evidence transport now admits a separate fixed four-member private
 USTAR through the shared Mac/Ubuntu receiver. Independent archive, candidate and
@@ -573,9 +573,24 @@ partial/aliased/changed custody and child-time mutation refuse; final static
 archive/evidence/full-candidate checks follow source children. Both full Ubuntu
 container candidates receive actual verifier receipts through pinned GNU TAR and
 retain unchanged handoff/source-receipt replay. The Mac profile keeps its record
-and byte identity. Continue manual Ubuntu workflow sequencing and compiler/
-generated-code qualification; neither local transport nor immutable artifact IDs
+and byte identity. The manual workflow now carries both receipt receivers;
+continue compiler/generated-code qualification. Neither transport nor artifact IDs
 establish hosted, publisher/rights, installed/systemd or publication authority.
+
+The manual Ubuntu candidate workflow now prepares fixed generated metadata,
+admits core/Gleam source receipts, runs target/container acceptance, replays the
+receipts and joins captured source assertions before transport. Separate remote
+checks surround token-free TAR/source-evidence receivers; the build/preparation
+step retains its existing read-only token for the public pinned Gleam download.
+Both candidate/evidence archives are independently hashed, verified against the
+received candidate and retained as distinct immutable attempts with all receipt
+hashes/artifact IDs. Private runner-temporary Hex/XDG cache roots follow the
+inspected pinned upstream cache contract. Workflow/refusal and policy fixtures
+pass; actual full GNU receiver joins for both target tuples complement static
+workflow evidence. No hosted workflow was pushed or dispatched. Continue bounded
+license/notices collection and compiler/generated material qualification; publisher
+rights, hosted/native-installed/systemd and production distribution remain
+independent evidence gates, with publication authority none.
 
 ## Shared contracts
 

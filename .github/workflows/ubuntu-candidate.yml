@@ -113,28 +113,80 @@ jobs:
           node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
       - name: Fetch exact locked build material
         run: |
+          install -d -m 700 "$RUNNER_TEMP/frameshift-hex" "$RUNNER_TEMP/frameshift-gleam-cache"
+          printf 'HEX_HOME=%s\nXDG_CACHE_HOME=%s\n' "$RUNNER_TEMP/frameshift-hex" "$RUNNER_TEMP/frameshift-gleam-cache" >> "$GITHUB_ENV"
+          export HEX_HOME="$RUNNER_TEMP/frameshift-hex"
+          export XDG_CACHE_HOME="$RUNNER_TEMP/frameshift-gleam-cache"
           cd apps/core
           mix local.hex 2.5.1 --force
+          mix local.rebar --force
           mix deps.get --check-locked
           cd ../../packages/decision-kernel
           gleam deps download
+      - name: Prepare and verify locked dependency sources
+        id: material
+        run: |
+          ./scripts/prepare-gleam-metadata "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json"
+          ./scripts/check-core-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$HEX_HOME/packages/hexpm" "$PWD/var/core-material"
+          ./scripts/check-gleam-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$XDG_CACHE_HOME/gleam/hex/hexpm/packages" "$PWD/var/gleam-material"
+          core_sha256=$(sha256sum var/core-material/core-material.json | cut -d ' ' -f 1)
+          gleam_sha256=$(sha256sum var/gleam-material/gleam-material.json | cut -d ' ' -f 1)
+          printf 'core_receipt_sha256=%s\ngleam_receipt_sha256=%s\n' "$core_sha256" "$gleam_sha256" >> "$GITHUB_OUTPUT"
       - name: Build the tagged target candidate
         env:
           GH_TOKEN: ${{ github.token }}
         run: ./scripts/package-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate"
       - name: Install and check exact candidate bytes
         run: ./scripts/check-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate"
-      - name: Recheck remote tag and preserve candidate modes
-        id: archive
+      - name: Replay source receipts and join captured dependency inputs
+        id: joined
+        env:
+          CORE_SHA256: ${{ steps.material.outputs.core_receipt_sha256 }}
+          GLEAM_SHA256: ${{ steps.material.outputs.gleam_receipt_sha256 }}
+        run: |
+          ./scripts/check-core-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$HEX_HOME/packages/hexpm" "$PWD/var/core-material"
+          ./scripts/check-gleam-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$XDG_CACHE_HOME/gleam/hex/hexpm/packages" "$PWD/var/gleam-material"
+          candidate_sha256=$(sha256sum var/ubuntu-candidate/candidate.json | cut -d ' ' -f 1)
+          ./scripts/check-linux-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate" "$candidate_sha256" "$PWD/var/core-material/core-material.json" "$CORE_SHA256" "$PWD/var/gleam-material/gleam-material.json" "$GLEAM_SHA256" "$PWD/var/dependency-inputs"
+          joined_sha256=$(sha256sum var/dependency-inputs/dependency-inputs.json | cut -d ' ' -f 1)
+          printf 'candidate_record_sha256=%s\ndependency_inputs_sha256=%s\n' "$candidate_sha256" "$joined_sha256" >> "$GITHUB_OUTPUT"
+      - name: Recheck remote identity before transport
         env:
           GH_TOKEN: ${{ github.token }}
+        run: node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
+      - name: Preserve and receive exact candidate and source evidence bytes
+        id: archive
+        env:
+          CANDIDATE_SHA256: ${{ steps.joined.outputs.candidate_record_sha256 }}
+          CORE_SHA256: ${{ steps.material.outputs.core_receipt_sha256 }}
+          GLEAM_SHA256: ${{ steps.material.outputs.gleam_receipt_sha256 }}
+          JOIN_SHA256: ${{ steps.joined.outputs.dependency_inputs_sha256 }}
         run: |
-          node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
           tar --format=ustar --hard-dereference -cf var/ubuntu-candidate.tar -C var ubuntu-candidate
+          chmod 600 var/ubuntu-candidate.tar
           ./scripts/package-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate"
           archive_sha256=$(sha256sum var/ubuntu-candidate.tar | cut -d ' ' -f 1)
           ./scripts/stage-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate.tar" "$archive_sha256" "$PWD/var/archive-handoff"
-          printf 'archive_sha256=%s\n' "$archive_sha256" >> "$GITHUB_OUTPUT"
+          install -d -m 700 var/ubuntu-material
+          install -m 600 var/core-material/core-material.json var/ubuntu-material/core-material.json
+          install -m 600 var/gleam-material/gleam-material.json var/ubuntu-material/gleam-material.json
+          install -m 600 var/dependency-inputs/dependency-inputs.json var/ubuntu-material/dependency-inputs.json
+          tar --format=ustar --hard-dereference -cf var/ubuntu-material.tar -C var ubuntu-material
+          chmod 600 var/ubuntu-material.tar
+          material_archive_sha256=$(sha256sum var/ubuntu-material.tar | cut -d ' ' -f 1)
+          ./scripts/stage-linux-material "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/archive-handoff/ubuntu-candidate" "$CANDIDATE_SHA256" "$PWD/var/ubuntu-material.tar" "$material_archive_sha256" "$CORE_SHA256" "$GLEAM_SHA256" "$JOIN_SHA256" "$PWD/var/material-handoff"
+          printf 'archive_sha256=%s\nmaterial_archive_sha256=%s\n' "$archive_sha256" "$material_archive_sha256" >> "$GITHUB_OUTPUT"
+      - name: Recheck remote identity after both receivers
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
+      - name: Verify retained archive digests before upload
+        env:
+          ARCHIVE_SHA256: ${{ steps.archive.outputs.archive_sha256 }}
+          MATERIAL_ARCHIVE_SHA256: ${{ steps.archive.outputs.material_archive_sha256 }}
+        run: |
+          test "$(sha256sum var/ubuntu-candidate.tar | cut -d ' ' -f 1)" = "$ARCHIVE_SHA256"
+          test "$(sha256sum var/ubuntu-material.tar | cut -d ' ' -f 1)" = "$MATERIAL_ARCHIVE_SHA256"
       - name: Retain an independent candidate attempt
         id: retain
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
@@ -145,13 +197,30 @@ jobs:
           overwrite: false
           if-no-files-found: error
           retention-days: 14
-      - name: Record the exact candidate handoff identity
+      - name: Retain independently verified source evidence
+        id: retain-material
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ubuntu-${{ matrix.architecture }}-source-evidence-${{ needs.source.outputs.tag }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: var/ubuntu-material.tar
+          archive: false
+          overwrite: false
+          if-no-files-found: error
+          retention-days: 14
+      - name: Record the exact candidate and source handoff identities
         env:
           ARCHIVE_SHA256: ${{ steps.archive.outputs.archive_sha256 }}
+          MATERIAL_ARCHIVE_SHA256: ${{ steps.archive.outputs.material_archive_sha256 }}
+          CANDIDATE_SHA256: ${{ steps.joined.outputs.candidate_record_sha256 }}
+          CORE_SHA256: ${{ steps.material.outputs.core_receipt_sha256 }}
+          GLEAM_SHA256: ${{ steps.material.outputs.gleam_receipt_sha256 }}
+          JOIN_SHA256: ${{ steps.joined.outputs.dependency_inputs_sha256 }}
           ARTIFACT_ID: ${{ steps.retain.outputs.artifact-id }}
+          MATERIAL_ARTIFACT_ID: ${{ steps.retain-material.outputs.artifact-id }}
         run: |
           {
-            printf 'Candidate transport only; publication authority none\n\n'
+            printf 'Candidate and source-evidence transport only; publication authority none\n\n'
             printf 'Architecture: %s\n\nSource tag: %s\n\nSource commit: %s\n\nSource record SHA-256: %s\n\n' "$TARGET_ARCHITECTURE" "$SOURCE_TAG" "$SOURCE_COMMIT" "$SOURCE_INPUTS_SHA256"
-            printf 'Archive SHA-256: %s\n\nArtifact ID: %s\n\nRun: %s; attempt: %s\n' "$ARCHIVE_SHA256" "$ARTIFACT_ID" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+            printf 'Candidate record SHA-256: %s\n\nCore receipt SHA-256: %s\n\nGleam receipt SHA-256: %s\n\nDependency join SHA-256: %s\n\n' "$CANDIDATE_SHA256" "$CORE_SHA256" "$GLEAM_SHA256" "$JOIN_SHA256"
+            printf 'Candidate TAR SHA-256: %s\n\nSource-evidence TAR SHA-256: %s\n\nArtifact ID: %s\n\nSource-evidence artifact ID: %s\n\nRun: %s; attempt: %s\n' "$ARCHIVE_SHA256" "$MATERIAL_ARCHIVE_SHA256" "$ARTIFACT_ID" "$MATERIAL_ARTIFACT_ID" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
           } >> "$GITHUB_STEP_SUMMARY"

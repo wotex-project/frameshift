@@ -334,6 +334,16 @@ digests plus both artifact IDs. The workflow has publication authority
 `none`; authoring/static/local software evidence is separate from hosted execution.
 See the [workflow contract](../docs/host/macos.md#native-mac-candidate-workflow).
 
+The manual [Ubuntu workflow](../.github/workflows/ubuntu-candidate.yml) now carries
+prepared metadata and both source receipts through candidate acceptance, receipt
+replay, captured-source join and separate candidate/evidence TAR receivers. It
+verifies evidence against the received candidate and retains independent hashes
+plus both immutable artifact IDs. Private Hex/XDG cache roots are explicit; read
+credentials stay in remote checks and the existing public Gleam build-preparation
+download. Authoring/static/local container evidence does not establish hosted or
+installed/systemd qualification. See the
+[workflow contract](../docs/architecture/install-and-guide.md#ubuntu-candidate-workflow).
+
 `scripts/stage-linux-material TAG COMMIT SOURCE_RECORD arm64|amd64 CANDIDATE
 CANDIDATE_SHA256 ARCHIVE ARCHIVE_SHA256 CORE_SHA256 GLEAM_SHA256 JOIN_SHA256 OUTPUT`
 receives exactly three private source-evidence JSON files under `ubuntu-material/`
