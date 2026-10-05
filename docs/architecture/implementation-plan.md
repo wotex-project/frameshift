@@ -267,7 +267,14 @@ files and exact private-key modes. Special files and changed named custody
 refuse; release CLI errors expose no private path/content or crypto terms.
 Fixtures preserve prior guide/site output on malformed metadata and exercise
 real descriptor mutation. These are local release boundaries, independent of
-production keys, hosted signing and public publication. Booted systemd/native CPU,
+production keys, hosted signing and public publication.
+The public GitHub observer now compares the configured channel's exact existing
+archive/manifest/signature/public-key set, anonymously verifies every file and
+rechecks local/remote identity. Missing/partial/draft outputs cannot pass; moved
+or conflicting material refuses without replacement. `gh` GET transport and
+signed/synthetic-public fixtures are exercised; source/installed/license/signing
+acceptance, actual Frameshift public bytes and authorized upload/promotion remain
+separate R5/R6 work. Booted systemd/native CPU,
 resource/failure, encrypted-key backup and physical identity/storage recovery
 retain their separate qualification. A missing external machine or signing identity does not block those
 software recovery/refusal paths. Development container artifacts remain separate

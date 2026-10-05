@@ -238,6 +238,50 @@ image serves a dedicated bridge/appliance role; it is not the Ubuntu package,
 and its firmware update, credential, persistent-data, and log paths are
 qualified separately. See [Linux host](../host/linux.md).
 
+## Public release reconciliation
+
+`scripts/inspect-release-channel OWNER/REPO MANIFEST SIGNATURE PUBLIC_KEY
+ARTIFACT_DIR TRUST_FILE` observes an independently configured public GitHub
+Releases channel using `gh` GET requests. First verify the owner-pinned local
+signature and exact archives. Every archive URL must name that repository's
+exact `/releases/download/vX.Y.Z/FILENAME`; refuse another channel or any archive
+at or above the channel's 2 GiB limit before network work. The channel is separate
+from the source repository. Its `target_commitish` cannot prove the product
+source commit; exact-source/candidate acceptance remains its upstream boundary.
+
+Require the repository's observed visibility to be public. Query only computed
+repository/tag/asset endpoints with bounded responses and request/processing
+budgets; never follow an API-provided URL or pagination link. A tag endpoint 404
+means `not-published`, not that no draft/ref exists or a new release may be created.
+An inaccessible/malformed response, wrong tag/release ID, private channel or
+prerelease refuses. A draft cannot pass anonymous public acceptance.
+
+The current asset profile contains the manifest's archives plus `manifest.json`,
+`manifest.sig` and `release.pub.pem`. Refuse duplicates, extra/unrecognized assets,
+wrong names/URLs, changed byte counts/digests and unsupported states. Missing
+assets or an interrupted `starter` upload return `incomplete`, retaining all
+remote bytes; they never authorize deletion, replacement or blind retry. Compare
+an API-provided SHA-256 when available, but its absence cannot replace anonymous
+readback and its presence cannot establish the served bytes.
+
+For a complete published set, anonymously stream every archive and all three
+metadata files with the existing HTTPS redirect, deadline, identity-encoding,
+size and SHA-256 rules. Recheck local signed files/archives and the same remote
+repository/release/asset inventory afterward. Any in-flight change refuses.
+An unchanged observation can report `public-bytes-verified`, with publication
+authority `none`; it does not grant source, license/notices, installed, signing
+identity or channel-promotion acceptance. A rerun observes the retained bytes,
+without building, writing a remote ref, uploading, deleting or promoting.
+The CLI emits its bounded JSON observation and exits 0 only for
+`public-bytes-verified`, 2 for incomplete/not-published, 1 for fixed-diagnostic
+refusal and 64 for usage. A passing byte observation still has no release authority.
+
+Acceptance covers signed local joins, zero-request malformed/size/channel refusal,
+published/draft/missing/partial/conflicting states, metadata-digest absence,
+wrong actual public bytes and changed local/remote custody. Fixture APIs and
+responses do not establish a real Frameshift release. A live upstream read may
+check the selected GET transport without changing an external repository.
+
 ## Ubuntu candidate workflow
 
 `.github/workflows/ubuntu-candidate.yml` is a manually dispatched build/check

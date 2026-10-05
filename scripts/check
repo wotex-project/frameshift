@@ -45,6 +45,7 @@ check_policy() {
     "$repository_root/scripts/package-linux-deb" \
     "$repository_root/scripts/package-linux-candidate" \
     "$repository_root/scripts/stage-linux-candidate" \
+    "$repository_root/scripts/inspect-release-channel" \
     "$repository_root/scripts/record-release-inputs" \
     "$repository_root/scripts/verify-release-inputs" \
     "$repository_root/release/linux/policy.sh" \
@@ -179,6 +180,8 @@ check_guide() {
 check_release() {
   mise exec -- node --check "$repository_root/release/manifest.mjs"
   mise exec -- node --check "$repository_root/release/files.mjs"
+  mise exec -- node --check "$repository_root/release/channel.mjs"
+  mise exec -- node --check "$repository_root/release/channel-cli.mjs"
   mise exec -- node --check "$repository_root/release/verify.mjs"
   mise exec -- node --check "$repository_root/release/signer.mjs"
   mise exec -- node --check "$repository_root/release/sign.mjs"
@@ -197,6 +200,7 @@ check_release() {
     "$repository_root/release/manifest.test.mjs" \
     "$repository_root/release/signer.test.mjs" \
     "$repository_root/release/files.test.mjs" \
+    "$repository_root/release/channel.test.mjs" \
     "$repository_root/release/inputs.test.mjs" \
     "$repository_root/release/linux/candidate.test.mjs" \
     "$repository_root/release/linux/ustar.test.mjs" \

@@ -38,6 +38,18 @@ The guide and site assembler use the same admission rather than rereading signed
 metadata through unrestricted file APIs. See
 [local file admission](../docs/architecture/release-manifest.md#local-file-admission).
 
+Inspect an existing public GitHub channel with
+`./scripts/inspect-release-channel OWNER/REPO MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR TRUST_FILE`.
+It verifies the signed local files before bounded `gh` GET requests, checks exact
+repository/release/asset identity, anonymously hashes archives and all three
+detached metadata files, and rechecks custody. URLs must name that configured
+channel's stable tag; archives at or above 2 GiB refuse. Missing published releases
+and partial/starter uploads emit an observation with exit 2. Complete public
+bytes emit exit 0 with publication authority none; conflicts/refusal emit exit 1.
+The command never creates a release/tag, uploads, deletes, replaces or promotes.
+It cannot infer product source provenance from the separate channel repository.
+See [public reconciliation](../docs/architecture/install-and-guide.md#public-release-reconciliation).
+
 The local [site assembler](../docs/architecture/install-and-guide.md#site-assembly-and-local-recovery)
 uses the same verifier before promoting versioned documentation and download
 links. Retained records use `verifyManifestSignature` to recheck the pinned key

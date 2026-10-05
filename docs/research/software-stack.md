@@ -754,3 +754,32 @@ filesystem mutation fixtures and bounded CLI FIFO children pass. These findings
 and checks establish local software behavior; they do not qualify a production
 trust root, installed signing identity, hostile administrator, storage device
 or public release channel.
+
+### Existing public release reconciliation
+
+**Observation:** 2026-10-05. Current GitHub
+[release endpoints](https://docs.github.com/en/rest/releases/releases),
+[asset endpoints](https://docs.github.com/en/rest/releases/assets) and
+[repository metadata](https://docs.github.com/en/rest/repos/repos#get-a-repository)
+are inspected under API version `2026-03-10`. A published tag lookup is not draft
+enumeration: the release-list documentation limits draft visibility to users
+with push access. A 404 therefore cannot prove there is no draft to reconcile.
+Asset responses provide IDs, names, state, size, browser URL and SHA-256 metadata.
+The API documents interrupted `starter` assets; automatic deletion cannot be
+inferred safe from that state alone.
+
+`release/channel.mjs` uses computed bounded `gh` GET endpoints and separately
+verified signed local files. The selected profile observes only the manifest's
+archives plus its detached JSON/signature/public key. Public URLs and channel
+size limits are checked before networking. API digests are compared when present;
+anonymous size/hash readback establishes actual served bytes. The observer then
+checks local material and remote repository/release/asset identity again. It
+never changes visibility, refs, releases, uploads or existing assets, and grants
+no source, installer, licensing or publication authority.
+
+Signed local/software fixtures cover complete/missing/draft/partial/conflicting
+states, zero-request invalid inputs, absent API digests, served-byte tampering,
+in-flight changes, request bounds and CLI exit/refusal semantics. A real `gh`
+read checks the upstream checkout repository, v7.0.1 release/asset endpoint and
+a distinct missing published-tag response. That transport observation does not
+create a Frameshift release or qualify its public bytes.

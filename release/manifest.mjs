@@ -146,9 +146,10 @@ async function downloadDigest(artifact, fetcher) {
   const signal = AbortSignal.timeout(15 * 60 * 1000);
   for (let redirects = 0; redirects <= 5; redirects += 1) {
     const response = await fetcher(url, {
-      redirect: 'manual', signal, headers: { 'accept-encoding': 'identity' },
+      redirect: 'manual', credentials: 'omit', signal, headers: { 'accept-encoding': 'identity' },
     });
     if ([301, 302, 303, 307, 308].includes(response.status)) {
+      await response.body?.cancel().catch(() => {});
       const location = response.headers.get('location');
       if (!location || redirects === 5) throw new Error('release redirect limit exceeded');
       const next = new URL(location, url);
@@ -161,10 +162,12 @@ async function downloadDigest(artifact, fetcher) {
     if (response.status !== 200 || !response.body ||
         (response.headers.get('content-encoding') &&
          response.headers.get('content-encoding') !== 'identity')) {
+      await response.body?.cancel().catch(() => {});
       throw new Error(`public release response refused: ${artifact.file}`);
     }
     const length = response.headers.get('content-length');
     if (length !== null && (!/^[0-9]+$/.test(length) || Number(length) !== artifact.bytes)) {
+      await response.body.cancel().catch(() => {});
       throw new Error(`public release length mismatch: ${artifact.file}`);
     }
     const hash = createHash('sha256');
@@ -182,6 +185,20 @@ async function downloadDigest(artifact, fetcher) {
     }
     return;
   }
+}
+
+// Archives are admitted by parseManifest; the channel observer also uses this
+// bounded byte check for the three detached public metadata files.
+export async function verifyPublishedFile(file, fetcher = fetch) {
+  if (!file || typeof file.file !== 'string' || file.file.length > 128 || !/^[A-Za-z0-9]/.test(file.file) ||
+      /[^A-Za-z0-9._-]/.test(file.file) || file.file.includes('..') ||
+      !Number.isSafeInteger(file.bytes) || file.bytes < 1 || file.bytes > 8 * 1024 * 1024 * 1024 ||
+      typeof file.sha256 !== 'string' || file.sha256.length !== 64 || !/^[0-9a-f]{64}$/.test(file.sha256)) throw new Error('invalid public release file');
+  const url = new URL(file.url);
+  if (url.protocol !== 'https:' || url.username || url.password || url.port || url.search || url.hash ||
+      url.pathname.includes('%') || /(^|\/)latest(\/|$)/i.test(url.pathname) || !url.pathname.endsWith('/' + file.file) ||
+      url.href !== file.url) throw new Error('invalid public release file URL');
+  await downloadDigest(file, fetcher);
 }
 
 export async function verifyPublishedArtifacts(manifest, fetcher = fetch) {

@@ -102,6 +102,12 @@ independent.
 
 ## Frozen source inputs
 
+The [public release observer](install-and-guide.md#public-release-reconciliation)
+separately joins exact signed local files to a configured public GitHub channel,
+its retained asset inventory and anonymous archive/metadata readback. A partial
+or missing published set cannot promote; the observation grants no release
+authority and never changes remote bytes or proves the product source commit.
+
 Before a stable installer build, `scripts/record-release-inputs TAG COMMIT OUTPUT`
 records a clean exact source checkout in a new private output directory. `TAG`
 is the existing stable `vX.Y.Z`; `COMMIT` is its independently supplied 40-hex
