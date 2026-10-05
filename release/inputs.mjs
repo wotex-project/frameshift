@@ -158,4 +158,5 @@ export async function verifyInputs(repository, tag, commit, path) {
   const current = await captureInputs(repository, tag, commit);
   sameCapture(current, await captureInputs(repository, tag, commit));
   if (previous !== encoded(current)) throw new Error('source differs from frozen input record');
+  return current;
 }

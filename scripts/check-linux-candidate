@@ -1,0 +1,27 @@
+#!/bin/sh
+set -eu
+repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+[ "$#" = 5 ] || { echo 'usage: check-linux-candidate TAG COMMIT SOURCE_RECORD arm64|amd64 OUTPUT' >&2; exit 64; }
+case "$4" in arm64|amd64) architecture=$4 ;; *) exit 64 ;; esac
+[ -f "$5/candidate.json" ] && [ ! -L "$5/candidate.json" ] || exit 69
+version=${1#v}
+context=$(mktemp -d "${TMPDIR:-/tmp}/frameshift-candidate-check.XXXXXXXX")
+trap 'rm -rf "$context"' EXIT HUP INT TERM
+mkdir "$context/archive" "$context/fixtures"
+mise exec -- node "$repository_root/release/linux/candidate-copy.mjs" "$@" "$context/archive"
+cp "$repository_root/release/linux/check-candidate" "$repository_root/release/linux/check-closure" \
+  "$repository_root/release/linux/closure-check.exs" "$repository_root/release/linux/verify-store.exs" \
+  "$repository_root/release/linux/maintenance-check.exs" "$repository_root/release/linux/verify-maintenance.exs" \
+  "$repository_root/apps/core/test/fixtures/canonical-jpeg.jpg" "$repository_root/apps/core/test/fixtures/canonical-jpeg.rgba" "$context/fixtures/"
+cp "$repository_root/release/linux/candidate-check.Dockerfile" "$context/Dockerfile"
+daemon_architecture=$(docker info --format '{{.Architecture}}')
+case "$architecture:$daemon_architecture" in
+  amd64:x86_64|amd64:amd64|arm64:aarch64|arm64:arm64) fixture_erl_flags='' ;;
+  *) fixture_erl_flags='+JMsingle true' ;;
+esac
+docker build --platform "linux/$architecture" --build-arg "FIXTURE_ERL_FLAGS=$fixture_erl_flags" \
+  --build-arg "EXPECTED_VERSION=$version" --tag "frameshift-candidate-$architecture:fixture" "$context"
+docker run --rm --platform "linux/$architecture" --network none --memory 1g --memory-swap 1g --pids-limit 512 \
+  "frameshift-candidate-$architecture:fixture"
+# Detect changed original source/artifacts after the joined fixture as well.
+"$repository_root/scripts/package-linux-candidate" "$@"

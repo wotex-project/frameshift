@@ -632,3 +632,30 @@ record exposes hashes/relative paths and no publication authority. It cannot
 prove ignored dependency cache bytes, native artifacts, an owner-authorized
 remote tag, license selection, signing or installed qualification. Those remain
 producer/workflow gates even after source capture passes.
+
+### Tagged Ubuntu build and package handoff
+
+**Observation:** 2026-10-05. The current
+[Mix 1.20.4 release contract](https://mix.hexdocs.pm/Mix.Tasks.Release.html)
+requires matching target architecture, OS and ABI for the runtime and NIFs,
+and describes a build-only single JIT mapping for emulation. Frameshift keeps
+its pinned Ubuntu 24.04 target compilation and ELF inspection; a stable tag does
+not authorize copying a Mac NIF or relabelling a development runtime. The
+[selected Ubuntu dpkg-deb interface](https://manpages.ubuntu.com/manpages/noble/man1/dpkg-deb.1.html)
+supplies archive metadata and root-owned package construction. Final package
+version is the stable application version, with no development fixture suffix.
+
+`release/linux/prepare-context` now owns the preparation shared by development
+and tagged candidates. Tagged source capture is checked before and after that
+work; every copied project input is compared with the frozen inventory. Actual
+dependency caches, tool archives and native bytes are additionally inventoried,
+with their provenance assertion limited to captured bytes. The native build
+consults generated core `.app`, `.rel` and start metadata; package construction
+repeats the version check in a clean bundled VM. Runtime-to-package copying and
+post-build context checks retain exact hashes rather than relying on filenames.
+
+Private candidate records never grant release authority. Fixture source has an
+isolated test-only tag/version; complete source/runtime/package/artifact records
+remain separate from trusted signing, notices, qualified installed runners and
+public channel acceptance. An identical retained candidate verifies without a
+new build, because repeating a build does not itself establish identical bytes.

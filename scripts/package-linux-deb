@@ -15,6 +15,12 @@ chmod 700 "$context"
 cp -R "$runtime/root" "$context/root"
 cp -R "$repository_root/release/linux" "$context/linux"
 mise exec -- node "$repository_root/release/linux/record-package.mjs" "$repository_root" "$context" "$architecture" "$3"
+daemon_architecture=$(docker info --format '{{.Architecture}}')
+case "$architecture:$daemon_architecture" in
+  amd64:x86_64|amd64:amd64|arm64:aarch64|arm64:arm64) fixture_erl_flags='' ;;
+  *) fixture_erl_flags='+JMsingle true' ;;
+esac
 docker build --platform "linux/$architecture" --file "$context/linux/deb.Dockerfile" \
-  --build-arg "PACKAGE_REVISION=$3" --target artifact --output "type=local,dest=$output" "$context"
+  --build-arg "PACKAGE_VERSION=$3" --build-arg "FIXTURE_ERL_FLAGS=$fixture_erl_flags" \
+  --target artifact --output "type=local,dest=$output" "$context"
 printf 'Development DEB %s revision %s: %s\n' "$architecture" "$3" "$output"

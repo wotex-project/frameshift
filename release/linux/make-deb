@@ -1,13 +1,26 @@
 #!/bin/sh
 set -eu
-case "${1:-}" in ''|0*|*[!0-9]*) exit 64 ;; esac
-[ "$1" -le 9999 ] && [ "$#" = 1 ] || exit 64
-version="0.1.0~dev+fixture$1"
+[ "$#" = 2 ] || exit 64
+case "$1" in
+  --development)
+    case "$2" in ''|0*|*[!0-9]*) exit 64 ;; esac
+    [ "$2" -le 9999 ] || exit 64
+    version="0.1.0~dev+fixture$2"
+    application_version=0.1.0-dev ;;
+  --candidate)
+    [ "${#2}" -le 32 ] && printf '%s\n' "$2" | grep -Eq '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$' || exit 64
+    version=$2
+    application_version=$2 ;;
+  *) exit 64 ;;
+esac
 architecture=$(dpkg --print-architecture)
 case "$architecture" in arm64|amd64) ;; *) exit 64 ;; esac
 stage=/runtime/root
 [ -f "$stage/usr/share/doc/frameshift/build-inputs.json" ]
 if find "$stage" -type l | grep -q .; then echo 'development package requires a self-contained regular tree' >&2; exit 1; fi
+release="$stage/usr/lib/frameshift/core/releases/$application_version"
+"$release/elixir" --boot "$release/start_clean" --boot-var RELEASE_LIB "$stage/usr/lib/frameshift/core/lib" \
+  /linux/verify-version.exs "$stage/usr/lib/frameshift/core" "$application_version"
 # Current package scripts/public policy replace only the development runtime's copies.
 cp /linux/policy.sh /linux/provision-runtime /linux/launch-service /linux/maintenance-entrypoint "$stage/usr/lib/frameshift/"
 cp /linux/frameshiftctl /linux/frameshift-identity /linux/frameshift-maintenance "$stage/usr/bin/"
@@ -31,7 +44,7 @@ done </package/files
 libraries=$(sed -n 's/^shlibs:Depends=//p' /out/shlibdeps.txt)
 [ -n "$libraries" ]
 # These bytes are developer metadata, not a selected project license or release notice set.
-printf '%s\n' 'Development fixture only. Project license, third-party release notices, signing and installed qualification remain publication gates.' >"$stage/usr/share/doc/frameshift/development-notice.txt"
+printf '%s\n' 'Build candidate only. Project license, third-party release notices, signing and installed qualification remain publication gates.' >"$stage/usr/share/doc/frameshift/candidate-notice.txt"
 find "$stage/usr" -type d -printf '%p %m\n' | sort | sed "s|^$stage||" >/package/directories
 for script in preinst postinst prerm postrm; do
   sed "s/@PACKAGE_VERSION@/$version/g; s/@ARCHITECTURE@/$architecture/g" "/linux/debian/$script" |

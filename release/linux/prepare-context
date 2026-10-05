@@ -1,0 +1,46 @@
+#!/bin/sh
+set -eu
+[ "$#" = 3 ] || exit 64
+repository_root=$1
+context=$2
+architecture=$3
+case "$architecture" in arm64|amd64) ;; *) exit 64 ;; esac
+mkdir -p "$context/apps/core" "$context/packages/decision-kernel" "$context/mix-archives" "$context/gleam-download"
+# Only code/locked dependency material enters the build; no Hex/user configuration.
+rsync -a --exclude '_build' --exclude '.git/config' --exclude '.git/hooks' --exclude '.git/logs' \
+  --exclude '*.so' --exclude '*.dylib' --exclude '*.o' --exclude '*.a' --exclude '*.beam' --exclude 'priv/spawner' \
+  "$repository_root/apps/core/lib" "$repository_root/apps/core/config" "$repository_root/apps/core/rel" \
+  "$repository_root/apps/core/deps" "$repository_root/apps/core/mix.exs" "$repository_root/apps/core/mix.lock" \
+  "$context/apps/core/"
+# Recreate only public Git metadata required by Mix's locked sparse checkouts.
+for dependency in wotex wotex_runtime wotex_binding_http; do
+  checkout="$context/apps/core/deps/$dependency"
+  test "$(git -C "$checkout" rev-parse HEAD)" = c8c727a7c8c18fec82d80cc5ba88d246af3c67fc
+  git -C "$checkout" config core.repositoryformatversion 0
+  git -C "$checkout" config core.bare false
+  git -C "$checkout" config core.sparseCheckout true
+  git -C "$checkout" config remote.origin.url https://github.com/wotex-project/wotex.git
+done
+rsync -a --exclude 'build' "$repository_root/packages/decision-kernel/" "$context/packages/decision-kernel/"
+mkdir -p "$context/packages/decision-kernel/build"
+cp -R "$repository_root/packages/decision-kernel/build/packages" "$context/packages/decision-kernel/build/packages"
+rsync -a --exclude 'target' "$repository_root/codec/" "$context/codec/"
+cp -R "$repository_root/release/linux" "$context/linux"
+cp -R "$repository_root/protocol" "$context/protocol"
+mix_archives=$(mise exec -- elixir -e 'IO.write(Mix.path_for(:archives))')
+cp -R "$mix_archives/hex-2.5.1" "$context/mix-archives/"
+case "$architecture" in
+  arm64) target=aarch64; gleam_hash=ea08a64846677f36da7f2e9163c4393dd9a9dee814d13a8fb28fbe7dcbf32f6d ;;
+  amd64) target=x86_64; gleam_hash=4955a38c2e8c99457458e2471472ccd5ee3c45bd7637a315ce33bccf0dd75d9e ;;
+esac
+archive="gleam-v1.18.1-$target-unknown-linux-musl.tar.gz"
+gh release download v1.18.1 -R gleam-lang/gleam --pattern "$archive" --dir "$context/gleam-download"
+test "$(shasum -a 256 "$context/gleam-download/$archive" | cut -d ' ' -f1)" = "$gleam_hash"
+tar -xzf "$context/gleam-download/$archive" -C "$context" gleam
+(
+  cd "$repository_root/renderer"
+  test "$(mise exec -- zig version)" = 0.16.0
+  mise exec -- zig build -Dtarget="$target-linux-musl" -Doptimize=ReleaseSafe --prefix "$context/raster"
+)
+cp "$context/raster/bin/frameshift-raster" "$context/frameshift-raster"
+printf '%s\n' "$gleam_hash" >"$context/gleam.sha256"

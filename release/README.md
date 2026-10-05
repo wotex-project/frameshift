@@ -166,3 +166,31 @@ exercise source, version, hidden-change, post-build and output refusal paths in
 `./scripts/check release`. The
 [frozen input contract](../docs/architecture/release-manifest.md#frozen-source-inputs)
 owns the format and lifecycle.
+
+## Tagged Ubuntu candidates
+
+For an existing clean stable tag whose core version agrees, first capture its
+source as above, then run
+`./scripts/package-linux-candidate TAG COMMIT SOURCE_RECORD arm64|amd64 OUTPUT`.
+The private output contains a freshly compiled Ubuntu runtime, one matching
+`frameshift_X.Y.Z_ARCH.deb`, runtime/packaging/source input records, actual build
+package versions, ELF closure and `candidate.json`. It does not reuse or relabel
+the existing development runtime. The source and copied project bytes must match;
+actual dependency/tool material is hashed as captured, without claiming upstream
+provenance or licensing. Generated `.app`, `.rel`, start metadata and DEB versions
+agree. The copied runtime and post-build material are checked again before the
+final record is synchronized. Current `0.1.0-dev` main refuses this command.
+
+A complete identical rerun verifies the original files without recompilation or
+rewriting. Changed, unsafe or interrupted output is retained and refused. Use
+`./scripts/check-linux-candidate TAG COMMIT SOURCE_RECORD ARCH OUTPUT` for actual
+clean-container installation, exact archive-handoff verification, matching
+dpkg/watermark/CLI identity, private PNG/JPEG, peer/group, restart/crash-custody,
+backup/restore and protected identity joins. Emulated builds/checks record or use
+the fixture JIT setting; shipped launchers retain native policy.
+
+These records have publication authority **none**. Complete notices/licensing,
+installed native/systemd and failure qualification, trusted signing, public
+archive readback and channel/site promotion remain required. The
+[tagged candidate contract](../docs/architecture/release-manifest.md#ubuntu-tagged-build-candidates)
+owns acceptance and refusal; neither command creates a tag, pushes or publishes.

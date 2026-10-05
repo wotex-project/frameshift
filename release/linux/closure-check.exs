@@ -16,10 +16,13 @@ defmodule FrameshiftLinuxClosureFixture do
 
     unsafe_directories()
 
-    {"frameshiftctl 0.1.0-dev\n", 0} = cli("frame-control", ["--version"])
+    version = System.get_env("FRAMESHIFT_FIXTURE_VERSION", "0.1.0-dev")
+    cli_version = "frameshiftctl #{version}\n"
+    identity_version = "frameshift-identity #{version}\n"
+    {^cli_version, 0} = cli("frame-control", ["--version"])
     {_, 0} = cli("frame-observer", ["--help"])
 
-    {"frameshift-identity 0.1.0-dev\n", 0} =
+    {^identity_version, 0} =
       System.cmd("runuser", [
         "-u",
         "frameshift",
@@ -40,7 +43,7 @@ defmodule FrameshiftLinuxClosureFixture do
     false = File.exists?("/var/lib/frameshift/metadata.sqlite")
     {_, 69} = cli("frame-control", ["state"])
 
-    {"frameshiftctl 0.1.0-dev\n", 0} =
+    {^cli_version, 0} =
       cli("frame-control", ["--version"], [
         {"FRAMESHIFT_SERVICE_UID", "0"},
         {"ERL_FLAGS", "invalid"}

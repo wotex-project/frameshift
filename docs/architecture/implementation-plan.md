@@ -243,8 +243,14 @@ Actual Git/Mix fixtures refuse dirty/moved/version-mismatched source, hidden
 content/mode changes, unsafe/conflicting/incomplete outputs and post-build
 mutation. This is source capture with no publication authority; resolved build
 material, native target records and actual runner/installer acceptance remain
-required. Continue target build/version integration and trusted workflow refusal
-while independent native/provider work proceeds. Booted systemd/native CPU,
+required. The R1/R3 tagged Ubuntu candidate now binds the frozen source record
+to copied project material, captured dependency/tool bytes, target-native release
+version descriptors and the exact runtime-to-DEB handoff. Private final records
+retain one stable-version archive and all file hashes with publication authority
+none; identical reruns verify without rebuilding. Container candidate acceptance
+checks exact copied archive bytes, dpkg/watermark/CLI versions and the existing
+import, restart and administrative joins. Continue trusted workflow refusal and
+independent native/provider work. Booted systemd/native CPU,
 resource/failure, encrypted-key backup and physical identity/storage recovery
 retain their separate qualification. A missing external machine or signing identity does not block those
 software recovery/refusal paths. Development container artifacts remain separate

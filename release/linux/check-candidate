@@ -1,0 +1,18 @@
+#!/bin/sh
+set -eu
+set -- /archive/*.deb
+[ "$#" = 1 ] && [ -f "$1" ]
+[ "$(dpkg-deb -f "$1" Version)" = "$FRAMESHIFT_FIXTURE_VERSION" ]
+[ "$(dpkg-deb -f "$1" Architecture)" = "$(dpkg --print-architecture)" ]
+dpkg -i "$1"
+[ "$(cat /var/lib/frameshift/.installed-version)" = "$FRAMESHIFT_FIXTURE_VERSION" ]
+# The candidate archive remains unchanged; only disposable emulated launchers change.
+if [ -n "$ERL_FLAGS" ]; then
+  sed -i "s/ERL_FLAGS='+S/ERL_FLAGS='$ERL_FLAGS +S/" /usr/lib/frameshift/launch-service \
+    /usr/bin/frameshiftctl /usr/bin/frameshift-identity /usr/bin/frameshift-maintenance
+fi
+/fixtures/check-closure
+version=$FRAMESHIFT_FIXTURE_VERSION
+exec /usr/lib/frameshift/core/releases/"$version"/elixir \
+  --boot /usr/lib/frameshift/core/releases/"$version"/start_clean \
+  --boot-var RELEASE_LIB /usr/lib/frameshift/core/lib /fixtures/maintenance-check.exs

@@ -1,46 +1,40 @@
-import { createHash } from 'node:crypto';
-import { execFileSync } from 'node:child_process';
-import { lstatSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
-import { join, relative } from 'node:path';
+import { readFileSync, writeFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { verifyInputs } from '../inputs.mjs';
+import { releaseGit } from '../source.mjs';
+import { images, inventory, sha256 } from './material.mjs';
 
-const [repository, context, architecture, revision] = process.argv.slice(2);
-if (!repository || !context || !['amd64', 'arm64'].includes(architecture) || !/^[1-9][0-9]{0,3}$/.test(revision)) {
-  throw new Error('invalid development package inputs');
+const [repository, context, architecture, revision, sourcePath, tag, commit, ...extra] = process.argv.slice(2);
+if (!repository || !context || !['amd64', 'arm64'].includes(architecture) || extra.length ||
+    (sourcePath ? !tag || !commit || revision !== 'candidate' : !/^[1-9][0-9]{0,3}$/.test(revision) || tag || commit)) {
+  throw new Error('invalid package inputs');
 }
+// Admit regular input custody before reading its metadata.
+const inputs = inventory(context, ['root', 'linux']);
+const source = sourcePath ? await verifyInputs(repository, tag, commit, sourcePath) : null;
 const runtimePath = join(context, 'root/usr/share/doc/frameshift/build-inputs.json');
 const runtimeBytes = readFileSync(runtimePath);
 const runtime = JSON.parse(runtimeBytes);
-if (runtime.schemaVersion !== 1 || runtime.kind !== 'development-closure' || runtime.product !== 'io.frameshift.app' ||
-    runtime.version !== '0.1.0-dev' || runtime.ubuntu !== '24.04' || runtime.architecture !== architecture) {
+if (runtime.schemaVersion !== 1 || runtime.kind !== (source ? 'tagged-closure-candidate' : 'development-closure') || runtime.product !== 'io.frameshift.app' ||
+    runtime.version !== (source?.version ?? '0.1.0-dev') || runtime.ubuntu !== '24.04' || runtime.architecture !== architecture ||
+    (source && (runtime.sourceCommit !== commit || runtime.tag !== tag || runtime.sourceInputsSha256 !== sha256(JSON.stringify(source) + '\n') ||
+      readFileSync(join(context, 'root/usr/share/doc/frameshift/source-inputs.json'), 'utf8') !== JSON.stringify(source) + '\n'))) {
   throw new Error('runtime closure identity mismatch');
 }
-const sha256 = bytes => createHash('sha256').update(bytes).digest('hex');
-const inputs = [];
-function collect(path) {
-  const stat = lstatSync(path);
-  if (stat.isDirectory()) {
-    for (const name of readdirSync(path).sort()) collect(join(path, name));
-  } else if (stat.isFile()) {
-    const bytes = readFileSync(path);
-    inputs.push({ path: relative(context, path), mode: stat.mode & 0o7777, bytes: bytes.length, sha256: sha256(bytes) });
-  } else {
-    throw new Error('package input must be a regular file or directory');
-  }
-}
-collect(join(context, 'root'));
-collect(join(context, 'linux'));
 const record = {
   schemaVersion: 1,
-  kind: 'development-deb',
+  kind: source ? 'tagged-deb-candidate' : 'development-deb',
   product: runtime.product,
   version: runtime.version,
-  packageVersion: `0.1.0~dev+fixture${revision}`,
+  packageVersion: source?.version ?? `0.1.0~dev+fixture${revision}`,
   ubuntu: runtime.ubuntu,
   architecture,
-  sourceCommit: execFileSync('git', ['-C', repository, 'rev-parse', 'HEAD'], { encoding: 'utf8' }).trim(),
-  workingTreeChanged: execFileSync('git', ['-C', repository, 'status', '--porcelain'], { encoding: 'utf8' }).length > 0,
+  sourceCommit: releaseGit(repository, ['rev-parse', 'HEAD']).trim(),
+  workingTreeChanged: releaseGit(repository, ['status', '--porcelain']).length > 0,
+  publicationAuthority: 'none',
+  ...(source ? { tag, sourceInputsSha256: runtime.sourceInputsSha256 } : {}),
   runtimeInputsSha256: sha256(runtimeBytes),
-  image: 'sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55',
+  image: images.runtime,
   inputs,
 };
 writeFileSync(join(context, 'packaging-inputs.json'), `${JSON.stringify(record)}\n`, { flag: 'wx' });

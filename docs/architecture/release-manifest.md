@@ -123,6 +123,51 @@ hidden content/mode change, symlink and conflicting output refusal, and post-bui
 verification that preserves the previous record. Those fixtures do not create a
 Frameshift release or qualify a signing key, runner, installer or remote tag.
 
+## Ubuntu tagged build candidates
+
+`scripts/package-linux-candidate TAG COMMIT SOURCE_RECORD arm64|amd64 OUTPUT`
+consumes the frozen source record above and builds one Ubuntu 24.04 runtime and
+DEB candidate in an absent private output. App, tag, release descriptor and DEB
+versions must be the same stable `X.Y.Z`; development fixture revisions cannot
+be relabelled. The builder uses the same target preparation, pinned images and
+package lifecycle policy as development builds. It neither signs nor publishes.
+
+Before compiling, compare every selected project-owned context input with its
+frozen source hash/mode and inventory the actual copied dependency/tool/native
+material. Check the source again after preparation and after building; compare
+the private context again before accepting outputs. Record upstream material
+as captured bytes, not as proof of its provenance or license. Target compilation
+and ELF closure still run inside the selected Ubuntu image. Emulated build JIT
+settings are recorded and never added to shipped launchers.
+
+Consult the generated core `.app`, release `.rel` and `start_erl.data` before
+runtime export and again before DEB assembly. Refuse a mismatched version,
+architecture or source-record digest. Hash the runtime before copying it into
+packaging and compare the copy; a changed handoff refuses. Retain source/runtime/
+packaging records, actual package versions, ELF closure and final archive digest.
+
+A final private `ubuntu-release-candidate` record covers all retained files and
+the one DEB's size/hash. It is written only after source, context and handoff
+checks pass and files are synchronized. Its publication authority is `none`:
+installed acceptance, license/notices, trusted signing and public readback are
+still required. No file contents, environment dump or private key enters it.
+An identical complete rerun verifies retained bytes without rebuilding or
+rewriting; changed, unsafe or interrupted output refuses and stays available
+for inspection. An existing stable version is never rebuilt over its bytes.
+
+Acceptance joins real Git/Mix source fixtures to version-descriptor and build/
+packaging handoff checks, and separately builds a test-only tagged full product
+in the pinned target image. `scripts/check-linux-candidate` takes the same five
+arguments, verifies the retained candidate without rebuilding, compares copied
+archive bytes with its recorded digest, then installs the actual DEB in a clean
+image. The externally supplied expected version must agree with dpkg metadata,
+retained watermark and bundled command/identity versions. Existing private
+PNG/JPEG, peer/group, restart/crash-custody and administrative recovery fixtures
+run with that version; original source/artifacts verify again afterward. This
+is container acceptance, independent of booted systemd/native installed proof.
+Such a tag is confined to the disposable fixture;
+it does not create a product release or authorize remote publication.
+
 ## Failure and recovery
 
 Reject an unknown schema or platform tuple, malformed signature, changed

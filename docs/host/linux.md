@@ -167,6 +167,15 @@ Development DEBs identify the existing `0.1.0-dev` application with a bounded
 customer download page. Stable app/package/tag/version agreement, licensing,
 signing, native installed lifecycle and public readback remain independent gates.
 
+The tagged candidate builder instead consumes a private frozen source record,
+compiles the exact stable app version in the target image and binds its runtime
+and packaging handoff to final hashes. Its clean-container acceptance checks
+dpkg/watermark/command versions and the existing import, restart and administrative
+joins against the actual archive. Complete reruns verify retained bytes without
+rebuilding. These candidates retain publication authority none under the
+[release input contract](../architecture/release-manifest.md#ubuntu-tagged-build-candidates);
+they do not close native installed, licensing, signing or publication gates.
+
 Acceptance first joins fresh target builds and actual nonroot launch, peer/group
 CLI, PNG/JPEG import, persistence/restart, unsafe-directory refusal and native
 ELF closure in pinned Ubuntu containers. The `linux-deb` lane additionally runs
