@@ -164,6 +164,56 @@ hidden content/mode change, symlink and conflicting output refusal, and post-bui
 verification that preserves the previous record. Those fixtures do not create a
 Frameshift release or qualify a signing key, runner, installer or remote tag.
 
+## Locked core dependency source bytes
+
+`scripts/check-core-material TAG COMMIT SOURCE_RECORD HEX_CACHE OUTPUT` verifies
+the core's already-fetched dependency source against the exact frozen
+`apps/core/mix.lock`. It performs no fetch, dependency update, compilation,
+application start or publication. Admit only bounded literal supported Hex/Git
+lock entries, exact package names/versions/checksums and pinned Git commits.
+The dependency directory must contain exactly those admitted packages.
+
+For each Hex package, read the existing archive through a bounded stable regular
+descriptor and compare its SHA-256 with the frozen outer checksum before parsing.
+Use inspected Hex 2.5.1's memory-only parser with explicit compressed and
+uncompressed ceilings; check package identity and inner checksum too. Compare
+every archive source file with the actual dependency's bounded byte hash and
+validate the generated Hex manifest and metadata. Refuse changed, missing,
+duplicate, unsafe or additional source members. For Git dependencies, compare
+actual regular files/modes with literal committed blobs at the lock's exact
+commit and sparse subtree, ignoring replacement refs and caller Git overrides.
+
+Build directories, private Git metadata and explicitly generated compiler/native
+outputs are outside this source-byte claim; they still require their own producer
+closure/custody checks. Expected archive/blob members always take precedence over
+exclusions. Current exclusions are `_build`, `.elixir_ls`, `.DS_Store`, Git's
+private root metadata, generated `.o`/`.beam`/`.d` files, Exile's `priv/exile.so`
+and `priv/spawner`, Exqlite's `priv/sqlite3_nif.so`/`.a`, FileSystem's
+`priv/mac_listener`, and the five exact EarmarkParser/Erlex `.erl` outputs only
+when their corresponding locked `.xrl`/`.yrl` inputs exist. Do not exclude
+arbitrary Erlang source. Compare admitted file permissions exactly, including
+published `0664` files; special bits and world-writable files refuse.
+Recheck the frozen source, cache namespace and all source
+material before syncing a bounded private receipt in a new owner-only output.
+Complete replay verifies the same receipt without modifying inputs or output;
+partial/conflicting custody refuses and remains retained. The receipt binds the
+source-input digest, dependency/lock identities, parser observations and admitted
+source facts, with publication authority `none`.
+
+Bound the lock to 64 KiB/128 packages, archive input to 64 MiB per package,
+memory-only expansion to 128 MiB per package, source files to 128 MiB each and
+512 MiB total, 8,192 material entries and the receipt to 16 MiB. Use finite
+parser output/child deadlines and a three-minute software processing budget.
+These do not interrupt every filesystem syscall or prove total process-tree
+termination. Acceptance includes actual locked Hex archives and Git blobs,
+source/manifest/archive/lock/namespace/alias mutation, resource refusal and
+unchanged receipt replay against an isolated full source cohort.
+
+This is byte identity relative to caller-approved frozen locks, not independent
+publisher/registry authentication, rights approval, toolchain authenticity,
+generated-code qualification or complete runtime dependency admission. Gleam,
+Swift/OTP/toolchain and non-core components retain their own input gates.
+
 ## Ubuntu tagged build candidates
 
 `scripts/package-linux-candidate TAG COMMIT SOURCE_RECORD arm64|amd64 OUTPUT`

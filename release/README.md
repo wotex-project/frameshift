@@ -330,3 +330,18 @@ receiver custody and retain one archive per independent attempt. Summaries retai
 source, candidate and archive digests. The workflow has publication authority
 `none`; authoring/static/local software evidence is separate from hosted execution.
 See the [workflow contract](../docs/host/macos.md#native-mac-candidate-workflow).
+
+`scripts/check-core-material TAG COMMIT SOURCE_RECORD HEX_CACHE OUTPUT` verifies
+already-fetched core dependency source against the frozen Mix lock. `HEX_CACHE`
+is the existing archive directory, normally `$HEX_HOME/packages/hexpm`. Pinned
+Hex 2.5.1 parses checksum-admitted archives entirely in memory; Git source files
+must match literal locked commits and sparse subtrees. The source directory must
+contain exactly the locked packages. No fetch, update, compilation or application
+start occurs. The private receipt records source identities, parser observations
+and file hashes; unchanged replay leaves its inode and timestamp intact.
+
+Explicit generated outputs stay outside this source claim. The
+[core material contract](../docs/architecture/release-manifest.md#locked-core-dependency-source-bytes)
+lists exclusions, ceilings, refusal/recovery and independent publisher, rights,
+toolchain, generated-code and other-component admission gates. Publication
+authority remains `none`.

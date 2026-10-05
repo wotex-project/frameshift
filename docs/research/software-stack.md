@@ -1021,3 +1021,51 @@ in-flight changes, request bounds and CLI exit/refusal semantics. A real `gh`
 read checks the upstream checkout repository, v7.0.1 release/asset endpoint and
 a distinct missing published-tag response. That transport observation does not
 create a Frameshift release or qualify its public bytes.
+
+### Locked core dependency source admission
+
+**Observation:** 2026-10-05. Inspected Hex 2.5.1
+[`Hex.SCM`](https://github.com/hexpm/hex/blob/v2.5.1/lib/hex/scm.ex)
+compares registry inner/outer checksums and writes a binary schema-two `.hex`
+manifest after extraction. The eight-field Mix Hex lock carries both checksums;
+matching a filename or manifest alone does not establish extracted source bytes.
+The selected offline gate compares the archive's outer SHA-256 with the frozen
+lock before invoking any archive parser, then compares identity/inner checksum,
+raw metadata, SCM fields and every admitted file's bytes and permissions.
+This relies on the caller-approved lock; it does not independently authenticate
+the registry or publisher.
+
+The pinned
+[`mix_hex_tarball`](https://github.com/hexpm/hex/blob/v2.5.1/src/mix_hex_tarball.erl)
+parser exports memory-only unpacking with explicit compressed/expanded ceilings.
+Its vendored hex_core revision is 0.18.0 (`d6a6a5a`). The selected profile uses
+64 MiB input and 128 MiB expansion. The vendored
+[`mix_hex_erl_tar`](https://github.com/hexpm/hex/blob/v2.5.1/src/mix_hex_erl_tar.erl)
+memory extractor returns regular-file contents while omitting other types.
+A separate bounded table inspection is therefore necessary to refuse links,
+FIFOs, devices, unsafe paths and duplicates before projecting file facts.
+The bounded inflate loop uses OTP's
+[`safeInflate`](https://www.erlang.org/doc/apps/erts/zlib.html#safeInflate/2),
+counts each output chunk and refuses over-budget expansion before accumulation.
+No source archive is extracted to disk by the verifier.
+
+Literal Git lock commits and sparse prefixes are compared through sanitized,
+replacement-free Git tree queries; actual bytes must match committed blob hashes
+and modes. Fetch protocols are disabled for those queries. The three current
+Wotex dependencies retain their sparse `packages/…` prefix inside each checkout.
+Source inspection of the admitted package build files identifies five generated
+EarmarkParser/Erlex `.erl` files from locked `.xrl`/`.yrl` grammars and
+FileSystem's generated `priv/mac_listener`, alongside Exile/Exqlite native outputs.
+Only these exact generated-source pairs are excluded; arbitrary `.erl` additions
+refuse. Existing archive members always override exclusions. These generated
+bytes still require independent producer qualification.
+
+Eight real Hex/Git fixture groups cover admission/replay, hidden byte/mode/lock
+changes, SCM/metadata/checksum conflicts, aliases/special files, namespace changes,
+malformed members and finite resource/child refusal. The isolated exact-source
+core cohort passes all 39 Hex archives and three pinned Git dependencies, retaining
+1,380 admitted file facts. Receipt replay preserves inode and timestamp. This is
+local source-byte evidence, not license approval, compiler authenticity, a clean
+runtime derivation, hosted execution or a public release. The
+[owning contract](../architecture/release-manifest.md#locked-core-dependency-source-bytes)
+keeps Gleam/other-component material and producer joins separate.

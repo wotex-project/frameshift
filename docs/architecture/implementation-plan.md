@@ -470,6 +470,17 @@ before signing/notarization and installed channel acceptance; captured cache
 bytes do not establish upstream provenance or licenses, and local test tags do
 not establish public distribution.
 
+The core dependency source-byte gate now compares the exact frozen Mix lock with
+existing Hex archive checksums, package/SCM metadata and every admitted source
+file, plus literal sparse Git blobs/modes. It performs no dependency fetch or
+build. Bounded real archive/Git fixtures and the isolated full core source cohort
+pass private receipt creation and unchanged replay; hidden changes, aliases,
+extra/missing members, invalid archive types, resource excess and mutation refuse.
+Explicit generated compiler/native outputs remain outside this source proof.
+Continue receipt joining to producer inputs and the independent Gleam/Swift/OTP
+material gates; agreement with approved locks does not establish publisher trust,
+licenses, toolchain authenticity, installed acceptance or publication authority.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

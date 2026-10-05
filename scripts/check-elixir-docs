@@ -6,7 +6,7 @@ repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 # The single-quoted AWK programs intentionally contain regular expressions.
 # shellcheck disable=SC2016
 find "$repository_root/apps" "$repository_root/packages" \
-  "$repository_root/scripts" "$repository_root/simulator" \
+  "$repository_root/scripts" "$repository_root/simulator" "$repository_root/release" \
   -type d \( -name deps -o -name _build -o -name build -o -name node_modules \) -prune -o \
   -type f \( -name '*.ex' -o -name '*.exs' \) -print0 |
   xargs -0 awk '
@@ -28,7 +28,8 @@ find "$repository_root/apps" "$repository_root/packages" \
       }
 
       hidden = FILENAME ~ /\/test\// || FILENAME ~ /_test\.exs$/ || \
-        FILENAME ~ /\/migrations[\/.]/ || FILENAME ~ /\/simulator\/container\/receiver\.exs$/
+        FILENAME ~ /\/migrations[\/.]/ || FILENAME ~ /\/simulator\/container\/receiver\.exs$/ || \
+        FILENAME ~ /\/release\/linux\/(closure|deb|maintenance)-check\.exs$/
 
       if (hidden && $0 !~ /^[[:space:]]*@moduledoc false[[:space:]]*$/) {
         print location ": migration and test modules require @moduledoc false" > "/dev/stderr"
