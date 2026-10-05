@@ -2,7 +2,7 @@ import { spawnSync } from 'node:child_process';
 import { lstat } from 'node:fs/promises';
 import { basename, dirname, join, posix, resolve } from 'node:path';
 import { auditMacBundle } from './closure.mjs';
-import { sparkleContainers } from './sparkle-framework.mjs';
+import { sparkleContainers } from '../macos-framework.mjs';
 
 const run = (command, args) => {
   const result = spawnSync(command, args, { encoding: 'utf8', timeout: 15_000, maxBuffer: 64 * 1024 });

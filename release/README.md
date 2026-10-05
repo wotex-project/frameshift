@@ -98,7 +98,8 @@ archive and signed-feed interoperability, not application update or production k
 `mise exec -- node release/macos/sparkle-framework-fixture.mjs SPARKLE_SPM_ZIP`
 qualifies the exact pinned Sparkle 2.10.0 SDK on an arm64 Mac. It preserves the
 framework's aliases, verifies both CPU metadata and nested ad-hoc seals, and
-runs a real controller initialization with the updater stopped. It checks no
+runs a real controller initialization with the updater stopped, then verifies
+BSD USTAR link/closure/seal readback. It checks no
 channel and establishes no installed-update or production-signing evidence.
 The [framework custody contract](../docs/host/macos.md#embedded-sparkle-framework-custody)
 owns this bounded profile; missing SDK provenance and unsupported transports

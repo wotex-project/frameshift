@@ -1,6 +1,7 @@
 import { createHash } from 'node:crypto';
-import { constants, closeSync, fchmodSync, fstatSync, fsyncSync, lstatSync, mkdirSync, opendirSync, openSync, readSync, statfsSync, writeSync } from 'node:fs';
+import { constants, closeSync, fchmodSync, fstatSync, fsyncSync, lstatSync, mkdirSync, opendirSync, openSync, readlinkSync, readSync, statfsSync, symlinkSync, writeSync } from 'node:fs';
 import { dirname, join } from 'node:path';
+import { sparkleLinks, sparkleRoot } from './macos-framework.mjs';
 
 const archiveProfiles = {
   'ubuntu-candidate': { archive: 1024 * 1024 * 1024, file: 512 * 1024 * 1024, entries: 65_536 },
@@ -57,15 +58,25 @@ function members(fd, size, deadline, root, profile) {
           throw new Error('missing USTAR parent directory');
         }
       }
+      const links = entries.filter(entry => entry.link !== undefined);
+      if (links.length) {
+        if (links.length !== sparkleLinks.size) throw new Error('incomplete framework USTAR links');
+        for (const entry of links) {
+          const relative = entry.path.slice(`${root}/Frameshift.app/`.length);
+          const target = relative.endsWith('/Versions/Current') ? `${sparkleRoot}/Versions/B` : `${sparkleRoot}/Versions/B/${relative.split('/').at(-1)}`;
+          if (!names.has(`${root}/Frameshift.app/${target}`)) throw new Error('dangling framework USTAR link');
+        }
+      }
       return { entries, payloadBytes };
     }
     const checksum = header.reduce((sum, byte, offset) => sum + (offset >= 148 && offset < 156 ? 32 : byte), 0);
     if (octal(header.subarray(148, 156)) !== checksum || !header.subarray(257, 263).equals(Buffer.from('ustar\0', 'ascii')) ||
-        !header.subarray(263, 265).equals(Buffer.from('00', 'ascii')) || !zero(header.subarray(500)) || text(header.subarray(157, 257)) !== '') {
+        !header.subarray(263, 265).equals(Buffer.from('00', 'ascii')) || !zero(header.subarray(500))) {
       throw new Error('unsupported or corrupt USTAR header');
     }
     const type = header[156];
-    if (![0, 48, 53].includes(type)) throw new Error('USTAR accepts only regular files and directories');
+    const link = type === 50;
+    if (![0, 48, 53].includes(type) && !(link && root === 'macos-candidate')) throw new Error('USTAR accepts only regular files and directories');
     const prefix = text(header.subarray(345, 500));
     const name = text(header.subarray(0, 100));
     let path = prefix ? `${prefix}/${name}` : name;
@@ -73,16 +84,20 @@ function members(fd, size, deadline, root, profile) {
     if (directory && path.endsWith('/')) path = path.slice(0, -1);
     if (/[\u0000-\u001f\u007f\\]/.test(path) || path.split('/').some(part => !part || part === '.' || part === '..') ||
         !(path === root || path.startsWith(root + '/')) || names.has(path)) throw new Error('unsafe or duplicate USTAR path');
+    const target = text(header.subarray(157, 257));
+    const relative = path.startsWith(`${root}/Frameshift.app/`) ? path.slice(`${root}/Frameshift.app/`.length) : '';
+    if (link ? !sparkleLinks.has(relative) || sparkleLinks.get(relative) !== target : target !== '') throw new Error('unsupported USTAR link');
     const mode = octal(header.subarray(100, 108));
     const bytes = octal(header.subarray(124, 136));
     for (const [start, end] of [[108, 116], [116, 124], [136, 148]]) octal(header.subarray(start, end));
     for (const start of [329, 337]) if (!zero(header.subarray(start, start + 8))) octal(header.subarray(start, start + 8));
-    if (mode > 0o777 || (mode & 0o022) !== 0 || (mode & 0o400) === 0 ||
+    if (mode > 0o777 || (!link && ((mode & 0o022) !== 0 || (mode & 0o400) === 0)) ||
         (directory && ((mode & 0o500) !== 0o500 || bytes !== 0)) || (!directory && bytes > profile.file) ||
+        (link && bytes !== 0) ||
         (path === root && (!directory || mode !== 0o700))) throw new Error('unsafe USTAR mode or size');
     names.add(path);
     if (directory) directories.add(path);
-    entries.push({ path, directory, mode, bytes, offset: position + 512 });
+    entries.push({ path, directory, mode, bytes, offset: position + 512, ...(link ? { link: target } : {}) });
     if (entries.length > profile.entries) throw new Error('too many USTAR entries');
     payloadBytes += bytes;
     const padded = Math.ceil(bytes / 512) * 512;
@@ -136,6 +151,12 @@ export function verifyExtractedArchive(archive, output) {
     if (performance.now() > archive.deadline) throw new Error('archive processing deadline');
     const path = join(output, entry.path);
     const before = lstatSync(path, { bigint: true });
+    if (entry.link !== undefined) {
+      if (!before.isSymbolicLink() || before.uid !== BigInt(process.getuid()) || before.nlink !== 1n ||
+          readlinkSync(path) !== entry.link || !sameStat(before, lstatSync(path, { bigint: true })) ||
+          readlinkSync(path) !== entry.link) throw new Error('extracted archive link custody changed');
+      continue;
+    }
     if (before.uid !== BigInt(process.getuid()) || Number(before.mode & 0o7777n) !== entry.mode ||
         (entry.directory ? !before.isDirectory() : !before.isFile() || before.size !== BigInt(entry.bytes))) {
       throw new Error('extracted archive custody changed');
@@ -174,7 +195,7 @@ export function extractArchive(archive, output) {
     if (performance.now() > archive.deadline) throw new Error('archive processing deadline');
     mkdirSync(join(output, entry.path), { mode: 0o700 });
   }
-  for (const entry of archive.entries.filter(entry => !entry.directory)) {
+  for (const entry of archive.entries.filter(entry => !entry.directory && entry.link === undefined)) {
     if (performance.now() > archive.deadline) throw new Error('archive processing deadline');
     const fd = openSync(join(output, entry.path), constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
     try {
@@ -191,6 +212,10 @@ export function extractArchive(archive, output) {
       fchmodSync(fd, entry.mode);
       fsyncSync(fd);
     } finally { closeSync(fd); }
+  }
+  for (const entry of archive.entries.filter(entry => entry.link !== undefined)) {
+    if (performance.now() > archive.deadline) throw new Error('archive processing deadline');
+    symlinkSync(entry.link, join(output, entry.path));
   }
   for (const entry of directories.reverse()) {
     if (performance.now() > archive.deadline) throw new Error('archive processing deadline');

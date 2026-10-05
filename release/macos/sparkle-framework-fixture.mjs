@@ -1,13 +1,15 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { chmodSync, closeSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readReleaseInput } from '../files.mjs';
+import { extractArchive, openArchive, verifyExtractedArchive } from '../ustar.mjs';
 import { auditMacBundle } from './closure.mjs';
 import { fixture, run } from './fixture.mjs';
 import { prepareDevelopmentBundle } from './prepare.mjs';
-import { sparkleContainers, sparkleRoot } from './sparkle-framework.mjs';
+import { sparkleContainers, sparkleRoot } from '../macos-framework.mjs';
 
 // Explicit local qualification, using independently pinned upstream bytes.
 // The controller never starts, performs no check, and uses no signing keys.
@@ -38,8 +40,25 @@ try {
   for (const path of sparkleContainers) run('/usr/bin/codesign', ['--verify', '--strict', join(f.root, path)]);
   run('/usr/bin/codesign', ['--verify', '--deep', '--strict', f.root]);
   run(join(f.root, 'Contents/MacOS/Frameshift'), []);
+  const transport = join(work, 'transport'), candidate = join(transport, 'macos-candidate');
+  mkdirSync(candidate, { recursive: true, mode: 0o700 });
+  run('/usr/bin/ditto', [f.root, join(candidate, 'Frameshift.app')]);
+  const tar = join(work, 'candidate.tar');
+  execFileSync('/usr/bin/tar', ['--format=ustar', '-cf', tar, '-C', transport, 'macos-candidate'],
+    { env: { ...process.env, COPYFILE_DISABLE: '1' }, timeout: 30_000, maxBuffer: 64 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+  chmodSync(tar, 0o600);
+  const admitted = openArchive(tar, createHash('sha256').update(readFileSync(tar)).digest('hex'), 'macos-candidate');
+  try {
+    const received = join(work, 'received'); mkdirSync(received, { mode: 0o700 });
+    extractArchive(admitted, received); verifyExtractedArchive(admitted, received);
+    const app = join(received, 'macos-candidate/Frameshift.app');
+    assert.deepEqual(await auditMacBundle(app, 'arm64'), after);
+    for (const path of sparkleContainers) run('/usr/bin/codesign', ['--verify', '--strict', join(app, path)]);
+    run('/usr/bin/codesign', ['--verify', '--deep', '--strict', app]);
+    verifyExtractedArchive(admitted, received);
+  } finally { closeSync(admitted.fd); }
   assert.deepEqual(await readReleaseInput(process.argv[2], { maximum: 16 * 1024 * 1024, protectedTrust: true }), archive);
-  process.stdout.write('Pinned Sparkle framework fixture passed: exact aliases and native slices, nested ad-hoc seals, arm64 loader/controller initialization; updater not started\n');
+  process.stdout.write('Pinned Sparkle framework fixture passed: exact aliases and native slices, nested ad-hoc seals, arm64 loader/controller initialization and USTAR link/seal readback; updater not started\n');
 } catch {
   process.stderr.write('Pinned Sparkle framework fixture refused\n'); process.exitCode = 1;
 } finally {

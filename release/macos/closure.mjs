@@ -3,7 +3,7 @@ import { spawnSync } from 'node:child_process';
 import { lstat, readdir, readlink } from 'node:fs/promises';
 import { join, posix, resolve } from 'node:path';
 import { readReleaseInput, withReleaseInput } from '../files.mjs';
-import { sparkleLinks, sparkleRoles, sparkleRoot } from './sparkle-framework.mjs';
+import { sparkleLinks, sparkleRoles, sparkleRoot } from '../macos-framework.mjs';
 
 const limits = { entries: 8192, file: 128 * 1024 * 1024, total: 512 * 1024 * 1024, native: 128, commands: 1024 * 1024 };
 const fail = message => { throw new Error(message); };

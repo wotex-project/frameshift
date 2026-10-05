@@ -27,7 +27,7 @@ async function fixture(t, version = '1.2.3') {
   const git = args => execFileSync('git', args, { ...silent, cwd: repository }).trim();
   git(['init', '-b', 'main']);
   mkdirSync(join(repository, 'var'), { mode: 0o700 });
-  for (const path of ['.mise.toml', 'release/read-version.exs', 'release/source.mjs', 'release/inputs.mjs', 'release/ustar.mjs']) {
+  for (const path of ['.mise.toml', 'release/read-version.exs', 'release/source.mjs', 'release/inputs.mjs', 'release/ustar.mjs', 'release/macos-framework.mjs']) {
     mkdirSync(dirname(join(repository, path)), { recursive: true });
     copyFileSync(join(owner, path), join(repository, path));
   }

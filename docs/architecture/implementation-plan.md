@@ -696,8 +696,15 @@ Four new compiled fixture groups plus ten existing closure groups pass shape,
 identity, loader/refusal and inside-out signature checks. A separately pinned
 actual SDK fixture verifies both CPU metadata, nested ad-hoc seals and an arm64
 loader/controller initialization with the updater stopped. This is not SDK
-source admission or the application update interface. Continue frozen binary
-SDK admission, architecture/transport preservation and application Sparkle
+source admission or the application update interface. The Mac USTAR profile
+now preserves only the complete nine-alias set, preflights real terminal targets
+and directory parents, creates links after regular payloads, and verifies exact
+retained link custody. Four new archive groups and five shared Ubuntu groups
+pass; the actual pinned SDK round-trips through BSD USTAR with unchanged closure
+and strict nested seals. All eight Ubuntu candidate groups preserve the source
+and retained-output contracts; all seventeen Mac/Linux candidate and receipt
+receiver groups pass with private CLI replay. Continue frozen binary
+SDK admission, architecture thinning/merging and application Sparkle
 integration with required signed-feed settings and shutdown coordination, then
 installed update qualification and final
 app/minimum-OS/Developer-ID qualification, real tap, public bytes and channel

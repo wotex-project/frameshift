@@ -598,9 +598,16 @@ frozen source. Independently supply the archive digest. Its sole root is
 `macos-candidate/` with mode `0700`; it contains exactly the completed app and
 private candidate record. Use the release USTAR reader's regular-file/directory,
 checksum, UTF-8/path, mode, member/byte/deadline and complete-terminator rules.
-No aliases, devices, extensions, compression, outside paths or duplicate members
-are admitted. Copy file bytes and modes; do not execute an extraction tool on
-received paths.
+The Mac candidate profile also admits the embedded Sparkle profile's nine
+exact symlink paths/targets below `macos-candidate/Frameshift.app/`; every other
+alias, device, extension, compressed input, outside path or duplicate refuses.
+Each link has zero payload, no special permission bits and its exact canonical
+relative target. Link permission bits are metadata rather than target access
+authority; do not apply them to the referent. Before output creation, require
+the complete nine-link set and all terminal targets as real archive members.
+Every member's parent must be an explicit real directory, never an alias.
+Copy file bytes/modes, then create only those admitted links after regular
+members are complete. Do not execute an extraction tool on received paths.
 
 Create a new private receiver output and retain a pending marker until exact
 archive member readback, source checks, complete candidate-record/app version/
@@ -619,6 +626,13 @@ no-extraction replay, plus a full retained arm64 host archive readback. Full
 native Intel, hosted runner, installed and production signing evidence remains
 separate. The shared Ubuntu profile retains its own `ubuntu-candidate/` root and
 existing acceptance corpus.
+
+Link acceptance adds actual BSD USTAR containing the complete fixed framework,
+readback of exact link type/target/owner/single-link and unchanged inode custody,
+wrong/partial/absolute/cyclic/extra-link and link-parent/payload refusal before
+creation, retained link mutation refusal, and strict native framework seal
+verification after transport. Ubuntu and material profiles continue to refuse
+all symbolic links; no generic archive alias support is introduced.
 
 Five Mac handoff fixture groups pass actual BSD USTAR staging/replay for both
 compiler CPU candidates, followed by source-bound universal assembly. Wrong

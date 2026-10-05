@@ -5,7 +5,7 @@ import test from 'node:test';
 import { auditMacBundle } from './closure.mjs';
 import { fixture, run } from './fixture.mjs';
 import { prepareDevelopmentBundle } from './prepare.mjs';
-import { sparkleContainers, sparkleLinks, sparkleRoles, sparkleRoot } from './sparkle-framework.mjs';
+import { sparkleContainers, sparkleLinks, sparkleRoles, sparkleRoot } from '../macos-framework.mjs';
 
 const mac = { skip: process.platform !== 'darwin' };
 function frameworkFixture(t) {

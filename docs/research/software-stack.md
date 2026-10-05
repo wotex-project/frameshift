@@ -1122,8 +1122,21 @@ verifies strict complete seals, and runs the arm64 consumer. The real
 has an updater; no update check, network channel or signing key is used. This
 qualifies this minimal native join, not the Frameshift application, Intel/older
 OS execution, Developer ID, installed update or publication. Frozen SDK source
-admission, architecture/transport preservation and app shutdown/settings remain
+admission, architecture thinning/merging and app shutdown/settings remain
 independent work.
+
+The Mac candidate USTAR reader now admits only these nine exact paths/targets,
+with zero link payload and complete real terminal members/parents checked before
+output creation. Four new archive groups and five shared Ubuntu groups pass
+alias/target/payload/mode/parent/partial/dangling refusals and immutable public
+readback. Ubuntu and material profiles retain complete symbolic-link refusal.
+The actual pinned SDK's ad-hoc fixture passes BSD USTAR extraction/readback,
+identical full closure and strict nested seals after transport. All eight Ubuntu
+candidate groups and seventeen Mac/Linux candidate/receipt receiver groups also
+pass, including private CLI replay. This is parser/native-fixture evidence; it does not
+create a frozen SDK source receipt, a source-bound full updater candidate or an
+installed release. The fixed framework profile lives beside the shared archive
+reader so isolated Linux receivers include its transitive source input.
 
 ### Locked core dependency source admission
 
