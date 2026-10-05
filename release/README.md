@@ -302,3 +302,13 @@ Captured cache bytes are not upstream provenance or license approval. This
 candidate has publication authority `none`; the
 [Mac producer contract](../docs/host/macos.md#tagged-native-mac-build-candidate)
 keeps universal assembly and installed/signing gates separate.
+
+`scripts/package-macos-cohort TAG COMMIT SOURCE_RECORD ARM_CANDIDATE ARM_SHA256
+INTEL_CANDIDATE INTEL_SHA256 OUTPUT` binds two private native candidates to the
+same frozen source before universal assembly. Independently supply the record
+digests; captured material and compiler versions must agree. Actual app/core
+versions, complete closures and seals are rechecked. A private parent record
+binds those candidates to the retained universal child; replay has no build,
+merge or signing effect. The [cohort contract](../docs/host/macos.md#source-bound-universal-candidate)
+keeps retained assertions, native producer evidence and public release authority
+separate. Full arm64 receiver admission passes; full native Intel remains open.

@@ -147,3 +147,9 @@ facts, app/core versions and copied bundle closure. Its retained private record
 and no-build replay are candidate custody, with publication authority `none`.
 See the [native producer contract](../../docs/host/macos.md#tagged-native-mac-build-candidate)
 for the passed full arm64 software join and remaining release gates.
+
+`scripts/package-macos-cohort` joins independently pinned native candidate
+records to one frozen source and matching material/compiler facts before using
+the universal assembler. Its private retained parent/child records have no
+publication authority. See the [source-cohort contract](../../docs/host/macos.md#source-bound-universal-candidate)
+for receiver/refusal and actual producer evidence boundaries.

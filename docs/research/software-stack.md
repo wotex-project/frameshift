@@ -369,6 +369,33 @@ does not qualify native Intel, upstream provenance, licenses, older-OS execution
 production signatures or installed distribution. See the
 [producer contract](../host/macos.md#tagged-native-mac-build-candidate).
 
+### Source-bound Mac candidate consumer
+
+Observed 2026-10-05 on the same Mac cohort. The source-bound consumer admits
+each retained canonical candidate record against an independently supplied
+SHA-256 and the actual frozen Git/Mix source record. It joins source/product/
+version identities, exact single-CPU bundle observations, native seals and
+actual core descriptors. Matching compiler identities exclude CPU-target and
+host scheduler details while preserving exact Xcode/SDK, Swift compiler,
+Elixir/ERTS and Zig versions. Ordered captured dependency-material facts agree
+without discarding differing common BEAM/configuration/resource bytes.
+
+Seven fixture groups join actual separate CPU compiler-role apps, merge all
+seven native roles, execute the arm64 fixture and preserve an unchanged replay.
+Wrong source/digest/material/compiler/execution/runtime records, record aliases,
+noncanonical/oversized metadata, hidden source or record changes during merging
+and changed parent/universal custody refuse. A late universal mutation during
+input rechecking is detected by final app/child-record admission. The captured
+full 24-native-file arm64 host passes the same receiver against candidate SHA-256
+`c5e650ae2b70bd297123f51959ccb09e373713bc12dec2a1a341c074be7524b5`.
+
+The receiver validates retained producer assertions and byte custody; it does
+not recreate remote/native execution or authenticated dependency provenance.
+The full universal host still needs the matching native Intel producer and
+installed execution. Parent/child records have publication authority `none`;
+source joining and independent digests do not grant production distribution.
+See the [source-cohort contract](../host/macos.md#source-bound-universal-candidate).
+
 ## Zig boundary
 
 The existing project-owned host raster executable is Zig. It accepts a

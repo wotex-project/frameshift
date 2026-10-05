@@ -449,10 +449,16 @@ captures dependency and installed-tool observations, runs the actual package
 recipe, joins shell/core versions and retains the copied app with publication
 authority none. Clean-cache native dependency ordering is explicit. The complete
 isolated arm64 tagged build passes packaged IPC/import/restart/offline maintenance
-and unchanged no-build replay on macOS 27.0.1. Continue source-bound joining of
-both CPU candidates and native Intel production before signing/notarization and
-installed channel acceptance; captured cache bytes do not establish upstream
-provenance or licenses, and local test tags do not establish public distribution.
+and unchanged no-build replay on macOS 27.0.1. The source-bound universal receiver
+now joins independently pinned candidate records to that frozen source, equal
+captured material/compiler cohorts and actual app/core versions before merging.
+Separate CPU compiler fixtures pass final assembly and no-effect replay; the
+retained complete arm64 host passes the receiver independently. Source/digest/
+compiler/material/version conflicts and changes during assembly/replay refuse.
+Continue native Intel production and candidate archive/workflow handoff before
+signing/notarization and installed channel acceptance; captured cache bytes do
+not establish upstream provenance or licenses, and local test tags do not
+establish public distribution.
 
 ## Shared contracts
 

@@ -400,6 +400,48 @@ No-build replay preserves its source and candidate hashes. This is a local
 test-purpose tag and captured source-cache cohort, not a public release or
 authenticated upstream dependency/Intel/installed-distribution qualification.
 
+### Source-bound universal candidate
+
+`scripts/package-macos-cohort TAG COMMIT SOURCE_RECORD ARM_CANDIDATE ARM_SHA256
+INTEL_CANDIDATE INTEL_SHA256 OUTPUT` joins two retained native candidate
+directories under the same exact frozen source. Supply each candidate-record
+SHA-256 independently of the received directory. Admit bounded private canonical
+records, exact source/tag/product/version identities, single-CPU app observations,
+native seals and actual shell/core version descriptors. Repeat record/app/source
+checks after assembly and before acknowledging completion.
+
+Both candidates must capture the same ordered dependency-material facts and
+the same Xcode/SDK, Swift compiler version, Elixir/ERTS version and Zig cohort.
+Their physical CPU/OS observations remain per-producer. A receiver validates
+the retained assertions and bytes; it does not independently prove that a
+remote producer ran natively or authenticated its dependency cache. Their
+independent expected digests are custody inputs, not a release signature or
+substitute for runner provenance and installed acceptance.
+
+Use the existing universal development join for every native role and common
+byte/directory/plist check. Retain its output in a private child directory and
+sync a bounded parent cohort record binding source-input digest, both candidate
+digests and the resulting universal record digest. Publication authority remains
+`none`. Completed replay verifies all retained bytes without rebuilding, merging
+or signing; source/material/compiler/version/digest/output conflicts and partial
+outputs refuse and remain retained. Do not normalize differing opaque BEAM,
+configuration or resource bytes to conceal a producer conflict.
+
+Acceptance includes actual separate CPU compiler fixtures joined to one real
+Git/Mix source record, final universal seals, unchanged no-effect replay, wrong
+source/digest/material/compiler/runtime identities and mutation during joining.
+The captured full arm64 host can enter receiver validation independently; full
+universal host acceptance still requires its matching qualified native Intel
+producer. Candidate-record inspection is bounded to 16 MiB each and the parent
+record to 64 KiB; all underlying bundle/source/tool limits remain in force.
+
+Seven receiver/cohort fixture groups pass actual source/version consumers,
+separate CPU compilation/merging/seals, native arm64 fixture execution and
+unchanged replay, alongside source/digest/material/compiler/runtime/alias/
+namespace and mutation refusal. The retained full arm64 host also passes
+receiver admission against its independently pinned record digest. The Intel
+fixture is cross-compiled purpose code, not a full native Intel OTP producer.
+
 ### Universal development bundle join
 
 `scripts/package-macos-universal ARM_APP INTEL_APP OUTPUT` joins two admitted
