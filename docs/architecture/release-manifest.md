@@ -82,6 +82,11 @@ versions and absent/moved tags refuse. This command never creates/moves a tag,
 pushes a ref or changes repository visibility. A release workflow must separately
 bind its expected commit to the owner-authorized remote tag/event.
 
+The [Ubuntu candidate workflow](install-and-guide.md#ubuntu-candidate-workflow)
+implements the remote-source/frozen-digest gate and independent build/check
+matrix with publication authority none. Actions outputs are temporary staging;
+they cannot satisfy accepted released-byte reuse, signing or public readback.
+
 `source-inputs.json` is a deterministic version-one `release-source-inputs`
 record of at most 8 MiB, separate from manifest v1. It identifies product,
 tag/version/commit, Git tree, every tracked path with Git blob identity, SHA-256,

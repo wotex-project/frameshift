@@ -1,0 +1,142 @@
+name: Ubuntu release candidate
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_tag:
+        description: Existing stable vX.Y.Z tag
+        required: true
+        type: string
+      source_commit:
+        description: Independently known exact 40-hex source commit
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ubuntu-candidate-${{ inputs.source_tag }}
+  cancel-in-progress: false
+
+jobs:
+  source:
+    name: Verify remote tag and freeze source
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    outputs:
+      tag: ${{ steps.freeze.outputs.tag }}
+      commit: ${{ steps.freeze.outputs.commit }}
+      source_inputs_sha256: ${{ steps.freeze.outputs.source_inputs_sha256 }}
+    env:
+      SOURCE_TAG: ${{ inputs.source_tag }}
+      SOURCE_COMMIT: ${{ inputs.source_commit }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: 2026.9.11
+          persist_github_token: false
+          cache: false
+      - name: Refuse absent or moved remote source
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: node release/workflow-cli.mjs remote "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT"
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.source_commit }}
+          fetch-depth: 0
+          path: candidate-source
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: 2026.9.11
+          working_directory: candidate-source
+          persist_github_token: false
+          cache: false
+      - name: Freeze exact source and recheck remote identity
+        id: freeze
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          install -d -m 700 candidate-source/var
+          ./candidate-source/scripts/record-release-inputs "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/candidate-source/var/release-inputs"
+          mise exec -- node release/workflow-cli.mjs record "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/candidate-source" "$PWD/candidate-source/var/release-inputs/source-inputs.json" >> "$GITHUB_OUTPUT"
+
+  ubuntu:
+    name: Ubuntu 24.04 ${{ matrix.architecture }} candidate
+    needs: source
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: amd64
+            runner: ubuntu-24.04
+          - architecture: arm64
+            runner: ubuntu-24.04-arm
+    runs-on: ${{ matrix.runner }}
+    env:
+      SOURCE_TAG: ${{ needs.source.outputs.tag }}
+      SOURCE_COMMIT: ${{ needs.source.outputs.commit }}
+      SOURCE_INPUTS_SHA256: ${{ needs.source.outputs.source_inputs_sha256 }}
+      TARGET_ARCHITECTURE: ${{ matrix.architecture }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ needs.source.outputs.commit }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: 2026.9.11
+          persist_github_token: false
+          cache: false
+      - name: Admit the selected native target
+        run: |
+          test "$(. /etc/os-release; printf '%s:%s' "$ID" "$VERSION_ID")" = ubuntu:24.04
+          test "$(dpkg --print-architecture)" = "$TARGET_ARCHITECTURE"
+          daemon_architecture=$(docker info --format '{{.Architecture}}')
+          case "$TARGET_ARCHITECTURE:$daemon_architecture" in
+            amd64:x86_64|amd64:amd64|arm64:aarch64|arm64:arm64) ;;
+            *) exit 1 ;;
+          esac
+      - name: Freeze and match source-job inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          install -d -m 700 var
+          ./scripts/record-release-inputs "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs"
+          node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
+      - name: Fetch exact locked build material
+        run: |
+          cd apps/core
+          mix local.hex 2.5.1 --force
+          mix deps.get --check-locked
+          cd ../../packages/decision-kernel
+          gleam deps download
+      - name: Build the tagged target candidate
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: ./scripts/package-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate"
+      - name: Install and check exact candidate bytes
+        run: ./scripts/check-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate"
+      - name: Recheck remote tag and preserve candidate modes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
+          tar -cf var/ubuntu-candidate.tar -C var ubuntu-candidate
+          ./scripts/package-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate"
+      - name: Retain an independent candidate attempt
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ubuntu-${{ matrix.architecture }}-candidate-${{ needs.source.outputs.tag }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: var/ubuntu-candidate.tar
+          archive: false
+          overwrite: false
+          if-no-files-found: error
+          retention-days: 14

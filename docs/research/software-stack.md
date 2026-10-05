@@ -659,3 +659,42 @@ isolated test-only tag/version; complete source/runtime/package/artifact records
 remain separate from trusted signing, notices, qualified installed runners and
 public channel acceptance. An identical retained candidate verifies without a
 new build, because repeating a build does not itself establish identical bytes.
+
+### GitHub candidate workflow and action scope
+
+**Observation:** 2026-10-05, using `gh` to read current upstream releases and
+exact action source. GitHub's current
+[reference endpoint](https://docs.github.com/en/rest/git/refs#get-a-reference)
+returns one exact ref or refusal, while matching-ref enumeration can return
+other names. The candidate gate uses only the exact endpoint and computed
+repository paths. It peels the
+[annotated-tag object](https://docs.github.com/en/rest/git/tags#get-a-tag)
+with bounded depth/deadline, ignores returned URLs and checks the independently
+supplied commit. Local source verification is bracketed by remote checks;
+target jobs compare the canonical source-record digest before compilation.
+
+[GitHub's runner matrix](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)
+lists native Ubuntu 24.04 amd64 and arm64 labels. The workflow additionally
+checks the runner OS/package CPU and Docker daemon architecture. Those choices
+do not qualify an unexecuted job or booted service; local arm64/emulated amd64
+candidate evidence remains its own tier.
+
+[mise-action 5.1.1](https://github.com/jdx/mise-action/releases/tag/v5.1.1), source
+`2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca`, retains its GitHub token inside
+the action by default. Both workflows explicitly keep persistence disabled;
+only `gh` steps get an explicit contents-read token. Current
+[checkout 7.0.1](https://github.com/actions/checkout/releases/tag/v7.0.1), source
+`3d3c42e5aac5ba805825da76410c181273ba90b1`, preserves nonpersistent credentials
+and its refusal of unsafe privileged fork checkout. Existing QEMU 4.4.0 is
+pinned to `99012661954931238ded8c8b007157a8430204e1` without changing its selected
+emulation image. These are action source/changelog observations and local
+workflow syntax checks, not execution of the hosted runners.
+
+[upload-artifact 7.0.1](https://github.com/actions/upload-artifact/blob/043fb46d1a93c77aae656e7c1c64a875d1fc6a0a/README.md#permission-loss)
+does not preserve file modes through its zipped upload. It documents direct
+TAR upload for that requirement. Candidate attempts therefore retain a single
+TAR with private records and executable modes, use distinct run/attempt names,
+disable overwrite and have finite retention. Their unsigned records carry no
+publication authority; a later receiver must verify retained candidate and
+archive bytes before release acceptance rather than treating an Actions ID or
+digest as a customer manifest signature.

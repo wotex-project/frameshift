@@ -11,12 +11,17 @@ export function releaseGit(repository, args) {
   });
 }
 
-export function releaseSourceIdentity(repository, tag, expectedCommit) {
-  if (typeof tag !== 'string' || tag.length > 33 ||
+export function releaseCoordinates(tag, expectedCommit) {
+  if (typeof tag !== 'string' || tag.length > 33 || tag.trim() !== tag ||
       !/^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/.test(tag) ||
-      typeof expectedCommit !== 'string' || !/^[0-9a-f]{40}$/.test(expectedCommit)) {
+      typeof expectedCommit !== 'string' || expectedCommit.length !== 40 || !/^[0-9a-f]{40}$/.test(expectedCommit)) {
     throw new Error('Release requires a stable tag and exact source commit');
   }
+  return { tag, commit: expectedCommit, version: tag.slice(1) };
+}
+
+export function releaseSourceIdentity(repository, tag, expectedCommit) {
+  releaseCoordinates(tag, expectedCommit);
   const git = args => releaseGit(repository, args).trim();
   const commit = git(['rev-parse', 'HEAD']);
   const tagged = git(['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]);

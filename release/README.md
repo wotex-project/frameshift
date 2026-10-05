@@ -194,3 +194,23 @@ installed native/systemd and failure qualification, trusted signing, public
 archive readback and channel/site promotion remain required. The
 [tagged candidate contract](../docs/architecture/release-manifest.md#ubuntu-tagged-build-candidates)
 owns acceptance and refusal; neither command creates a tag, pushes or publishes.
+
+## GitHub candidate staging
+
+The manual [Ubuntu candidate workflow](../.github/workflows/ubuntu-candidate.yml)
+takes an existing stable tag and independently known exact commit. A `gh`
+remote-ref gate precedes source capture; each native Ubuntu 24.04 CPU job must
+match its source-record digest and pass candidate build/container acceptance.
+Remote tag and retained output checks repeat before upload. Each run/attempt
+retains a distinct short-lived TAR, preserving private record/executable modes.
+Actions records are staging outputs with publication authority none.
+
+`release/workflow-cli.mjs` exposes the fixed remote, record and verify entrypoints
+used by that graph; `./scripts/check release` exercises exact remote objects,
+bounded annotation chains, moved/malformed source and source-digest handoffs.
+`./scripts/check policy` validates both workflows. Actions are pinned to exact
+source; checkout and mise token persistence are disabled. Explicit step-scoped
+contents-read tokens support `gh`; signing/deployment credentials and promotion
+are absent from this graph. No workflow was pushed or dispatched by local tests.
+The [workflow contract](../docs/architecture/install-and-guide.md#ubuntu-candidate-workflow)
+keeps actual hosted-runner, installed and production publication gates separate.

@@ -249,8 +249,13 @@ version descriptors and the exact runtime-to-DEB handoff. Private final records
 retain one stable-version archive and all file hashes with publication authority
 none; identical reruns verify without rebuilding. Container candidate acceptance
 checks exact copied archive bytes, dpkg/watermark/CLI versions and the existing
-import, restart and administrative joins. Continue trusted workflow refusal and
-independent native/provider work. Booted systemd/native CPU,
+import, restart and administrative joins. The Ubuntu candidate workflow now
+places remote tag/commit refusal and frozen source-digest agreement before its
+native CPU matrix, preserves per-attempt candidate TARs and confines read-only
+GitHub credentials to their steps. Its action and remote/source fixtures are
+software evidence; no GitHub runner or publication was executed. Continue
+accepted-byte workflow handoff/signing/promotion and independent native/provider
+work. Booted systemd/native CPU,
 resource/failure, encrypted-key backup and physical identity/storage recovery
 retain their separate qualification. A missing external machine or signing identity does not block those
 software recovery/refusal paths. Development container artifacts remain separate

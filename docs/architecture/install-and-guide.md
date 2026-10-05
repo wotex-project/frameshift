@@ -238,6 +238,41 @@ image serves a dedicated bridge/appliance role; it is not the Ubuntu package,
 and its firmware update, credential, persistent-data, and log paths are
 qualified separately. See [Linux host](../host/linux.md).
 
+## Ubuntu candidate workflow
+
+`.github/workflows/ubuntu-candidate.yml` is a manually dispatched build/check
+workflow. The operator supplies an existing stable tag and its independently
+known exact commit. The source job uses `gh` against the current repository to
+resolve the remote tag, peeling a bounded annotated-tag chain, and refuses a
+different commit, unavailable reference or unsupported object. It then checks
+out that commit and freezes its actual source/app-version record. Remote tag
+identity is checked again around source verification and after target work.
+
+The Ubuntu 24.04 amd64/arm64 matrix depends on that source job. Each target
+recomputes the same deterministic source-record digest before building, uses
+the pinned native target images and runs exact candidate/container acceptance.
+Wrong target CPU, source digest, moved tag, failed build/check or changed artifact
+prevents an artifact upload. Source and final archives remain bound to their
+records; the target source tools are invoked with data arguments rather than
+interpolated expressions in workflow shell commands.
+
+The workflow has contents-read permission, no signing/deployment secret or
+protected publication job. Checkout credentials are not persisted and mise's
+GitHub token stays inside its action. An explicit read-only job token is scoped
+to steps that use `gh`. Successful outputs are short-lived candidate TARs,
+preserving private record and executable modes, with distinct run/attempt names.
+No rerun overwrites an earlier candidate artifact; a fresh runner's rebuild is
+another candidate, not proof of identical released bytes. Actions artifact IDs
+and hashes are staging metadata. A later release consumes accepted exact bytes,
+verifies handoffs and retains them before signing/promotion.
+
+Acceptance includes remote-ref/annotated-tag/error/moved-tag fixtures, exact
+source-digest checks, workflow syntax and permission checks, plus the existing
+candidate builders and container joins. A local passing fixture does not count
+as an executed GitHub runner or installed native/systemd qualification. License/
+notices, stable accepted-byte rerun, Mac signing/DMG/Cask/Sparkle, public-channel
+readback and site promotion remain the release pipeline's separate work.
+
 ## Browser installation lab
 
 The public page gives a useful simulation before purchase or installation:
