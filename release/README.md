@@ -334,6 +334,16 @@ digests plus both artifact IDs. The workflow has publication authority
 `none`; authoring/static/local software evidence is separate from hosted execution.
 See the [workflow contract](../docs/host/macos.md#native-mac-candidate-workflow).
 
+`scripts/stage-linux-material TAG COMMIT SOURCE_RECORD arm64|amd64 CANDIDATE
+CANDIDATE_SHA256 ARCHIVE ARCHIVE_SHA256 CORE_SHA256 GLEAM_SHA256 JOIN_SHA256 OUTPUT`
+receives exactly three private source-evidence JSON files under `ubuntu-material/`
+in a bounded POSIX USTAR. Independently supplied digests and the admitted received
+candidate must reproduce the same joined bytes before the receiver completes.
+Unchanged replay does not extract/build/install/rewrite. The
+[receipt handoff contract](../docs/host/linux.md#dependency-source-receipt-archive-handoff)
+uses the shared Mac/Ubuntu byte-custody receiver while retaining separate platform,
+generated, Git metadata and external evidence scopes.
+
 `scripts/check-linux-material TAG COMMIT SOURCE_RECORD arm64|amd64 CANDIDATE
 CANDIDATE_SHA256 CORE_RECEIPT CORE_SHA256 GLEAM_RECEIPT GLEAM_SHA256 OUTPUT`
 joins the same independently pinned source receipts to an admitted Ubuntu

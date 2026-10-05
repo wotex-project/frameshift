@@ -208,6 +208,37 @@ serves Mac and Ubuntu without adding another dependency verifier. Actual archive
 Git receipts join both retained container candidates; installed/systemd, hosted
 provenance, generated derivation, licenses and trusted distribution remain open.
 
+### Dependency source receipt archive handoff
+
+`scripts/stage-linux-material TAG COMMIT SOURCE_RECORD arm64|amd64 CANDIDATE
+CANDIDATE_SHA256 ARCHIVE ARCHIVE_SHA256 CORE_SHA256 GLEAM_SHA256 JOIN_SHA256 OUTPUT`
+receives a separate source-evidence POSIX USTAR beside the already received
+Ubuntu candidate. Independently pin archive, candidate and all three receipt
+digests. Admit exactly `ubuntu-material/` at 0700 and the three 0600 regular
+members `core-material.json`, `gleam-material.json` and `dependency-inputs.json`.
+The fixed four-member profile is at most 33 MiB, with 16 MiB source receipts and
+a 64 KiB joined record; extra names, links, extensions, bad modes and bounds
+refuse before extraction. Share descriptor-level USTAR validation with existing
+Mac and candidate receivers; compare every extracted member with its payload.
+
+Create only absent private output under safe custody, with a synchronized pending
+marker. Rejoin received receipts to the separately admitted Ubuntu candidate;
+the locally produced joined bytes must equal the received joined bytes exactly.
+Keep a separate private verification record and a bounded 4 KiB handoff record
+binding source, architecture, transport/candidate/receipt hashes and the source,
+generated and Git metadata counts. Final source/parser/version children precede
+static archive/extracted-receipt/full-candidate and namespace checks. An interrupted
+or conflicting output stays incomplete for inspection. Identical complete replay
+verifies existing bytes without extraction, build, install or rewriting.
+
+Publication authority remains `none`. BSD/GNU USTAR retained-assertion fixtures,
+independent and semantically conflicting digests, wrong profile/member/mode/bounds,
+partial/aliased/changed custody, child-time mutation and exact unchanged replay
+are acceptance targets. Both full Ubuntu container candidates must receive these
+actual source receipts through the bounded receiver. This does not authenticate
+a hosted run or source publisher, sanitize Git metadata, approve licenses or
+qualify booted systemd/native installed lifecycle or production distribution.
+
 ### Group-owned diagnostic endpoint
 
 The initial group boundary is read-only diagnostics. Configure an explicit numeric

@@ -109,6 +109,14 @@ async function inspectCandidate(repository, source, candidate, expectedDigest, a
   return { material, buildInputsSha256: hash(inputBytes), directories };
 }
 
+// Receipt transport needs the same bounded complete candidate check after its
+// last source child, without rerunning any parser or runtime/version child.
+export async function inspectLinuxMaterialBytes({ repository, source, candidate, candidateSha256, architecture }) {
+  const deadline = performance.now() + 180_000;
+  const budget = () => { if (performance.now() > deadline) fail('Ubuntu material static inspection deadline'); };
+  return inspectCandidate(repository, source, candidate, candidateSha256, architecture, budget, undefined, false);
+}
+
 export async function linuxMaterialJoin({ repository, tag, commit, sourcePath, architecture, candidate, candidateSha256, corePath, coreSha256, gleamPath, gleamSha256, output }, { tool = versionTool } = {}) {
   repository = realpathSync(repository); candidate = resolve(candidate); output = resolve(output);
   const deadline = performance.now() + 180_000, budget = () => { if (performance.now() > deadline) fail('Ubuntu material join processing deadline'); };

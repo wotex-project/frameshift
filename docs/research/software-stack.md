@@ -1301,3 +1301,30 @@ and emulated-amd64 Ubuntu container candidates. Receipt/refusal fixtures and the
 [owning join contract](../architecture/release-manifest.md#ubuntu-captured-dependency-source-join)
 retain separate compiler/generated derivation, independent publisher/rights,
 hosted/systemd/native installed and release gates; publication authority is none.
+
+### Ubuntu source-evidence transport
+
+**Observation:** 2026-10-05. The fixed Mac source-evidence transport now also
+serves Ubuntu through an explicit `ubuntu-material` profile. It transports only
+the core/Gleam source receipts and exact joined record, beside a separately
+received candidate. Independent digest, canonical semantic join and final static
+full-candidate custody checks are separate assertions. The handler shares the
+bounded descriptor USTAR reader and preserves the established Mac record schema;
+platform adapters select the existing source-join and final byte consumer.
+
+The pinned Ubuntu build image's GNU TAR emits 266,240-byte archives for both
+retained full container candidates. Arm64 transport SHA-256 is
+`a2561abce6e2053b8f2d7263a06664df517adb3722ab7b856232610030e4f074`;
+amd64 is `e173b8274afa11c422790ad5d4c243b37559b6bd8641e551d1c226c8ff189abf`.
+The corresponding handoff records are
+`98e543a5ceb5c6b346facc485d7e1bdc357e7cff6ceed8cff322b20269b9044e` and
+`25d978d999054ea010c70be9901b079a0a37d641c17f8f6718c4ef71878f5ebf`.
+Each received candidate rejoins 1,457 proved source/metadata facts, seven generated
+inputs and 45 separately retained Git metadata facts. Completed replay preserves
+handoff and extracted source-receipt inode/time. BSD USTAR retained-assertion,
+wrong/semantically conflicting identity, mode/member/resource, partial/changed
+custody and child-time mutation fixtures complement the full GNU transport.
+This does not authenticate a hosted workflow or compiler execution; the
+[handoff contract](../host/linux.md#dependency-source-receipt-archive-handoff)
+keeps rights/publisher, generated/toolchain, installed/systemd and production
+release acceptance separate, with publication authority none.
