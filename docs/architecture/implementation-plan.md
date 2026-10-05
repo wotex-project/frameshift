@@ -192,6 +192,16 @@ join verified originals/canonical pixels to the existing Library writer, then
 qualify JPEG and the complete target release closure. Do not report the worker
 or a direct Library fixture as a completed `frameshiftctl import` command.
 
+Streamed import now has an explicit intent/token/chunk/finish/status contract in
+[the Linux owner](../host/linux.md#streamed-original-import). Build it in three
+logical slices: retain exact import results atomically with Library registration
+and actor-bound receipts; add bounded private staging/native-codec admission to
+the authenticated endpoint; then join the regular-descriptor CLI and freshly
+built Linux SQLite/Exile runtime artifacts. Each slice must exercise its crash,
+conflict and replay paths before the next one enables them. Preserve ordinary
+command/Mac behavior and edit the original unreleased receipt CREATE definition.
+JPEG and installed Ubuntu packaging/resource evidence follow these software joins.
+
 ### Independent software delivery order
 
 Deliver S1 first, then inspect and exercise the exact S2/S3 mappings before

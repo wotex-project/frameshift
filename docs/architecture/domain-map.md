@@ -75,6 +75,14 @@ file placement and SQLite writes remain in the storage owner.
 6. Audit writes share the mutation transaction. Logs and metrics are emitted
    after commit and cannot make a successful mutation fail.
 
+Streamed original import claims its source intent before immutable placement.
+The exact imported master digest, successful receipt and import/completion
+audit facts commit with master registration in one SQLite transaction. A
+matching terminal replay returns that prior result without decoding again or
+restoring removed artwork. Pending claims remain unknown; a receipt is a past
+result, not a content pin. The [Linux upload contract](../host/linux.md#streamed-original-import)
+owns authenticated staging, byte limits, codec provenance and recovery.
+
 Pure transition functions should accept domain values and return typed
 decisions or errors. Persistence mappings, IPC JSON, Wotex bindings, Keychain,
 Image I/O, and the Zig worker stay outside those functions. A port is introduced

@@ -239,6 +239,124 @@ from replaying an import receipt or modifying the immutable Library.
 
 Physical pair/recovery and stdin intake follow the dedicated contracts below.
 
+### Streamed original import
+
+The group endpoint admits `importBegin`, `importChunk`, `importFinish`,
+`importCancel` and read-only `importStatus`. Each request independently verifies
+final socket custody, kernel credentials and `auth: "peer"` before decoding or
+looking up an upload. The private Mac path-import operation remains separate;
+group callers cannot submit decoded pixels, dimensions, source paths or actor
+identities. Upload and command admission use the existing command socket and
+limits, not a general HTTP listener or a second Library writer.
+
+`importBegin` carries an `intent` with exactly these fields:
+
+| Field | Requirement |
+| --- | --- |
+| `kind` | Exact `importOriginal` |
+| `id` | Caller-retained command ID, 1–64 UTF-8 bytes |
+| `title` | Nonblank NFC UTF-8, at most 256 bytes, no control characters |
+| `originalFilename` | One nonempty NFC UTF-8 filename, at most 255 bytes, no `/`, NUL or control characters; metadata only |
+| `sourceByteCount` | Integer 1–134217728 |
+| `sourceDigest` | Exact lowercase `sha256:` identity of those original bytes |
+
+Hash the RFC 8785 canonical intent, including its kind and ID. The selected
+codec digest/revision is service-derived and frozen in the upload; it is not a
+caller field or part of the source-intent hash. A later codec version must not
+change the identity of an earlier completed request. Check the durable receipt
+before allocating a stage: changed payload/actor conflicts, completed import
+returns its exact prior master ID, and pending remains unknown. Same-actor,
+same-intent active upload returns its existing token/offset rather than creating
+another stage. An ID used by an ordinary command cannot become an import.
+
+The upload owner admits at most two leases and 128 MiB per lease. Its real
+service-owned `0700` staging directory and exclusive `0600` files have generated
+names unrelated to caller filenames. A 256-bit random hexadecimal token binds
+the exact intent, authenticated UID and frozen codec context. Tokens and stages
+are transient; tokens, file paths and bytes never enter receipts, audit or logs.
+Uploading has a thirty-second idle and ten-minute absolute deadline. These
+limits apply to byte intake; a finishing job retains its reservation until its
+actual task/effect custody is resolved. Expiration cannot grant a second decode
+worker or conceal an uncertain Library mutation.
+
+`importChunk` carries exactly `uploadToken`, an integer `offset` and `bytes` as
+canonical padded base64 for 1–6144 decoded bytes, within the existing 8192-byte
+JSON string limit. The offset must equal acknowledged bytes; gaps, duplicate
+offsets, wrong actor/token, overflow or changed custody refuse before append.
+Advance the offset only after a complete write. An IO failure leaves that lease
+unavailable for further appends. No partial write or lost acknowledgement is
+automatically retried. An explicit repeated begin can observe the acknowledged
+offset; a failed lease requires explicit cancellation. Chunk acknowledgements
+are intake observations, not crash-durable import receipts.
+
+`importFinish` carries only `uploadToken`. Seal and synchronize the owned stage,
+verify exact byte count and source digest through stable descriptor custody,
+then pass original bytes to the frozen native codec. Canonical pixels come from
+that codec alone. A decode/busy/refusal before Library admission creates no
+command claim; an explicit caller retry is possible without silently retrying
+work. The sole codec owner still enforces its actual worker reservation and
+exit/deadline contract. A source mismatch or unsafe stage cannot reach it.
+
+The Library performs the final command claim and immutable import through one
+writer call. It refuses an existing pending claim, replays an exact terminal
+result and never reexecutes an uncertain import. Successful master registration,
+its import audit, exact result master ID, terminal receipt and completion audit
+commit in one SQLite transaction after verified content placement. The original
+unreleased CREATE definition adds a nullable checked `imported_master_digest`
+to `command_receipts`, permitted only for successful imports. Ordinary command
+receipts retain their existing shape. File placement and the SQLite commit
+remain separate; an interrupted write can leave an orphan or pending claim,
+not permission to repeat effects. A receipt records a past result and does not
+pin artwork or restore a subsequently removed master.
+
+The immutable MasterPackage retains exact original and canonical pixels.
+Provenance records original filename/media/orientation, source-color
+interpretation/digest, codec revision and executed binary digest. Source-intent
+hash and authenticated actor bind the receipt; caller fields cannot override
+decoder facts. Registered package bytes use the existing Library byte budget;
+bounded transient stages are a separate working-resource allowance.
+Exact package duplicates use the existing master and retain its current title,
+labels and provenance; a new import intent does not become a metadata edit.
+A new explicit import may restore removed bytes under the existing Library
+contract, while replaying an earlier completed ID never restores them.
+
+`importCancel` carries only `uploadToken`. The matching actor may discard a
+known intake/failed stage before effects. Cancellation cannot roll back a
+finishing or terminal Library mutation. `importStatus` carries only `commandId`
+and returns the authenticated actor's pending/terminal receipt with an optional
+exact imported master ID and finite error code; another actor's ID refuses.
+It requires no source file and performs no decode, restoration or retry.
+Successful envelopes use the bounded `import` object; pending stays an explicit
+unknown outcome. No response exposes filesystem paths or source bytes.
+
+`frameshiftctl import FILE [--title TITLE] --id COMMAND_ID` opens a regular
+source accessible to the caller through a bounded descriptor, checks its identity/length,
+hashes exact bytes, rewinds and streams chunks. It verifies the descriptor again
+before finish. The service never follows FILE. Only explicit begin/offset
+observation can resume intake; no CLI loop automatically retries a lost chunk
+or finish. `frameshiftctl import-status COMMAND_ID` reads recovery without
+opening FILE. Existing statuses apply: 2 domain refusal, 64 usage/policy, 69
+unavailable intake/read and 75 unknown after a possible finish/effect. Exit 75
+retains the original ID; terminal status recovery returns the same master ID
+after restart or codec change.
+
+Normal owner shutdown removes only known owned intake stages after its active
+tasks exit. Abrupt owner death or unknown active custody preserves an exclusive
+staging fence; a replacement reports import unavailable without adopting or
+deleting unknown bytes. Library and diagnostics remain available. Recovery of
+that fence requires complete service/native termination before removal; durable
+receipt recovery remains separate and cannot erase immutable Library objects.
+
+Acceptance joins actual Unix authorization, native normalization, the single
+SQLite writer and CLI. It covers different UIDs, actor/payload/token conflicts,
+chunk limits/order/custody, incomplete/mismatched originals, idle/absolute
+expiration, blocked IO, full disk, stop/crash fences, concurrent finishes,
+transaction rollback, lost finish replies, fresh-VM status/replay, codec change,
+removal without replay restoration and unchanged original/canonical hashes.
+Linux joins freshly compile SQLite and Exile native dependencies for both
+architectures; Mac NIF reuse is not accepted. Installed Ubuntu/systemd resource,
+package/upgrade and filesystem power-loss evidence remains R3 acceptance.
+
 Requests retain 64 KiB/8 KiB framing bounds and responses 1 MiB/256 KiB bounds.
 The connection and send use finite deadlines; the response has one absolute
 30-second deadline, including all partial reads, and bounded duplicate-key-aware

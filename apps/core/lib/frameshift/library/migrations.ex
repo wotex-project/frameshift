@@ -237,6 +237,14 @@ defmodule Frameshift.Library.Migrations do
            substr(command_hash, 8) NOT GLOB '*[^0-9a-f]*'
          ),
          actor_uid INTEGER CHECK (actor_uid IS NULL OR actor_uid BETWEEN 0 AND 4294967294),
+         imported_master_digest TEXT CHECK (
+           imported_master_digest IS NULL OR (
+             status = 'succeeded' AND
+             length(imported_master_digest) = 71 AND
+             substr(imported_master_digest, 1, 7) = 'sha256:' AND
+             substr(imported_master_digest, 8) NOT GLOB '*[^0-9a-f]*'
+           )
+         ),
          status TEXT NOT NULL CHECK (status IN ('pending', 'succeeded', 'failed')),
          error_code TEXT CHECK (
            error_code IS NULL OR (

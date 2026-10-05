@@ -95,7 +95,28 @@ defmodule Frameshift.NativeCodecTest do
       provenance: %{"codecRevision" => normalized.codec_revision, "codecDigest" => digest}
     }
 
-    assert {:ok, master} = Library.import_master(library, package, attributes)
+    intent = %{
+      "kind" => "importOriginal",
+      "id" => "native-source",
+      "title" => attributes.title,
+      "originalFilename" => "fixture.png",
+      "sourceByteCount" => byte_size(original),
+      "sourceDigest" => Digest.sha256(original)
+    }
+
+    hash = intent |> RFC8785.encode!() |> Digest.sha256()
+
+    assert {:ok, %{"status" => "succeeded", "importedItemID" => master_id}} =
+             Library.import_master_command_as(
+               library,
+               package,
+               attributes,
+               "native-source",
+               hash,
+               501
+             )
+
+    assert {:ok, master} = Library.get_master(library, master_id)
     assert master["digest"] == Digest.sha256(package)
     assert {:ok, %{placement: :existing}} = Library.import_master(library, package, attributes)
     assert {:ok, %{"bytes" => ^package}} = Library.read_object(library, master["digest"])

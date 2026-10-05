@@ -24,6 +24,9 @@ defmodule Frameshift.Library do
   local actor UID, or null for private launch-token authority. Another actor
   cannot replay or complete that receipt. Claims/completions retain redacted actor
   hashes in audit; pending outcomes require reconciliation rather than blind retry.
+  Streamed import records its exact result digest and terminal receipt in the
+  master-registration transaction. Replay reports that past result without
+  renormalizing or restoring removed artwork; receipts do not pin content.
 
   ## Maintenance and diagnostics
 
@@ -37,6 +40,8 @@ defmodule Frameshift.Library do
   remain read-only and omit private credentials and source paths. Database errors
   return through the storage boundary; programming faults are not fabricated as
   successful writes. The web platform owns a separate database and lifecycle.
+  OTP status/crash formatting redacts request bytes, buffered logs, writer state
+  and raw fault reasons; diagnostics use the public bounded owner queries.
   """
 
   use GenServer
@@ -52,6 +57,7 @@ defmodule Frameshift.Library do
   alias Frameshift.Library.Migrations
   alias Frameshift.Library.Storage
   alias Frameshift.Library.Writer
+  alias Frameshift.MasterPackage
   alias Frameshift.Playlist.Store, as: PlaylistStore
   alias Frameshift.Protocol.Schema
   alias Frameshift.Qualification.Store, as: QualificationStore
@@ -102,6 +108,34 @@ defmodule Frameshift.Library do
   @spec import_master(server(), iodata(), map()) :: {:ok, map()} | {:error, term()}
   def import_master(server \\ __MODULE__, bytes, attributes) do
     GenServer.call(server, {:import_master, bytes, attributes}, :infinity)
+  end
+
+  @doc """
+  Claims and stores one verified canonical import under an authenticated actor.
+
+  The upload/codec owner supplies bounded MasterPackage bytes, normalized
+  attributes and the canonical original-intent hash after verifying exact
+  originals and the frozen producer. This writer checks package geometry and
+  canonical metadata; it does not authenticate a socket or qualify a decoder.
+  A new claim precedes placement. Master registration, exact result digest and
+  completion audit commit together. Pending refuses; terminal replay returns
+  the previous result without placing supplied bytes or restoring artwork.
+  """
+  @spec import_master_command_as(
+          server(),
+          iodata(),
+          map(),
+          String.t(),
+          digest(),
+          non_neg_integer()
+        ) ::
+          {:ok, map()} | {:error, term()}
+  def import_master_command_as(server, bytes, attributes, command_id, command_hash, actor_uid) do
+    GenServer.call(
+      server,
+      {:import_master_command, bytes, attributes, command_id, command_hash, actor_uid},
+      :infinity
+    )
   end
 
   @doc "Records a canonical recipe identity and its source lineage."
@@ -261,6 +295,21 @@ defmodule Frameshift.Library do
         ) :: :ok | {:error, term()}
   def complete_command_as(server, command_id, command_hash, actor_uid, outcome) do
     GenServer.call(server, {:complete_command, command_id, command_hash, actor_uid, outcome})
+  end
+
+  @doc """
+  Reads an actor's durable command disposition and optional exact import result.
+
+  An optional expected payload digest additionally rejects changed-intent replay.
+  The returned status/error/result contains no hash, UID, paths, token or source
+  bytes. Missing receipts return `:not_found`; another actor conflicts. Successful
+  history does not claim that its artwork remains active or physically displayed.
+  Null actor retains private launch-token authority and differs from every UID.
+  """
+  @spec command_receipt_as(server(), String.t(), non_neg_integer() | nil, digest() | nil) ::
+          {:ok, map()} | :not_found | {:error, term()}
+  def command_receipt_as(server, command_id, actor_uid, expected_hash \\ nil) do
+    GenServer.call(server, {:command_receipt, command_id, actor_uid, expected_hash})
   end
 
   @doc "Admits and stores a frame Thing Description with an opaque credential reference and server pin."
@@ -698,6 +747,10 @@ defmodule Frameshift.Library do
     {:reply, import_master_record(state, bytes, attributes, nil, nil), state}
   end
 
+  def handle_call({:import_master_command, bytes, attributes, id, hash, actor}, _, state) do
+    {:reply, import_command_record(state, bytes, attributes, id, hash, actor), state}
+  end
+
   def handle_call(
         {:add_generated_variant, bytes, attributes, parent_digest, recipe_hash},
         _,
@@ -828,6 +881,10 @@ defmodule Frameshift.Library do
 
   def handle_call({:complete_command, command_id, command_hash, actor_uid, outcome}, _, state) do
     {:reply, complete_command_record(state, command_id, command_hash, actor_uid, outcome), state}
+  end
+
+  def handle_call({:command_receipt, id, actor, expected_hash}, _, state) do
+    {:reply, command_receipt_record(state, id, actor, expected_hash), state}
   end
 
   def handle_call(
@@ -1197,13 +1254,31 @@ defmodule Frameshift.Library do
     end
   end
 
-  defp import_master_record(state, bytes, attributes, parent_digest, recipe_hash) do
+  @impl true
+  def format_status(status) do
+    status
+    |> Map.put(:message, :redacted)
+    |> Map.put(:log, [:redacted])
+    |> Map.put(:state, :redacted)
+    |> Map.put(:reason, :library_owner_failure)
+  end
+
+  defp import_master_record(state, bytes, attributes, parent_digest, recipe_hash, receipt \\ nil) do
     with :ok <- Identity.validate_master(attributes, parent_digest, recipe_hash),
          :ok <- validate_parent_recipe(state, parent_digest, recipe_hash),
          :not_found <- existing_generation(state, recipe_hash),
          :ok <- Storage.admit(state.connection, bytes),
          {:ok, digest, byte_count, placement} <- ContentStore.put(state.data_dir, bytes) do
-      insert_master(state, digest, byte_count, attributes, parent_digest, recipe_hash, placement)
+      insert_master(
+        state,
+        digest,
+        byte_count,
+        attributes,
+        parent_digest,
+        recipe_hash,
+        placement,
+        receipt
+      )
     else
       {:cached, master} -> {:ok, Map.put(master, :placement, :existing)}
       error -> error
@@ -1256,7 +1331,8 @@ defmodule Frameshift.Library do
          attributes,
          parent_digest,
          recipe_hash,
-         placement
+         placement,
+         receipt
        ) do
     now = now_ms()
     provenance_json = RFC8785.encode!(attributes.provenance)
@@ -1321,9 +1397,20 @@ defmodule Frameshift.Library do
         )
       end
 
-      DiagnosticsStore.record_audit(connection, "master.imported", digest, %{
-        "sourceKind" => source_kind
-      })
+      audit =
+        if receipt do
+          %{
+            "sourceKind" => source_kind,
+            "commandId" => receipt.id,
+            "actorId" => command_actor_id(receipt.actor)
+          }
+        else
+          %{"sourceKind" => source_kind}
+        end
+
+      DiagnosticsStore.record_audit(connection, "master.imported", digest, audit)
+
+      complete_import_receipt(connection, receipt, digest)
 
       :ok
     end)
@@ -1342,6 +1429,138 @@ defmodule Frameshift.Library do
   defp inserted_master_record(state, _, recipe_hash, placement) do
     with {:ok, master} <- cached_generation_record(state, recipe_hash),
          do: {:ok, Map.put(master, :placement, placement)}
+  end
+
+  defp import_command_record(state, bytes, attributes, id, hash, actor) do
+    with true <- is_integer(actor) and local_actor?(actor) and Digest.valid_sha256?(hash),
+         {:ok, receipt} <- command_receipt_record(state, id, actor, hash) do
+      replay_import_receipt(receipt)
+    else
+      :not_found -> claim_import(state, bytes, attributes, id, hash, actor)
+      false -> {:error, :invalid_command_receipt}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp claim_import(state, bytes, attributes, id, hash, actor) do
+    with :ok <- validate_import_package(bytes, attributes),
+         {:ok, :execute} <- claim_command_record(state, id, hash, actor) do
+      receipt = %{id: id, hash: hash, actor: actor}
+
+      case import_master_record(state, bytes, attributes, nil, nil, receipt) do
+        {:ok, _} -> command_receipt_record(state, id, actor, hash)
+        {:error, {:database, _}} -> {:error, :command_outcome_unknown}
+        {:error, :command_outcome_unknown} -> {:error, :command_outcome_unknown}
+        {:error, reason} -> fail_import_claim(state, receipt, reason)
+      end
+    else
+      {:ok, :pending} -> {:error, :command_outcome_unknown}
+      {:ok, {:replay, _}} -> {:error, :command_outcome_unknown}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
+  defp validate_import_package(bytes, attributes) when is_map(attributes) do
+    with :ok <- Identity.validate_master(attributes, nil, nil),
+         {:ok, decoded} <- MasterPackage.decode(IO.iodata_to_binary(bytes)),
+         true <- attributes.source_kind == :import and attributes.width == decoded.width,
+         true <- attributes.height == decoded.height and attributes[:orientation] == 1,
+         true <- attributes.media_type == MasterPackage.media_type(),
+         true <- attributes[:color_profile] == "sRGB" and is_map(attributes.provenance) do
+      :ok
+    else
+      _ -> {:error, :invalid_import_package}
+    end
+  rescue
+    _ -> {:error, :invalid_import_package}
+  end
+
+  defp validate_import_package(_, _), do: {:error, :invalid_import_package}
+
+  defp replay_import_receipt(%{"status" => "pending"}), do: {:error, :command_outcome_unknown}
+  defp replay_import_receipt(%{"status" => "failed", "errorCode" => code}), do: {:error, code}
+
+  defp replay_import_receipt(%{"status" => "succeeded", "importedItemID" => digest} = receipt)
+       when is_binary(digest), do: {:ok, receipt}
+
+  defp replay_import_receipt(_), do: {:error, :command_id_conflict}
+
+  defp fail_import_claim(state, receipt, reason) do
+    code = if reason == :library_storage_full, do: reason, else: :import_storage_unavailable
+
+    case complete_command_record(state, receipt.id, receipt.hash, receipt.actor, {:error, code}) do
+      :ok -> {:error, code}
+      _ -> {:error, :command_outcome_unknown}
+    end
+  end
+
+  defp complete_import_receipt(_, nil, _), do: :ok
+
+  defp complete_import_receipt(connection, receipt, digest) do
+    result =
+      Exqlite.query!(
+        connection,
+        """
+        UPDATE command_receipts
+        SET status = 'succeeded', imported_master_digest = ?, completed_at_ms = ?
+        WHERE command_id = ? AND command_hash = ? AND actor_uid IS ? AND status = 'pending'
+        RETURNING command_id
+        """,
+        [digest, now_ms(), receipt.id, receipt.hash, receipt.actor]
+      )
+
+    if result.rows != [[receipt.id]], do: Exqlite.rollback(connection, :command_outcome_unknown)
+
+    DiagnosticsStore.record_audit(connection, "command.completed", nil, %{
+      "commandId" => receipt.id,
+      "actorId" => command_actor_id(receipt.actor),
+      "kind" => "succeeded"
+    })
+
+    :ok
+  end
+
+  defp command_receipt_record(state, id, actor, expected_hash)
+       when is_binary(id) and byte_size(id) in 1..64 and local_actor?(actor) do
+    with :ok <- validate_receipt_hash(expected_hash),
+         {:ok, record} <-
+           query_one(
+             state.connection,
+             """
+             SELECT command_hash, actor_uid, status, error_code, imported_master_digest
+             FROM command_receipts WHERE command_id = ?
+             """,
+             [id]
+           ) do
+      receipt_for_actor(record, actor, expected_hash)
+    end
+  rescue
+    _ in Exqlite.Error -> {:error, :command_outcome_unknown}
+  end
+
+  defp command_receipt_record(_, _, _, _), do: {:error, :invalid_command_receipt}
+
+  defp validate_receipt_hash(nil), do: :ok
+
+  defp validate_receipt_hash(hash) do
+    if Digest.valid_sha256?(hash), do: :ok, else: {:error, :invalid_command_hash}
+  end
+
+  defp receipt_for_actor(%{"actor_uid" => actor} = record, actor, nil),
+    do: receipt_projection(record)
+
+  defp receipt_for_actor(%{"actor_uid" => actor, "command_hash" => hash} = record, actor, hash),
+    do: receipt_projection(record)
+
+  defp receipt_for_actor(_, _, _), do: {:error, :command_id_conflict}
+
+  defp receipt_projection(record) do
+    {:ok,
+     %{
+       "status" => record["status"],
+       "errorCode" => record["error_code"],
+       "importedItemID" => record["imported_master_digest"]
+     }}
   end
 
   defp do_register_recipe(state, kind, parameters, source_digests) do

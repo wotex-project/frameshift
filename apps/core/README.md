@@ -102,6 +102,14 @@ also builds target Exile NIFs/helpers against pinned OTP headers and exercises
 nonroot arm64/amd64 worker deadlines, shutdown and abrupt-owner refusal.
 This owner is not yet an authenticated streamed-import command or a release package.
 
+The Library retains the exact imported master ID in the actor-bound command
+receipt, committed with registration and audit. Pending imports refuse replay;
+completed imports return their original result without restoring removed artwork.
+The unreleased original schema includes this result field. Existing development
+databases are preserved and are not automatically upgraded or reset; use a new
+data directory for fresh-schema fixtures. Streamed endpoint/CLI wiring follows
+the [Linux import contract](../../docs/host/linux.md#streamed-original-import).
+
 The separate bundled `frameshift-identity import` command accepts one bounded
 certificate/private-key PEM on closed stdin while running as the configured
 nonroot service UID. Set `FRAMESHIFT_SERVICE_UID` and an existing service-owned
