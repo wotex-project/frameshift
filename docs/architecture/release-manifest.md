@@ -256,6 +256,52 @@ approved locks; it does not authenticate publishers, approve licenses or prove
 compiler/generated-code/runtime/other-component qualification. Join these
 receipts to producer inputs separately.
 
+## Captured core lexer/parser derivation
+
+`scripts/check-core-generated TAG COMMIT SOURCE_RECORD HEX_CACHE CORE_RECEIPT
+CORE_SHA256 DEPENDENCY_JOIN JOIN_SHA256 OUTPUT` qualifies only the known captured
+core lexer/parser inputs identified by `generated-lexer-parser` in an independently
+pinned Mac/Ubuntu dependency join. Reuse complete core source-receipt replay from
+its original single-receipt output against the fetched archive/Git cache; do not replace that verifier or infer source proof
+from the joined record. Core receipt, join and frozen source identities
+must agree. Retain the join's candidate reference without claiming a new candidate
+admission. Unknown schemas/facts/paths, wrong expected hashes, missing admitted
+grammars and unsafe/changed custody refuse. Other generated inputs and retained
+Git metadata keep their separate scope. An empty selected subset is recorded as
+zero qualified files; it does not qualify generation inside the target build.
+
+The supported syntax profile is OTP 29.1/ERTS 17.1/parsetools 2.8, using `leex`
+for the three retained lexer grammars and `yecc` for the two retained parser
+grammars in earmark_parser/erlex. Invoke only those inspected public file exports
+with relative `src/` names in private copies; clear inherited compiler options.
+Record exact helper, four generator-module and two default-template observations.
+Default templates embed their installation path in generated source. Require
+exact raw output bytes/hash and captured 0644 mode: a different tool/path cohort
+refuses; do not normalize generated source or change retained candidate bytes.
+Source grammar inputs are at most 64 KiB each, generated files at most 2 MiB each,
+with at most five pairs and 64 KiB joined/proof records. Each generator/observation
+child has a 30-second deadline, 64 KiB output ceiling and shell file-size limit;
+the operation has a three-minute software budget. This is bounded source/output
+and child-lifetime policy, not a measured
+compiler peak-memory guarantee.
+
+A new private output contains synchronized 0600 grammar/generated proof files,
+0700 directories, a pending marker and a bounded derivation record. Preserve
+partial/conflicting custody for inspection; never implicitly regenerate there.
+Completed replay checks retained proof bytes, source/receipt/join identity and
+current generator observations without generating, fetching, building, loading
+application code or rewriting. Final static input/proof/namespace checks follow
+all source/parser/observation children. No generated Erlang actions are executed.
+
+Acceptance joins real parser-generator outputs, actual Git/Mix and source-archive
+receipts to exact captured hashes; altered source/output/template/module identity,
+unsupported input, resource/alias/namespace conflicts, child-time mutation and
+no-generation replay must refuse or preserve the declared custody. Separately
+join the five full captured files for both Mac and Ubuntu retained cohorts. This
+proves derivation of these captured source inputs by the observed tool cohort;
+it does not prove compiler/publisher authenticity, target BEAM/native execution,
+licenses, installed lifecycle or production distribution. Authority remains none.
+
 ## Canonical fetched Gleam metadata for candidate builds
 
 Gleam 1.18.1 rewrites generated `build/packages/packages.toml` with package-map

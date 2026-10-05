@@ -592,6 +592,17 @@ license/notices collection and compiler/generated material qualification; publis
 rights, hosted/native-installed/systemd and production distribution remain
 independent evidence gates, with publication authority none.
 
+The captured core syntax derivation now replays the original source receipt and
+regenerates only the five supported lexer/parser inputs from admitted private
+grammar copies. It records OTP 29.1/ERTS 17.1/parsetools 2.8 module/template
+observations and requires exact captured bytes without normalization. Completed
+replay observes tools and retained proof without generation or writes. Source,
+tool/template, bounds, aliases, incomplete custody and child-time mutations
+refuse. The native helper and empty compiler lock retain separate unqualified
+scope; an empty selection qualifies zero files. Continue bounded notice-file
+collection and other tool/native material qualification. This source derivation
+does not supply target execution, publisher/rights, installed or release proof.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

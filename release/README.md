@@ -380,6 +380,20 @@ lists exclusions, ceilings, refusal/recovery and independent publisher, rights,
 toolchain, generated-code and other-component admission gates. Publication
 authority remains `none`.
 
+`scripts/check-core-generated TAG COMMIT SOURCE_RECORD HEX_CACHE CORE_RECEIPT
+CORE_SHA256 DEPENDENCY_JOIN JOIN_SHA256 OUTPUT` replays an existing core source
+receipt from its original single-receipt directory, then derives the selected
+five supported lexer/parser files from private copies of its admitted grammars.
+The independently pinned Mac/Ubuntu join supplies the captured output hashes.
+OTP 29.1/ERTS 17.1/parsetools 2.8 generator modules and default templates are
+observed by byte hash; differing raw outputs, tools, identities or custody refuse.
+No generated actions are compiled or executed. Completed replay verifies proof
+files and tool observations without generation or output rewrites. An empty
+selection qualifies zero files. The
+[derivation contract](../docs/architecture/release-manifest.md#captured-core-lexerparser-derivation)
+keeps remaining generated inputs, compiler authenticity, target runtime,
+rights and publication separate; authority is `none`.
+
 `scripts/check-gleam-material TAG COMMIT SOURCE_RECORD HEX_CACHE OUTPUT` verifies
 already-fetched decision-kernel source against the frozen Gleam manifest and
 fetched package metadata. `HEX_CACHE` is Gleam's existing checksum-named archive
