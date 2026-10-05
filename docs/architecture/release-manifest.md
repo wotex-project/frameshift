@@ -302,6 +302,53 @@ proves derivation of these captured source inputs by the observed tool cohort;
 it does not prove compiler/publisher authenticity, target BEAM/native execution,
 licenses, installed lifecycle or production distribution. Authority remains none.
 
+## Locked dependency notice-file collection
+
+`scripts/collect-dependency-notices TAG COMMIT SOURCE_RECORD CORE_CACHE
+CORE_RECEIPT CORE_SHA256 GLEAM_CACHE GLEAM_RECEIPT GLEAM_SHA256 OUTPUT` collects
+raw notice candidates only from the independently pinned core and decision-kernel
+source receipts. Replay both existing source gates from their original
+single-receipt directories against the same frozen source and supplied caches.
+Missing, conflicting or incomplete source evidence refuses; collection never
+creates replacement source receipts, fetches, builds or starts application code.
+
+Select admitted files whose ASCII case-insensitive basename is `LICENSE`,
+`LICENCE`, `LICENSES`, `LICENCES`, `COPYING`, `COPYRIGHT`, `NOTICE`, `NOTICES` or
+`AUTHORS`, optionally followed by a dot, underscore or hyphen suffix. Also retain
+files below an exactly named `LICENSES`/`LICENCES` directory and each core Hex
+package's admitted `hex_metadata.config`. Keep original path/mode/byte/hash and
+locked package identity; copy exact raw bytes into private component/package
+paths. Do not decode, execute, render, normalize or infer SPDX expressions from
+the content. Record every locked package, including an explicit empty notice
+list where this filename profile finds nothing. Metadata is a separate role;
+it cannot turn a missing notice file into a complete package review.
+
+This is a technical collection scope, not a license decision or full distributed
+closure. It does not establish that these packages ship, that inline notices or
+third-party code have been covered, or that declared licenses grant the planned
+rights. Project license selection, rights review and the separate OTP/Elixir,
+Swift/toolchain, Rust/native, SDK/model and operating-system materials remain
+required. The record must state rights review required and publication authority
+none. Do not modify retained app/DEB/candidate bytes or pretend this private
+collection is an installed release notice bundle.
+
+Bound selection to 512 files, 1 MiB per file, 16 MiB aggregate raw bytes and a
+1 MiB inventory, with existing source path/depth and package limits. Use the
+source gates' finite parser/child limits and a six-minute software processing
+budget. Synchronize 0600 files and 0700 directories beneath a private output;
+retain a pending marker on failure. A complete replay verifies exact copied
+bytes, package/role inventory, source/receipt identity and output namespace
+without copying, rewriting or deleting. Unknown/aliased/special/unsafe files,
+additional directories, changed source or child-time custody changes refuse
+while retaining prior or partial evidence. Final static source, selected-file,
+receipt and output checks must follow all parser/version children.
+
+Acceptance joins actual Hex/Git/Gleam source producers and the existing source
+verifiers, then checks exact copies, nested notice names, missing-file reporting,
+independent identity, bounds, aliases, incomplete custody, mutation and unchanged
+CLI replay. A full current dependency cohort exercises the same collector; this
+evidence does not close release licensing or distribution acceptance.
+
 ## Canonical fetched Gleam metadata for candidate builds
 
 Gleam 1.18.1 rewrites generated `build/packages/packages.toml` with package-map

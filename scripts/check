@@ -55,6 +55,7 @@ check_policy() {
     "$repository_root/scripts/inspect-release-channel" \
     "$repository_root/scripts/check-core-material" \
     "$repository_root/scripts/check-core-generated" \
+    "$repository_root/scripts/collect-dependency-notices" \
     "$repository_root/scripts/check-gleam-material" \
     "$repository_root/scripts/prepare-gleam-metadata" \
     "$repository_root/scripts/check-macos-material" \
@@ -204,6 +205,9 @@ check_release() {
   mise exec -- node --check "$repository_root/release/core-generated.mjs"
   mise exec -- node --check "$repository_root/release/core-generated-cli.mjs"
   mise exec -- node --check "$repository_root/release/core-generated-fixture.mjs"
+  mise exec -- node --check "$repository_root/release/notices.mjs"
+  mise exec -- node --check "$repository_root/release/notices-cli.mjs"
+  mise exec -- node --check "$repository_root/release/notices-fixture.mjs"
   mise exec -- node --check "$repository_root/release/gleam-material.mjs"
   mise exec -- node --check "$repository_root/release/gleam-material-cli.mjs"
   mise exec -- node --check "$repository_root/release/gleam-metadata.mjs"
@@ -229,6 +233,7 @@ check_release() {
     "$repository_root/release/inputs.test.mjs" \
     "$repository_root/release/core-material.test.mjs" \
     "$repository_root/release/core-generated.test.mjs" \
+    "$repository_root/release/notices.test.mjs" \
     "$repository_root/release/gleam-material.test.mjs" \
     "$repository_root/release/gleam-metadata.test.mjs" \
     "$repository_root/release/linux/candidate.test.mjs" \

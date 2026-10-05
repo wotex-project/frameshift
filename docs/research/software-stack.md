@@ -1416,3 +1416,42 @@ container candidates; derivation runs on the observed local Mac generator cohort
 and establishes source-input identity, not target generator/BEAM execution.
 Each still records two unqualified generated inputs. The seven fixture groups,
 formatter, Node syntax, policy and rendered Chrome documentation checks pass.
+
+### Locked dependency notice-file collection
+
+**Observation:** 2026-10-05. The source-admitted 42 core dependencies and two
+Gleam dependencies provide a bounded technical starting point for notice
+collection. Selection uses the
+[owning filename profile](../architecture/release-manifest.md#locked-dependency-notice-file-collection),
+not content interpretation. Nested sparse Git notices and `LICENSES`/`LICENCES`
+members retain their original paths; each core Hex package's admitted raw
+metadata has a separate role. Arbitrary suffixes can identify candidates that
+are not license texts, so filename matching alone establishes no rights or
+notice completeness. Raw contents are copied without decoding or execution.
+
+The full cohort produces 83 files and 283,159 raw bytes: 44 conventional filename
+candidates plus 39 package metadata files. Inventory SHA-256 is
+`c10d3584c2bb0259e7826d923f422137419a942092e0ab17da89b89de783d52e`.
+Completed source-gate/inventory replay preserves its inode and timestamp. Seven
+core packages have no matching notice name in the admitted source scope:
+benchee_markdown 0.3.4, db_connection 2.10.2, elixir_make 0.10.0,
+file_system 1.1.1, nimble_parsec 1.4.2, stream_data 1.4.0 and yaml_elixir 2.12.2.
+Their inventories explicitly retain an empty notice list and separate Hex
+metadata; this absence is not a determination about their licensing.
+
+Actual archive/Git/Gleam fixtures exercise non-UTF-8/NUL raw copies and correct
+metadata roles, missing names and successful unchanged CLI replay. Source-admitted
+inputs exceeding 1 MiB per file, 16 MiB aggregate and 512 selected files refuse
+before collection. Independently wrong/forged/changed evidence, incomplete or
+aliased/unsafe/changed/extra copies, and changes during the final source parsers
+refuse while preserving prior/partial custody. Five refusal/resource groups and
+two positive/filename groups pass in targeted runs. Current source identities and copied byte/namespace checks follow all
+parser/version children.
+
+This collection includes development/build dependencies and does not determine
+which packages ship. It does not cover all inline/transitive notices or the
+project, OTP/Elixir, Swift/toolchain, Rust/native, SDK/model and OS distribution
+materials. It changes no retained app/DEB/candidate and is not an installed notice
+bundle. Full closure and rights review remain required; publication authority is
+none. Continue the separate input-source gates before attaching broader release
+claims to notice inventories.

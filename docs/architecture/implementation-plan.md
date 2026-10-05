@@ -603,6 +603,20 @@ scope; an empty selection qualifies zero files. Continue bounded notice-file
 collection and other tool/native material qualification. This source derivation
 does not supply target execution, publisher/rights, installed or release proof.
 
+The core/decision-kernel notice collector now replays the actual source gates and
+retains exact conventional filename candidates plus core Hex metadata in a
+private inventory. Missing notice names remain explicit per package; metadata
+does not fill that gap. Actual Hex/Git/Gleam fixtures cover raw binary copies,
+unchanged CLI replay, independent/forged/changed identities, source-admitted
+file/aggregate/entry ceilings, aliases, partial outputs and late source/copy/
+namespace changes. The full 44-package cohort retains 83 files/283,159 raw bytes,
+with seven packages lacking a matching notice filename, and replays unchanged.
+This supplies bounded technical collection for two source scopes. Complete
+distributed dependency coverage and rights review remain required, alongside
+other tool/native/SDK materials and the project license decision; authority is
+none. Continue those independent material gates and candidate evidence retention
+without treating this private inventory as installed release notices.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

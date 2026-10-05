@@ -406,6 +406,19 @@ metadata and changed custody. It reuses the pinned Hex memory parser; the receip
 carries publication authority `none` and grants no publisher, license, compiler,
 operating-system lock or runtime qualification.
 
+`scripts/collect-dependency-notices TAG COMMIT SOURCE_RECORD CORE_CACHE
+CORE_RECEIPT CORE_SHA256 GLEAM_CACHE GLEAM_RECEIPT GLEAM_SHA256 OUTPUT` replays
+both source receipts and collects only their admitted conventionally named
+notice candidates and core Hex metadata. Exact raw copies and locked package
+identities are retained privately; every package has an explicit notice list,
+including empty lists. Metadata, filename discovery and rights review keep
+separate meanings. Completed replay checks unchanged copies/inventory without
+copying or rewriting. The
+[collection contract](../docs/architecture/release-manifest.md#locked-dependency-notice-file-collection)
+defines bounds, refusal and partial-custody recovery. This covers the two locked
+dependency source scopes; full distributed closure and rights approval remain
+required, with publication authority `none`.
+
 `scripts/check-macos-material TAG COMMIT SOURCE_RECORD arm64|x86_64 CANDIDATE
 CANDIDATE_SHA256 CORE_RECEIPT CORE_SHA256 GLEAM_RECEIPT GLEAM_SHA256 OUTPUT`
 compares separately pinned core/Gleam source receipts with an admitted native
