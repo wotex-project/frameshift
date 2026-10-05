@@ -50,6 +50,20 @@ defmodule FrameshiftPlatform.AuthenticationTest do
              })
   end
 
+  test "password bounds count code points and preserve combining-character bytes" do
+    password = String.duplicate("e\u0301", 8)
+    assert String.length(password) == 8
+    assert length(String.codepoints(password)) == 16
+    user = register(password: password)
+    assert {:ok, _} = Authentication.sign_in(%{email: to_string(user.email), password: password})
+
+    assert {:error, :invalid_credentials} =
+             Authentication.sign_in(%{
+               email: to_string(user.email),
+               password: String.normalize(password, :nfc)
+             })
+  end
+
   test "invalid shapes and password bounds refuse before creating accounts or tokens" do
     for params <- [
           nil,

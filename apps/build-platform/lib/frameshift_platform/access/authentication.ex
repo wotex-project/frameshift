@@ -137,7 +137,7 @@ defmodule FrameshiftPlatform.Access.Authentication do
   defp parameters(_, _, _), do: {:error, :invalid_input}
 
   defp text?(value, minimum, maximum) when is_binary(value) and byte_size(value) <= 512,
-    do: String.valid?(value) and String.length(value) in minimum..maximum
+    do: String.valid?(value) and length(String.codepoints(value)) in minimum..maximum
 
   defp text?(_, _, _), do: false
 
