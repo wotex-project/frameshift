@@ -274,8 +274,12 @@ may be fabricated. Restart preserves prior completed receipts while unknown
 intake custody refuses status/new import with exit 69. Retain this fenced final
 state and all fixture outputs; this is not automatic recovery or a customer
 installation procedure. A partial run never resets or deletes its retained data.
-Stock Ubuntu/native amd64, physical storage/power and production acceptance
-remain separate from the observed shared-kernel fixture.
+The complete fixture passes uninterrupted from a fresh Ubuntu 24.04.5 arm64 /
+systemd 255.4 installation with default JIT on the shared OrbStack kernel. A
+persistent per-unit override restores provider-disabled hardening before APT
+installation; actual properties are checked before and after the lifecycle.
+Stock Ubuntu/native amd64, actual host OOM recovery, physical storage/power and
+production acceptance remain separate from that exact software configuration.
 
 ### Captured dependency source receipts
 

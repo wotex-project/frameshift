@@ -659,21 +659,22 @@ All source/namespace/byte/handoff gates remain authoritative, incomplete outputs
 remain retained and shared caches are not pruned. Two fresh standard-command
 arm64 candidates join these fixes to exact frozen source/package bytes.
 
-Actual booted APT install/immediate restart, PNG/JPEG/role/identity, offline exact
-backup/restore, active-but-disabled numeric upgrade and post-downgrade retained
-comparison pass. After a disk-pressure VM interruption, an explicit resumed check
-passes remove/purge/reinstall, unchanged state/key/backups/unknown custody/UID,
-new import and suspended-codec stop. Prior receipts remain readable; pre-decode
-receipt fabrication is absent and uncertain intake refuses new work/status.
-The repeatable fixture retains partial state and accepts only the manager's exact
-unloaded-unit reset response; the real start budget remains unchanged.
+The complete booted fixture now passes uninterrupted from a fresh installation:
+actual APT install/immediate restart, PNG/JPEG/role/identity, offline exact
+backup/restore, active-but-disabled numeric upgrade, downgrade/error-unwind,
+remove/purge/reinstall, unchanged state/key/backups/unknown custody/UID and new
+import. Suspended-codec stop passes actual PID/group/deadline/CLI-75 checks.
+Prior receipts remain readable; pre-decode receipt fabrication is absent and
+uncertain intake refuses new work/status with 69. The fixture retains its final
+fenced state and accepts only the manager's exact unloaded-unit reset response;
+the real start budget remains unchanged.
 
-This qualifies the observed Ubuntu 24.04.5/systemd 255.4 configuration on the
-shared OrbStack arm64 kernel, with declared hardening restored only for the tested
-units. Continue an uninterrupted fresh fixture when space permits, stock Ubuntu/
-native amd64/default JIT, actual host OOM recovery, physical power/storage,
-rights/signing and production acceptance. Split runs, kernel canaries and source
-assertions do not complete those remaining gates.
+This qualifies Ubuntu 24.04.5/systemd 255.4/default JIT on the shared OrbStack
+arm64 kernel, with persistent declared-hardening restoration scoped to the
+tested unit before installation. Continue stock Ubuntu/native amd64, actual host
+OOM recovery, physical power/storage, rights/signing and production acceptance.
+The complete software lifecycle closes the fresh-run gap; kernel canaries and
+source assertions do not complete those remaining gates.
 
 S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned

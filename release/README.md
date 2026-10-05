@@ -199,9 +199,13 @@ must not be restarted by deleting data or lowering the watermark. The last phase
 intentionally leaves intake fenced and prior receipts readable. Preserve that
 state for inspection; this is acceptance tooling, not customer recovery.
 
-The current observed shared-kernel arm64 qualification is split by disk-pressure
-VM interruption. Its exercised phases pass; an uninterrupted complete fresh run,
-stock Ubuntu/native amd64 and physical/production acceptance remain open.
+The complete fixture passes uninterrupted on a fresh Ubuntu 24.04.5 arm64 /
+systemd 255.4 installation with default JIT and the shared OrbStack kernel.
+Provider-disabled hardening is restored before installation through a persistent
+per-unit override under `/etc/systemd/system/frameshift.service.d/`; selected
+properties are read back before and after the lifecycle. The final uncertain
+intake fence and all outputs remain retained. Stock Ubuntu/native amd64, actual
+host OOM recovery and physical/production acceptance remain open.
 
 ## Stable source input capture
 

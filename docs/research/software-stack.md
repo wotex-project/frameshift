@@ -1714,42 +1714,45 @@ artifact/readiness/mixed-stop implementation join these private source identitie
 The copied archives verify independently. Installed unit, `check-ready`,
 `launch-service`, `frameshiftctl` and `policy.sh` match frozen source. Unit SHA-256
 is `dc6290adb88bb9e0930f98c7393d60c9c7f6be1eba5bbcf3e491ec95c1b8591f`.
-Actual APT install and immediate managed restart pass with default JIT on Ubuntu
-24.04.5 arm64/systemd 255.4 and the previously identified shared OrbStack kernel.
-Declared hardening is restored only for the tested unit.
+Actual APT install and immediate managed restart pass with default JIT on a fresh
+Ubuntu 24.04.5 arm64/systemd 255.4 machine using the shared OrbStack kernel.
+Provider-disabled hardening is restored before installation, only for the tested
+unit, through a persistent `/etc/systemd/system/frameshift.service.d/` override.
+Pre- and post-fixture readback confirms strict system protection, home denial,
+private temporary/device views, NoNewPrivileges, mixed stop, OOM stop, a 1 GiB
+memory ceiling and 512 tasks. This is an exact software configuration, not a
+stock-kernel or physical-hardware qualification.
 
-The repository booted fixture passes exact original PNG/JPEG/group admission,
-created 0400 identity and service-UID resolution, offline backup/verify/restore,
-live maintenance refusal, active-but-disabled 0.1.0-to-0.1.1 upgrade, downgrade
-before unpack/error-unwind and post-downgrade retained comparison. It then stops
-because `reset-failed` refuses an inactive disabled unit that the manager has
-unloaded. Exact [systemd v255 reset source](https://github.com/systemd/systemd/blob/v255/src/core/dbus-manager.c#L870-L874)
-explains that reset does not load an absent unit because it cannot retain failed
-state. This source was read with gh. The fixture now accepts only that exact
-C-locale response, continuing to normal start; every other reset error refuses.
-The finite installed start budget remains unchanged.
-
-Disk pressure interrupts the VM and prevents a fresh machine's rootfs extraction.
-An explicit resumed fixture uses the exact stopped installation after the prior
-retained comparison; noncustodial `/tmp` and `/run` fixture inputs are recreated,
-with no installed data/watermark/fence reset. Actual remove, purge, lower-version
+The complete corrected repository fixture passes uninterrupted from that fresh
+installation. It joins exact original PNG/JPEG/group admission, created 0400
+identity and service-UID resolution, offline backup/verify/restore, live
+maintenance refusal, active-but-disabled 0.1.0-to-0.1.1 upgrade, downgrade before
+unpack/error-unwind and retained comparison. Actual remove, purge, lower-version
 reinstall refusal and higher-version reinstall preserve immutable bytes, owners,
 modes, authoritative tables, retained audits, key, UID, backups and unknown
 sentinel. A new original import succeeds. The validator runs from its separately
 extracted protected runtime, independent of removed product files.
 
-The final phase SIGSTOPs the actual codec worker after executable/cgroup/PID-start
-matching. Managed stop succeeds, that identity disappears, the group empties and
-the interrupted CLI exits 75. Authoritative tables remain unchanged: decoding
-had not reached Library receipt admission. Restart keeps prior completed receipts
-readable; interrupted status and new import refuse with 69 while uncertain intake
-custody stays retained. This qualifies actual worker ownership/refusal, not
-pre-decode durable claims or automatic recovery.
+An exact C-locale `reset-failed` response for an unloaded unit permits normal
+start; every other reset error refuses. The [systemd v255 reset source](https://github.com/systemd/systemd/blob/v255/src/core/dbus-manager.c#L870-L874),
+read with gh, explains why resetting does not load an absent unit that cannot
+retain failed state. The real three-start/120-second budget remains unchanged.
+The complete run does not resume a partial fixture or reset its installed
+custody, watermark or fences.
 
-All exercised phases pass across the explicitly split run. The corrected full
-repository fixture has not completed uninterrupted from a fresh installation.
-Stock Ubuntu/native amd64, host OOM recovery, physical storage/power and production
-acceptance remain open. These private candidates grant no release authority.
+The final phase SIGSTOPs the actual codec worker after executable/cgroup/PID-start
+matching. Managed stop succeeds within the declared deadline, that identity
+disappears, the group empties and the interrupted CLI exits 75. Authoritative
+tables remain unchanged: decoding had not reached Library receipt admission.
+Restart keeps prior completed receipts readable; interrupted status and new
+import refuse with 69 while uncertain intake custody stays retained. The final
+fenced installation and fixture outputs remain available for inspection. This
+qualifies actual worker ownership/refusal, not pre-decode durable claims or
+automatic recovery.
+
+Stock Ubuntu/native amd64, actual host OOM recovery, physical storage/power and
+production acceptance remain open. These private candidates grant no release
+authority.
 
 ### Timezone-independent protected identity custody
 
