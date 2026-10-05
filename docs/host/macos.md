@@ -442,6 +442,42 @@ execution attestation, installed acceptance and production distribution remain
 open. Source-bound universal assembly still requires its independent common-byte
 and compiler-cohort checks.
 
+### Dependency source receipt archive handoff
+
+`scripts/stage-macos-material TAG COMMIT SOURCE_RECORD arm64|x86_64 CANDIDATE
+CANDIDATE_SHA256 ARCHIVE ARCHIVE_SHA256 CORE_SHA256 GLEAM_SHA256 JOIN_SHA256
+OUTPUT` transports source evidence separately from the strict app-candidate
+archive. Independently supply the exact candidate, archive and three receipt
+digests. The uncompressed POSIX USTAR has exactly four members: mode `0700`
+`macos-material/`, and mode `0600` `core-material.json`, `gleam-material.json`
+and `dependency-inputs.json` beneath it. No other path, directory or archive
+profile is admitted. Bound the archive to 33 MiB, each source receipt to 16 MiB,
+the joined receipt to 64 KiB and the member count to four before extraction.
+Reuse the shared USTAR regular-member, byte/mode, checksum, padding, terminator,
+descriptor and two-minute processing rules. Keep the existing app and Ubuntu
+archive formats intact.
+
+Create a new owner-only receiver directory with a private pending marker and
+extract directly from the verified archive descriptor. Compare received receipt
+digests before passing the two source receipts and separately admitted candidate
+to the source join. The receiver's own `verification/dependency-inputs.json`
+must equal the received joined receipt byte for byte. This proves the received
+assertions agree with the candidate and frozen locks; it does not authenticate
+their original execution or publisher. Refuse a mismatched joined result even
+when all supplied transport digests agree.
+
+Recheck source, archive, extracted members, candidate/app, namespaces and output
+custody after all child consumers and before completion. Sync a private bounded
+`handoff.json` binding source, candidate, archive and all receipt digests with
+publication authority `none`. Complete replay verifies retained evidence without
+extraction, fetching, building, merging, signing or rewriting. Partial/conflicting
+output remains retained and refused. Acceptance includes actual BSD USTAR for
+separate CPU compiler fixtures, independent hash/source/join conflicts, invalid
+member/permission/resource profiles, retained byte/namespace mutation and
+unchanged CLI replay. Exercise the full retained native host and its actual source
+receipts separately; hosted/native Intel, upstream trust, rights, generated-code,
+toolchain, installed and production distribution evidence remain open.
+
 ### Native Mac candidate workflow
 
 `.github/workflows/macos-candidate.yml` is an explicit manual candidate workflow

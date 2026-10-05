@@ -507,6 +507,18 @@ source comparison, with authority none; generated-code/toolchain, independent
 publisher/rights, native execution attestation, installed targets and production
 distribution remain separate. Continue workflow/producer receipt integration.
 
+The Mac dependency-source handoff now carries a separate four-member private
+USTAR beside the unchanged app archive. Its receiver requires independently
+pinned archive/candidate/core/Gleam/join digests and reruns the actual source join
+against the admitted app; the received joined record must equal the local result.
+Bounded member/mode/resource profiles, source or byte conflicts and incomplete
+custody refuse without replacement. The full retained arm64 host's actual
+255,488-byte evidence archive admits the same 1,457 source facts and seven
+generated exceptions, with unchanged replay. This implements source-evidence
+transport, not publisher/runner authentication or production qualification.
+Integrate source checking and both archive receivers into the manual native
+workflow before recording any hosted execution claim.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

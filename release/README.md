@@ -371,3 +371,15 @@ with seven recorded exceptions. The
 keeps retained assertions and byte comparison separate from publisher trust,
 rights, generated/toolchain qualification, native execution attestation and
 production distribution. Publication authority is `none`.
+
+`scripts/stage-macos-material TAG COMMIT SOURCE_RECORD arm64|x86_64 CANDIDATE
+CANDIDATE_SHA256 ARCHIVE ARCHIVE_SHA256 CORE_SHA256 GLEAM_SHA256 JOIN_SHA256
+OUTPUT` receives source evidence separately from the app archive. A private
+`macos-material/` USTAR contains only `core-material.json`, `gleam-material.json`
+and `dependency-inputs.json`. Supply their expected digests independently. The
+receiver verifies exact transport bytes, reruns the source join against the
+admitted app and requires byte-for-byte agreement with the received joined record.
+Partial/conflicting output stays retained; successful replay does not extract,
+fetch, build, sign or rewrite. The full arm64 receipt archive passes at 255,488
+bytes. The [receipt handoff contract](../docs/host/macos.md#dependency-source-receipt-archive-handoff)
+defines its fixed members, private modes, ceilings and remaining evidence gates.

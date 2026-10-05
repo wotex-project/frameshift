@@ -1146,3 +1146,34 @@ publisher/registry trust, licenses, compiler/generated-code authenticity,
 native execution attestation, installed support and production distribution
 remain separate under the
 [owning join contract](../host/macos.md#candidate-dependency-source-join).
+
+### Dependency source evidence transport
+
+**Observation:** 2026-10-05. The strict Mac app archive carries only the native
+candidate and app. Adding source receipts inside that root would change its
+admitted namespace and invalidate the existing receiver contract. The selected
+transport is a separate four-member `macos-material/` POSIX USTAR: its private
+root plus the core, Gleam and dependency-input joined receipts. Its fixed
+33 MiB archive, 16 MiB source-receipt, 64 KiB joined-receipt and four-member
+ceilings are checked before descriptor extraction. The app and Ubuntu profiles
+retain their existing roots and bounds.
+
+The receiver compares independent transport/receipt/candidate digests, invokes
+the existing source join against the admitted app, and requires its own joined
+record to equal the received record byte for byte. A correct archive hash alone
+cannot make conflicting source assertions pass. Final static archive, extracted
+member, candidate/app and namespace checks follow all child consumers. Successful
+replay retains the same receipt and handoff inode/timestamp; incomplete or changed
+custody is preserved and refused.
+
+The full retained native arm64 host and its actual 42-core/two-Gleam source
+receipts pass a 255,488-byte BSD USTAR and unchanged replay, with 1,457 matched
+facts and seven classified generated/lock inputs. The archive SHA-256 is
+`489b6110a4ce770bec2a8556aa2ed149702cad998d6d137d8d38f00ad98b0aee`;
+the receiver handoff SHA-256 is
+`e3f8a09667d16779a8eaed5c7d1c405b777c1b2268f8c14e65142d8a1479d4df`.
+This is local byte/consumer evidence under the
+[receipt handoff contract](../host/macos.md#dependency-source-receipt-archive-handoff),
+with publication authority `none`. It does not authenticate original producer
+execution, a publisher, licenses, generated code or toolchains, and does not
+establish hosted/native Intel, installed or production distribution acceptance.
