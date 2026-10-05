@@ -1,6 +1,9 @@
 import Config
 
-config :ash, default_string_length_count: :codepoints
+config :ash,
+  default_string_length_count: :codepoints,
+  infer_generic_action_reactors?: false
+
 config :argon2_elixir, argon2_type: 2, t_cost: 3, m_cost: 16, parallelism: 4
 config :prometheus, collectors: []
 config :frameshift_platform, ecto_repos: [FrameshiftPlatform.Repo]

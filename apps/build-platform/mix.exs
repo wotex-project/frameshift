@@ -64,7 +64,7 @@ defmodule FrameshiftPlatform.MixProject do
       {:rustler, "0.38.0", runtime: false, override: true},
       {:phoenix, "~> 1.8.15"},
       {:phoenix_assets, "~> 1.1.1"},
-      {:ash, "~> 3.34.0"},
+      {:ash, "~> 3.34.4"},
       {:ash_authentication, "4.15.0"},
       {:argon2_elixir, "4.1.3"},
       {:ash_postgres,

@@ -369,6 +369,35 @@ guards. The three advisory IDs are narrowly excluded from the automated audit
 for these inspected paths. Reassess when the graph, transport, cookie handling,
 or source/provider adapters change; newly reported advisories still fail.
 
+## Ash security patch, 2026-10-05
+
+A fresh Hex audit reported CVE-2026-94201 on the previous Ash 3.34.0 pin.
+The [Ash 3.34.4 changelog](https://github.com/ash-project/ash/blob/5800aa41f03a34f8be4aaaaf596456b2527576ce/CHANGELOG.md)
+records the 3.34.3 correction; the exact
+[filter fix](https://github.com/ash-project/ash/commit/5282f3f513053628cdd1bf2236ea22d975d934d4)
+keeps caller strings as strings during atom-filter coercion and native dumping,
+instead of interning them through unsafe attribute input casting. Upgrade the
+platform requirement and lock to Ash 3.34.4. Its required Spark 2.7.6 is the only
+other changed lock entry. Both peeled tag commits were checked with `gh`.
+
+The reviewed changes also correct aggregate/calculation nullability and retain
+false defaults in manifests/keyset handling. Spark's
+[2.7.6 changelog](https://github.com/ash-project/spark/blob/7e0e4f3d16cdf17f17b1c55d4255e3871a18e287/CHANGELOG.md)
+records smaller compile dependencies/module output. Apply Ash's recommended
+[`infer_generic_action_reactors?: false`](https://github.com/ash-project/ash/blob/5800aa41f03a34f8be4aaaaf596456b2527576ce/documentation/topics/development/backwards-compatibility-config.md#infer_generic_action_reactors)
+after inspecting the actual installed resource actions: 378 resources across
+the host, Refpath and Ash Authentication contain no bare Reactor implementation.
+Generic Reactor actions would need the explicit upstream `reactor/2` wrapper;
+this application introduces none. No measured compilation-speed claim is made.
+
+A test-only private ETS resource reproduces the corrected unsafe-atom filter
+boundary. One hundred distinct nonmatching caller strings remain uninterned,
+while a string matching an existing stored atom still selects its row. The
+production resources retain their existing constrained roles/evidence kinds;
+no unsafe atom attribute or generic filter endpoint is introduced. Joined account,
+HTTP, resource-policy, generated-schema and migration checks qualify this patch
+with the existing scoped Gun/cowlib exceptions and no additional audit exclusion.
+
 ## Dependency refresh, 2026-10-04
 
 GitHub source and changelog inspection used `gh`; Hex/npm resolution produced
