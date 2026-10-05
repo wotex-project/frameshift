@@ -42,6 +42,8 @@ check_policy() {
     "$repository_root/scripts/package-macos" \
     "$repository_root/scripts/package-linux" \
     "$repository_root/scripts/package-linux-deb" \
+    "$repository_root/scripts/record-release-inputs" \
+    "$repository_root/scripts/verify-release-inputs" \
     "$repository_root/release/linux/policy.sh" \
     "$repository_root/release/linux/provision-runtime" \
     "$repository_root/release/linux/launch-service" \
@@ -174,9 +176,17 @@ check_release() {
   mise exec -- node --check "$repository_root/release/verify.mjs"
   mise exec -- node --check "$repository_root/release/signer.mjs"
   mise exec -- node --check "$repository_root/release/sign.mjs"
+  mise exec -- node --check "$repository_root/release/source.mjs"
+  mise exec -- node --check "$repository_root/release/inputs.mjs"
+  mise exec -- node --check "$repository_root/release/input-cli.mjs"
+  (
+    cd "$repository_root/apps/core"
+    mise exec -- mix format --check-formatted ../../release/read-version.exs
+  )
   mise exec -- node --test \
     "$repository_root/release/manifest.test.mjs" \
-    "$repository_root/release/signer.test.mjs"
+    "$repository_root/release/signer.test.mjs" \
+    "$repository_root/release/inputs.test.mjs"
 }
 
 check_guide_browser() {

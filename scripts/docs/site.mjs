@@ -2,6 +2,7 @@ import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
 import { lstatSync, readFileSync, readdirSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import { extname, join, resolve, sep } from 'node:path';
+export { releaseSourceIdentity } from '../../release/source.mjs';
 
 export const digest = bytes => createHash('sha256').update(bytes).digest('hex');
 
@@ -18,21 +19,6 @@ export function sourceIdentity(repository, preview = false) {
   if (!preview && (branch !== 'main' || dirty)) throw new Error('Development site requires clean main; use --preview for uncommitted inspection');
   if (!/^[0-9a-f]{40}$/.test(commit)) throw new Error('Unsupported source commit identity');
   return { commit, branch, dirty, publishableDevelopment: !preview && !dirty && branch === 'main' };
-}
-
-export function releaseSourceIdentity(repository, tag, expectedCommit) {
-  if (typeof tag !== 'string' || tag.length > 33 ||
-      !/^v(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$/.test(tag) ||
-      typeof expectedCommit !== 'string' || !/^[0-9a-f]{40}$/.test(expectedCommit)) {
-    throw new Error('Release documentation requires a stable tag and exact source commit');
-  }
-  const git = args => execFileSync('git', args, { cwd: repository, encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] }).trim();
-  const commit = git(['rev-parse', 'HEAD']);
-  const tagged = git(['rev-parse', '--verify', `refs/tags/${tag}^{commit}`]);
-  if (commit !== expectedCommit || tagged !== expectedCommit || git(['status', '--porcelain'])) {
-    throw new Error('Release documentation requires clean exact tag/commit source');
-  }
-  return { commit, tag, version: tag.slice(1), dirty: false, publishableDevelopment: false };
 }
 
 export function headersForPath(text, pathname) {

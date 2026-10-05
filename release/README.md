@@ -142,3 +142,27 @@ package lifecycle preserves its bytes while artwork exports exclude it.
 Controlled manager states, query failure and deadline complement these checks.
 Booted systemd, native amd64/default JIT, physical storage/power and separately
 encrypted key recovery remain unqualified.
+
+## Stable source input capture
+
+`./scripts/record-release-inputs vX.Y.Z COMMIT OUTPUT` records a clean existing
+stable tag at its independently supplied exact commit. It reads the actual
+production Mix project version without starting the host or compiling dependencies,
+and checks every committed source byte and executable mode against Git, including
+changes hidden from status. The owned output parent must already exist; a private
+`source-inputs.json` is created in OUTPUT. An identical rerun checks without
+rewriting, while changed/unsafe/incomplete output is retained and refused.
+
+Use `./scripts/verify-release-inputs vX.Y.Z COMMIT OUTPUT/source-inputs.json`
+after build work to repeat source/version/tag verification. The source record
+contains hashes and paths, not file contents or environment/key material. It
+covers committed source, dependency-lock paths and the toolchain configuration;
+resolved dependencies, actual native build material, target/runner qualification,
+licenses/notices and final artifacts still need their target build records.
+Its publication authority is explicitly `none`; it is not manifest v1 or release
+acceptance. The tools never create/move tags, push, sign or publish. Current
+`0.1.0-dev` source cannot produce a stable record. Real temporary Git/Mix fixtures
+exercise source, version, hidden-change, post-build and output refusal paths in
+`./scripts/check release`. The
+[frozen input contract](../docs/architecture/release-manifest.md#frozen-source-inputs)
+owns the format and lifecycle.

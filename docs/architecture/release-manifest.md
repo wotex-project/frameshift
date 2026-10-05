@@ -70,6 +70,59 @@ Developer ID/notarization, Sparkle and Cask acceptance, licenses/notices,
 installed platform tests, and applicable frame evidence. Repository visibility
 does not change to publish release artifacts.
 
+## Frozen source inputs
+
+Before a stable installer build, `scripts/record-release-inputs TAG COMMIT OUTPUT`
+records a clean exact source checkout in a new private output directory. `TAG`
+is the existing stable `vX.Y.Z`; `COMMIT` is its independently supplied 40-hex
+commit. HEAD and the local tag must resolve to that same commit. The actual core
+Mix project version must equal `X.Y.Z`, read through a fixed non-starting build
+entrypoint, rather than inferred from an artifact filename. Development app
+versions and absent/moved tags refuse. This command never creates/moves a tag,
+pushes a ref or changes repository visibility. A release workflow must separately
+bind its expected commit to the owner-authorized remote tag/event.
+
+`source-inputs.json` is a deterministic version-one `release-source-inputs`
+record of at most 8 MiB, separate from manifest v1. It identifies product,
+tag/version/commit, Git tree, every tracked path with Git blob identity, SHA-256,
+byte count and
+executable mode, and the source paths of dependency locks and `.mise.toml`.
+It contains no file contents, private key, environment dump or local tool-cache
+path. Its `publicationAuthority` is `none`: source capture alone does not prove
+resolved dependency bytes, native build outputs, licensing/notices, signing,
+installed acceptance or a public channel. Target builders extend their own
+records with actual tools, OS/image/CPU, resolved material and final artifacts.
+
+All source entries must be stage-zero regular files with admitted Git file modes;
+symlinks, submodules, conflict stages, unsafe paths or missing files refuse.
+Read descriptors without following final symlinks, compare inode/size/timestamps
+across hashing and compare actual bytes with their Git blob. This catches hidden
+changes even when Git's status optimization or configuration suppresses them.
+Use literal committed objects, ignoring Git replacement refs and caller Git
+directory/index/work-tree overrides. Refuse nonregular names before opening and
+use nonblocking descriptor admission so a raced FIFO cannot wait for a writer;
+a source growing beyond its initial size refuses during hashing.
+Retain exact bytes/modes; no checkout filter or newline transformation counts as
+identical source. Nonignored untracked changes refuse; ignored caches are outside
+the source inventory and cannot themselves qualify build material.
+
+The collector checks tag/HEAD, tracked inventory, all hashes/modes and application
+version again before publication. A builder uses `scripts/verify-release-inputs
+TAG COMMIT RECORD` after its work to repeat that comparison; it cannot claim a
+frozen source using only a clean-looking status. Git and Mix queries have finite
+deadlines and fixed arguments, with no source/eval interpolation from supplied
+paths or tags. The output parent must be an existing directory owned by the
+operator; the output directory is 0700 and record 0600. Existing identical owned
+output verifies without rewriting; unsafe output, extra files or same-path
+changed version/source refuses. Interrupted output is retained for inspection,
+never silently overwritten or treated as committed.
+
+Acceptance uses real temporary Git/Mix projects: exact stable source and identical
+rerun, development/version mismatch, dirty/untracked source, changed tag/HEAD,
+hidden content/mode change, symlink and conflicting output refusal, and post-build
+verification that preserves the previous record. Those fixtures do not create a
+Frameshift release or qualify a signing key, runner, installer or remote tag.
+
 ## Failure and recovery
 
 Reject an unknown schema or platform tuple, malformed signature, changed

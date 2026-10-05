@@ -236,9 +236,17 @@ replay/resolve pass through actual DEBs. Backups and private keys survive packag
 lifecycle; artwork exports exclude identity, watermark and unknown custody.
 Controlled manager states, errors and deadlines refuse offline writes; this
 remains software/container evidence.
-Continue R1 exact-tag/version/build-input refusal and independent native/provider
-work while booted systemd/native CPU, resource/failure, encrypted-key backup
-and physical identity/storage recovery retain their separate qualification. A missing external machine or signing identity does not block those
+The R1 source-input slice now shares the exact-tag identity check with versioned
+docs and binds production Mix version, Git tree, tracked bytes/executable modes,
+lock paths and toolchain configuration in a private deterministic source record.
+Actual Git/Mix fixtures refuse dirty/moved/version-mismatched source, hidden
+content/mode changes, unsafe/conflicting/incomplete outputs and post-build
+mutation. This is source capture with no publication authority; resolved build
+material, native target records and actual runner/installer acceptance remain
+required. Continue target build/version integration and trusted workflow refusal
+while independent native/provider work proceeds. Booted systemd/native CPU,
+resource/failure, encrypted-key backup and physical identity/storage recovery
+retain their separate qualification. A missing external machine or signing identity does not block those
 software recovery/refusal paths. Development container artifacts remain separate
 from stable tagged, licensed, signed and
 publicly read-back releases. Preserve independent platform progress and do not

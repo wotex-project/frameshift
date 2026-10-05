@@ -601,3 +601,34 @@ package watermark and temporary custody. Actual dpkg lifecycle preserves both
 backups/restored candidates and private key bytes. Controlled manager-query
 states/failure/deadline exercise the refusal contract; no booted-manager,
 physical-storage or encrypted-key-backup qualification follows.
+
+### Stable source record boundary
+
+**Observation:** 2026-10-05. Git's current
+[ls-files documentation](https://git-scm.com/docs/git-ls-files) defines stage-zero
+index entries with mode/object identity and unquoted NUL-delimited paths.
+[Git status](https://git-scm.com/docs/git-status) reports index/working-tree
+changes, but a clean-looking status is insufficient for a frozen installer
+input. Actual fixtures set `--assume-unchanged` and `core.fileMode=false`, then
+change file content/mode while status stays empty. The selected implementation
+therefore compares stage-zero index with the committed tree, hashes actual
+regular descriptors and compares their Git blob identity and executable modes,
+then repeats source capture before recording or verifying. Actual replacement-ref
+and caller Git-directory/index/work-tree fixtures additionally establish that the
+collector uses literal committed objects from the selected checkout. Hidden FIFO
+replacement refuses before a reader opens or any output is created.
+
+The existing versioned-docs tag/commit predicate now lives in `release/source.mjs`
+and remains re-exported by the documentation owner. Source capture reads the
+actual production Mix project configuration through `Mix.Project.in_project/3`
+in a fixed standalone Elixir script. It does not start the product, load its
+runtime configuration, compile dependencies or infer the app version from a
+filename. Repository tests use real Git/Mix projects, including a version query
+that deliberately mutates hidden source; no partial record publishes.
+
+`release-source-inputs` is deliberately distinct from the signed artifact manifest
+and each target's resolved-material/build record. Its deterministic private
+record exposes hashes/relative paths and no publication authority. It cannot
+prove ignored dependency cache bytes, native artifacts, an owner-authorized
+remote tag, license selection, signing or installed qualification. Those remain
+producer/workflow gates even after source capture passes.
