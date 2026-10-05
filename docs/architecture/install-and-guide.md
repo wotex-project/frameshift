@@ -225,6 +225,64 @@ requires a license, notices, signing credentials, owner-controlled public
 channel, a repeatable release process, and the applicable installed/physical
 product gates. No existing repository visibility change is part of this plan.
 
+### Local Mac channel material
+
+`scripts/derive-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_SIGNATURE SPARKLE_TRUST OUTPUT`
+prepares a private Cask/appcast candidate from the signed manifest's unique
+macOS/universal/DMG tuple. It performs no upload, tap change, network request or
+application update. The output has publication authority `none`; local byte and
+signature checks cannot attest the installed app, minimum OS or publisher rights.
+
+Channel URLs are bounded to 2,048 UTF-8 bytes and each generated file to 16 KiB.
+The minimum OS is an explicit canonical `major.minor.patch` declaration from the
+qualified final Mac build, at least macOS 14.0.0. Production qualification must
+bind that declaration to every nested Mach-O slice and the final app. Use the
+stable release version as both `CFBundleVersion` and the displayed version;
+Sparkle's numeric comparison must not depend on the development build counter.
+The production publisher must independently join the final app's version,
+`SUPublicEDKey`, embedded updater and minimum OS to this material before setting
+customer links or the Cask's in-app-update claim. This local renderer does not
+perform that join.
+
+Read the release-key fingerprint through the existing protected trust-file
+contract. The separately configured Sparkle trust file is an owner/root-owned,
+non-writable-by-others regular file containing exactly 32 public-key bytes as
+canonical base64 with an optional LF. It must not come from the signed manifest
+or update response. Admit a separate canonical base64 64-byte Sparkle signature,
+as emitted by Sparkle's `sign_update -p`. Verify ordinary Ed25519 over the exact
+DMG bytes, independently of the release-manifest signature, and require the
+manifest's exact size and SHA-256. Keep the existing 1 GiB Mac disk-image bound;
+this verifier buffers that bounded message for Node's Ed25519 API. That bound
+is not a measured whole-job RSS ceiling. Unsafe/nonregular inputs, malformed
+encoding, missing Mac tuple, changed bytes, untrusted keys and signature failure
+refuse before output creation.
+
+Derive the Cask's stable version, SHA-256 and immutable URL from that tuple. Its
+fixed application is `Frameshift.app`, homepage is the canonical site, and it
+declares the supplied minimum OS and in-app updates for the intended Sparkle
+release. Do not add uninstall hooks, destructive `zap`, artifact-host guessing
+or a second archive. Render one full-update RSS item with top-level Sparkle
+version/short-version/minimum-system-version fields, the same URL and length,
+and verified EdDSA enclosure signature. There are no deltas, external release
+notes, dates inferred from local time or invented compatibility claims. Archive
+signing is required; signed-feed integration remains a separate product gate.
+
+Use an absent output under an owned, protected real parent. Create mode 0700,
+write mode 0600 files, synchronize bytes and retain a pending marker until the
+complete `frameshift.rb`, `appcast.xml` and deterministic `channels.json` record
+have been verified. The record distinguishes the declared OS from qualified
+platform evidence and records local-only authority. A complete identical replay
+verifies all inputs and retained bytes without rewriting files; unknown members,
+partial output, changed inputs or same-output conflicts refuse without deletion.
+No refusal may print input paths, key bytes or cryptographic exception details.
+
+Acceptance uses distinct ephemeral release/Sparkle keys, exact local archives,
+real Ruby syntax and XML parsing, signature/tamper/grammar/custody refusals and
+unchanged replay. Compare the signature profile with the exact upstream Sparkle
+tool in an isolated fixture. These software checks do not qualify a DMG, a real
+tap, installed updater, signed feed, Developer ID, public archive readback or
+production release.
+
 ## Linux and Pi delivery
 
 Ubuntu amd64 and arm64 receive architecture-specific OTP releases and native

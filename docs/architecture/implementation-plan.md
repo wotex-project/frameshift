@@ -676,6 +676,17 @@ OOM recovery, physical power/storage, rights/signing and production acceptance.
 The complete software lifecycle closes the fresh-run gap; kernel canaries and
 source assertions do not complete those remaining gates.
 
+The independent R5/R6 Mac channel-material slice is implemented under the
+installation contract. A local Cask and full-update appcast derive from the
+signed manifest's unique universal DMG after verification of its separate
+Sparkle signature. Eight fixture groups cover real Ruby/XML parsing, identity,
+tamper, strict encoding/custody, declared OS bounds and retained replay. Actual
+Sparkle 2.10.0 and Node 26.9 sign/verify the same ephemeral-key message in both
+directions. This renderer has no publication authority. Continue the stable
+`CFBundleVersion` binding, signed-feed and installed Sparkle integration, then
+final app/minimum-OS/Developer-ID qualification, real tap, public bytes and
+channel promotion. Supplied declarations do not complete those joins.
+
 S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned
 Argon2id costs. Private account/token resources, all-token persistence, 12-hour

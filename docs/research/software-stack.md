@@ -1022,6 +1022,46 @@ read checks the upstream checkout repository, v7.0.1 release/asset endpoint and
 a distinct missing published-tag response. That transport observation does not
 create a Frameshift release or qualify its public bytes.
 
+### Local Mac channel material and Sparkle signature profile
+
+**Observation:** 2026-10-05. `gh` resolves the current
+[Sparkle 2.10.0 release](https://github.com/sparkle-project/Sparkle/releases/tag/2.10.0)
+to commit `eef1a539a373c1f1a320624b1130fc5de7b2e100`. Its changelog raises the
+minimum OS to 12.0 and recommends an explicit minimum-system field for manually
+created feeds. That does not lower Frameshift's app/runtime minimum. The
+[publication guide](https://sparkle-project.org/documentation/publishing/)
+places version fields at item level and permits the same DMG for direct and
+updater delivery. The [Homebrew Cask cookbook](https://docs.brew.sh/Cask-Cookbook)
+owns version/SHA-256/URL, minimum OS and accurate in-app-update declarations.
+
+Exact [archive verification source](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Autoupdate/SUSignatureVerifier.m)
+verifies ordinary Ed25519 against the full archive bytes. Its
+[`sign_update`](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/sign_update/main.swift)
+reads keys even in verification mode, making it unsuitable as a public-key-only
+publisher verifier. The host's Node verifier instead admits separately pinned
+32-byte public material and the exact signed DMG, with independent manifest and
+Sparkle signature checks. The
+[current secret decoder](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/common_cli/Secret.swift)
+accepts a 32-byte seed for newly generated keys. The isolated fixture uses this
+format in a private file, without accessing any personal Keychain.
+
+The upstream TAR fetched with `gh` is 16,319,840 bytes and SHA-256
+`c2bf58aa8387266ac179357b1415d6f2635f044da8be41042af32425dae6da0c`, matching the
+release API's digest. Only `bin/sign_update` is extracted; its SHA-256 is
+`43c249771bafc3aa581228abae00731a012d324691b8292860896635050be76b`.
+On macOS 27.0.1 arm64 / Node 26.9.0, actual upstream signing matches Node signing
+byte-for-byte; each verifier accepts the other's signature. The input bytes and
+tool remain unchanged. This establishes the inspected signature profile, not
+upstream binary derivation, production keys or an installed update.
+
+Eight channel groups pass exact tuple derivation, real Ruby/XML parsing of
+quoted/escaped URLs, separate signature/hash refusal, bounded grammar/custody,
+minimum declaration, missing target, unsafe/partial output, fixed FIFO/CLI
+refusal and unchanged replay. The generator records local authority `none` and
+separates the declared OS from qualification. Final app/version/key/updater
+joining, signed feed, Developer ID/notarization, real tap, public readback and
+installed update/removal remain open.
+
 ### Locked core dependency source admission
 
 **Observation:** 2026-10-05. Inspected Hex 2.5.1

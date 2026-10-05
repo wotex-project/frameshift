@@ -58,6 +58,29 @@ that narrower call makes no fresh local/public archive claim. Development update
 preserve accepted versions and stable pages, and local journal recovery repeats
 no release or network effect. These tools create no external publication.
 
+## Local Mac update metadata
+
+`./scripts/derive-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_SIGNATURE SPARKLE_TRUST OUTPUT`
+derives `frameshift.rb`, `appcast.xml` and `channels.json` from the signed
+manifest's unique universal DMG. The separately configured Sparkle public key
+is canonical base64 of 32 bytes in a protected file; the signature is canonical
+base64 of 64 bytes, as emitted by `sign_update -p`. The declared minimum OS is
+an explicit three-component value from the final build. Signature, size and
+SHA-256 checks precede private output creation; complete identical replay
+preserves files, while partial or changed output remains retained and refuses.
+
+This local candidate has publication authority none. Its Cask describes the
+intended in-app updater; publishing requires a separate join to the final
+qualified app and updater. It performs no public readback, signing, upload or
+tap change, and the appcast feed itself is not yet signed. See the
+[owning channel-material contract](../docs/architecture/install-and-guide.md#local-mac-channel-material).
+
+An optional isolated upstream interoperability check is
+`mise exec -- node release/macos/sparkle-fixture.mjs SIGN_UPDATE EXPECTED_SHA256`.
+Supply an independently pinned Sparkle executable; the fixture uses ephemeral
+0600 seed files and does not access the user's Keychain. It qualifies only
+archive signature interoperability, not application update or production keys.
+
 The plan is compact JSON with one trailing newline, such as:
 
 ```json
