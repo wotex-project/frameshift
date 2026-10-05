@@ -160,6 +160,8 @@ defmodule FrameshiftCore.MixProject do
           {"../../docs/hardware/validation-plan.md", title: "Hardware validation plan"},
           {"../../docs/architecture/domain-map.md", title: "Host domain map"},
           {"../../docs/architecture/install-and-guide.md", title: "Installation and guide"},
+          {"../../docs/architecture/guide-simulation.md", title: "Guide simulation"},
+          {"../../docs/architecture/shared-decision-kernel.md", title: "Shared decision kernel"},
           {"../../docs/architecture/release-manifest.md", title: "Release artifact manifest"},
           {"../../docs/architecture/qualified-generations.md", title: "Qualified generations"},
           {"../../docs/architecture/diagnostics.md", title: "Host diagnostics"},
@@ -169,6 +171,8 @@ defmodule FrameshiftCore.MixProject do
           {"../../docs/research/software-stack.md", title: "Software stack research"},
           {"../../docs/research/embedded-persistence.md", title: "Embedded persistence"},
           {"../../docs/host/linux.md", title: "Linux host"},
+          {"../../docs/host/macos.md", title: "macOS host"},
+          {"../../docs/host/guide-handoff.md", title: "Guide handoff"},
           {"../../docs/research/protocol-foundations.md", title: "Protocol foundations"}
         ] ++ Path.wildcard("bench/output/*.md"),
       groups_for_extras: [
