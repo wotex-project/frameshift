@@ -22,6 +22,8 @@ check_policy() {
     "$repository_root/scripts/build-site" \
     "$repository_root/scripts/assemble-site" \
     "$repository_root/scripts/derive-macos-channels" \
+    "$repository_root/scripts/sign-macos-channels" \
+    "$repository_root/scripts/verify-macos-channels" \
     "$repository_root/scripts/build-release-guide" \
     "$repository_root/scripts/check" \
     "$repository_root/scripts/check-workspace" \

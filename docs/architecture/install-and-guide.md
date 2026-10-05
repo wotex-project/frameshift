@@ -265,12 +265,13 @@ or a second archive. Render one full-update RSS item with top-level Sparkle
 version/short-version/minimum-system-version fields, the same URL and length,
 and verified EdDSA enclosure signature. There are no deltas, external release
 notes, dates inferred from local time or invented compatibility claims. Archive
-signing is required; signed-feed integration remains a separate product gate.
+signing is required; the signed mode below also signs the feed. Runtime
+signed-feed integration remains a separate product gate.
 
 Use an absent output under an owned, protected real parent. Create mode 0700,
 write mode 0600 files, synchronize bytes and retain a pending marker until the
-complete `frameshift.rb`, `appcast.xml` and deterministic `channels.json` record
-have been verified. The record distinguishes the declared OS from qualified
+complete `frameshift.rb`, `appcast.xml`, `sparkle.sig` and deterministic
+`channels.json` record have been verified. The record distinguishes the declared OS from qualified
 platform evidence and records local-only authority. A complete identical replay
 verifies all inputs and retained bytes without rewriting files; unknown members,
 partial output, changed inputs or same-output conflicts refuse without deletion.
@@ -282,6 +283,48 @@ unchanged replay. Compare the signature profile with the exact upstream Sparkle
 tool in an isolated fixture. These software checks do not qualify a DMG, a real
 tap, installed updater, signed feed, Developer ID, public archive readback or
 production release.
+
+### Signed Mac channel material
+
+`scripts/sign-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_SEED SPARKLE_TRUST OUTPUT`
+uses the same verified manifest, declared OS, bounded archive and output-custody
+contract. Its separately supplied Sparkle seed is canonical base64 of exactly
+32 bytes, with an optional LF, in an operator-owned regular mode 0400/0600 file.
+Derive the Ed25519 public key and require it to equal the independently pinned
+Sparkle trust file before signing. Never read Keychain keys, accept seed bytes
+in argv/environment, log key material or generate production keys automatically.
+
+Sign the admitted exact archive and then the renderer's exact UTF-8 appcast body
+with that key. Append Sparkle 2.10's canonical signature comment containing the
+feed's base64 Ed25519 signature and exact body byte length. The signature covers
+every byte before that comment; it is not a signature over a hash. Suppress no
+verification on malformed bytes, altered length or unknown suffix. Keep the
+complete generated feed within the existing 16 KiB metadata bound. This format
+matches upstream `sign_update --disable-signing-warning`; no external release
+notes or their separate signature are introduced.
+
+Both renderer modes retain the canonical public archive signature as
+`sparkle.sig`. The signed mode's record declares verified feed signing and hashes
+all three public output files; it still has publication authority `none`. Replays
+and interrupted outputs follow the existing no-replacement contract. A signer
+rerun requires its protected seed; later consumers never need that private key.
+
+`scripts/verify-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_TRUST OUTPUT`
+is read-only. It revalidates the independently signed manifest, exact local DMG
+and retained archive signature; verifies the feed's signature using only the
+pinned public key; and requires the unsigned body to equal the canonical body
+regenerated from those inputs. It compares the complete Cask, signed feed,
+public signature and record, including output names, private modes and unchanged
+directory custody. Wrong key, digest, version, URL, OS declaration, signing
+length, record, namespace or bytes refuses without rewriting anything. A changed
+minimum-OS declaration cannot be laundered through a valid signature over a
+noncanonical feed. CLI diagnostics remain fixed and secret-free.
+
+Acceptance adds wrong-seed/private-mode and feed-body/footer tamper refusals,
+public-only verification with the seed absent, immutable signed replay and
+actual upstream signing/verification of the canonical feed. These checks qualify
+local signed metadata, not the runtime client's signed-feed settings, installed
+update, production keys, Developer ID/notarization, public delivery or promotion.
 
 ## Linux and Pi delivery
 

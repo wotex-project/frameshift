@@ -5,7 +5,7 @@ import { mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { readReleaseInput } from '../files.mjs';
-import { verifySparkleArchive } from './channels.mjs';
+import { signSparkleFeed, verifySparkleArchive, verifySparkleFeed } from './channels.mjs';
 
 // Explicit isolated qualification of a separately pinned upstream tool.
 // Private ephemeral keys enter a 0600 file; the user's Keychain is never used.
@@ -35,9 +35,17 @@ try {
   assert.deepEqual(upstream, node); verifySparkleArchive(bytes, upstream, publicKey);
   run(['--verify', archive, node.toString('base64')]);
   assert.deepEqual(readFileSync(archive), bytes);
+  const content = Buffer.from('<?xml version="1.0" encoding="UTF-8"?>\n<rss version="2.0"><channel><title>Isolated signed-feed fixture</title></channel></rss>\n');
+  const expectedFeed = signSparkleFeed(content, pair.privateKey, publicKey);
+  const upstreamFeed = join(root, 'upstream.xml'), nodeFeed = join(root, 'node.xml');
+  writeFileSync(upstreamFeed, content, { mode: 0o600 }); writeFileSync(nodeFeed, expectedFeed, { mode: 0o600 });
+  run(['--disable-signing-warning', '-p', upstreamFeed]);
+  assert.deepEqual(readFileSync(upstreamFeed), expectedFeed);
+  assert.deepEqual(verifySparkleFeed(readFileSync(upstreamFeed), publicKey), content);
+  run(['--verify', nodeFeed]); assert.deepEqual(readFileSync(nodeFeed), expectedFeed);
   const final = await readReleaseInput(tool, { maximum: 16 * 1024 * 1024, protectedTrust: true });
   assert.deepEqual(final, binary);
-  process.stdout.write('Pinned Sparkle signature interoperability passed: upstream signing, Node verification, Node signing and upstream verification; isolated ephemeral keys\n');
+  process.stdout.write('Pinned Sparkle signature interoperability passed: archive signatures in both directions, exact signed-feed bytes and upstream feed verification; isolated ephemeral keys\n');
 } catch {
   process.stderr.write('Pinned Sparkle signature interoperability refused\n'); process.exitCode = 1;
 } finally {

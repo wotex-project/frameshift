@@ -5,7 +5,7 @@ import { chmodSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, readdirSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import test from 'node:test';
-import { deriveMacChannels, verifySparkleArchive } from './channels.mjs';
+import { deriveMacChannels, signMacChannels, signSparkleFeed, verifyMacChannels, verifySparkleArchive, verifySparkleFeed } from './channels.mjs';
 
 const hash = bytes => createHash('sha256').update(bytes).digest('hex');
 function fixture(t, url = 'https://example.test/releases/v1.2.3/Frameshift-1.2.3.dmg') {
@@ -51,13 +51,88 @@ test('separate signed archive and manifest derive the same exact Mac channel ide
   assert.ok(feed.includes(`<sparkle:version>1.2.3</sparkle:version>`));
   assert.ok(feed.includes(`<sparkle:minimumSystemVersion>15.0.0</sparkle:minimumSystemVersion>`));
   assert.ok(feed.includes(`length="${f.artifact.bytes}"`)); assert.ok(!/pubDate|releaseNotesLink|delta/.test(feed));
-  assert.deepEqual(readdirSync(f.options.outputDirectory).sort(), ['appcast.xml', 'channels.json', 'frameshift.rb']);
+  assert.deepEqual(readdirSync(f.options.outputDirectory).sort(), ['appcast.xml', 'channels.json', 'frameshift.rb', 'sparkle.sig']);
   for (const entry of record.files) {
     const bytes = readFileSync(join(f.options.outputDirectory, entry.path));
     assert.equal(entry.bytes, bytes.length); assert.equal(entry.sha256, hash(bytes));
   }
   assert.equal(lstatSync(f.options.outputDirectory).mode & 0o7777, 0o700);
   for (const name of readdirSync(f.options.outputDirectory)) assert.equal(lstatSync(join(f.options.outputDirectory, name)).mode & 0o7777, 0o600);
+});
+
+function signingOptions(f) {
+  const sparkleSeedPath = join(f.root, 'ephemeral-sparkle-seed');
+  const seed = f.sparkle.privateKey.export({ format: 'der', type: 'pkcs8' }).subarray(-32);
+  writeFileSync(sparkleSeedPath, seed.toString('base64') + '\n', { mode: 0o600 });
+  return { ...f.options, sparkleSeedPath };
+}
+
+test('protected signing produces a canonical feed and verifies publicly after the seed is absent', async t => {
+  const f = fixture(t), options = signingOptions(f);
+  await signMacChannels(options);
+  const output = options.outputDirectory, feed = readFileSync(join(output, 'appcast.xml'));
+  const body = verifySparkleFeed(feed, f.publicKey);
+  assert.ok(body.toString().includes('<sparkle:version>1.2.3</sparkle:version>'));
+  assert.equal(JSON.parse(readFileSync(join(output, 'channels.json'))).feedSignatureVerified, true);
+  const before = lstatSync(join(output, 'appcast.xml'), { bigint: true });
+  assert.equal((await signMacChannels(options)).disposition, 'retained-bytes-verified');
+  assert.equal(lstatSync(join(output, 'appcast.xml'), { bigint: true }).mtimeNs, before.mtimeNs);
+  const signedOutput = join(f.root, 'cli-signed');
+  const signingArgs = [options.manifestPath, options.signaturePath, options.publicKeyPath, options.artifactDirectory,
+    options.releaseTrustPath, options.minimumOS, options.sparkleSeedPath, options.sparkleTrustPath, signedOutput];
+  const signed = spawnSync(process.execPath, [join(import.meta.dirname, 'channels-sign-cli.mjs'), ...signingArgs],
+    { encoding: 'utf8', timeout: 5000, maxBuffer: 1024 });
+  assert.equal(signed.status, 0, signed.stderr); assert.equal(signed.stderr, '');
+  assert.equal(signed.stdout, 'Signed Mac channel material: 1.2.3; local-material-created; publication authority none\n');
+  assert.deepEqual(readFileSync(join(signedOutput, 'appcast.xml')), feed);
+  rmSync(options.sparkleSeedPath);
+  assert.equal((await verifyMacChannels(options)).disposition, 'signed-local-bytes-verified');
+  const args = [options.manifestPath, options.signaturePath, options.publicKeyPath, options.artifactDirectory,
+    options.releaseTrustPath, options.minimumOS, options.sparkleTrustPath, output];
+  const verified = spawnSync(process.execPath, [join(import.meta.dirname, 'channels-verify-cli.mjs'), ...args],
+    { encoding: 'utf8', timeout: 5000, maxBuffer: 1024 });
+  assert.equal(verified.status, 0); assert.equal(verified.stderr, '');
+  assert.equal(verified.stdout, 'Signed Mac channel material: 1.2.3; public-key-only bytes verified; publication authority none\n');
+  assert.deepEqual(readFileSync(join(output, 'appcast.xml')), feed);
+  assert.equal(lstatSync(join(output, 'appcast.xml'), { bigint: true }).ino, before.ino);
+});
+
+test('wrong seed, weak private modes and unsigned-to-signed replacement refuse without laundering material', async t => {
+  const f = fixture(t), options = signingOptions(f);
+  const correct = readFileSync(options.sparkleSeedPath);
+  writeFileSync(options.sparkleSeedPath, Buffer.alloc(32, 42).toString('base64'));
+  await assert.rejects(signMacChannels(options)); assert.equal(readdirSync(f.root).includes('output'), false);
+  writeFileSync(options.sparkleSeedPath, correct); chmodSync(options.sparkleSeedPath, 0o644);
+  await assert.rejects(signMacChannels(options)); assert.equal(readdirSync(f.root).includes('output'), false);
+  chmodSync(options.sparkleSeedPath, 0o600);
+  await deriveMacChannels(options);
+  const unsigned = readFileSync(join(options.outputDirectory, 'appcast.xml'));
+  await assert.rejects(signMacChannels(options)); await assert.rejects(verifyMacChannels(options));
+  assert.deepEqual(readFileSync(join(options.outputDirectory, 'appcast.xml')), unsigned);
+  const args = [options.manifestPath, options.signaturePath, options.publicKeyPath, options.artifactDirectory,
+    options.releaseTrustPath, options.minimumOS, options.sparkleSeedPath, options.sparkleTrustPath, join(f.root, 'new-signed')];
+  chmodSync(options.sparkleSeedPath, 0o644);
+  const denied = spawnSync(process.execPath, [join(import.meta.dirname, 'channels-sign-cli.mjs'), ...args],
+    { encoding: 'utf8', timeout: 5000, maxBuffer: 1024 });
+  assert.equal(denied.status, 1); assert.equal(denied.stdout, ''); assert.equal(denied.stderr, 'Mac channel signing refused\n');
+  assert.ok(!denied.stderr.includes(f.root));
+});
+
+test('signed body, footer length, namespace and record changes refuse even when a changed feed is authentically resigned', async t => {
+  const f = fixture(t), options = signingOptions(f); await signMacChannels(options);
+  const path = join(options.outputDirectory, 'appcast.xml'), original = readFileSync(path), body = verifySparkleFeed(original, f.publicKey);
+  const changed = Buffer.from(body.toString().replace('15.0.0', '16.0.0'));
+  for (const bytes of [Buffer.from(original.toString().replace('15.0.0', '16.0.0')),
+    Buffer.from(original.toString().replace(`length: ${body.length}\n`, `length: ${body.length + 1}\n`)),
+    Buffer.concat([original, Buffer.from('\n')]), body]) assert.throws(() => verifySparkleFeed(bytes, f.publicKey));
+  const resigned = signSparkleFeed(changed, f.sparkle.privateKey, f.publicKey);
+  assert.deepEqual(verifySparkleFeed(resigned, f.publicKey), changed);
+  writeFileSync(path, resigned); await assert.rejects(verifyMacChannels(options));
+  assert.deepEqual(readFileSync(path), resigned); writeFileSync(path, original);
+  await assert.rejects(verifyMacChannels({ ...options, minimumOS: '16.0.0' }));
+  const recordPath = join(options.outputDirectory, 'channels.json'), record = JSON.parse(readFileSync(recordPath));
+  record.declaredMinimumOS = '16.0.0'; writeFileSync(recordPath, JSON.stringify(record) + '\n');
+  await assert.rejects(verifyMacChannels(options)); assert.equal(JSON.parse(readFileSync(recordPath)).declaredMinimumOS, '16.0.0');
 });
 
 test('real Ruby and XML parsers preserve quoted URL semantics', { skip: process.platform !== 'darwin' }, async t => {
@@ -72,6 +147,11 @@ test('real Ruby and XML parsers preserve quoted URL semantics', { skip: process.
   const parsed = spawnSync('/usr/bin/xmllint', ['--nonet', '--xpath', 'string(//*[local-name()="enclosure"]/@url)', feed],
     { encoding: 'utf8', timeout: 5000 });
   assert.equal(parsed.status, 0, parsed.stderr); assert.equal(parsed.stdout.trim(), f.artifact.url);
+  const signedOptions = { ...signingOptions(f), outputDirectory: join(f.root, 'signed-output') };
+  await signMacChannels(signedOptions);
+  const signedXML = spawnSync('/usr/bin/xmllint', ['--nonet', '--noout', join(signedOptions.outputDirectory, 'appcast.xml')],
+    { encoding: 'utf8', timeout: 5000 });
+  assert.equal(signedXML.status, 0, signedXML.stderr);
 });
 
 test('signature checks bind full archive bytes to the independent Sparkle trust root', async t => {

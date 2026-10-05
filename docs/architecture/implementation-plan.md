@@ -679,14 +679,19 @@ source assertions do not complete those remaining gates.
 The independent R5/R6 Mac channel-material slice is implemented under the
 installation contract. A local Cask and full-update appcast derive from the
 signed manifest's unique universal DMG after verification of its separate
-Sparkle signature. Eight fixture groups cover real Ruby/XML parsing, identity,
-tamper, strict encoding/custody, declared OS bounds and retained replay. Actual
-Sparkle 2.10.0 and Node 26.9 sign/verify the same ephemeral-key message in both
-directions. This renderer has no publication authority. The native producer
+Sparkle signature. Protected-seed signing also produces Sparkle's canonical
+signed feed, and a public-key-only consumer regenerates and verifies all retained
+channel bytes after the private seed is absent. Eleven fixture groups cover real
+Ruby/XML parsing, identity, archive/feed/footer/record tamper, authentic but
+noncanonical feed refusal, strict encoding/custody, declared OS bounds and
+retained replay. Actual Sparkle 2.10.0 and Node 26.9 produce identical archive
+signatures and signed-feed bytes and verify each other's output with ephemeral
+keys. These tools have no publication authority. The native producer
 and source-bound receiver now bind both displayed and build plist versions to
 the exact stable source version. A fixed counter refuses before packaging; a
 changed built/received counter refuses despite an admitted native closure.
-Continue signed-feed and installed Sparkle integration, then final
+Continue application Sparkle integration with required signed-feed settings and
+installed update qualification, then final
 app/minimum-OS/Developer-ID qualification, real tap, public bytes and channel
 promotion. Supplied declarations do not complete those joins.
 

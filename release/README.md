@@ -61,7 +61,7 @@ no release or network effect. These tools create no external publication.
 ## Local Mac update metadata
 
 `./scripts/derive-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_SIGNATURE SPARKLE_TRUST OUTPUT`
-derives `frameshift.rb`, `appcast.xml` and `channels.json` from the signed
+derives `frameshift.rb`, `appcast.xml`, `sparkle.sig` and `channels.json` from the signed
 manifest's unique universal DMG. The separately configured Sparkle public key
 is canonical base64 of 32 bytes in a protected file; the signature is canonical
 base64 of 64 bytes, as emitted by `sign_update -p`. The declared minimum OS is
@@ -71,15 +71,29 @@ preserves files, while partial or changed output remains retained and refuses.
 
 This local candidate has publication authority none. Its Cask describes the
 intended in-app updater; publishing requires a separate join to the final
-qualified app and updater. It performs no public readback, signing, upload or
-tap change, and the appcast feed itself is not yet signed. See the
+qualified app and updater. This renderer mode performs no public readback,
+signing, upload or tap change, and leaves the appcast feed unsigned. See the
 [owning channel-material contract](../docs/architecture/install-and-guide.md#local-mac-channel-material).
+
+`./scripts/sign-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_SEED SPARKLE_TRUST OUTPUT`
+instead signs the archive and canonical feed using a separately supplied
+canonical base64 32-byte seed in an operator-owned 0400/0600 file. Its derived
+public key must match the independently pinned Sparkle trust file. No key bytes
+enter argv, environment or diagnostics, and the tool never reads Keychain keys.
+It uses the same protected, non-replacing output contract and authority `none`.
+
+`./scripts/verify-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_TRUST OUTPUT`
+checks the signed manifest, exact DMG, retained archive/feed signatures and all
+canonical channel bytes using only public keys. It needs no private seed and
+rewrites nothing. A valid signature over a changed OS declaration or feed still
+refuses when the body differs from the canonical renderer. See the
+[signed-material contract](../docs/architecture/install-and-guide.md#signed-mac-channel-material).
 
 An optional isolated upstream interoperability check is
 `mise exec -- node release/macos/sparkle-fixture.mjs SIGN_UPDATE EXPECTED_SHA256`.
 Supply an independently pinned Sparkle executable; the fixture uses ephemeral
 0600 seed files and does not access the user's Keychain. It qualifies only
-archive signature interoperability, not application update or production keys.
+archive and signed-feed interoperability, not application update or production keys.
 
 The plan is compact JSON with one trailing newline, such as:
 

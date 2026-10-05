@@ -1054,12 +1054,15 @@ byte-for-byte; each verifier accepts the other's signature. The input bytes and
 tool remain unchanged. This establishes the inspected signature profile, not
 upstream binary derivation, production keys or an installed update.
 
-Eight channel groups pass exact tuple derivation, real Ruby/XML parsing of
+Eleven channel groups pass exact tuple derivation, real Ruby/XML parsing of
 quoted/escaped URLs, separate signature/hash refusal, bounded grammar/custody,
 minimum declaration, missing target, unsafe/partial output, fixed FIFO/CLI
-refusal and unchanged replay. The generator records local authority `none` and
+refusal and unchanged replay. Protected-seed signing, public-key-only verification
+after deleting the ephemeral seed, signed-feed/footer/record tamper and an
+authentically resigned but noncanonical OS declaration are also exercised. The
+generator records local authority `none` and
 separates the declared OS from qualification. Final app/version/key/updater
-joining, signed feed, Developer ID/notarization, real tap, public readback and
+joining, runtime signed-feed enforcement, Developer ID/notarization, real tap, public readback and
 installed update/removal remain open.
 
 Apple's current [CFBundleVersion contract](https://developer.apple.com/documentation/bundleresources/information-property-list/cfbundleversion),
@@ -1071,6 +1074,21 @@ copied plist values; source-bound receivers recheck them before/after joining.
 Compiler fixtures refuse a clean tagged source with counter `1`, a changed built
 counter and a resealed/fully admitted received app with the wrong counter. These
 checks do not modify any retained archive or establish a running updater.
+
+Exact [feed-signing source](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/common_cli/Signing.swift)
+appends a signature comment with the unsigned body's exact byte count. The
+[runtime extractor](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUExtractSignedFeed.m)
+locates and verifies that message. With the same exact upstream tool and
+ephemeral seed, Node's complete feed bytes equal `sign_update
+--disable-signing-warning -p` output, and upstream verification accepts them.
+The fixture accesses no personal Keychain and creates no customer channel.
+The protected local signer first binds its seed to the separately supplied
+public key; the later consumer uses only public material and requires the
+verified body to equal its regenerated canonical XML. Positive signing and
+verification CLI cases and real signed XML parsing pass within the eleven
+groups. This establishes local cryptographic/byte interoperability; application
+settings, native framework custody and installed update behavior need their own
+qualification.
 
 ### Locked core dependency source admission
 
