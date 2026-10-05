@@ -334,6 +334,17 @@ digests plus both artifact IDs. The workflow has publication authority
 `none`; authoring/static/local software evidence is separate from hosted execution.
 See the [workflow contract](../docs/host/macos.md#native-mac-candidate-workflow).
 
+`scripts/check-linux-material TAG COMMIT SOURCE_RECORD arm64|amd64 CANDIDATE
+CANDIDATE_SHA256 CORE_RECEIPT CORE_SHA256 GLEAM_RECEIPT GLEAM_SHA256 OUTPUT`
+joins the same independently pinned source receipts to an admitted Ubuntu
+candidate's captured dependency assertions. It verifies complete retained
+package/runtime bytes and source/version descriptors without Docker or host
+launch, refuses unexplained material and separately records bounded known Git
+metadata. Completed replay has no write/build/install effect. The
+[Ubuntu join contract](../docs/architecture/release-manifest.md#ubuntu-captured-dependency-source-join)
+keeps captured facts distinct from licensing, source authenticity, generated
+execution, hosted/native-installed and publication evidence.
+
 `scripts/check-core-material TAG COMMIT SOURCE_RECORD HEX_CACHE OUTPUT` verifies
 already-fetched core dependency source against the frozen Mix lock. `HEX_CACHE`
 is the existing archive directory, normally `$HEX_HOME/packages/hexpm`. Pinned

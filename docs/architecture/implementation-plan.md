@@ -487,10 +487,10 @@ checksum-named archives. It reuses bounded Hex memory parsing and verifies every
 delivered source member, including Erlang files shipped by the supplier; extra
 generated files refuse. Literal/namespace/alias/resource/mutation fixtures and
 both full locked dependencies pass receipt creation and unchanged replay, with
-76 file facts. No fetch/build or compiler-lock ownership is claimed. Join both
-core/Gleam receipts to their captured producer inputs next; licensing, independent
-publisher trust, compiler authenticity and generated/runtime qualification remain
-separate gates.
+76 file facts. No fetch/build or compiler-lock ownership is claimed. Both Mac and
+Ubuntu now join core/Gleam receipts to captured producer inputs; licensing,
+independent publisher trust, compiler authenticity and generated/runtime
+qualification remain separate gates.
 
 The native Mac dependency-input join now binds independently pinned core/Gleam
 source receipts and an admitted candidate to the same frozen source. Every proved
@@ -549,6 +549,19 @@ authored workflow and local byte/consumer results; hosted macOS 26/Intel, runner
 upstream authentication, rights, installed acceptance and production signing/
 distribution remain separate. Continue source receipt integration for other
 targets and compiler/generated-code qualification within their owning contracts.
+
+The Ubuntu source-receipt join now uses the same core/Gleam receipt admission as
+Mac. It binds independently supplied receipt/candidate digests, frozen source,
+embedded project/build assertions, runtime descriptors and bounded complete
+retained candidate bytes. Every source fact must match; generated exceptions and
+known Git metadata have distinct non-proof records. Unknown Git paths, metadata
+inside an asserted Git source proof, source/schema/byte/custody conflicts and
+child-time mutation refuse; final static checks follow all children. The full
+retained arm64 and amd64 container candidates each join 1,457 source facts, seven
+generated inputs and 45 captured Git metadata facts with unchanged replay.
+Continue this join through Ubuntu workflow receipt transport next. Compiler/
+generated execution, independent publisher/rights, hosted/native installed and
+production distribution remain separate gates with publication authority none.
 
 ## Shared contracts
 

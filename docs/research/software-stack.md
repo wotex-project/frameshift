@@ -1264,3 +1264,40 @@ workflow was pushed or dispatched. The
 [workflow contract](../host/macos.md#native-mac-candidate-workflow) retains
 independent hosted/native Intel, runner/publisher/toolchain, rights, generated
 derivation, installed and production distribution gates.
+
+### Ubuntu captured-source receipt comparison
+
+**Observation:** 2026-10-05. Repository inspection of
+`release/linux/prepare-context`, `record-inputs.mjs` and `candidate.mjs` shows the
+Ubuntu build copies dependency source and selected private Git state into a
+captured context. The original source receipts exclude private Git state. The
+retained full arm64/amd64 contexts each contain 1,864 file facts, including 1,509
+dependency-path facts: 1,464 ordinary inputs and 45 Git metadata files totalling
+36,374,448 bytes. Supplier `priv` and Erlang files are source where the archive
+proof identifies them; a blanket generated-file exclusion would discard evidence.
+
+Pinned Elixir 1.20.4
+[`Mix.SCM.Git.checkout/1` and its private checkout](https://github.com/elixir-lang/elixir/blob/v1.20.4/lib/mix/lib/mix/scm/git.ex)
+initialize Git with hooks disabled, fetch the locked revision, configure sparse
+selection and check it out. This explains why Git metadata can appear in captured
+preparation, but does not authenticate a retained config or execution, or imply
+those bytes belong in a customer archive. The selected comparison reuses existing
+source admission, bounds a known Git metadata path profile only for Git-locked
+core dependencies, and records its raw facts separately. Unknown metadata and
+metadata presented as Git source proof refuse. No complete captured context is
+retained here, so these assertions do not replay the compilation or prove that
+every captured input was consumed.
+
+Actual source gates admit 42 core packages and two Gleam packages, with source
+receipt SHA-256 values
+`76b9316033d78c06ea08e06258d80d07bd0c2dc13fbc70e2050b9dd6a9d6d7a7` and
+`40277a06e012d6e84030e3221a708c6e072d66b0277d0d410e8ad9d874fe3154`.
+Both joins compare 1,457 source/metadata facts and record seven generated inputs
+plus 45 Git facts. Arm64 joined-record SHA-256 is
+`c672e663892901732b9bdaead0b03dd78c3aa6ab932032e8c075f663688e795c`;
+amd64 is `62048c923da13d4c55e3cce1414d2ceae9244cd76e3ca4dc030961a8c2d76c40`.
+Both repeat without receipt inode/time changes. These are existing native-arm64
+and emulated-amd64 Ubuntu container candidates. Receipt/refusal fixtures and the
+[owning join contract](../architecture/release-manifest.md#ubuntu-captured-dependency-source-join)
+retain separate compiler/generated derivation, independent publisher/rights,
+hosted/systemd/native installed and release gates; publication authority is none.

@@ -225,6 +225,7 @@ check_release() {
     "$repository_root/release/gleam-material.test.mjs" \
     "$repository_root/release/gleam-metadata.test.mjs" \
     "$repository_root/release/linux/candidate.test.mjs" \
+    "$repository_root/release/linux/source-material.test.mjs" \
     "$repository_root/release/linux/ustar.test.mjs" \
     "$repository_root/release/workflow.test.mjs"
   mise exec -- node --test "$repository_root"/release/macos/*.test.mjs

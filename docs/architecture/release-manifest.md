@@ -351,6 +351,51 @@ record with publication authority none; hosted provenance remains separate.
 Such a tag is confined to the disposable fixture;
 it does not create a product release or authorize remote publication.
 
+## Ubuntu captured dependency source join
+
+`scripts/check-linux-material TAG COMMIT SOURCE_RECORD arm64|amd64 CANDIDATE
+CANDIDATE_SHA256 CORE_RECEIPT CORE_SHA256 GLEAM_RECEIPT GLEAM_SHA256 OUTPUT`
+compares a retained Ubuntu 24.04 candidate's captured build inputs with the same
+independently supplied source receipts used by native Mac candidates. It neither
+fetches, compiles, installs nor launches the packaged host. All three expected
+record digests must come from a separate retained source; reading them from the
+records being admitted is not an independent assertion.
+
+Admit canonical private records, exact frozen tag/commit/version/architecture,
+recorded native/emulated build policy and the complete retained package/runtime
+bytes. Compare the embedded source record and selected project-owned context
+inputs with frozen source. Consult the bounded runtime release descriptors with
+the existing version consumer. Candidate files and captured assertions are
+bounded to 8,192 entries, 32 path components, 512 path bytes, 128 MiB per file and
+512 MiB aggregate. Candidate directories are owned, real, non-group/world-writable;
+files are owned regular unaliased source-like modes with owner read. Reject
+unknown namespaces, empty undeclared directories, links, special files, malformed
+facts, duplicate paths and all size/hash/mode conflicts. Private receipt records
+are at most 16 MiB. All source/parser/version children finish before final static
+record, byte and namespace checks; use a finite 180-second processing budget.
+
+Every admitted core/Gleam source file must match the captured input, including
+supplier-delivered Erlang and native source. The exact fetched Gleam metadata
+hash/mode must agree. Only the existing explicit generated lexer/parser, native
+helper and empty compiler-lock profiles may remain outside source proof. Ubuntu
+preparation additionally retains Git metadata for Git-locked dependencies. Admit
+only the bounded known HEAD/FETCH_HEAD/config/description/index, sparse/exclude,
+object pack/commit-graph and safe branch-reference paths; record their exact facts
+separately as `retained-git-build-metadata`. They establish captured metadata
+identity, not source authenticity, execution, sanitization or a need to distribute
+Git metadata. Hooks, logs, unknown Git files and metadata beneath Hex/Gleam
+packages refuse. A new receipt cannot relabel an unexplained input as proved.
+
+Write a private 0700 output containing a synchronized 0600
+`ubuntu-dependency-input-join` record, at most 64 KiB, with source/candidate/receipt
+hashes, proved source count, explicit generated facts and separate retained Git
+facts. Interrupted or conflicting output refuses and stays for inspection. A
+complete identical rerun verifies all inputs and preserves receipt inode/time.
+Publication authority remains `none`. Retained-assertion refusal fixtures and
+actual archive/Git verifier receipts joined to both qualified container candidates
+are the acceptance targets; they do not establish hosted provenance, licenses,
+generated derivation, compiler authenticity, booted systemd or native installation.
+
 ## Failure and recovery
 
 Reject an unknown schema or platform tuple, malformed signature, changed

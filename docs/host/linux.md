@@ -188,6 +188,26 @@ systemd manager, native amd64 JIT, installed clean-VM update/removal, cgroup/OOM
 behavior, power loss, signing/notices or Pi hardware. Installed systemd and native
 CPU acceptance remain mandatory before a customer package is advertised.
 
+### Captured dependency source receipts
+
+The retained Ubuntu candidate's build-input assertions now have a separate
+source-receipt join. `scripts/check-linux-material` takes the exact frozen source,
+architecture, candidate and independently pinned core/Gleam receipts; it rechecks
+all retained package/runtime bytes, embedded source/project facts and runtime
+version descriptors without Docker, install or host launch. Unknown input,
+wrong identity, unsafe custody, receipt/candidate mutation and partial or
+conflicting output refuse. A complete replay preserves receipt inode/time.
+
+Supplier source and fetched metadata must agree byte-for-byte and mode-for-mode.
+Generated parser/native/lock inputs retain explicit reasons. Captured Git metadata
+has its own bounded known-path profile and separate facts; it is not source proof
+or an execution/sanitization claim. See the
+[Ubuntu source join contract](../architecture/release-manifest.md#ubuntu-captured-dependency-source-join)
+for identity, limits, recovery and evidence tiers. The same core/Gleam comparison
+serves Mac and Ubuntu without adding another dependency verifier. Actual archive/
+Git receipts join both retained container candidates; installed/systemd, hosted
+provenance, generated derivation, licenses and trusted distribution remain open.
+
 ### Group-owned diagnostic endpoint
 
 The initial group boundary is read-only diagnostics. Configure an explicit numeric
