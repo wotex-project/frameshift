@@ -214,6 +214,45 @@ publisher/registry authentication, rights approval, toolchain authenticity,
 generated-code qualification or complete runtime dependency admission. Gleam,
 Swift/OTP/toolchain and non-core components retain their own input gates.
 
+## Locked Gleam dependency source bytes
+
+`scripts/check-gleam-material TAG COMMIT SOURCE_RECORD HEX_CACHE OUTPUT` admits
+the existing `packages/decision-kernel/build/packages` sources against that
+component's frozen `manifest.toml`. The selected profile accepts Gleam 1.18.1's
+inspected generated literal Hex manifest form, with `gleam` build tools,
+bounded unique names/versions, optional same-name OTP app, declared package
+requirements and outer checksums. Unsupported Git/local sources, ambiguous or
+duplicate fields, escapes and unconsumed syntax refuse; this is not a general
+TOML interpreter. The fetched `packages.toml` must declare exactly the locked
+name/version pairs with empty Git state. The existing regular `gleam.lock` is
+empty and outside the source-byte identity; this check does not claim to hold
+the compiler's operating-system lock.
+
+Archives are named by their uppercase outer checksum in the existing Gleam Hex
+cache. Compare their SHA-256 before using the same bounded pinned Hex memory
+parser, then validate package identity, internal checksum and every fetched
+file's exact bytes/mode. Fetched package directories contain exactly the admitted
+source files and their parent/archive directories; no generated-output exclusions
+apply inside them. Reserved metadata, extra/missing/aliased/special members and
+world-writable or special file modes refuse. Root fetched metadata is bounded
+and rechecked with source, cache and package namespaces before completion.
+
+Use the core source gate's 64 KiB lock/metadata, 128 package, 64 MiB archive,
+128 MiB expansion/file, 512 MiB aggregate, 8,192 material-entry, 16 MiB receipt
+and three-minute processing ceilings, including finite parser output/deadlines.
+Sync a new 0700 output and 0600 pending marker/receipt; partial or conflicting
+output is retained and refused. Complete replay verifies unchanged custody
+without fetch, dependency update, compilation, core application start or output
+rewrite. Bind the frozen source/manifest digests, parser observations, package
+identities and admitted source facts with publication authority `none`.
+
+Acceptance includes both real locked Gleam archives and fetched source trees,
+literal/metadata/hash/source/namespace/alias/resource refusal, changes during
+inspection and unchanged private receipt replay. This establishes agreement with
+approved locks; it does not authenticate publishers, approve licenses or prove
+compiler/generated-code/runtime/other-component qualification. Join these
+receipts to producer inputs separately.
+
 ## Ubuntu tagged build candidates
 
 `scripts/package-linux-candidate TAG COMMIT SOURCE_RECORD arm64|amd64 OUTPUT`

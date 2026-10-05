@@ -53,6 +53,7 @@ check_policy() {
     "$repository_root/scripts/stage-linux-candidate" \
     "$repository_root/scripts/inspect-release-channel" \
     "$repository_root/scripts/check-core-material" \
+    "$repository_root/scripts/check-gleam-material" \
     "$repository_root/scripts/record-release-inputs" \
     "$repository_root/scripts/verify-release-inputs" \
     "$repository_root/release/linux/policy.sh" \
@@ -196,6 +197,8 @@ check_release() {
   mise exec -- node --check "$repository_root/release/inputs.mjs"
   mise exec -- node --check "$repository_root/release/core-material.mjs"
   mise exec -- node --check "$repository_root/release/core-material-cli.mjs"
+  mise exec -- node --check "$repository_root/release/gleam-material.mjs"
+  mise exec -- node --check "$repository_root/release/gleam-material-cli.mjs"
   mise exec -- node --check "$repository_root/release/input-cli.mjs"
   mise exec -- node --check "$repository_root/release/remote.mjs"
   mise exec -- node --check "$repository_root/release/workflow.mjs"
@@ -214,6 +217,7 @@ check_release() {
     "$repository_root/release/channel.test.mjs" \
     "$repository_root/release/inputs.test.mjs" \
     "$repository_root/release/core-material.test.mjs" \
+    "$repository_root/release/gleam-material.test.mjs" \
     "$repository_root/release/linux/candidate.test.mjs" \
     "$repository_root/release/linux/ustar.test.mjs" \
     "$repository_root/release/workflow.test.mjs"

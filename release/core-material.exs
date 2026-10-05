@@ -1,10 +1,11 @@
 defmodule Frameshift.Release.CoreMaterialParser do
   @moduledoc """
-  Parses already admitted core dependency inputs without fetching or extracting files.
+  Parses already admitted dependency inputs without fetching or extracting files.
 
   The Node release consumer supplies bounded bytes on standard input. `lock` accepts
-  only a literal Mix lock with the supported Hex and exact Git forms. `package`
-  uses Hex 2.5.1's memory parser and inventories archive members, including types
+  only a literal core Mix lock with the supported Hex and exact Git forms. `package`
+  serves both core and Gleam source admission using Hex 2.5.1's memory parser and
+  inventories archive members, including types
   that memory extraction would otherwise omit. `manifest` accepts only the current
   binary Hex manifest schema; legacy text is deliberately refused.
 

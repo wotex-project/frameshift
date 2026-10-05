@@ -39,7 +39,7 @@ function synchronize(path, isDirectory = false) {
     fsyncSync(fd);
   } finally { closeSync(fd); }
 }
-async function facts(path, expected, budget) {
+export async function lockedSourceFacts(path, expected, budget) {
   budget();
   const named = lstatSync(path, { bigint: true });
   if (!named.isFile() || named.nlink !== 1n || named.uid !== BigInt(process.getuid()) || (named.mode & 0o7002n) !== 0n || (named.mode & 0o400n) === 0n) fail('unsafe core source file or alias');
@@ -104,7 +104,7 @@ async function dependencyFiles(root, lock, expected, archiveDirectories, budget,
     } else {
       const entry = expected.get(relative);
       if (!entry) fail('additional core source file');
-      const file = await facts(path, entry, budget);
+      const file = await lockedSourceFacts(path, entry, budget);
       if ((limits.bytes += file.bytes) > 512 * 1024 * 1024) fail('core material byte limit');
       observed.push(file); seen.add(relative);
     }

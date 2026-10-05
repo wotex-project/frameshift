@@ -1069,3 +1069,42 @@ local source-byte evidence, not license approval, compiler authenticity, a clean
 runtime derivation, hosted execution or a public release. The
 [owning contract](../architecture/release-manifest.md#locked-core-dependency-source-bytes)
 keeps Gleam/other-component material and producer joins separate.
+
+### Locked Gleam dependency source admission
+
+**Observation:** 2026-10-05. Gleam 1.18.1, revision
+`4a83802ca33a8a96227a1b332768725f232f9779`, implements a deliberate generated
+manifest serializer in
+[`compiler-core/src/manifest.rs`](https://github.com/gleam-lang/gleam/blob/4a83802ca33a8a96227a1b332768725f232f9779/compiler-core/src/manifest.rs).
+It orders package/requirement entries, writes literal name/version/build-tool/
+requirement/optional-OTP-app fields and distinguishes Hex checksums from Git/local
+sources. The selected offline profile accepts the current generated Hex form;
+unconsumed syntax, duplicate/ambiguous fields or unsupported sources refuse.
+It does not introduce a general TOML parser or dependency resolver.
+
+The inspected
+[`HexDownloader`](https://github.com/gleam-lang/gleam/blob/4a83802ca33a8a96227a1b332768725f232f9779/compiler-core/src/hex.rs)
+addresses cached archives by their outer checksum. Existing archive/source paths
+short-circuit download/extraction; their presence alone therefore cannot establish
+current byte agreement with the lock. The offline gate hashes each bounded
+archive before pinned Hex memory parsing and compares every delivered source
+file's byte hash and permissions. Unlike generated core lexer outputs, supplier
+Erlang files shipped in these archives are part of admitted source.
+
+Gleam's
+[`LocalPackages`](https://github.com/gleam-lang/gleam/blob/4a83802ca33a8a96227a1b332768725f232f9779/compiler-cli/src/dependencies.rs)
+records fetched package versions and Git state in `packages.toml`. The selected
+Hex-only profile requires exactly the locked name/version pairs and empty Git
+state, with bounded root metadata and source/cache namespaces. An empty regular
+`gleam.lock` is inspected but operating-system compiler-lock ownership is not
+claimed.
+
+Six real archive/source fixture groups pass, including the actual 128-package
+literal boundary and successful private CLI replay. The combined core/Gleam
+suite passes fourteen groups. The exact isolated source cohort admits
+`gleam_stdlib` 1.0.5 and `gleeunit` 1.11.0 with 76 source files and unchanged
+receipt inode/timestamp; the shared-parser core cohort also replays all 42 locked
+dependencies. These prove agreement with approved frozen locks, not independent
+publisher authentication, rights approval, compiler authenticity, generated-code
+or runtime qualification. Producer receipt joins remain separate under the
+[release input contract](../architecture/release-manifest.md#locked-gleam-dependency-source-bytes).

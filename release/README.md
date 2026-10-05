@@ -345,3 +345,15 @@ Explicit generated outputs stay outside this source claim. The
 lists exclusions, ceilings, refusal/recovery and independent publisher, rights,
 toolchain, generated-code and other-component admission gates. Publication
 authority remains `none`.
+
+`scripts/check-gleam-material TAG COMMIT SOURCE_RECORD HEX_CACHE OUTPUT` verifies
+already-fetched decision-kernel source against the frozen Gleam manifest and
+fetched package metadata. `HEX_CACHE` is Gleam's existing checksum-named archive
+directory, observed on this Mac as `~/Library/Caches/gleam/hex/hexpm/packages`.
+No fetch, update or compilation occurs. Both actual locked packages and all
+76 source files pass admission and unchanged private receipt replay. The bounded
+[manifest/source profile](../docs/architecture/release-manifest.md#locked-gleam-dependency-source-bytes)
+refuses unsupported literal syntax, extra/generated/aliased sources, wrong
+metadata and changed custody. It reuses the pinned Hex memory parser; the receipt
+carries publication authority `none` and grants no publisher, license, compiler,
+operating-system lock or runtime qualification.

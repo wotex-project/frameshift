@@ -477,9 +477,20 @@ build. Bounded real archive/Git fixtures and the isolated full core source cohor
 pass private receipt creation and unchanged replay; hidden changes, aliases,
 extra/missing members, invalid archive types, resource excess and mutation refuse.
 Explicit generated compiler/native outputs remain outside this source proof.
-Continue receipt joining to producer inputs and the independent Gleam/Swift/OTP
+Continue receipt joining to producer inputs and the independent Swift/OTP/compiler
 material gates; agreement with approved locks does not establish publisher trust,
 licenses, toolchain authenticity, installed acceptance or publication authority.
+
+The Gleam source-byte gate now admits the existing decision-kernel dependencies
+against the frozen generated Hex manifest, fetched name/version metadata and
+checksum-named archives. It reuses bounded Hex memory parsing and verifies every
+delivered source member, including Erlang files shipped by the supplier; extra
+generated files refuse. Literal/namespace/alias/resource/mutation fixtures and
+both full locked dependencies pass receipt creation and unchanged replay, with
+76 file facts. No fetch/build or compiler-lock ownership is claimed. Join both
+core/Gleam receipts to their captured producer inputs next; licensing, independent
+publisher trust, compiler authenticity and generated/runtime qualification remain
+separate gates.
 
 ## Shared contracts
 
