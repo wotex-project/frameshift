@@ -195,6 +195,48 @@ worker protocol. Service-owned upload custody is specified by
 [the Linux host](../host/linux.md); this executable alone does not authorize
 caller paths or complete streamed import.
 
+#### Host process custody
+
+`Frameshift.NativeCodec` owns the normalized result before Library admission.
+Its configured executable MUST be a regular executable, owned by root or the
+actual nonroot service identity, without group/other write permission and at
+most 64 MiB. Read a bounded descriptor, compare path/descriptor identity before
+and after using one timestamp representation, then copy exact bytes into an
+exclusive private custody directory and verify readback. Execute that snapshot;
+later replacement of the configured pathname cannot alter its build digest.
+
+The host selects an existing real service-owned `0700` temporary directory
+before startup. This directory protects Exile's transient Unix descriptor
+handshake as well as the `frameshift-codec-custody` lease. A preexisting lease
+refuses startup without overwriting, adopting or removing any inode. Check
+private temporary custody again before each invocation. The fixed root-owned
+`/usr/bin/env` executable runs the staged worker with `-i`, an empty environment
+and disabled stderr; source bytes enter stdin only. There are no caller paths,
+credentials or provider arguments. Admit the exact primary Logger filter and
+mark Exile processes before original-byte writes: upstream crash reports can
+otherwise contain a queued input chunk. A conflicting filter refuses rather
+than replacing unrelated logging policy.
+
+Each admitted job verifies the exact `--version` result and its successful
+native exit, then performs one decode. Both invocations share one thirty-second
+absolute deadline and reservation. Writes and reads use at most 64 KiB chunks;
+stdin closes after exact input. Validate the complete FSN1 header before reading
+bounded pixels, then require exact payload, EOF and exit status zero. A valid
+output followed by a nonzero exit is a refusal. Error output must have no
+metadata, pixels or extra bytes.
+
+An independent watchdog observes owner death and the deadline even while the
+decode task is blocked on IO. The public deadline can return before native
+termination, but the reservation remains occupied until the task acknowledges
+actual exit. Unknown task/native custody makes the owner unavailable and
+retains the lease. Normal shutdown removes custody only after confirmed exit;
+abrupt owner death preserves it so a replacement cannot overlap old work.
+Abandoned custody is an explicit service-recovery operation: stop the complete
+installed service and establish native termination before removing that lease.
+Do not infer VM-exit cleanup from `Port.close`, an elapsed timer or a PID signal
+alone. Installed service/cgroup shutdown, NIF/helper closure, OS resource limits
+and storage power-loss behavior require their own release evidence.
+
 Acceptance requires native debug/release normalization and process-framing
 fixtures, all orientations, actual ICC/cICP/gamma transforms, alpha, bit depth,
 interlace, checksums, corruption and bounds. Host joins must additionally exercise

@@ -10,8 +10,8 @@ defmodule Frameshift.MasterPackage do
   ## Representation and limits
 
   The 32-byte header uses unsigned big-endian fields. Canonical pixels are sRGB,
-  top-left row order, straight alpha and orientation 1; the Apple decoding boundary
-  must normalize them before packaging. Dimension, source-byte and pixel ceilings
+  top-left row order, straight alpha and orientation 1; the qualified platform
+  decoder must normalize them before packaging. Dimension, source-byte and pixel ceilings
   are enforced by this module and `Frameshift.Renderer.Protocol`.
 
   `media_type/0` identifies this internal durable format. It is a master container,

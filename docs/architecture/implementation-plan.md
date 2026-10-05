@@ -182,6 +182,16 @@ actor-bound staging, lost replies and immutable source/package readback.
 Both Ubuntu architectures, OS resource enforcement and installed release
 closure remain R3 requirements.
 
+The host process slice uses pinned Exile 0.15.0 with private descriptor-handshake
+custody, a verified executable snapshot, exact producer revision, bounded
+backpressure and awaited exit. Deadline/owner-death watchdogs retain the sole
+reservation; unknown custody preserves an exclusive replacement fence. Its
+native/container joins precede Linux import authorization. Next define and
+build the authenticated streamed-upload lifecycle and actor-bound receipt,
+join verified originals/canonical pixels to the existing Library writer, then
+qualify JPEG and the complete target release closure. Do not report the worker
+or a direct Library fixture as a completed `frameshiftctl import` command.
+
 ### Independent software delivery order
 
 Deliver S1 first, then inspect and exercise the exact S2/S3 mappings before

@@ -291,6 +291,62 @@ fallback. The [content pipeline](../architecture/content-pipeline.md#linux-nativ
 owns requirements, while the [verification ledger](../architecture/verification.md)
 records actual executions.
 
+#### Codec process transport cohort
+
+**Source observation:** 2026-10-05. The selected transport is Exile **0.15.0**,
+[tagged source `a4f29f3`](https://github.com/akash-akya/exile/tree/a4f29f31adc3c6bd2fe43ac62dc07a9eeb3bf413)
+under Apache-2.0. All sixteen published `lib/`, `c_src/`, Makefile, README,
+license and Mix source blobs match that tag. `apps/core/mix.lock` records the
+published checksum `eb520ea43e26793abff619d3bc3fda358b6bed5ea8ed4d3715f66b4b27ca438b`.
+The [September 14 release notes](https://github.com/akash-akya/exile/releases/tag/v0.15.0)
+separate cancellation timeouts/input-producer failures and fix startup failure
+handling/stale native builds; source and target fixtures remain necessary.
+
+Plain OTP ports do not supply stdin close while continuing to consume stdout;
+closing a port alone does not establish native termination. Exile's public
+`start_link`, `write`, `close_stdin`, bounded `read`, `kill` and owner-only
+`await_exit` match this one-shot boundary. It uses a small C NIF for nonblocking
+descriptor IO/signals and an exec helper, not an in-process image parser.
+`Exec.start` has separate two-second accept/descriptor-handshake timeouts;
+these do not bound decoding. IO and `kill` calls can wait indefinitely at the
+GenServer boundary, so the host's deadline/watchdog and retained reservation
+must remain independent of those calls.
+
+Three source details materially constrain integration:
+
+- `process/exec.ex` creates its random handshake socket directly in
+  `System.tmp_dir!()` without a peer-UID check. Its socket is protected by an
+  already-private service temporary directory, selected once before runtime;
+  per-job environment or working-directory options do not change that parent.
+- Exec environment options inherit unspecified variables. Run the exact
+  staged binary through protected `/usr/bin/env -i`; normal stderr goes to
+  `/dev/null`. Admit/mark the primary Logger privacy filter before original
+  writes because `process.ex` has no redacting `format_status` callback.
+- `await_exit` closes owned pipes and escalates through SIGTERM/SIGKILL, with
+  a 500 ms SIGKILL grace. `watcher.ex` also attempts owner-death cleanup, but
+  a cleanup attempt is not an exit receipt. Preserve unknown custody and fence
+  replacement with the exclusive staging directory.
+
+The Makefile marks both `priv/exile.so` and `priv/spawner` phony. Target
+qualification nevertheless compiles them freshly for each architecture against
+the pinned Linux/OTP image's headers: copying host-built NIFs or trusting a cached Mix dependency would not
+establish ABI closure. The Linux fixture uses portable locked BEAM code with
+new target native artifacts; it does not load the Mac SQLite NIF or claim an
+installed Ubuntu release. Reaping, backpressure, replacement refusal and
+logging fault injection are consumer acceptance, while complete VM/service
+shutdown and resource enforcement remain installed-release gates.
+
+The Linux index fixes Elixir 1.20.4 and **OTP 29.1.1**; local native core tests
+use `.mise.toml`'s OTP 29.1. The fixture checks its exact version rather than
+claiming identical runtime versions. On this arm64 Docker VM, the emulated
+amd64 runtime fails during `prim_tty` NIF startup with default dual JIT mapping;
+`+JMsingle true` permits that bootstrap. OTP's
+[29.1 runtime documentation](https://github.com/erlang/otp/blob/OTP-29.1/erts/doc/references/erl_cmd.md#L793)
+describes this switch for user-mode emulators. The fixture selects it only when
+target and Docker-daemon architectures differ; native targets keep the default.
+That emulated run does not qualify native amd64 performance, the default JIT
+memory protection or an installed release.
+
 ## Explicit exclusions
 
 - **Membrane:** no role because Frameshift has no video, audio, animation, or

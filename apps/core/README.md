@@ -91,6 +91,17 @@ bridge for local discovery. The Linux IPC lane retains no external network and
 uses an executable temporary filesystem only for owned deadline-test helpers.
 These are software fixtures, not supported Ubuntu install or hardware evidence.
 
+`Frameshift.NativeCodec` owns one original-byte normalization job against a
+verified staged executable and exact revision. It requires existing private
+nonroot `0700` temporary custody for Exile's descriptor handshake. Source bytes
+are bounded; environment/stderr and upstream crash logs cannot expose them.
+The deadline/watchdog awaits native exit before admitting another job; unknown
+custody preserves its replacement fence. Core tests join actual PNG normalization
+to immutable package/SQLite readback and Zig rendering. `scripts/check linux-codec`
+also builds target Exile NIFs/helpers against pinned OTP headers and exercises
+nonroot arm64/amd64 worker deadlines, shutdown and abrupt-owner refusal.
+This owner is not yet an authenticated streamed-import command or a release package.
+
 The separate bundled `frameshift-identity import` command accepts one bounded
 certificate/private-key PEM on closed stdin while running as the configured
 nonroot service UID. Set `FRAMESHIFT_SERVICE_UID` and an existing service-owned

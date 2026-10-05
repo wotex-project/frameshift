@@ -1,0 +1,35 @@
+#!/bin/sh
+set -eu
+
+repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+case "${1:-}" in
+  arm64|amd64) architecture=$1 ;;
+  *) echo 'usage: check-linux-codec-owner [arm64|amd64]' >&2; exit 64 ;;
+esac
+
+# OTP documents single JIT mapping for user-mode emulators. Keep the default
+# dual mapping on native targets; this switch belongs only to the fixture VM.
+daemon_architecture=$(docker info --format '{{.Architecture}}')
+case "$architecture:$daemon_architecture" in
+  amd64:x86_64|amd64:amd64|arm64:aarch64|arm64:arm64) fixture_erl_flags='' ;;
+  *) fixture_erl_flags='+JMsingle true' ;;
+esac
+
+context=$(mktemp -d "${TMPDIR:-/tmp}/frameshift-codec-join.XXXXXXXX")
+trap 'rm -rf "$context"' EXIT HUP INT TERM
+chmod 0700 "$context"
+mkdir -p "$context/exile"
+cp "$repository_root/apps/core/deps/exile/Makefile" "$context/exile/Makefile"
+cp -R "$repository_root/apps/core/deps/exile/c_src" "$context/exile/c_src"
+cp -R "$repository_root/apps/core/_build/test/lib/exile/ebin" "$context/exile/ebin"
+cp "$repository_root/apps/core/test/fixtures/native-codec-worker.c" "$context/native-codec-worker.c"
+cp "$repository_root/apps/core/test/fixtures/linux-codec-owner.Dockerfile" "$context/Dockerfile"
+
+docker build --platform "linux/$architecture" \
+  --build-arg "CODEC_IMAGE=frameshift-codec-$architecture:fixture" \
+  --tag "frameshift-codec-owner-$architecture:fixture" "$context"
+docker run --rm --platform "linux/$architecture" --network none --read-only \
+  --env "ERL_FLAGS=$fixture_erl_flags" \
+  --mount "type=bind,src=$repository_root/apps/core,dst=/src,readonly" \
+  --tmpfs /tmp/codec-service:mode=0700,uid=65534,gid=65534,size=16m,exec \
+  "frameshift-codec-owner-$architecture:fixture"

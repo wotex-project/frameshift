@@ -227,6 +227,16 @@ distinct from authenticated upload/receipt, installed Ubuntu and target binary
 closure evidence. JPEG needs its own complete-container/color/stillness corpus
 before the Linux adapter enables it.
 
+The host's `Frameshift.NativeCodec` owner requires existing nonroot private
+`0700` temporary custody selected before startup, including Exile's descriptor
+handshake. It snapshots a protected executable, requires its exact digest and
+producer revision, closes bounded stdin and awaits native exit. Original bytes
+do not enter argv, environment, stderr or marked upstream crash logs. Unknown
+custody or abrupt owner death retains an exclusive replacement fence. Installed
+recovery must stop the complete service and verify native termination before
+removing an abandoned `frameshift-codec-custody` directory. This is separate
+from replaying an import receipt or modifying the immutable Library.
+
 Physical pair/recovery and stdin intake follow the dedicated contracts below.
 
 Requests retain 64 KiB/8 KiB framing bounds and responses 1 MiB/256 KiB bounds.

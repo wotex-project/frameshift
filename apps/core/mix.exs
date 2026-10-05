@@ -42,7 +42,8 @@ defmodule FrameshiftCore.MixProject do
         "test/frameshift/local_ipc/linux_command_service.exs",
         "test/frameshift/local_ipc/linux_client_service.exs",
         "test/frameshift/local_ipc/linux_credential_service.exs",
-        "test/frameshift/discovery/linux_avahi_join.exs"
+        "test/frameshift/discovery/linux_avahi_join.exs",
+        "test/frameshift/native_codec/linux_owner_join.exs"
       ],
       dialyzer: dialyzer()
     ]
@@ -73,6 +74,7 @@ defmodule FrameshiftCore.MixProject do
     [
       {:frameshift_decisions, path: "../../packages/decision-kernel"},
       {:exqlite, "~> 0.42.0"},
+      {:exile, "0.15.0"},
       {:telemetry, "~> 1.4"},
       {:telemetry_metrics, "~> 1.1"},
       {:jsv, "~> 0.25.0"},

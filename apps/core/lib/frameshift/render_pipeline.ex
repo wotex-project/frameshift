@@ -17,7 +17,7 @@ defmodule Frameshift.RenderPipeline do
 
   The renderer receives only canonical RGBA8 extracted from the durable package.
   Caller-provided replacement pixels, mismatched dimensions or stale qualification
-  refuse. Apple-system decoding remains outside this module. Successful rendering
+  refuse. Platform source decoding remains outside this module. Successful rendering
   means exact artifact custody, not transport completion or physical display;
   delivery owners perform those later steps and preserve uncertain outcomes.
   """
