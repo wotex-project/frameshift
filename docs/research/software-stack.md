@@ -1599,3 +1599,31 @@ numeric-version update/removal and administrative backup/restore remain separate
 checks. Stock Ubuntu/native amd64, physical storage/power, rights/signing and
 production release acceptance remain independent gates. Publication authority is
 none; no model or physical frame is involved.
+
+### Timezone-independent protected identity custody
+
+**Observation:** 2026-10-05. The booted arm64 identity command validates its PEM,
+publishes the certificate-bound 0400 file and successfully synchronizes the
+credential directory, but returns uncertain status because final resolution
+compares unequal calendar timestamps. On this configuration, pathname mtime/ctime
+are `2026-10-05 16:29:13`, while the opened raw descriptor reports `18:29:13`;
+all other compared fields match and independent PEM proof succeeds. These are two
+representations of the same unchanged inode, not observed byte mutation.
+
+The resolver now requests `time: :posix` for both pathname reads and both opened
+file-information reads. It retains all existing owner, mode, inode, size, mtime,
+ctime, bounded-byte and final-name checks; atime remains excluded because reading
+may change it. The exact [OTP 29.1 file contract](https://github.com/erlang/otp/blob/OTP-29.1/lib/kernel/src/file.erl#L679-L689)
+defines explicit POSIX seconds independently of default local calendar conversion;
+that source was read with gh on the observation date.
+
+The existing Linux nonroot credential/TLS/installation fixture now runs in fresh
+processes with `TZ=UTC0` and `TZ=Etc/GMT-2`. Before correction, the complete lane
+reports 14/15 passing with actual uncertain publication in the credential group.
+After correction, all 15 groups pass, including both timezone variants, actual
+IPv4/IPv6 pinned TLS, no-replacement/changed/unsafe custody, concurrent identity
+installation, stdin CLI, publication uncertainty, real full-disk refusal and the
+other peer/actor contracts. This is source/runtime fixture evidence. Fresh fixed
+DEB installed identity, booted backup/restore and numeric update/removal remain
+required; no physical durability, encrypted-key recovery or production claim
+follows. Previously uncertain identity bytes remain preserved for inspection.

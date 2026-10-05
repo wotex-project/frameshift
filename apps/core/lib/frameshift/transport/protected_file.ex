@@ -7,7 +7,9 @@ defmodule Frameshift.Transport.ProtectedFile do
   HEX identifies the complete DER certificate. No command or stored reference
   supplies an arbitrary filesystem path. Files must be owned regular inodes,
   `0400` or `0600`, and no larger than 128 KiB. Bounded descriptor readback and
-  final inode checks refuse changed, symlinked, missing or unsafe custody.
+  final inode checks refuse changed, symlinked, missing or unsafe custody. Name
+  and descriptor timestamps use POSIX seconds so local timezone conversion
+  cannot make the same unchanged inode appear different.
 
   ## Identity and lifetime
 
@@ -202,16 +204,16 @@ defmodule Frameshift.Transport.ProtectedFile do
   end
 
   defp read_pem(path, uid) do
-    with {:ok, before} <- File.lstat(path),
+    with {:ok, before} <- File.lstat(path, time: :posix),
          :ok <- private_file(before, uid),
          {:ok, file} <- File.open(path, [:read, :binary, :raw]) do
       try do
-        with {:ok, record} <- :file.read_file_info(file),
+        with {:ok, record} <- :file.read_file_info(file, time: :posix),
              true <- same_file?(File.Stat.from_record(record), before),
              bytes when is_binary(bytes) <- :file.read(file, @maximum_bytes + 1) |> read_bytes(),
              true <- byte_size(bytes) == before.size,
-             {:ok, after_read} <- :file.read_file_info(file),
-             {:ok, final} <- File.lstat(path),
+             {:ok, after_read} <- :file.read_file_info(file, time: :posix),
+             {:ok, final} <- File.lstat(path, time: :posix),
              true <-
                same_file?(File.Stat.from_record(after_read), before) and same_file?(final, before) do
           {:ok, bytes}

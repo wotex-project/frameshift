@@ -631,6 +631,10 @@ reads at most the bound plus one byte, closes the descriptor and returns a finit
 error on replacement, missing/unsafe bytes or decode failure. The final directory
 is rechecked. No failure prints an exception, path, PEM or key.
 
+Pathname and opened-descriptor custody comparisons use explicit POSIX-second
+timestamps for both reads. Local timezone conversion must not reject the same
+unchanged inode; size, inode, owner, mode, mtime and ctime checks remain required.
+
 The PEM contains exactly one certificate then one unencrypted RSA or EC private
 key, including supported PKCS#8 wrapping, with no extra blocks or non-whitespace
 text. Certificate DER is at most 65536 bytes and must match the reference. Only

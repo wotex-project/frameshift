@@ -650,6 +650,13 @@ hardening only for the tested units. Continue real codec-child stop and booted
 numeric-version update/removal/administrative recovery. Stock Ubuntu/native amd64,
 physical power/storage, rights/signing and production acceptance remain open.
 
+Protected identity resolution now compares pathname and descriptor timestamps
+as POSIX seconds. The Linux credential/installation/pinned-TLS fixture runs fresh
+UTC and non-UTC processes; the reproduced uncertain-publication failure becomes
+15 passing Linux IPC groups without weakening file custody or key proof. Continue
+fresh fixed-DEB identity and administrative/lifecycle joins before installed
+acceptance; previously uncertain key bytes stay preserved for inspection.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

@@ -19,23 +19,27 @@ defmodule Frameshift.LocalIPC.LinuxCredentialContract do
     File.chmod!(path, 0o600)
     on_exit(fn -> File.rm_rf!(root) end)
 
-    assert {output, 0} =
-             System.cmd(
-               "runuser",
-               [
-                 "-u",
-                 "nobody",
-                 "--",
-                 "elixir",
-                 "/src/test/frameshift/local_ipc/linux_credential_service.exs",
-                 root
-               ],
-               stderr_to_stdout: true
-             )
+    for timezone <- ["UTC0", "Etc/GMT-2"] do
+      assert {output, 0} =
+               System.cmd(
+                 "runuser",
+                 [
+                   "-u",
+                   "nobody",
+                   "--",
+                   "elixir",
+                   "/src/test/frameshift/local_ipc/linux_credential_service.exs",
+                   root
+                 ],
+                 stderr_to_stdout: true,
+                 env: [{"TZ", timezone}]
+               )
 
-    assert output =~ "protected-file-pinned-tls-passed"
-    assert output =~ "pairing-directory-sync-passed"
-    assert output =~ "protected-identity-import-passed"
+      assert output =~ "protected-file-pinned-tls-passed"
+      assert output =~ "pairing-directory-sync-passed"
+      assert output =~ "protected-identity-import-passed"
+    end
+
     assert File.read!(path) == "root-owned fixture must not be read"
     assert {:ok, %File.Stat{uid: 0, mode: mode}} = File.lstat(path)
     assert Bitwise.band(mode, 0o7777) == 0o600
