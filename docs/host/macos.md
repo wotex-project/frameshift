@@ -301,7 +301,8 @@ Cloud labeling is a separate explicit opt-in and is disabled by default.
 Before accepting a development or release bundle, inspect every regular file
 for Mach-O code, including dynamically opened OTP NIFs. The local static gate
 is `scripts/check-macos-closure APP arm64|x86_64|universal`. Its JSON observation
-records relative file identities, CPU slices, native deployment minima and
+records directory paths/modes, relative file identities, CPU slices, native
+deployment minima and
 loader references; it grants no publication authority. Required code includes
 the shell, CLI, renderer, one OTP emulator, SQLite NIF, Exile NIF and spawner.
 Every native item must contain the selected CPU, or both CPUs for `universal`.
@@ -343,6 +344,48 @@ The real fresh development app must then pass closure and packaged IPC,
 import, restart and offline maintenance checks on the observed Mac. Those
 checks do not qualify macOS 14, Intel execution, universal OTP/NIF packaging,
 Developer ID, hardened runtime, notarization or installed DMG/update behavior.
+
+### Universal development bundle join
+
+`scripts/package-macos-universal ARM_APP INTEL_APP OUTPUT` joins two admitted
+ad-hoc development bundles without building either source or selecting a
+production signing identity. Each input must contain exactly its one generic
+CPU in every native file, and pass closure and all native/app seal checks.
+Their directory paths/modes and relative file sets must agree. Every non-native
+byte and mode must agree,
+except the enclosing app's regenerated `Contents/_CodeSignature/CodeResources`
+and `Contents/Info.plist`. Parse both plists with Apple's parser and require
+equal properties except `LSMinimumSystemVersion`, with matching nonempty bundle
+ID, version and build number. Refuse differing BEAM files, configuration,
+resources, dependency versions, native roles or file types; never pick one
+architecture's conflicting common bytes silently.
+
+Copy the admitted common tree into a private stage and merge every native
+file with `lipo`, preserving its mode. Do not keep one architecture's OTP
+helpers or NIFs. Admit both slices in every result, derive the greatest actual
+native OS minimum, and sign the merged leaves before the app. Re-read both
+sources before completion. Sync the final app and a bounded private record
+binding both complete input observations to the exact universal observation;
+its publication authority is `none`. A retained rerun verifies inputs, output,
+closures and signatures without merging, re-signing or replacing bytes.
+An interrupted or changed output remains retained and refuses.
+
+Use the closure reader's member/byte/path/native limits. Bound the completed
+record to 1 MiB and require twice the conservative output byte estimate plus
+256 MiB free before staging; reserve 1 MiB per native file for merge padding,
+and refuse estimates over the closure's per-file or total byte ceilings.
+Bound subprocess output and deadlines. Acceptance includes actual separately
+compiled arm64/x86_64 inputs, merged executable and dylib slices, native arm64
+fixture execution, final seals, unchanged replay, resource/plist/CPU/type/input
+mutation and interrupted/failed-merge refusal. The exact merged fixture can
+then enter the development DMG readback gate.
+
+This join checks byte custody and static structure, not semantic equivalence
+of separately compiled CPU code. Exact tagged source, reproducible common
+resources, the full native Intel/Apple Silicon OTP/NIF producer cohort and
+execution on each supported OS/CPU remain required before production
+distribution. Missing source or installed evidence must not become a release
+claim merely because a universal fixture was successfully joined.
 
 ### Development disk-image custody
 

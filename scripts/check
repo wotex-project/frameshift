@@ -43,6 +43,7 @@ check_policy() {
     "$repository_root/scripts/launch-bundled-core" \
     "$repository_root/scripts/package-macos" \
     "$repository_root/scripts/package-macos-dmg" \
+    "$repository_root/scripts/package-macos-universal" \
     "$repository_root/scripts/package-linux" \
     "$repository_root/scripts/package-linux-deb" \
     "$repository_root/scripts/package-linux-candidate" \
@@ -208,7 +209,7 @@ check_release() {
     "$repository_root/release/linux/candidate.test.mjs" \
     "$repository_root/release/linux/ustar.test.mjs" \
     "$repository_root/release/workflow.test.mjs"
-  mise exec -- node --test "$repository_root/release/macos/closure.test.mjs" "$repository_root/release/macos/dmg.test.mjs"
+  mise exec -- node --test "$repository_root"/release/macos/*.test.mjs
 }
 
 check_guide_browser() {
@@ -253,7 +254,7 @@ check_core() {
 }
 
 check_macos() {
-  mise exec -- node --test "$repository_root/release/macos/closure.test.mjs" "$repository_root/release/macos/dmg.test.mjs"
+  mise exec -- node --test "$repository_root"/release/macos/*.test.mjs
   (
     cd "$repository_root/apps/macos"
     swift format lint --recursive --strict Sources Tests Package.swift

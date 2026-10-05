@@ -126,3 +126,17 @@ completion. The same command verifies unchanged retained bytes on rerun.
 Interrupted or changed output refuses without replacement. The
 [disk-image contract](../../docs/host/macos.md#development-disk-image-custody)
 keeps production signing, notarization and installed acceptance separate.
+
+Join separately built development CPU bundles before creating a universal image:
+
+```sh
+../../scripts/package-macos-universal /path/to/arm64/Frameshift.app /path/to/intel/Frameshift.app /path/to/new-universal
+```
+
+Both admitted ad-hoc inputs must have matching directories, common bytes and
+product identities. Every native file is merged and signed again in the new
+private output. The record binds both input observations and the final
+universal bundle. A rerun verifies retained custody without merging or signing
+again. Differing resources, incomplete output and changed source/output refuse.
+See the [join contract](../../docs/host/macos.md#universal-development-bundle-join);
+the tool does not supply exact-source provenance or installed CPU qualification.

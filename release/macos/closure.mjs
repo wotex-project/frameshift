@@ -32,7 +32,7 @@ async function inventory(root, budget) {
       for (const name of names) await visit(relative ? `${relative}/${name}` : name, depth + 1);
       const after = await lstat(path, { bigint: true });
       if (!after.isDirectory() || JSON.stringify(identity(before)) !== JSON.stringify(identity(after))) fail('bundle directory changed');
-      directories.push({ path: relative, identity: identity(after) });
+      directories.push({ path: relative, mode: Number(after.mode & 0o7777n), identity: identity(after) });
     } else if (before.isFile()) {
       if (before.nlink !== 1n) fail('bundle hard links unavailable');
       if (before.size > BigInt(limits.file) || (total += Number(before.size)) > limits.total) fail('bundle byte limit');
@@ -202,5 +202,5 @@ export async function auditMacBundle(input, architecture, { enforceMinimum = tru
   versionNumber(declared);
   const after = await inventory(root, budget);
   if (JSON.stringify(before) !== JSON.stringify(after)) fail('bundle changed during inspection');
-  return { schemaVersion: 1, publicationAuthority: 'none', architecture, declaredMinimum: declared, nativeMinimum: version(minimum), files: before.files.map(({ identity, native, ...file }) => file), natives };
+  return { schemaVersion: 2, publicationAuthority: 'none', architecture, declaredMinimum: declared, nativeMinimum: version(minimum), directories: before.directories.map(({ identity, ...directory }) => directory), files: before.files.map(({ identity, native, ...file }) => file), natives };
 }

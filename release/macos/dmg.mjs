@@ -48,7 +48,7 @@ async function imageFacts(path) {
     return { bytes: size, sha256: hash.digest('hex') };
   });
 }
-function signatures(root, observation, tool) {
+export function verifyDevelopmentSignatures(root, observation, tool = macImageTool) {
   for (const native of observation.natives) tool('/usr/bin/codesign', ['--verify', '--strict', join(root, native.path)]);
   tool('/usr/bin/codesign', ['--verify', '--deep', '--strict', root]);
   const signature = tool('/usr/bin/codesign', ['--display', '--verbose=2', root]);
@@ -71,7 +71,7 @@ async function mountedReadback(image, work, expectedBytes, architecture, tool) {
     if (!(await readReleaseInput(join(mount, 'Read Me.txt'), { maximum: 4096 })).equals(reading)) fail('invalid development reading text');
     const mounted = join(mount, 'Frameshift.app'), observation = await auditMacBundle(mounted, architecture);
     if (!Buffer.from(JSON.stringify(observation)).equals(expectedBytes)) fail('mounted app differs from admitted source');
-    signatures(mounted, observation, tool);
+    verifyDevelopmentSignatures(mounted, observation, tool);
     tool('/usr/bin/hdiutil', ['detach', mount]); detached = true;
   } finally {
     if (attachAttempted && !detached) {
@@ -90,7 +90,7 @@ async function mountedReadback(image, work, expectedBytes, architecture, tool) {
 
 export async function developmentDiskImage(input, architecture, destination, { tool = macImageTool } = {}) {
   const initial = await auditMacBundle(input, architecture);
-  signatures(resolve(input), initial, tool);
+  verifyDevelopmentSignatures(resolve(input), initial, tool);
   const source = realpathSync(input), output = join(realpathSync(dirname(resolve(destination))), basename(destination));
   if (output === source || output.startsWith(`${source}/`) || source.startsWith(`${output}/`) || /[\u0000-\u001f\u007f]/.test(output)) fail('overlapping or unsafe disk-image paths');
   const observationBytes = Buffer.from(JSON.stringify(initial)), name = `Frameshift-development-${architecture}.dmg`;
@@ -130,7 +130,7 @@ export async function developmentDiskImage(input, architecture, destination, { t
   const copied = join(payload, 'Frameshift.app');
   tool('/usr/bin/ditto', [source, copied], 120_000);
   if (!Buffer.from(JSON.stringify(await auditMacBundle(copied, architecture))).equals(observationBytes)) fail('copied app differs from admitted source');
-  signatures(copied, initial, tool);
+  verifyDevelopmentSignatures(copied, initial, tool);
   symlinkSync('/Applications', join(payload, 'Applications'));
   writeFileSync(join(payload, 'Read Me.txt'), reading, { flag: 'wx', mode: 0o644 });
   tool('/usr/bin/hdiutil', ['create', '-srcfolder', payload, '-fs', 'HFS+', '-format', 'UDZO', '-volname', 'Frameshift Development', '-nospotlight', '-noskipunreadable', image], 120_000);

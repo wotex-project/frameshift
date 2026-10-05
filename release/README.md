@@ -273,3 +273,16 @@ rebuild. A refused detach retains the working mount rather than deleting its
 directory. Its authority remains none and it supplies no stable release input,
 production signature or notarization. See
 [development image custody](../docs/host/macos.md#development-disk-image-custody).
+
+`./scripts/package-macos-universal ARM_APP INTEL_APP OUTPUT` joins two admitted,
+single-CPU ad-hoc apps into one private universal development bundle. Matching
+directory paths/modes, common file bytes, parsed product identity and native
+file roles/types are required. Every native item, including OTP helpers and
+NIFs, is merged and signed in the new stage. Its private `universal.json` binds
+both complete input observations to the final bundle; replay verifies without
+changing source, output or signatures. Source conflict, mutation, failed merge
+and interrupted output retain custody and refuse. Closure observation schema v2
+includes directory identities by relative path and mode, so empty-directory
+drift also changes retained identity. See
+[the universal join contract](../docs/host/macos.md#universal-development-bundle-join)
+for independent exact-source, native producer and installed acceptance gates.

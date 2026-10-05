@@ -37,6 +37,6 @@ export function fixture(t, architecture = 'arm64', rpath) {
     else copyFileSync(slices[0], outputs[kind]);
   }
   for (const [relative, kind] of roles) { const path = join(root, relative); mkdirSync(dirname(path), { recursive: true }); copyFileSync(outputs[kind], path); chmodSync(path, 0o755); }
-  writeFileSync(join(root, 'Contents/Info.plist'), '<plist version="1.0"><dict><key>CFBundleExecutable</key><string>Frameshift</string><key>CFBundleIdentifier</key><string>io.frameshift.closure-fixture</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleVersion</key><string>1</string><key>LSMinimumSystemVersion</key><string>14.0</string></dict></plist>');
+  writeFileSync(join(root, 'Contents/Info.plist'), '<plist version="1.0"><dict><key>CFBundleExecutable</key><string>Frameshift</string><key>CFBundleIdentifier</key><string>io.frameshift.closure-fixture</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleShortVersionString</key><string>0.1.0</string><key>CFBundleVersion</key><string>1</string><key>LSMinimumSystemVersion</key><string>14.0</string></dict></plist>');
   return { root, parent };
 }

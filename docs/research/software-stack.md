@@ -282,9 +282,10 @@ UDZO, HFS+, checksum, read-only, explicit mountpoint and no-autoopen options.
 The candidate uses that inspected compatibility surface; no assertion is made
 about the replacement API or tools on an older build host.
 
-The complete current ad-hoc app produces a 23,535,455-byte development DMG.
-Its SHA-256 is retained in private metadata beside the exact 275,228-byte
-bundle observation. Actual read-only mount, app inventory, native closure,
+The complete current ad-hoc app produces a 23,531,333-byte development DMG.
+Its SHA-256 is retained in private metadata beside the exact 281,753-byte
+bundle observation, including 98 directory paths/modes. Actual read-only mount,
+app inventory, native closure,
 ad-hoc seals, reading text and `/Applications` link agree; detach restores
 the original private mountpoint. A second invocation repeats mounted readback
 with the same retained archive bytes and hash, rather than rebuilding it.
@@ -302,6 +303,39 @@ exit removes an OS mount. The
 [development image contract](../host/macos.md#development-disk-image-custody)
 keeps stable source, licenses, universal host assembly, production signatures,
 notarization, Gatekeeper and installed/update evidence separate.
+
+### Universal development join source and consumer
+
+Observed 2026-10-05 with the same Mac/SDK cohort. Apple's
+[universal binary guidance](https://developer.apple.com/documentation/apple-silicon/building-a-universal-macos-binary)
+describes separate arm64/x86_64 compilation and merging the results with `lipo`.
+The installed tool exposes `-create`, `-archs` and `-verify_arch`; the fixture
+uses actual separately compiled executables and dylibs. Native code is signed
+again after merging, with all leaves before the enclosing app. Cross-compiling
+and inspecting Intel code on this Mac is not native Intel execution evidence.
+
+The consumer checks all required and additional native files, rather than just
+the Swift shell. Common file bytes/modes and directory paths/modes must agree;
+the two parsed plists must agree except their observed OS minima. Only the
+enclosing regenerated `CodeResources` and plist are excluded from raw common
+byte comparison. Conflicting BEAM/configuration/resource files cannot be
+silently taken from one CPU build. The current core build configuration contains
+an absolute default renderer path, while its runtime configuration and bundled
+launcher supply the shipped worker path. Actual independent producer builds
+must make retained common configuration/BEAM bytes agree; the join refuses
+instead of rewriting those opaque artifacts to conceal a producer difference.
+
+Six fixture groups pass exact merged CPU/type/minimum/seal checks, native arm64
+fixture execution, retained replay and the actual mounted universal DMG consumer.
+Directory drift, common bytes, plist identity, wrong/fat CPU input, file-set/type
+conflict, failed merge, an input changed during merge, metadata aliases and
+output/namespace changes during replay refuse while retaining custody. Closure
+observation schema v2 now records directory paths/modes, including empty
+directories; their drift changes the recorded observation. This bounds a
+development assembly mechanism. The full matching Intel/Apple Silicon host
+producer, source/license cohort, older-OS/Intel execution and production signing
+remain independent requirements under the
+[join contract](../host/macos.md#universal-development-bundle-join).
 
 ## Zig boundary
 

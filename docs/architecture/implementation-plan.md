@@ -439,8 +439,14 @@ development prerequisite packages an already admitted ad-hoc app into a labelled
 DMG, verifies its exact mounted bytes/native seals and detaches before recording
 the archive identity. Retained reruns verify rather than rebuild; incomplete or
 changed output refuses. It carries no stable-source or publication authority.
-Continue native universal cohort assembly and exact release-input joining
-before production signing/notarization and installed channel acceptance.
+The universal development join now requires separately admitted single-CPU
+inputs, equal common resources/directories/product identities, merged code in
+every native role, final seals and durable retained observations. Compiler
+fixtures join both CPUs, execute the arm64 fixture and enter actual DMG
+readback. Conflicting sources, failed merges, interrupted output and replay
+mutation refuse. Continue the complete Intel/Apple Silicon host producer cohort
+and exact release-input joining before production signing/notarization and
+installed channel acceptance; the fixture supplies no source or installed claim.
 
 ## Shared contracts
 
