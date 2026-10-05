@@ -27,3 +27,9 @@ frameshift_data_custody() {
   [ ! -L /var/lib/frameshift ] && [ -d /var/lib/frameshift ] &&
     [ "$(stat -c '%u:%g:%a' /var/lib/frameshift)" = "$fs_uid:$fs_gid:700" ] || frameshift_refuse
 }
+frameshift_working_directory() {
+  if [ -r . ] && [ -x . ] && pwd -P >/dev/null 2>&1; then return; fi
+  # Never reinterpret a relative file argument after moving away from its caller.
+  for fs_path do case "$fs_path" in /*) ;; *) frameshift_refuse ;; esac; done
+  cd / || frameshift_refuse
+}

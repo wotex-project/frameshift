@@ -637,6 +637,18 @@ toolchain/native/SDK/OS material gates, vendor derivation and distributed closur
 review. This private technical inventory grants no rights or publication
 authority and does not modify candidate transports or installed packages.
 
+The installed Linux launchers now preserve a usable caller working directory and
+fall back to `/` for unreadable/unlinked directories. Relative import/maintenance
+file paths refuse before that move; absolute and path-free work retain admission.
+Three real filesystem/POSIX groups pass. Current launchers joined to the retained
+Ubuntu arm64 runtime under a booted manager pass control/observer state/health,
+identity version, actual absolute and literal-relative PNG imports and actor
+refusal. The isolated OrbStack userspace has a shared kernel and inherited
+hardening overrides; the fixture restores the declared per-unit restrictions.
+Continue a fresh DEB build and booted update/removal, kernel enforcement and
+cgroup/worker termination evidence. This launcher join does not complete stock
+Ubuntu/native amd64, physical power/storage or production release acceptance.
+
 ## Shared contracts
 
 These artifacts reduce rework across every track:

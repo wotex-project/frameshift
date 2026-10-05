@@ -1533,3 +1533,43 @@ not establish target build consumption, publisher rights, vendor archive/patch
 qualification, complete inline/transitive/distributed closure or installed
 release notices. Toolchain, SDK/model and OS materials remain independent gates.
 Publication authority is none; rights review remains required.
+
+### Booted Ubuntu manager and caller-directory admission
+
+**Observation:** 2026-10-05. An isolated OrbStack 2.2.3 arm64 machine uses Ubuntu
+24.04.5 userspace, systemd 255.4-1ubuntu8.17 and cgroup v2 on
+`7.0.14-orbstack-00380-ga7e0a2dc9535`. Its limits are 2 GiB RAM, two CPU cores
+and 4 GiB disk; host files and SSH-agent integration are disabled. OrbStack's
+[isolation contract](https://docs.orbstack.dev/machines/isolated) describes a
+shared Linux VM/kernel, so this is not an independent stock Ubuntu kernel.
+The retained arm64 DEB transfers with SHA-256
+`f08859538e1b9f25c57e5d85520dcd15a8dad97cc6f8cd1332b9770859b73b7a`.
+APT installs the declared runtime dependencies and the actual manager starts
+its dedicated nonroot service with the packaged default JIT settings.
+
+The machine injects `/run/systemd/system/service.d/zzz-lxc-service.conf`, which
+disables filesystem/home/private-tmp/device/kernel/control-group protection and
+NoNewPrivileges. Those defaults cannot qualify the required service policy.
+A fixture-only per-unit override restores the declared values; the actual
+service still starts and imports under that configuration. Full kernel-enforcement,
+cgroup/OOM and native-worker termination fixtures remain required.
+
+The clean CLI VM needs a usable inherited working directory: a different-UID
+caller inheriting `/root` fails OTP bootstrap, while `/` permits its normal
+version/state response. The current shared launcher policy preserves a readable,
+searchable directory with a resolvable physical path; otherwise it uses `/` and
+refuses relative file arguments before moving. The stdin-only identity launcher
+has no relative file interpretation. No fallback changes groups, public policy,
+Library data, credentials or caller environment isolation.
+
+Three POSIX groups exercise actual accessible, unreadable and unlinked directories,
+literal file arguments and refusal before reinterpretation. The current launcher
+source is installed as an explicit fixture overlay on the retained arm64 runtime.
+Actual control/observer state/health, identity version and finite absent-backup
+verification pass from the tested caller context. Absolute PNG import from the
+unavailable caller directory and a literal relative PNG import from its usable
+private directory succeed to the same item; observer/outsider control still
+refuses. No model or physical frame is involved. Continue fresh DEB packaging and
+booted install/update/remove with the corrected source before claiming that
+archive's installed lifecycle; stock Ubuntu/native amd64, physical storage/power,
+rights/signing and production release acceptance remain independent gates.

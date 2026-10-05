@@ -250,6 +250,7 @@ check_release() {
     "$repository_root/release/gleam-material.test.mjs" \
     "$repository_root/release/gleam-metadata.test.mjs" \
     "$repository_root/release/linux/candidate.test.mjs" \
+    "$repository_root/release/linux/working-directory.test.mjs" \
     "$repository_root/release/linux/source-material.test.mjs" \
     "$repository_root/release/linux/material-handoff.test.mjs" \
     "$repository_root/release/linux/ustar.test.mjs" \

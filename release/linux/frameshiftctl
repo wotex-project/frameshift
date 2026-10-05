@@ -10,6 +10,10 @@ fi
 # shellcheck source=release/linux/policy.sh
 . /usr/lib/frameshift/policy.sh
 frameshift_policy
+case "${1:-}" in
+  import) frameshift_working_directory "${2:-}" ;;
+  *) frameshift_working_directory ;;
+esac
 exec env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
   ERL_FLAGS='+S 2:2 +SDcpu 2 +SDio 2' \
   ERL_CRASH_DUMP=/dev/null ERL_CRASH_DUMP_SECONDS=0 \

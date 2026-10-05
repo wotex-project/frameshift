@@ -11,6 +11,7 @@ fi
 . /usr/lib/frameshift/policy.sh
 frameshift_policy
 [ "$(id -u)" = "$fs_uid" ] || frameshift_refuse
+frameshift_working_directory
 umask 077
 exec env -i PATH=/usr/bin:/bin LANG=C.UTF-8 \
   ERL_FLAGS='+S 2:2 +SDcpu 2 +SDio 2' \

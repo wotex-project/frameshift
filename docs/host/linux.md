@@ -104,6 +104,15 @@ bundled VM; it never inherits service cookies, private keys or runtime service
 configuration. The separate identity launcher requires the service UID and reads
 its bounded PEM from stdin under the existing protected-file contract.
 
+Installed clean-VM launchers must not inherit an unreadable or unlinked working
+directory into OTP startup. Preserve a readable/searchable caller directory with
+a resolvable physical path, so ordinary relative imports and maintenance paths
+retain their meaning. Otherwise launch from `/`; any supplied relative import,
+backup or restore file path refuses with the finite custody error before starting
+the VM. Absolute paths and path-free commands retain their existing admission.
+The stdin-only identity launcher may use that fallback without reinterpreting a
+file argument. Working-directory recovery grants no actor or credential access.
+
 Offline backup/restore uses the same admitted data-directory lock as the managed
 service launch, through the service-UID-only `frameshift-maintenance` command.
 Package configuration additionally provisions a private `/var/backups/frameshift`

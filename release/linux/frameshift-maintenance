@@ -20,6 +20,10 @@ case "$#:$operation" in 2:backup|2:verify|3:restore) ;; *)
   exit 64 ;;
 esac
 for argument do [ "${#argument}" -le 8192 ] || exit 64; done
+case "$operation" in
+  restore) frameshift_working_directory "$2" "$3" ;;
+  *) frameshift_working_directory "$2" ;;
+esac
 if [ "$operation" != verify ] && [ -d /run/systemd/system ]; then
   state=$(env -i PATH=/usr/bin:/bin LANG=C.UTF-8 /usr/bin/timeout --signal=KILL 2 \
     /usr/bin/systemctl show --property=ActiveState --value frameshift.service) || frameshift_refuse
