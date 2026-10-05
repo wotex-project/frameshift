@@ -136,6 +136,12 @@ test('the candidate workflow exposes only explicit manual staging and pinned act
   assert.match(workflow, /needs: source/);
   assert.match(workflow, /source_inputs_sha256/);
   assert.match(workflow, /check-linux-candidate/);
+  assert.match(workflow, /tar --format=ustar --hard-dereference/);
+  assert.match(workflow, /stage-linux-candidate/);
+  assert.match(workflow, /archive_sha256=%s/);
+  assert.match(workflow, /steps\.archive\.outputs\.archive_sha256/);
+  assert.match(workflow, /steps\.retain\.outputs\.artifact-id/);
+  assert.match(workflow, /GITHUB_STEP_SUMMARY/);
   assert.match(workflow, /archive: false/);
   assert.match(workflow, /overwrite: false/);
   assert.match(workflow, /github\.run_attempt/);

@@ -125,13 +125,18 @@ jobs:
       - name: Install and check exact candidate bytes
         run: ./scripts/check-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate"
       - name: Recheck remote tag and preserve candidate modes
+        id: archive
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           node release/workflow-cli.mjs verify "$GITHUB_REPOSITORY" "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD" "$PWD/var/release-inputs/source-inputs.json" "$SOURCE_INPUTS_SHA256"
-          tar -cf var/ubuntu-candidate.tar -C var ubuntu-candidate
+          tar --format=ustar --hard-dereference -cf var/ubuntu-candidate.tar -C var ubuntu-candidate
           ./scripts/package-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate"
+          archive_sha256=$(sha256sum var/ubuntu-candidate.tar | cut -d ' ' -f 1)
+          ./scripts/stage-linux-candidate "$SOURCE_TAG" "$SOURCE_COMMIT" "$PWD/var/release-inputs/source-inputs.json" "$TARGET_ARCHITECTURE" "$PWD/var/ubuntu-candidate.tar" "$archive_sha256" "$PWD/var/archive-handoff"
+          printf 'archive_sha256=%s\n' "$archive_sha256" >> "$GITHUB_OUTPUT"
       - name: Retain an independent candidate attempt
+        id: retain
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ubuntu-${{ matrix.architecture }}-candidate-${{ needs.source.outputs.tag }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -140,3 +145,13 @@ jobs:
           overwrite: false
           if-no-files-found: error
           retention-days: 14
+      - name: Record the exact candidate handoff identity
+        env:
+          ARCHIVE_SHA256: ${{ steps.archive.outputs.archive_sha256 }}
+          ARTIFACT_ID: ${{ steps.retain.outputs.artifact-id }}
+        run: |
+          {
+            printf 'Candidate transport only; publication authority none\n\n'
+            printf 'Architecture: %s\n\nSource tag: %s\n\nSource commit: %s\n\nSource record SHA-256: %s\n\n' "$TARGET_ARCHITECTURE" "$SOURCE_TAG" "$SOURCE_COMMIT" "$SOURCE_INPUTS_SHA256"
+            printf 'Archive SHA-256: %s\n\nArtifact ID: %s\n\nRun: %s; attempt: %s\n' "$ARCHIVE_SHA256" "$ARTIFACT_ID" "$GITHUB_RUN_ID" "$GITHUB_RUN_ATTEMPT"
+          } >> "$GITHUB_STEP_SUMMARY"

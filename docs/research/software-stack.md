@@ -698,3 +698,32 @@ disable overwrite and have finite retention. Their unsigned records carry no
 publication authority; a later receiver must verify retained candidate and
 archive bytes before release acceptance rather than treating an Actions ID or
 digest as a customer manifest signature.
+
+### Bounded candidate TAR consumer
+
+**Observation:** 2026-10-05. GNU tar 1.35's
+[POSIX USTAR header definition](https://www.gnu.org/s/tar/manual/html_node/Standard.html)
+defines fixed 512-byte headers, octal metadata, a header checksum, name/prefix
+fields and distinct link/device/extension types. Its
+[portability guidance](https://www.gnu.org/software/tar/manual/html_node/Portability.html)
+and [`--hard-dereference` option](https://www.gnu.org/software/tar/manual/tar.html)
+support a deliberately narrow producer: uncompressed USTAR, one candidate root,
+and hard-linked files copied as regular members. Extended tar formats and
+unrestricted extraction add no required capability to this retained-byte path.
+
+`release/linux/ustar.mjs` verifies a separately supplied transport hash through
+one bounded regular descriptor before interpreting those headers. It admits
+only safe regular files/directories, bounds bytes/member count/time/free space,
+creates exclusive private output names and preserves admitted modes without
+restoring archived ownership. Candidate/source verification remains a separate
+semantic check. Exact extracted directory names and modes matter on replay;
+file hashes alone cannot detect an added empty directory or changed directory
+permissions. The final record has no release authority and no manifest v1 fields.
+
+Actual system USTAR producer fixtures cover extraction/custody and malformed
+headers, paths, types, padding, terminators, metadata limits and the 65,536-entry
+boundary. A pinned Ubuntu build image's GNU tar separately joins both retained
+full-product arm64 and emulated-amd64 candidates to exact-source verification,
+unchanged no-build replay and wrong-digest refusal. This is archive/software
+evidence, not a hosted Actions transfer, native installed service, signing,
+license review or public-channel release.

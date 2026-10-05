@@ -1,13 +1,14 @@
 import assert from 'node:assert/strict';
-import { execFileSync } from 'node:child_process';
-import { chmodSync, copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
+import { execFileSync, spawnSync } from 'node:child_process';
+import { chmodSync, copyFileSync, cpSync, existsSync, lstatSync, mkdirSync, mkdtempSync, readFileSync, rmdirSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { recordInputs } from '../inputs.mjs';
 import { buildCandidate } from './candidate.mjs';
-import { inventory } from './material.mjs';
+import { stageCandidate } from './handoff.mjs';
+import { inventory, sha256 } from './material.mjs';
 
 const owner = resolve(dirname(fileURLToPath(import.meta.url)), '../..');
 const silent = { encoding: 'utf8', stdio: 'pipe' };
@@ -156,4 +157,95 @@ test('material symlinks and FIFO refuse before reading target bytes', t => {
   execFileSync('mkfifo', [join(root, 'fifo')]);
   assert.throws(() => inventory(root), /regular files/);
   assert.equal(readFileSync(join(root, 'original'), 'utf8'), 'retain');
+});
+
+function transport(f) {
+  const staging = join(f.repository, 'var/transport');
+  mkdirSync(staging, { mode: 0o700 });
+  cpSync(f.output, join(staging, 'ubuntu-candidate'), { recursive: true });
+  const archivePath = join(f.repository, 'var/ubuntu-candidate.tar');
+  execFileSync('tar', ['--format=ustar', '-cf', archivePath, '-C', staging, 'ubuntu-candidate'], silent);
+  chmodSync(archivePath, 0o600);
+  return { ...f, archivePath, archiveSha256: sha256(readFileSync(archivePath)), output: join(f.repository, 'var/handoff') };
+}
+
+test('real USTAR joins exact source and candidate with private durable no-build replay', async t => {
+  const f = await fixture(t);
+  const candidate = await buildCandidate(f, executor(f));
+  const h = transport(f);
+  const record = await stageCandidate(h);
+  assert.equal(record.kind, 'ubuntu-candidate-handoff');
+  assert.equal(record.publicationAuthority, 'none');
+  assert.equal(record.archiveSha256, h.archiveSha256);
+  assert.equal(record.candidateSha256, sha256(JSON.stringify(candidate) + '\n'));
+  assert.equal(lstatSync(h.output).mode & 0o7777, 0o700);
+  const path = join(h.output, 'handoff.json');
+  const before = lstatSync(path);
+  const archiveBefore = lstatSync(h.archivePath);
+  assert.equal(before.mode & 0o7777, 0o600);
+  assert.equal(existsSync(join(h.output, 'handoff.pending')), false);
+  assert.deepEqual(await stageCandidate(h), record);
+  assert.equal(lstatSync(path).ino, before.ino);
+  assert.equal(lstatSync(path).mtimeMs, before.mtimeMs);
+  assert.equal(lstatSync(h.archivePath).ino, archiveBefore.ino);
+  assert.equal(lstatSync(h.archivePath).mtimeMs, archiveBefore.mtimeMs);
+  assert.deepEqual(inventory(join(h.output, 'ubuntu-candidate')), inventory(f.output));
+});
+
+test('changed transport, source, retained bytes, directory modes and empty names refuse without rewriting a complete handoff', async t => {
+  const f = await fixture(t);
+  await buildCandidate(f, executor(f));
+  const h = transport(f);
+  await stageCandidate(h);
+  const path = join(h.output, 'handoff.json');
+  const prior = readFileSync(path);
+  const before = lstatSync(path);
+  await assert.rejects(() => stageCandidate({ ...h, archiveSha256: '0'.repeat(64) }), /digest/);
+  await assert.rejects(() => stageCandidate({ ...h, architecture: 'amd64' }), /conflicting/);
+  const directory = join(h.output, 'ubuntu-candidate/runtime');
+  const mode = lstatSync(directory).mode & 0o7777;
+  chmodSync(directory, 0o777);
+  await assert.rejects(() => stageCandidate(h), /custody/);
+  chmodSync(directory, mode);
+  const extra = join(directory, 'unexpected-empty');
+  mkdirSync(extra, { mode: 0o700 });
+  await assert.rejects(() => stageCandidate(h), /names/);
+  rmdirSync(extra);
+  const retained = join(h.output, 'ubuntu-candidate/package/frameshift_1.2.3_arm64.deb');
+  writeFileSync(retained, 'substituted retained archive');
+  await assert.rejects(() => stageCandidate(h));
+  copyFileSync(join(f.output, 'package/frameshift_1.2.3_arm64.deb'), retained);
+  f.git(['update-index', '--assume-unchanged', 'README.md']);
+  put(f.repository, 'README.md', 'hidden source change');
+  await assert.rejects(() => stageCandidate(h));
+  assert.deepEqual(readFileSync(path), prior);
+  assert.equal(lstatSync(path).ino, before.ino);
+  assert.equal(lstatSync(path).mtimeMs, before.mtimeMs);
+});
+
+test('interrupted handoff stays retained and malformed candidate never receives a final handoff record', async t => {
+  const f = await fixture(t);
+  await buildCandidate(f, executor(f));
+  const h = transport(f);
+  mkdirSync(h.output, { mode: 0o700 });
+  put(h.output, 'handoff.pending', 'retained interrupted bytes', 0o600);
+  await assert.rejects(() => stageCandidate(h), /incomplete/);
+  assert.equal(readFileSync(join(h.output, 'handoff.pending'), 'utf8'), 'retained interrupted bytes');
+  const record = join(f.repository, 'var/transport/ubuntu-candidate/candidate.json');
+  writeFileSync(record, '{malformed\n');
+  execFileSync('tar', ['--format=ustar', '-cf', h.archivePath, '-C', join(f.repository, 'var/transport'), 'ubuntu-candidate'], silent);
+  const invalid = { ...h, archiveSha256: sha256(readFileSync(h.archivePath)), output: join(f.repository, 'var/refused') };
+  await assert.rejects(() => stageCandidate(invalid));
+  assert.equal(existsSync(join(invalid.output, 'handoff.json')), false);
+  assert.equal(readFileSync(join(invalid.output, 'handoff.pending'), 'utf8'), 'incomplete candidate handoff\n');
+  await assert.rejects(() => stageCandidate(invalid), /incomplete/);
+  const cliPath = join(f.repository, 'release/linux/handoff-cli.mjs');
+  const usage = spawnSync(process.execPath, [cliPath], silent);
+  assert.equal(usage.status, 64);
+  assert.equal(usage.stdout, '');
+  assert.match(usage.stderr, /^usage: stage-linux-candidate /);
+  const refusal = spawnSync(process.execPath, [cliPath, h.tag, h.commit, h.sourcePath, h.architecture, h.archivePath, '0'.repeat(64), invalid.output], silent);
+  assert.equal(refusal.status, 1);
+  assert.equal(refusal.stdout, '');
+  assert.equal(refusal.stderr, 'Ubuntu candidate handoff: archive, source, capacity or retained custody refused\n');
 });

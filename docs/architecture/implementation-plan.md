@@ -253,9 +253,15 @@ import, restart and administrative joins. The Ubuntu candidate workflow now
 places remote tag/commit refusal and frozen source-digest agreement before its
 native CPU matrix, preserves per-attempt candidate TARs and confines read-only
 GitHub credentials to their steps. Its action and remote/source fixtures are
-software evidence; no GitHub runner or publication was executed. Continue
-accepted-byte workflow handoff/signing/promotion and independent native/provider
-work. Booted systemd/native CPU,
+software evidence; no GitHub runner or publication was executed. The bounded
+USTAR receiver now stages exact accepted candidate bytes beside the same frozen
+source, preserves admitted modes, verifies file/directory custody and binds the
+transport/source/candidate digests without rebuilding. Complete replays preserve
+the prior record; malformed archives and changed/interrupted custody refuse.
+Real GNU USTAR joins both retained full-product candidate architectures; the
+workflow checks its archive before upload and records the expected transport
+identity. Hosted downstream provenance, signing/promotion and independent
+native/provider work remain. Booted systemd/native CPU,
 resource/failure, encrypted-key backup and physical identity/storage recovery
 retain their separate qualification. A missing external machine or signing identity does not block those
 software recovery/refusal paths. Development container artifacts remain separate

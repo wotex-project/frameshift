@@ -214,3 +214,17 @@ contents-read tokens support `gh`; signing/deployment credentials and promotion
 are absent from this graph. No workflow was pushed or dispatched by local tests.
 The [workflow contract](../docs/architecture/install-and-guide.md#ubuntu-candidate-workflow)
 keeps actual hosted-runner, installed and production publication gates separate.
+
+Receive the retained single-file POSIX USTAR using
+`./scripts/stage-linux-candidate TAG COMMIT SOURCE_RECORD ARCH ARCHIVE SHA256 OUTPUT`.
+Supply the expected archive SHA-256 from the trusted job handoff beside the exact
+clean source checkout; computing a digest from the downloaded file alone cannot
+establish its expected identity. The workflow checks this archive before upload
+and records its target/source/digest/run/attempt/artifact identity in job metadata.
+The receiver checks bounded regular-file/directory entries, exact source and
+candidate inventories, and admitted modes before synchronizing a new private
+output. Its `handoff.json` binds the source, transport and candidate digests with
+publication authority none. An identical replay verifies without extraction or
+rewriting; malformed, changed or interrupted output stays retained and refuses.
+See the [archive contract](../docs/architecture/install-and-guide.md#candidate-archive-handoff)
+for resource limits and independent acceptance gates.

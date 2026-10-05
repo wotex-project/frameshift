@@ -170,6 +170,10 @@ retained watermark and bundled command/identity versions. Existing private
 PNG/JPEG, peer/group, restart/crash-custody and administrative recovery fixtures
 run with that version; original source/artifacts verify again afterward. This
 is container acceptance, independent of booted systemd/native installed proof.
+The [candidate archive handoff](install-and-guide.md#candidate-archive-handoff)
+receives retained USTAR bytes beside this same frozen source without rebuilding.
+It verifies transport, candidate and directory custody before emitting a private
+record with publication authority none; hosted provenance remains separate.
 Such a tag is confined to the disposable fixture;
 it does not create a product release or authorize remote publication.
 

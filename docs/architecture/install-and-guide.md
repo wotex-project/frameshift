@@ -273,6 +273,42 @@ as an executed GitHub runner or installed native/systemd qualification. License/
 notices, stable accepted-byte rerun, Mac signing/DMG/Cask/Sparkle, public-channel
 readback and site promotion remain the release pipeline's separate work.
 
+### Candidate archive handoff
+
+The Ubuntu candidate producer emits an uncompressed POSIX USTAR archive rooted
+at `ubuntu-candidate/`, with hard-linked files represented as independent regular
+files. Verify the producer's TAR with the same receiving command before upload.
+Record its SHA-256 after candidate verification and retain that digest, exact
+source digest, target, run/attempt and artifact ID in the job output/summary.
+A receiver must obtain the expected digest through its trusted job handoff;
+the local command does not authenticate a workflow run. An Actions artifact ID or the downloaded file's
+self-computed digest cannot supply the independent expected identity.
+
+`scripts/stage-linux-candidate TAG COMMIT SOURCE_RECORD arm64|amd64 ARCHIVE SHA256
+OUTPUT` receives that exact archive beside the qualified source checkout. It
+MUST verify the independently supplied transport hash, exact frozen source and
+the existing complete candidate record without rebuilding. Admit only regular
+files/directories under that one root; reject traversal, duplicate or conflicting
+names, links/devices/FIFOs, extensions/compression, malformed checksums/numbers,
+nonzero padding/trailing material and unsafe modes. Do not run an unrestricted
+archive extractor, restore archived ownership or overwrite an existing name.
+
+This profile admits at most 1 GiB of archive/payload, 512 MiB per file and 65,536
+entries. Check available destination space for the payload plus a 128 MiB reserve
+before writing. Use bounded descriptor reads and compare archive identity before
+and after extraction. Extract into a new owner-only directory, preserve admitted
+file modes, then verify exact directory names/modes and source/candidate
+inventories, synchronize files and verify again before
+publishing a private `handoff.json`. The record binds the transport, candidate and
+source digests with publication authority `none`; it is separate from manifest v1.
+
+An identical complete replay verifies without rewriting or extracting. Changed,
+unsafe or interrupted output refuses and retains previous/partial bytes for
+inspection. A staged candidate still needs installed acceptance, license/notices,
+signing and public readback before release promotion. Acceptance joins real
+USTAR producers to exact-source/candidate fixtures and refusal cases, plus a
+retained full-product candidate; it does not dispatch a hosted workflow or publish.
+
 ## Browser installation lab
 
 The public page gives a useful simulation before purchase or installation:

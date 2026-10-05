@@ -44,6 +44,7 @@ check_policy() {
     "$repository_root/scripts/package-linux" \
     "$repository_root/scripts/package-linux-deb" \
     "$repository_root/scripts/package-linux-candidate" \
+    "$repository_root/scripts/stage-linux-candidate" \
     "$repository_root/scripts/record-release-inputs" \
     "$repository_root/scripts/verify-release-inputs" \
     "$repository_root/release/linux/policy.sh" \
@@ -196,6 +197,7 @@ check_release() {
     "$repository_root/release/signer.test.mjs" \
     "$repository_root/release/inputs.test.mjs" \
     "$repository_root/release/linux/candidate.test.mjs" \
+    "$repository_root/release/linux/ustar.test.mjs" \
     "$repository_root/release/workflow.test.mjs"
 }
 
