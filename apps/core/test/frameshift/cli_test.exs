@@ -9,6 +9,39 @@ defmodule Frameshift.CLITest do
 
   @photo Path.expand("../../../../protocol/fixtures/valid/capabilities-photo.json", __DIR__)
 
+  test "import keeps paths local, requires a retained ID and exposes file-free status recovery" do
+    assert {:ok,
+            {:import,
+             %{"file" => "/caller/private/source.png", "id" => "original-1", "title" => nil}}} =
+             CLI.parse(["import", "/caller/private/source.png", "--id", "original-1"])
+
+    assert {:ok, {:import, %{"title" => "Été"}}} =
+             CLI.parse(["import", "source.png", "--title", "Été", "--id", "id"])
+
+    assert {:ok,
+            {:command,
+             %{"operation" => "importStatus", "commandId" => "original-1", "auth" => "peer"}}} =
+             CLI.parse(["import-status", "original-1"])
+
+    for args <- [
+          ["import", "file"],
+          ["import", "", "--id", "id"],
+          ["import", "file", "--id", ""],
+          ["import", "file", "--title", "e\u0301", "--id", "id"],
+          ["import", "file", "--title", "x\n", "--id", "id"],
+          ["import", "file", "--id", "id", "--title", "Title"],
+          ["import-status", ""],
+          ["import-status", "id", "file"],
+          ["import-status", "id", "--id", "id"]
+        ] do
+      assert {:error, :usage} = CLI.parse(args)
+    end
+
+    assert {0, help, ""} = CLI.run(["--help"])
+    assert help =~ "import FILE"
+    assert help =~ "import-status COMMAND_ID"
+  end
+
   test "physical CLI arguments keep commissioning IDs and require the protected namespace" do
     reference = "linux-pem-v1:" <> Digest.hex!(Digest.sha256("certificate"))
 
@@ -174,7 +207,7 @@ defmodule Frameshift.CLITest do
           ["instruction", "text", "--id", ""],
           ["instruction", "text", "--id", String.duplicate("x", 65)],
           ["instruction", String.duplicate("x", 4_097), "--id", "id"],
-          ["import", "/private/file.png", "--id", "id"],
+          ["import", "/private/file.png", "--uid", "0", "--id", "id"],
           ["pair", "secret", "--id", "id"],
           ["state", "--uid", "0"],
           ["metadata", "x"],

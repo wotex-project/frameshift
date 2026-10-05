@@ -672,8 +672,15 @@ defmodule Frameshift.LocalIPC.Server do
   defp execute_import(%{"operation" => "importCancel"} = request, _, owner),
     do: Upload.cancel(owner, request["uploadToken"], request[:actor_uid])
 
-  defp execute_import(%{"operation" => "importStatus"} = request, library, _),
-    do: Library.command_receipt_as(library, request["commandId"], request[:actor_uid])
+  defp execute_import(%{"operation" => "importStatus"} = request, library, _) do
+    case Library.command_receipt_as(library, request["commandId"], request[:actor_uid]) do
+      {:ok, %{"status" => "succeeded", "importedItemID" => nil}} ->
+        {:error, :command_id_conflict}
+
+      result ->
+        result
+    end
+  end
 
   defp execute_request(
          %{"requestId" => request_id, "operation" => "snapshot"} = request,

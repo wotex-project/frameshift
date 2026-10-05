@@ -9,7 +9,9 @@ defmodule Frameshift.CLI do
   outcome. Pairing reads bounded physical bootstrap JSON from stdin with a finite
   deadline; only discovery/origin/reference and retained ID appear in argv.
   `discover` takes a bounded Avahi introduction snapshot without starting the
-  host or reading credentials. Import awaits its streamed custody boundary.
+  host or reading credentials. Import streams a caller-accessible regular original
+  through private authenticated staging; `import-status` reads its exact receipt
+  without reopening that file, decoding or retrying effects.
   Physical recovery never reposts a secret.
 
   Catalog edits carry the observed metadata/storage revision. Metadata requires
@@ -49,6 +51,8 @@ defmodule Frameshift.CLI do
          frameshiftctl loop TARGET MILLISECONDS|profile ITEM... | loop-pinned TARGET MILLISECONDS|profile
          frameshiftctl pair|recover-pair DISCOVERED_ID ORIGIN CREDENTIAL_REF
          frameshiftctl discover
+         frameshiftctl import FILE [--title TITLE] --id COMMAND_ID
+         frameshiftctl import-status COMMAND_ID
   Every mutation requires --id COMMAND_ID. Configure service UID, endpoint GID and socket path.
   Pair/recover-pair reads one bounded physical bootstrap JSON from closed stdin.
   """
@@ -83,13 +87,7 @@ defmodule Frameshift.CLI do
     with {:ok, {role, body}} <- parse(args),
          {:ok, path, policy} <- endpoint(role),
          {:ok, body} <- bootstrap_input(body, input) do
-      request =
-        Map.merge(body, %{
-          "version" => 1,
-          "requestId" => Base.encode16(:crypto.strong_rand_bytes(16), case: :lower)
-        })
-
-      response_result(Client.exchange(path, request, role, policy))
+      response_result(run_operation(role, body, path, policy))
     else
       _ -> {64, "", @usage}
     end
@@ -101,7 +99,7 @@ defmodule Frameshift.CLI do
 
   @doc "Admits exact CLI arguments without opening a socket or allocating a command identity."
   @spec parse([String.t()]) ::
-          {:ok, {:command | :diagnostics | :discovery, map()}} | {:error, :usage}
+          {:ok, {:command | :diagnostics | :discovery | :import, map()}} | {:error, :usage}
   def parse(args) when is_list(args) do
     if length(args) <= 270 and Enum.all?(args, &valid_argument?/1) and
          Enum.reduce(args, 0, &(byte_size(&1) + &2)) <= 64 * 1024,
@@ -128,6 +126,19 @@ defmodule Frameshift.CLI do
   defp parse_args(["state"]), do: read("snapshot")
   defp parse_args(["discover"]), do: {:ok, {:discovery, %{}}}
   defp parse_args(["storage"]), do: read("libraryStorage")
+
+  defp parse_args(["import-status", id]) do
+    if Frameshift.Import.Intent.command_id?(id),
+      do:
+        {:ok, {:command, %{"operation" => "importStatus", "auth" => "peer", "commandId" => id}}},
+      else: {:error, :usage}
+  end
+
+  defp parse_args(["import", file, "--id", id]), do: import_arguments(file, nil, id)
+
+  defp parse_args(["import", file, "--title", title, "--id", id]),
+    do: import_arguments(file, title, id)
+
   defp parse_args(["metadata", id]), do: identified_read("libraryMetadata", "itemID", id)
   defp parse_args(["recovery"]), do: read("libraryRecovery")
 
@@ -184,6 +195,34 @@ defmodule Frameshift.CLI do
     else
       _ -> {:error, :usage}
     end
+  end
+
+  defp import_arguments(file, title, id) do
+    intent = %{
+      "kind" => "importOriginal",
+      "id" => id,
+      "title" => title || "Original",
+      "originalFilename" => "original",
+      "sourceByteCount" => 1,
+      "sourceDigest" => Digest.sha256("validation")
+    }
+
+    if file != "" and Frameshift.Import.Intent.validate(intent) == :ok,
+      do: {:ok, {:import, %{"file" => file, "title" => title, "id" => id}}},
+      else: {:error, :usage}
+  end
+
+  defp run_operation(:import, parameters, path, policy),
+    do: Frameshift.Import.CLI.execute(path, policy, parameters)
+
+  defp run_operation(role, body, path, policy) do
+    request =
+      Map.merge(body, %{
+        "version" => 1,
+        "requestId" => Base.encode16(:crypto.strong_rand_bytes(16), case: :lower)
+      })
+
+    Client.exchange(path, request, role, policy)
   end
 
   defp action(["instruction", text]) when byte_size(text) <= 4_096,
@@ -398,11 +437,33 @@ defmodule Frameshift.CLI do
          {75, RFC8785.encode!(response) <> "\n",
           "frameshiftctl: uncertain outcome; retain the command ID and use explicit recovery\n"}
 
+  defp response_result({:ok, %{"ok" => true, "import" => %{"status" => "pending"}} = response}),
+    do:
+      {75, RFC8785.encode!(response) <> "\n",
+       "frameshiftctl: pending import; retain the command ID and use import-status\n"}
+
+  defp response_result({:ok, %{"ok" => true, "import" => %{"status" => "failed"}} = response}),
+    do: {2, RFC8785.encode!(response) <> "\n", ""}
+
+  defp response_result({:ok, %{"ok" => false, "error" => %{"code" => code}} = response})
+       when code in [
+              "import_unavailable",
+              "import_stage_unavailable",
+              "import_source_unavailable",
+              "import_busy",
+              "codec_busy",
+              "codec_worker_unavailable",
+              "codec_custody_unknown"
+            ],
+       do: {69, RFC8785.encode!(response) <> "\n", "frameshiftctl: import unavailable\n"}
+
   defp response_result({:ok, %{"ok" => ok} = response}),
     do: {if(ok, do: 0, else: 2), RFC8785.encode!(response) <> "\n", ""}
 
   defp response_result({:error, :command_outcome_unknown}),
     do: {75, "", "frameshiftctl: command_outcome_unknown; reconcile using the same command ID\n"}
+
+  defp response_result({:error, :invalid_import_intent}), do: {64, "", @usage}
 
   defp response_result({:error, _}),
     do: {69, "", "frameshiftctl: unavailable or invalid response\n"}

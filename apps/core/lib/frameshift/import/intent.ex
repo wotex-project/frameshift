@@ -27,7 +27,8 @@ defmodule Frameshift.Import.Intent do
       when is_integer(count) and count in 1..@maximum_source_bytes do
     valid =
       Enum.sort(Map.keys(intent)) == Enum.sort(@keys) and command_id?(intent["id"]) and
-        text?(intent["title"], 256) and text?(intent["originalFilename"], 255) and
+        text?(intent["title"], 256) and String.trim(intent["title"]) != "" and
+        text?(intent["originalFilename"], 255) and
         not String.contains?(intent["originalFilename"], "/") and
         Digest.valid_sha256?(intent["sourceDigest"])
 
@@ -53,7 +54,7 @@ defmodule Frameshift.Import.Intent do
   def command_id?(_), do: false
 
   defp text?(text, maximum) when is_binary(text) and byte_size(text) in 1..maximum//1 do
-    String.valid?(text) and String.normalize(text, :nfc) == text and String.trim(text) != "" and
+    String.valid?(text) and String.normalize(text, :nfc) == text and
       not Regex.match?(~r/[\x{0000}-\x{001F}\x{007F}-\x{009F}]/u, text)
   end
 

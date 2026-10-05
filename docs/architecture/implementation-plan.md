@@ -150,9 +150,9 @@ The Linux `discover` command now takes one bounded Avahi introduction snapshot,
 omits privacy/route/identity violations and returns no authenticated frame
 authority. Parser/CLI fixtures and real Linux helper deadlines join a separate
 pinned Avahi/D-Bus producer lane, including nonroot CLI and daemon restart.
-Streamed original-byte import and a qualified Linux canonical codec are the
-next command-surface boundary; native Ubuntu closure, protected provisioning
-and installed package acceptance remain R3 requirements.
+Original import now joins the canonical PNG codec, authenticated byte intake
+and exact receipts through the CLI. JPEG qualification, native Ubuntu closure,
+protected provisioning and installed package acceptance remain required.
 
 Backup/restore and simulated pairing authority now require OTP directory
 synchronization through explicit directory handles. Parent-sync failure after
@@ -170,45 +170,41 @@ fixtures exercise concurrent installation, fresh CLI create/replay/refusal,
 conflict preservation, abandoned stages, full tmpfs and a post-link custody
 fault, alongside resolved-key pinned TLS. Administrator issuance/encrypted
 backup, systemd credential policy, installed Ubuntu closure and exact physical
-identity recovery remain separate R3 evidence. Streamed original import and its
-Linux codec contract are the next independent command boundary.
+identity recovery remain separate R3 evidence.
 
-The Linux codec contract now defines a bounded isolated static-PNG profile,
-complete-container/stillness refusal, exact orientation and SDR color
-normalization. Its worker fixtures precede authenticated streamed upload and
-the Library/receipt join; the executable alone does not complete `import`.
-Qualify JPEG metadata/stillness separately, then exercise worker loss/deadline,
-actor-bound staging, lost replies and immutable source/package readback.
-Both Ubuntu architectures, OS resource enforcement and installed release
-closure remain R3 requirements.
+The Linux import software joins a bounded isolated static-PNG profile, complete
+container/stillness refusal, exact orientation and SDR color normalization to
+private authenticated upload and immutable Library results. Pinned Exile 0.15.0
+owns protected descriptor-handshake custody, a verified executable snapshot,
+exact producer revision, bounded backpressure and awaited exit. Deadline and
+owner-death watchdogs retain the sole native reservation; unknown custody
+preserves replacement fences while the Library and diagnostics remain available.
 
-The host process slice uses pinned Exile 0.15.0 with private descriptor-handshake
-custody, a verified executable snapshot, exact producer revision, bounded
-backpressure and awaited exit. Deadline/owner-death watchdogs retain the sole
-reservation; unknown custody preserves an exclusive replacement fence. Its
-native/container joins precede Linux import authorization. Next define and
-build the authenticated streamed-upload lifecycle and actor-bound receipt,
-join verified originals/canonical pixels to the existing Library writer, then
-qualify JPEG and the complete target release closure. Do not report the worker
-or a direct Library fixture as a completed `frameshiftctl import` command.
+The [Linux streamed-import contract](../host/linux.md#streamed-original-import)
+now has all three software slices: exact actor-bound receipts committed with
+Library registration/audit; bounded private staging and kernel-authenticated
+Unix begin/chunk/finish/cancel/status; and regular-descriptor CLI streaming with
+complete source revalidation before finish. Pending claims never reexecute.
+Terminal replay retains the same master ID across restart, codec change and
+artwork removal; history cannot restore removed bytes. Ordinary commands and
+private Mac imports retain their existing boundary. The unreleased schema
+changes its original CREATE definition without upgrading or resetting user data.
 
-Streamed import now has an explicit intent/token/chunk/finish/status contract in
-[the Linux owner](../host/linux.md#streamed-original-import). Build it in three
-logical slices: retain exact import results atomically with Library registration
-and actor-bound receipts; add bounded private staging/native-codec admission to
-the authenticated endpoint; then join the regular-descriptor CLI and freshly
-built Linux SQLite/Exile runtime artifacts. Each slice must exercise its crash,
-conflict and replay paths before the next one enables them. Preserve ordinary
-command/Mac behavior and edit the original unreleased receipt CREATE definition.
-JPEG and installed Ubuntu packaging/resource evidence follow these software joins.
+Fresh Linux arm64 and emulated amd64 SQLite/Exile native artifacts pass actual
+different-UID PNG registration, fresh CLI VMs, complete host-VM restart/status,
+strict reply/offset refusal, lost chunk/finish replies without retry, changed
+originals, actual full-tmpfs intake refusal and immutable original/pixel readback.
+Receipt fixtures also cover concurrency, transaction rollback, preserved
+orphans, verified backup and unknown owner/task effects. This is pinned Debian
+software evidence; installed Ubuntu/systemd/package/upgrade acceptance, native
+amd64/default JIT and OS memory limits remain R3 requirements.
 
-The first two import slices now retain exact SQLite results and join bounded
-private staging, owned native normalization and kernel-authenticated Unix
-operations. Fresh Linux arm64 and emulated amd64 SQLite/Exile artifacts pass
-the receipt and real different-UID PNG joins. Next add regular-descriptor CLI
-streaming and fresh-VM status/replay, including uncertain response, full-disk
-and immutable readback fixtures. JPEG qualification and installed Ubuntu
-service/package/resource closure remain separate requirements.
+Next qualify JPEG complete-container, primary Exif, source-color and stillness
+semantics against exact producer source and positive/refusal fixtures. Preserve
+PNG vectors and explicit unsupported-format refusal. Then finish the supported
+Ubuntu native/runtime/package closure and installed lifecycle checks. Physical
+filesystem power-loss, received frame interoperability and measured display
+color retain their separate evidence gates.
 
 ### Independent software delivery order
 
@@ -343,13 +339,13 @@ and exact request digest to the kernel actor's durable receipt. SQLite fixtures
 exercise completed/pending/unknown replay, changed actor/payload refusal, restart,
 secret exclusion and failure between paired admission and receipt completion. A
 nonroot dispatcher fixture traces UID 1 through a missing-key pair claim/refusal
-and completion; no fixture proves a received frame or supported Ubuntu NIF.
+and completion; no fixture proves a received frame or installed Ubuntu release.
 The pairing CLI now reads at most 2049 stdin bytes with a five-second deadline,
 checks the physical discovery ID, validates the returned frame ID and reports
 missing or explicitly uncertain outcomes with exit 75. Fresh Linux CLI VMs consume
 real stdin and UID 1 reaches the actual dispatcher/receipt wrappers; withheld input
 terminates its reader without a socket send. Bootstrap data never enters argv.
-Linux database/NIF qualification, streamed import,
+Installed Ubuntu database/NIF qualification,
 systemd ACL/credential mounts and encrypted provisioning, package wiring, installed
 lifecycle and physical power-loss measurements remain open gates.
 

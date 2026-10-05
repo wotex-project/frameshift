@@ -6,6 +6,37 @@ Code.prepend_paths(
 alias Frameshift.Digest
 alias Frameshift.LocalIPC.Client
 
+System.put_env("FRAMESHIFT_SERVICE_UID", "65534")
+System.put_env("FRAMESHIFT_CONTROL_GID", "50")
+System.put_env("FRAMESHIFT_SOCKET_PATH", "/tmp/import-socket/c.sock")
+
+paths =
+  Path.wildcard("/src/_build/test/lib/*/ebin")
+  |> Enum.reject(&(Path.basename(Path.dirname(&1)) in ["exile", "exqlite"]))
+
+entry =
+  "true = is_nil(Process.whereis(Frameshift.Library)); " <>
+    "{status, output, error} = Frameshift.CLI.run(System.argv()); " <>
+    "true = is_nil(Process.whereis(Frameshift.Library)); " <>
+    "IO.write(output); IO.write(:stderr, error); System.halt(status)"
+
+cli = fn arguments ->
+  System.cmd("elixir", Enum.flat_map(paths, &["-pa", &1]) ++ ["-e", entry, "--"] ++ arguments,
+    stderr_to_stdout: true
+  )
+end
+
+if System.argv() == ["recovery"] do
+  {output, 0} = cli.(["import-status", "linux-cli-1"])
+
+  {:ok, %{"import" => %{"status" => "succeeded", "importedItemID" => id}}} =
+    Wotex.JSON.decode(output)
+
+  true = Digest.valid_sha256?(id)
+  IO.puts("fresh-vm-import-recovery-passed")
+  System.halt(0)
+end
+
 path = "/tmp/import-socket/c.sock"
 policy = [uid: 65_534, gid: 50]
 
@@ -91,3 +122,37 @@ true = Digest.valid_sha256?(id)
   exchange.("importBegin", %{"intent" => %{intent | "title" => "changed"}})
 
 IO.puts("authenticated-import-passed")
+
+directory = "/tmp/caller-original"
+File.mkdir!(directory)
+File.chmod!(directory, 0o700)
+file = Path.join(directory, "original.png")
+File.write!(file, original)
+File.chmod!(file, 0o600)
+{output, 0} = cli.(["import", file, "--title", "CLI original", "--id", "linux-cli-1"])
+{:ok, %{"import" => %{"importedItemID" => ^id} = cli_receipt}} = Wotex.JSON.decode(output)
+false = String.contains?(output, directory)
+false = String.contains?(output, "uploadToken")
+{output, 0} = cli.(["import", file, "--title", "CLI original", "--id", "linux-cli-1"])
+{:ok, %{"import" => ^cli_receipt}} = Wotex.JSON.decode(output)
+{output, 2} = cli.(["import", file, "--title", "changed", "--id", "linux-cli-1"])
+true = String.contains?(output, "command_id_conflict")
+File.rm!(file)
+{output, 0} = cli.(["import-status", "linux-cli-1"])
+{:ok, %{"import" => ^cli_receipt}} = Wotex.JSON.decode(output)
+{output, 69} = cli.(["import", file, "--id", "missing-source"])
+false = String.contains?(output, directory)
+File.rmdir!(directory)
+IO.puts("fresh-cli-original-import-passed")
+
+{:ok, %{"ok" => true}} =
+  exchange.("command", %{
+    "command" => %{
+      "kind" => "updateInstruction",
+      "id" => "ordinary-command",
+      "instruction" => "Still artwork"
+    }
+  })
+
+{output, 2} = cli.(["import-status", "ordinary-command"])
+true = String.contains?(output, "command_id_conflict")

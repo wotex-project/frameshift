@@ -58,6 +58,7 @@ defmodule Frameshift.Import.IntentTest do
     end
 
     assert :ok = Intent.validate(%{intent() | "title" => "Été", "originalFilename" => "été.png"})
+    assert :ok = Intent.validate(%{intent() | "originalFilename" => " "})
     assert {:error, :invalid_import_intent} = Intent.identity(nil)
   end
 

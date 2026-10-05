@@ -47,7 +47,9 @@ defmodule FrameshiftCore.MixProject do
         "test/frameshift/import/linux_receipt_join.exs",
         "test/frameshift/import/linux_upload_client.exs",
         "test/frameshift/import/linux_upload_contract.exs",
-        "test/frameshift/import/linux_upload_service.exs"
+        "test/frameshift/import/linux_upload_service.exs",
+        "test/frameshift/import/linux_cli_contract.exs",
+        "test/frameshift/import/linux_full_disk.exs"
       ],
       dialyzer: dialyzer()
     ]

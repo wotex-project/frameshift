@@ -79,6 +79,7 @@ defmodule Frameshift.Import.LinuxUploadContract do
              )
 
     assert output =~ "authenticated-import-passed"
+    assert output =~ "fresh-cli-original-import-passed"
 
     assert {output, 0} =
              System.cmd(
@@ -102,6 +103,50 @@ defmodule Frameshift.Import.LinuxUploadContract do
     assert output =~ "fresh-sqlite-import-passed"
     refute File.exists?(Path.join(root, "frameshift-import-custody"))
     refute File.exists?(Path.join(root, "frameshift-codec-custody"))
+
+    File.rm!(Path.join(control, "ready"))
+    File.rm!(Path.join(control, "stop"))
+
+    restarted =
+      Task.async(fn ->
+        System.cmd(
+          "runuser",
+          [
+            "-u",
+            "nobody",
+            "-g",
+            "staff",
+            "--",
+            "elixir",
+            "/src/test/frameshift/import/linux_upload_service.exs"
+          ],
+          env: [{"TMPDIR", root}],
+          stderr_to_stdout: true
+        )
+      end)
+
+    assert eventually(fn -> File.exists?(Path.join(control, "ready")) end)
+
+    assert {output, 0} =
+             System.cmd(
+               "runuser",
+               [
+                 "-u",
+                 "daemon",
+                 "-g",
+                 "staff",
+                 "--",
+                 "elixir",
+                 "/src/test/frameshift/import/linux_upload_client.exs",
+                 "recovery"
+               ],
+               stderr_to_stdout: true
+             )
+
+    assert output =~ "fresh-vm-import-recovery-passed"
+    File.write!(Path.join(control, "stop"), "stop")
+    assert {output, 0} = Task.await(restarted, 30_000)
+    assert output =~ "fresh-sqlite-import-passed"
   end
 
   test "fresh nonroot SQLite receipts preserve rollback, backup, restart and exact replay" do
@@ -125,6 +170,57 @@ defmodule Frameshift.Import.LinuxUploadContract do
              )
 
     assert output =~ "14 passed"
+  end
+
+  test "bounded CLI wire recovery refuses lost replies, forged results and changed originals" do
+    directory = "/tmp/cli-contract"
+    File.mkdir!(directory)
+    File.chown!(directory, 65_534)
+    File.chmod!(directory, 0o700)
+
+    assert {output, 0} =
+             System.cmd(
+               "runuser",
+               [
+                 "-u",
+                 "nobody",
+                 "-g",
+                 "staff",
+                 "--",
+                 "elixir",
+                 "/src/test/frameshift/import/linux_cli_contract.exs"
+               ],
+               env: [{"TMPDIR", directory}],
+               stderr_to_stdout: true
+             )
+
+    assert output =~ "7 passed"
+  end
+
+  test "actual full tmpfs refuses intake without acknowledging partial bytes or claiming a command" do
+    directory = "/tmp/full-disk-service"
+    File.mkdir!(directory)
+    File.chown!(directory, 65_534)
+    File.chmod!(directory, 0o700)
+
+    assert {output, 0} =
+             System.cmd(
+               "runuser",
+               [
+                 "-u",
+                 "nobody",
+                 "-g",
+                 "staff",
+                 "--",
+                 "elixir",
+                 "/src/test/frameshift/import/linux_full_disk.exs"
+               ],
+               env: [{"TMPDIR", directory}],
+               stderr_to_stdout: true
+             )
+
+    assert output =~ "actual-enospc-import-refusal-passed"
+    refute File.exists?(Path.join(directory, "frameshift-import-custody"))
   end
 
   defp eventually(function, attempts \\ 1_000)

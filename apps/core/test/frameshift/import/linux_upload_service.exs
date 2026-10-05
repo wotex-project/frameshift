@@ -63,7 +63,13 @@ wait.(wait)
   Frameshift.MasterPackage.decode(package)
 
 true = byte_size(original) > 32
-3 = length(Library.audit_page(library)["entries"])
+
+{:ok, %{"status" => "succeeded", "importedItemID" => ^id}} =
+  Library.command_receipt_as(library, "linux-cli-1", 1)
+
+:not_found = Library.command_receipt_as(library, "missing-source", 1)
+8 = length(Library.audit_page(library)["entries"])
+{:ok, %{"title" => "Linux original"}} = Library.get_master(library, id)
 :ok = GenServer.stop(socket)
 :ok = GenServer.stop(upload)
 :ok = GenServer.stop(library)

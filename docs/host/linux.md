@@ -216,7 +216,7 @@ and 8 KiB per argument, before constructing JSON. Catalog edits, replay and stal
 revision acceptance use the actual SQLite owner; ordered-loop argument fixtures
 join the retained core rendering/playlist tests. These are software checks, not
 Linux NIF, installed package, qualified target or physical display evidence.
-Streamed import remains required CLI work with its own custody/codec adapter.
+Streamed original import uses the dedicated custody/codec/receipt contract below.
 
 The [native normalization profile](../architecture/content-pipeline.md#linux-native-normalization)
 uses an isolated codec executable. Its first admitted static-PNG profile owns
@@ -325,14 +325,20 @@ known intake/failed stage before effects. Cancellation cannot roll back a
 finishing or terminal Library mutation. `importStatus` carries only `commandId`
 and returns the authenticated actor's pending/terminal receipt with an optional
 exact imported master ID and finite error code; another actor's ID refuses.
+A completed ordinary command without an imported result refuses with
+`command_id_conflict` rather than masquerading as a successful import.
 It requires no source file and performs no decode, restoration or retry.
 Successful envelopes use the bounded `import` object; pending stays an explicit
 unknown outcome. No response exposes filesystem paths or source bytes.
 
 `frameshiftctl import FILE [--title TITLE] --id COMMAND_ID` opens a regular
 source accessible to the caller through a bounded descriptor, checks its identity/length,
-hashes exact bytes, rewinds and streams chunks. It verifies the descriptor again
-before finish. The service never follows FILE. Only explicit begin/offset
+hashes exact bytes, rewinds and streams chunks. Empty, oversized, symlink and
+nonregular sources refuse before staging. Without `--title`, use the filename
+without its extension; normalize the filename as NFC metadata without changing
+the opened path. Rehash the complete original under unchanged descriptor/path
+custody before finish, including a resumed prefix. The service never follows
+FILE. Only explicit begin/offset
 observation can resume intake; no CLI loop automatically retries a lost chunk
 or finish. `frameshiftctl import-status COMMAND_ID` reads recovery without
 opening FILE. Existing statuses apply: 2 domain refusal, 64 usage/policy, 69
@@ -363,7 +369,9 @@ this boundary. Explicit Linux group mode starts the upload owner; configure
 real service-owned `0700` temporary directory before startup. The upload owner
 links the codec lifetime. Missing configuration or abandoned custody reports
 import unavailable while the Library and diagnostics continue; status reads
-the durable writer directly. The CLI stream remains the next software slice.
+the durable writer directly. `Frameshift.Import.Source` and `Import.CLI` join
+regular caller descriptors and explicit chunk/finish operations; fresh VMs read
+the same terminal receipt after host restart without an original file.
 
 Requests retain 64 KiB/8 KiB framing bounds and responses 1 MiB/256 KiB bounds.
 The connection and send use finite deadlines; the response has one absolute
