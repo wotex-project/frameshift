@@ -4,10 +4,12 @@ import FrameshiftMacRelease
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 guard arguments.count == 2,
-  ["verify-sparkle-archive", "verify-sparkle-plist"].contains(arguments[0])
+  ["verify-sparkle-archive", "verify-sparkle-plist", "inspect-macho"].contains(arguments[0])
 else {
   FileHandle.standardError.write(
-    Data("usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist] INPUT\n".utf8)
+    Data(
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho] INPUT\n"
+        .utf8)
   )
   exit(64)
 }
@@ -16,10 +18,17 @@ do {
     try PinnedSparkleArchive.verify(arguments[1])
     FileHandle.standardOutput.write(
       Data("Sparkle \(PinnedSparkleArchive.version) archive verified\n".utf8))
-  } else {
+  } else if arguments[0] == "verify-sparkle-plist" {
     try PinnedSparkleArchive.verifyFrameworkInfo(arguments[1])
     FileHandle.standardOutput.write(
       Data("Sparkle \(PinnedSparkleArchive.version) plist identity verified\n".utf8))
+  } else {
+    let encoder = JSONEncoder()
+    encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
+    var bytes = try encoder.encode(MachOInspector.inspect(arguments[1]))
+    guard bytes.count < 16 * 1024 * 1024 else { throw ReleaseToolError.inputLimit }
+    bytes.append(10)
+    FileHandle.standardOutput.write(bytes)
   }
 } catch {
   let message = (error as? ReleaseToolError)?.description ?? "Mac release admission refused"

@@ -45,7 +45,21 @@ metadata types refuse. `verify-sparkle-plist /absolute/path/to/Info.plist` check
 the seven pinned SDK identity fields only; it does not qualify CPU headers,
 framework contents or signatures.
 
-See the [plist contract](../../docs/host/macos.md#native-release-property-lists),
+`MachOInspector` uses scoped random-access descriptor reads for bounded thin/fat
+loader metadata. It preserves CPU/file type/minimum, import order and run paths
+without executing code or loading the whole file. The borrowed view refuses
+after closure, including descriptor-number reuse. Inspect one file with:
+
+```sh
+swift run frameshift-mac-release inspect-macho /absolute/path/to/native-file
+```
+
+Output is a bounded JSON slice array plus LF; failures retain the fixed 64/65
+usage/admission convention. This does not resolve imports or verify code seals.
+The complete closure gate and production wrappers remain separate RT2 work.
+
+See the [loader metadata contract](../../docs/host/macos.md#native-release-loader-metadata),
+[plist contract](../../docs/host/macos.md#native-release-property-lists),
 [child contract](../../docs/host/macos.md#native-release-child-custody) and
 the [owning contract](../../docs/host/macos.md#native-release-input-foundation),
 [migration sequence](../../docs/architecture/implementation-plan.md#release-tooling-migration)

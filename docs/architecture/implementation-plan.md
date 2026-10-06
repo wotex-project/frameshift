@@ -1087,7 +1087,8 @@ The guide links only to real verified artifacts. See
 **Decision:** [D-003](../decisions/README.md#d-003--language-boundary), supported by
 [the source review](../research/software-stack.md#release-tooling-language-boundary).
 **State:** Swift descriptor/hash, owned-process and typed-plist foundations
-implemented; remaining native ports and portable descriptor adapter remain
+and bounded Mach-O observation implemented; whole-closure/SDK/native packaging
+ports and the portable descriptor adapter remain
 unimplemented/unqualified. The
 pinned compiler capture is at its validated checkpoint. Use this order for
 affected release tooling. Do not extend Mac-native
@@ -1112,6 +1113,16 @@ still require implementation and Mac/Ubuntu qualification. Native admission
 ports can proceed through RT2 while that independent work continues. No
 existing release wrapper has switched. See the
 [foundation contract](../host/macos.md#native-release-input-foundation).
+
+RT2's bounded `MachOInspector` now reads supported thin/fat loader metadata
+through scoped descriptor custody. Ten groups join malformed/overflow/string/
+deployment/refusal, exact command bounds, actual descriptor reuse and compiled
+arm64/Intel/universal inputs to the 43-test Swift package gate. The release-built
+CLI matches the retained observer on 34 actual compiled/SDK/app files and 40
+CPU slices with unchanged bytes/metadata. Whole inventory, path resolution, SDK
+resource/archive/cache and strict nested-signature ports remain open. This is
+metadata parity, not a passing full RT2 cutover or Intel execution. See the
+[loader metadata contract](../host/macos.md#native-release-loader-metadata).
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

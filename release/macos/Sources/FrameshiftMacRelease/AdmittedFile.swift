@@ -85,6 +85,46 @@ public enum AdmittedFile {
     _ path: String, policy: FileReadPolicy, observe: ((FileReadPhase) throws -> Void)?,
     consume: (UnsafeRawBufferPointer) -> Void
   ) throws -> Int64 {
+    try withDescriptor(path, policy: policy, observe: observe) { descriptor, size, budget in
+      var block = [UInt8](repeating: 0, count: 64 * 1024)
+      var offset: Int64 = 0
+      while offset < size {
+        try budget()
+        let requested = Int(min(Int64(block.count), size - offset))
+        let count = try block.withUnsafeMutableBytes { buffer in
+          try read(
+            descriptor, into: buffer.baseAddress!, count: requested, offset: offset, budget: budget)
+        }
+        guard count > 0 else { throw ReleaseToolError.inputChanged }
+        block.withUnsafeBytes { consume(UnsafeRawBufferPointer(rebasing: $0[..<count])) }
+        offset += Int64(count)
+        try observe?(.chunk(offset))
+      }
+      try budget()
+      let extra = try block.withUnsafeMutableBytes { buffer in
+        try read(descriptor, into: buffer.baseAddress!, count: 1, offset: offset, budget: budget)
+      }
+      guard extra == 0 else { throw ReleaseToolError.inputChanged }
+      return offset
+    }
+  }
+
+  /// Scoped random-access reads for bounded native headers; the descriptor never escapes.
+  static func withRegions<Result>(
+    _ path: String, policy: FileReadPolicy, observe: ((FileReadPhase) throws -> Void)? = nil,
+    consume: (NativeRegionReader) throws -> Result
+  ) throws -> Result {
+    try withDescriptor(path, policy: policy, observe: observe) { descriptor, size, budget in
+      let reader = NativeRegionReader(descriptor: descriptor, size: size, budget: budget)
+      defer { reader.invalidate() }
+      return try consume(reader)
+    }
+  }
+
+  private static func withDescriptor<Result>(
+    _ path: String, policy: FileReadPolicy, observe: ((FileReadPhase) throws -> Void)?,
+    consume: (Int32, Int64, @escaping () throws -> Void) throws -> Result
+  ) throws -> Result {
     guard !path.isEmpty, !path.utf8.contains(0) else { throw ReleaseToolError.unsafeInput }
     let deadline = ContinuousClock.now.advanced(by: policy.budget)
     func budget() throws {
@@ -102,25 +142,7 @@ public enum AdmittedFile {
     try before.admit(policy)
     guard named == before else { throw ReleaseToolError.inputChanged }
     try observe?(.opened)
-    var block = [UInt8](repeating: 0, count: 64 * 1024)
-    var offset: Int64 = 0
-    while offset < before.size {
-      try budget()
-      let requested = Int(min(Int64(block.count), before.size - offset))
-      let count = try block.withUnsafeMutableBytes { buffer in
-        try read(
-          descriptor, into: buffer.baseAddress!, count: requested, offset: offset, budget: budget)
-      }
-      guard count > 0 else { throw ReleaseToolError.inputChanged }
-      block.withUnsafeBytes { consume(UnsafeRawBufferPointer(rebasing: $0[..<count])) }
-      offset += Int64(count)
-      try observe?(.chunk(offset))
-    }
-    try budget()
-    let extra = try block.withUnsafeMutableBytes { buffer in
-      try read(descriptor, into: buffer.baseAddress!, count: 1, offset: offset, budget: budget)
-    }
-    guard extra == 0 else { throw ReleaseToolError.inputChanged }
+    let result = try consume(descriptor, before.size, budget)
     try observe?(.finished)
     try budget()
     let after = try identity(descriptor)
@@ -129,7 +151,7 @@ public enum AdmittedFile {
       throw ReleaseToolError.inputChanged
     }
     try budget()
-    return offset
+    return result
   }
 
   private static func read(
@@ -154,6 +176,51 @@ public enum AdmittedFile {
     var value = stat()
     guard Darwin.fstat(descriptor, &value) == 0 else { throw ReleaseToolError.readFailed }
     return FileIdentity(value)
+  }
+}
+
+/// A synchronous borrowed view. Invalidation precedes descriptor closure; even
+/// an accidentally retained view refuses before a recycled descriptor is used.
+/// It is deliberately not Sendable and exposes no raw descriptor.
+final class NativeRegionReader {
+  let size: Int64
+  private let descriptor: Int32
+  private let budget: () throws -> Void
+  private var valid = true
+
+  fileprivate init(descriptor: Int32, size: Int64, budget: @escaping () throws -> Void) {
+    self.descriptor = descriptor
+    self.size = size
+    self.budget = budget
+  }
+
+  fileprivate func invalidate() { valid = false }
+
+  func checkBudget() throws {
+    guard valid else { throw ReleaseToolError.unsafeInput }
+    try budget()
+  }
+
+  func read(offset: Int64, count: Int) throws -> Data {
+    try checkBudget()
+    guard offset >= 0, offset <= size, count >= 0, count <= 1024 * 1024,
+      Int64(count) <= size - offset
+    else { throw ReleaseToolError.invalidMachO }
+    var bytes = Data(count: count)
+    try bytes.withUnsafeMutableBytes { buffer in
+      var position = 0
+      while position < count {
+        try checkBudget()
+        let received = Darwin.pread(
+          descriptor, buffer.baseAddress!.advanced(by: position), min(64 * 1024, count - position),
+          off_t(offset + Int64(position)))
+        if received < 0 && errno == EINTR { continue }
+        guard received >= 0 else { throw ReleaseToolError.readFailed }
+        guard received > 0 else { throw ReleaseToolError.inputChanged }
+        position += received
+      }
+    }
+    return bytes
   }
 }
 

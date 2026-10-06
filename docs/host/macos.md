@@ -621,6 +621,56 @@ integer/real/type refusal, exact depth/node/metadata bounds, descriptor custody
 and typed SDK identities. Independently run the command on the actual pinned
 SDK Info.plist; fixture identities alone do not prove that upstream input.
 
+### Native release loader metadata
+
+The Swift release owner ports the existing bounded loader observation before
+the whole-bundle gate changes. `MachOInspector.inspect(_:)` uses the same
+no-follow/nonblocking descriptor custody as file admission and reads only
+bounded regions, not a whole native file into memory. File size caps at 128 MiB,
+each region at 1 MiB, reads at 64 KiB and the admission budget at 60 seconds.
+An internal synchronous borrowed view exposes no descriptor, is not Sendable,
+and refuses after its scope closes, including if the descriptor number is reused.
+
+Admit little-endian 64-bit thin Mach-O and big-endian 32/64-bit fat tables with
+one or two distinct arm64/x86_64 slices. Fat offsets, lengths, alignments,
+reserved fields, containment, overlap and exact table/header CPU agreement must
+validate before allocating command bytes. Accept arm64 subtype 0 and x86_64
+subtype 3 or `0x80000003`; specialized or other CPU profiles refuse. Supported
+file types are executable, dylib and bundle, with 1–4096 commands whose total
+is at most 1 MiB per slice. Every command is contained, at least eight bytes,
+eight-byte aligned, and the declared count consumes the exact command region.
+
+Observe ordered dylib imports and run paths as nonempty terminated UTF-8 strings
+of at most 512 bytes without U+0000–U+001F or U+007F. The dynamic linker must be
+`/usr/lib/dyld`. Retain the existing unsupported-loader-command refusals. Require
+one macOS deployment command: exact legacy minimum layout or exact build-version
+layout with macOS platform and at most 32 tool entries. Preserve its packed
+major/minor/patch value, with major at least 10. Other structurally valid commands
+are skipped under this metadata profile; instruction, symbol, segment, code-sign
+and runtime dyld validation are separate. Source layout: Apple cctools
+[loader.h](https://github.com/apple-oss-distributions/cctools/blob/e0d56624eca2a76c2ace4c21850df9e666de4ca5/include/mach-o/loader.h)
+and [fat.h](https://github.com/apple-oss-distributions/cctools/blob/e0d56624eca2a76c2ace4c21850df9e666de4ca5/include/mach-o/fat.h),
+inspected through `gh` on 2026-10-06.
+
+Return slices sorted by architecture with the unchanged observation fields
+`arch`, `filetype`, `minimum`, `dependencies` and `rpaths`. The standalone
+`frameshift-mac-release inspect-macho INPUT` emits that bounded JSON array plus
+LF; output caps at 16 MiB, and usage/admission exits remain 64/65. It does not
+execute the input, resolve imports, repair a binary, validate a signature or
+grant publication authority. The whole closure and wrapper cutover remain RT2
+work. Acceptance requires malformed thin/fat/string/deployment and truncation
+refusals, descriptor mutation/deadline/cleanup, borrowed-view reuse refusal,
+actual compiled arm64/Intel/universal metadata and pinned SDK parity against the
+retained parser. Intel metadata is not Intel execution proof.
+
+Ten `MachOInspectorTests` pass within the 43-test Swift release package gate.
+They include real compiled CPU/universal inputs and actual descriptor-number
+reuse after the borrowed view closes. The release-built CLI matches retained
+observations on 34 real compiled/SDK/app files and 40 CPU slices while preserving
+hashes and inode metadata. The actual pinned Sparkle ZIP also verifies. This
+qualifies the bounded metadata observer; the following whole-bundle admission
+and SDK/signature ports retain their separate RT2 gates.
+
 ### Native closure admission
 
 Before accepting a development or release bundle, inspect every regular file

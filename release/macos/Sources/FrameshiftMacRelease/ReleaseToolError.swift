@@ -21,6 +21,7 @@ public enum ReleaseToolError: Error, Equatable, Sendable, CustomStringConvertibl
   case childFailed
   case childCustodyUnknown
   case invalidPropertyList
+  case invalidMachO
 
   public var description: String {
     switch self {
@@ -41,6 +42,7 @@ public enum ReleaseToolError: Error, Equatable, Sendable, CustomStringConvertibl
     case .childFailed: "Mac release child failed; retain incomplete output"
     case .childCustodyUnknown: "Mac release child exit unconfirmed; retain incomplete output"
     case .invalidPropertyList: "invalid native release property list"
+    case .invalidMachO: "invalid native release loader metadata"
     }
   }
 }
