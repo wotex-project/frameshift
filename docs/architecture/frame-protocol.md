@@ -316,6 +316,24 @@ never silently redefined.
 
 Upload does not change desired or current state.
 
+Artifact metadata must retain the canonical digest of its exact artifact
+profile, color and geometry snapshot. Use the same RFC 8785/SHA-256 projection
+as [render qualification](qualified-generations.md); exclude changing capacity
+and health. A profile ID alone is insufficient. Cache eligibility, desired
+acceptance, retry, playlist advancement and the already-displayed outbox path
+must compare that frozen digest with the advertised snapshot before claiming
+compatibility or completion. Missing or changed identity refuses.
+
+Restart retains last-valid bytes and desired/current/previous pointers when a
+profile changes, but reports recovering/degraded state and cannot replay the
+asset or issue a fresh displayed acknowledgement under the new profile.
+Reinstalling a digest with conflicting metadata must preserve its original
+association and report the existing conflict outcome with durable degraded
+storage health. No automatic rehash, metadata rewrite, artwork deletion or
+profile migration is authorized. A firmware/profile update that requires such
+a migration needs its own qualified recovery contract; ordinary firmware
+updates that preserve the artifact contract remain independent.
+
 The closed [indexed4 artifact contract](content-pipeline.md#closed-indexed4-software-profile)
 uses explicit `packing`, `paletteRevision` and `colorProfileRevision` fields.
 Palette array positions and hardware `wireCode` values are distinct. Its exact

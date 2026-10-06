@@ -74,6 +74,15 @@ identity and older-binding refusal. No measured palette or controller is selecte
 by those software tests. Native dither/composition controls, exact received-device
 profile, installed connection and physical completion retain their own gates.
 
+M1-06's software receiver now freezes each stored artifact's exact profile,
+color and geometry digest. Changed or missing identities after restart retain
+last-valid bytes and desired/current/previous pointers in recovering/degraded
+state. Cache lookup, repeated desired/playlist submissions, retry, playlist
+advancement and outbox replay refuse fresh activation or completion. Conflicting
+metadata cannot relabel existing bytes, and successful display does not silently
+repair degraded storage. Persistent synthetic fixtures exercise those paths;
+exact MCU storage/transport and measured display recovery remain required.
+
 M1-01/M1-02 still need received module/revision and flash capacity, complete
 power/mechanical parts, a pinned isolated C/ESP-IDF build, mTLS/key custody,
 recoverable app/asset partitions and a bounded physical adapter. The reviewed

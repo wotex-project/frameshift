@@ -10,6 +10,16 @@ defmodule Frameshift.Simulator do
   pigment codes in both nibbles. Invalid packing, lengths or codes refuse before
   content publication, desired-state changes or simulated display completion.
 
+  ## Artifact profile custody
+
+  Each installed artifact freezes the canonical profile/color/geometry digest
+  from `Frameshift.Qualification.Profile.digest/2`. Cache hits and every activation
+  path compare that identity, including idempotent requests and outbox replay.
+  Changed or missing identity retains bytes and artwork pointers after restart,
+  reports recovering/degraded state, and refuses fresh display confirmation.
+  Reinstalling conflicting metadata preserves the original association. Storage
+  degradation persists; a later successful display does not claim it was repaired.
+
   ## Exercising receiver behavior
 
   Asset, desired, retry, playlist and pull-outbox operations model bounded transfer,
@@ -34,6 +44,7 @@ defmodule Frameshift.Simulator do
   alias Frameshift.Pairing.{Endpoint, Store, Window}
   alias Frameshift.Protocol.Schema
   alias Frameshift.Protocol.Thing
+  alias Frameshift.Qualification.Profile
   alias Frameshift.Simulator.Persistence
   alias Frameshift.Simulator.State
   alias Wotex.ThingDescription
@@ -164,7 +175,8 @@ defmodule Frameshift.Simulator do
            ),
          {:ok, thing_source} <- validate_thing(Keyword.get(options, :thing_source), capabilities),
          :ok <- verify_assets(state),
-         {:ok, recovered} <- recover_interrupted(state) do
+         {:ok, interrupted} <- recover_interrupted(state),
+         {:ok, recovered} <- recover_profiles(interrupted) do
       {:ok, %{recovered | pairing: pairing, thing_source: thing_source}}
     else
       {:error, reason} -> {:stop, reason}
@@ -239,12 +251,13 @@ defmodule Frameshift.Simulator do
   end
 
   def handle_call({:has_compatible_asset, digest, profile_id}, _, state) do
-    {:reply, get_in(state.assets, [digest, "profileId"]) == profile_id, state}
+    {:reply, asset_compatible?(state, digest, profile_id), state}
   end
 
   def handle_call({:put_asset, digest, profile_id, bytes}, _, state) do
     case put_asset_record(state, digest, profile_id, bytes) do
       {:ok, disposition, next_state} -> {:reply, {:ok, disposition}, next_state}
+      {:error, reason, next_state} -> {:reply, {:error, reason}, next_state}
       {:error, reason} -> {:reply, {:error, reason}, state}
     end
   end
@@ -269,21 +282,9 @@ defmodule Frameshift.Simulator do
   end
 
   def handle_call(:retry_display, _, state) do
-    preparing =
-      state
-      |> Map.put(:display_state, "preparing")
-      |> Map.put(:last_error, nil)
-      |> State.bump()
-
-    case Persistence.save(preparing) do
-      :ok ->
-        case perform_display(preparing) do
-          {:ok, next_state} -> {:reply, {:ok, State.public(next_state)}, next_state}
-          {:error, reason, next_state} -> {:reply, {:error, reason}, next_state}
-        end
-
-      {:error, reason} ->
-        {:reply, {:error, reason}, state}
+    case retry_display_record(state) do
+      {:ok, next_state} -> {:reply, {:ok, State.public(next_state)}, next_state}
+      {:error, reason, next_state} -> {:reply, {:error, reason}, next_state}
     end
   end
 
@@ -385,6 +386,34 @@ defmodule Frameshift.Simulator do
 
   defp recover_interrupted(state), do: {:ok, state}
 
+  defp recover_profiles(state) do
+    if Enum.any?(state.assets, fn {digest, asset} ->
+         not asset_compatible?(state, digest, asset["profileId"])
+       end) do
+      recovered = %{
+        state
+        | storage_degraded: true,
+          display_state: "recovering",
+          last_error: problem("unsupported-profile", "Stored artwork requires profile recovery")
+      }
+
+      persist_recovery(state, recovered)
+    else
+      {:ok, state}
+    end
+  end
+
+  defp persist_recovery(state, state), do: {:ok, state}
+
+  defp persist_recovery(_, recovered) do
+    next_state = State.bump(recovered)
+
+    case Persistence.save(next_state) do
+      :ok -> {:ok, next_state}
+      {:error, reason} -> {:error, reason}
+    end
+  end
+
   defp verify_assets(state) do
     case Enum.find(Map.keys(state.assets), fn digest ->
            not File.regular?(ContentStore.object_path(state.data_dir, digest))
@@ -417,12 +446,14 @@ defmodule Frameshift.Simulator do
          {:ok, profile} <- find_profile(state, profile_id),
          :ok <- validate_asset_size(profile, candidate),
          :ok <- validate_packed_codes(state.capabilities, profile, candidate),
+         :ok <- validate_existing_metadata(state, digest, profile_id),
          :ok <- ensure_storage(state, digest, byte_size(candidate)),
          {:ok, _, byte_count, placement} <- ContentStore.put(state.data_dir, candidate) do
       commit_asset(state, digest, profile_id, byte_count, placement)
     else
       false -> {:error, :digest_mismatch}
       :not_found -> {:error, :unsupported_profile}
+      {:error, :asset_metadata_conflict} -> record_metadata_conflict(state)
       {:error, reason} -> {:error, reason}
     end
   end
@@ -430,9 +461,41 @@ defmodule Frameshift.Simulator do
   defp put_asset_record(_, _, _, _), do: {:error, :invalid_asset}
 
   defp find_profile(state, profile_id) do
-    case Enum.find(state.capabilities["storage"]["artifactProfiles"], &(&1["id"] == profile_id)) do
-      nil -> :not_found
-      profile -> {:ok, profile}
+    case Enum.filter(state.capabilities["storage"]["artifactProfiles"], &(&1["id"] == profile_id)) do
+      [profile] -> {:ok, profile}
+      _ -> :not_found
+    end
+  end
+
+  defp asset_compatible?(state, digest, profile_id) do
+    with %{"profileId" => ^profile_id, "profileDigest" => stored_digest} <- state.assets[digest],
+         {:ok, _} <- find_profile(state, profile_id),
+         {:ok, ^stored_digest} <- Profile.digest(state.capabilities, profile_id) do
+      true
+    else
+      _ -> false
+    end
+  end
+
+  defp validate_existing_metadata(state, digest, profile_id) do
+    if not Map.has_key?(state.assets, digest) or asset_compatible?(state, digest, profile_id),
+      do: :ok,
+      else: {:error, :asset_metadata_conflict}
+  end
+
+  defp record_metadata_conflict(state) do
+    degraded =
+      state
+      |> Map.put(:storage_degraded, true)
+      |> Map.put(
+        :last_error,
+        problem("asset-metadata-conflict", "Stored artifact metadata conflicts")
+      )
+      |> State.bump()
+
+    case Persistence.save(degraded) do
+      :ok -> {:error, :asset_metadata_conflict, degraded}
+      {:error, reason} -> {:error, reason}
     end
   end
 
@@ -521,11 +584,17 @@ defmodule Frameshift.Simulator do
   end
 
   defp persist_new_asset(state, digest, profile_id, byte_count, placement) do
+    {:ok, profile_digest} = Profile.digest(state.capabilities, profile_id)
+
     next_state =
       state
       |> Map.update!(
         :assets,
-        &Map.put(&1, digest, %{"profileId" => profile_id, "byteCount" => byte_count})
+        &Map.put(&1, digest, %{
+          "profileId" => profile_id,
+          "byteCount" => byte_count,
+          "profileDigest" => profile_digest
+        })
       )
       |> State.bump()
 
@@ -570,17 +639,22 @@ defmodule Frameshift.Simulator do
 
   defp set_desired_record(state, request, precondition, suspend_playlist \\ false) do
     with :ok <- Schema.validate("desired", request),
+         :ok <- validate_desired_asset(state, request),
          {:new, request_hash} <- request_status(state, request),
-         :ok <- check_precondition(state, precondition),
-         {:ok, asset} <- Map.fetch(state.assets, request["assetDigest"]),
-         true <- asset["profileId"] == request["artifactProfile"] do
+         :ok <- check_precondition(state, precondition) do
       accept_desired(state, request, request_hash, suspend_playlist)
     else
       {:repeat, _} -> {:ok, state}
       {:conflict, _} -> {:error, :request_id_conflict}
-      :error -> {:error, :asset_missing}
-      false -> {:error, :unsupported_profile}
       {:error, reason} -> {:error, normalize_schema_error(reason)}
+    end
+  end
+
+  defp validate_desired_asset(state, request) do
+    cond do
+      not Map.has_key?(state.assets, request["assetDigest"]) -> {:error, :asset_missing}
+      asset_compatible?(state, request["assetDigest"], request["artifactProfile"]) -> :ok
+      true -> {:error, :unsupported_profile}
     end
   end
 
@@ -623,6 +697,29 @@ defmodule Frameshift.Simulator do
   end
 
   defp perform_display(state) do
+    if asset_compatible?(state, state.desired_asset, state.desired_profile),
+      do: perform_compatible_display(state),
+      else: {:error, :unsupported_profile, state}
+  end
+
+  defp retry_display_record(state) do
+    if asset_compatible?(state, state.desired_asset, state.desired_profile) do
+      preparing =
+        state
+        |> Map.put(:display_state, "preparing")
+        |> Map.put(:last_error, nil)
+        |> State.bump()
+
+      case Persistence.save(preparing) do
+        :ok -> perform_display(preparing)
+        {:error, reason} -> {:error, reason, state}
+      end
+    else
+      {:error, :unsupported_profile, state}
+    end
+  end
+
+  defp perform_compatible_display(state) do
     refreshing = state |> Map.put(:display_state, "refreshing") |> State.bump()
 
     case Persistence.save(refreshing) do
@@ -673,8 +770,12 @@ defmodule Frameshift.Simulator do
   defp maybe_delay(milliseconds), do: Process.sleep(milliseconds)
 
   defp set_playlist_record(%{playlist: playlist} = state, playlist, _)
-       when is_map(playlist),
-       do: {:ok, state}
+       when is_map(playlist) do
+    case validate_playlist_capabilities(state, playlist) do
+      :ok -> {:ok, state}
+      {:error, reason} -> {:error, reason}
+    end
+  end
 
   defp set_playlist_record(state, playlist, precondition) do
     with :ok <- Schema.validate("playlist", playlist),
@@ -748,6 +849,9 @@ defmodule Frameshift.Simulator do
     digest = entry["assetDigest"]
 
     cond do
+      not asset_compatible?(state, digest, get_in(state.assets, [digest, "profileId"])) ->
+        {:error, :unsupported_profile, state}
+
       state.current_asset == digest and state.display_state == "displayed" ->
         complete_playlist_entry(state, index, now_ms)
 
@@ -853,7 +957,9 @@ defmodule Frameshift.Simulator do
          _
        )
        when is_binary(digest) do
-    outbox_acknowledgement(manifest, :existing, "displayed", state)
+    if asset_compatible?(state, digest, profile_id),
+      do: outbox_acknowledgement(manifest, :existing, "displayed", state),
+      else: {:error, :unsupported_profile, state}
   end
 
   defp receive_outbox_manifest(state, manifest, bytes),
@@ -866,7 +972,7 @@ defmodule Frameshift.Simulator do
     installation =
       case bytes do
         nil ->
-          if get_in(state.assets, [digest, "profileId"]) == profile_id,
+          if asset_compatible?(state, digest, profile_id),
             do: {:ok, :existing, state},
             else: {:error, :asset_missing}
 
@@ -876,6 +982,7 @@ defmodule Frameshift.Simulator do
 
     case installation do
       {:ok, disposition, uploaded} -> activate_outbox_asset(uploaded, manifest, disposition)
+      {:error, reason, next_state} -> {:error, reason, next_state}
       {:error, reason} -> {:error, reason}
     end
   end
@@ -906,6 +1013,9 @@ defmodule Frameshift.Simulator do
 
   defp complete_outbox_display(state, manifest, disposition) do
     cond do
+      not asset_compatible?(state, manifest["desiredAsset"], manifest["artifactProfile"]) ->
+        {:error, :unsupported_profile, state}
+
       state.current_asset == manifest["desiredAsset"] and state.display_state == "displayed" ->
         outbox_acknowledgement(manifest, disposition, "displayed", state)
 
@@ -958,6 +1068,12 @@ defmodule Frameshift.Simulator do
 
       Enum.any?(playlist["entries"], &(not Map.has_key?(state.assets, &1["assetDigest"]))) ->
         {:error, :asset_missing}
+
+      Enum.any?(playlist["entries"], fn entry ->
+        digest = entry["assetDigest"]
+        not asset_compatible?(state, digest, get_in(state.assets, [digest, "profileId"]))
+      end) ->
+        {:error, :unsupported_profile}
 
       true ->
         :ok

@@ -5,7 +5,9 @@ defmodule Frameshift.Qualification.Profile do
   `digest/2` selects an artifact profile by ID and canonically hashes that profile
   with its color and geometry contract. Storage availability and health are
   excluded because they can change without changing accepted artifact bytes.
-  Missing or unsupported profile structure returns `:unsupported_profile`.
+  Missing, ambiguous or unsupported profile structure returns
+  `:unsupported_profile`. Duplicate matching IDs cannot select an arbitrary
+  profile for either host qualification or receiver cache eligibility.
 
   ## Transfer identity
 
@@ -32,7 +34,7 @@ defmodule Frameshift.Qualification.Profile do
          } <-
            capabilities,
          true <- is_list(profiles) and is_map(color) and is_map(geometry),
-         %{} = profile <- Enum.find(profiles, &(&1["id"] == profile_id)),
+         [%{} = profile] <- Enum.filter(profiles, &(&1["id"] == profile_id)),
          {:ok, canonical} <-
            RFC8785.encode(%{
              "artifactProfile" => profile,

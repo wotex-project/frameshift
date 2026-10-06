@@ -14,6 +14,11 @@ defmodule Frameshift.Simulator.State do
   and root. `public/1` exposes protocol state and bounded storage summary rather
   than transient faults, secret pairing state or injected Thing source.
 
+  Asset metadata retains its frozen profile digest independently of the currently
+  advertised capabilities. Persistent `storage_degraded` reports unresolved
+  identity conflicts through the public storage health; successful activation
+  alone does not clear that condition or rewrite existing artifact metadata.
+
   Desired and current must not be collapsed: verified bytes can exist while
   physical activation is interrupted. This struct performs no transition,
   authentication or I/O; `Frameshift.Simulator` and its separate persistence and
@@ -31,6 +36,7 @@ defmodule Frameshift.Simulator.State do
             previous_known_good: nil,
             pending_request_id: nil,
             last_error: nil,
+            storage_degraded: false,
             assets: %{},
             requests: %{},
             playlist: nil,
@@ -61,6 +67,7 @@ defmodule Frameshift.Simulator.State do
       previous_known_good: payload["previousKnownGood"],
       pending_request_id: payload["pendingRequestId"],
       last_error: payload["lastError"],
+      storage_degraded: payload["storageDegraded"] == true,
       assets: payload["assets"] || %{},
       requests: payload["requests"] || %{},
       playlist: payload["playlist"],
@@ -83,6 +90,7 @@ defmodule Frameshift.Simulator.State do
       "previousKnownGood" => state.previous_known_good,
       "pendingRequestId" => state.pending_request_id,
       "lastError" => state.last_error,
+      "storageDegraded" => state.storage_degraded,
       "assets" => state.assets,
       "requests" => state.requests,
       "playlist" => state.playlist,
@@ -123,6 +131,7 @@ defmodule Frameshift.Simulator.State do
 
     %{
       "assetCount" => map_size(state.assets),
+      "health" => if(state.storage_degraded, do: "degraded", else: "ok"),
       "usedBytes" => used,
       "availableBytes" => max(storage["totalBytes"] - used, 0)
     }
