@@ -281,6 +281,14 @@ offset; conflate absolute temperature and temperature rise), execute the same
 declared corpus and retain their failing cases. A build/import failure cannot
 count as detecting either fault.
 
+Retain up to eight actual reduction trials per fault/runtime. The offset
+counterexample reduces to quarter turn `90`, position `(0,0,0)`, singleton
+width/height `1` micrometre and its original corner `(0,0,0)`; the expected
+Conjunct point is `(1/1000000,0,0)` metres. The temperature counterexample
+reduces to component `temperature.operating`, unit `mc`, bounds `0/0`; both
+expected bounds are `temperature` / `K` with rational `27315/100`. These
+expectations are independent of the injected fault's observations.
+
 The authored null budget selects five full hands repeated twice per runtime,
 after untimed complete-result preflight. Retain all ten elapsed samples, full
 paired outputs and original source/BEAM bytes. No controlled latency, memory,
