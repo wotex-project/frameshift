@@ -90,6 +90,8 @@ they do not stop independent native, host or frame-profile work.
 - [Consolidated composition research, current producer exports and specification plan](research/conjunct-adoption.md)
 - [Hardware platforms and power feasibility](research/hardware-platforms.md)
 - [Software stack](research/software-stack.md)
+- [Release tooling language research](research/software-stack.md#release-tooling-language-boundary)
+  and [migration sequence](architecture/implementation-plan.md#release-tooling-migration)
 - [Technical build decisions, producer seams and model qualification](research/build-platform-decisions.md)
 - [SQLite and Elixir boundary](research/sqlite-elixir-boundary.md)
 - [Embedded persistence review](research/embedded-persistence.md)

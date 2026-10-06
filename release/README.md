@@ -58,6 +58,24 @@ that narrower call makes no fresh local/public archive claim. Development update
 preserve accepted versions and stable pages, and local journal recovery repeats
 no release or network effect. These tools create no external publication.
 
+## Tooling language migration
+
+The current commands below still use the checked Node implementations. The
+accepted [language decision](../docs/decisions/README.md#d-003--language-boundary)
+moves Mac-native inspection/SDK/packaging operations to a separate SwiftPM tool
+package and portable manifests, receipts, archive policy and channel
+rendering/signing to one Elixir tool owner. POSIX shell remains the entry-point
+layer; release tools are not shipped app dependencies. Replacement packages
+and the portable descriptor adapter are planned, not implemented here.
+
+Follow [RT1–RT6](../docs/architecture/implementation-plan.md#release-tooling-migration)
+and the [compatibility contract](../docs/architecture/release-manifest.md#release-tooling-ownership-and-migration).
+Keep wrapper arguments/exit meanings stable, qualify exact bytes and refusal
+behavior before switching, and remove obsolete production Node dependencies
+after their consumers move. Existing commands and test results remain current
+until cutover. The [research](../docs/research/software-stack.md#release-tooling-language-boundary)
+records source evidence, alternatives and the OTP descriptor limitation.
+
 ## Local Mac update metadata
 
 `./scripts/derive-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_SIGNATURE SPARKLE_TRUST OUTPUT`

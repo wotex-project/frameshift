@@ -225,6 +225,15 @@ requires a license, notices, signing credentials, owner-controlled public
 channel, a repeatable release process, and the applicable installed/physical
 product gates. No existing repository visibility change is part of this plan.
 
+Mac-native release commands are being migrated to Swift; portable release
+verification, source/receipt policy and channel rendering/signing belong to
+Elixir, with thin POSIX shell entry points. The
+[tooling contract](../host/macos.md#mac-release-tooling-implementation) and
+[portable migration rules](release-manifest.md#release-tooling-ownership-and-migration)
+require qualification before each command switches. The documented Node
+commands remain the current implementation until that cutover; this language
+decision does not qualify signed artifacts or an installed updater.
+
 ### Local Mac channel material
 
 `scripts/derive-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_SIGNATURE SPARKLE_TRUST OUTPUT`
@@ -252,8 +261,9 @@ or update response. Admit a separate canonical base64 64-byte Sparkle signature,
 as emitted by Sparkle's `sign_update -p`. Verify ordinary Ed25519 over the exact
 DMG bytes, independently of the release-manifest signature, and require the
 manifest's exact size and SHA-256. Keep the existing 1 GiB Mac disk-image bound;
-this verifier buffers that bounded message for Node's Ed25519 API. That bound
-is not a measured whole-job RSS ceiling. Unsafe/nonregular inputs, malformed
+the current verifier buffers that bounded message for Node's Ed25519 API. The
+replacement must preserve the whole-message signature profile and bound. The
+bound is not a measured whole-job RSS ceiling. Unsafe/nonregular inputs, malformed
 encoding, missing Mac tuple, changed bytes, untrusted keys and signature failure
 refuse before output creation.
 

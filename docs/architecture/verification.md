@@ -232,6 +232,18 @@ qualified contracts and physical evidence remain required.
 
 ## Installed product and guide
 
+Release-tooling language migration is specified in
+[RT1–RT6](implementation-plan.md#release-tooling-migration), with contracts in
+[Mac tooling](../host/macos.md#mac-release-tooling-implementation) and
+[portable release policy](release-manifest.md#release-tooling-ownership-and-migration).
+The 2026-10-06 source/API review is research evidence only. Swift tool commands,
+the portable Elixir owner and its descriptor adapter remain unimplemented and
+unqualified. Required evidence includes compiled CPU/real-SDK and nested-seal
+parity, canonical wire/crypto interoperability, Mac/Ubuntu descriptor and
+transport refusals, owned child failures, unchanged-profile replay and explicit
+changed-profile conflict. The existing Node results below remain evidence for
+those existing implementations; they do not count as a passing language port.
+
 | Requirement | Owner | Automated evidence | Current state |
 | --- | --- | --- | --- |
 | Normal AppKit quit retains core custody until actual exit and refuses new work while quiescing | Mac/core lifecycle | `CoreProcessExitTests`, `CoreTerminationCoordinator`, `release/macos/core-quit-fixture.mjs`, Swift/shell/package/IPC checks, policy and rendered-docs gates | Three real-process cases pass cooperative exit, ignored TERM/deadline/later read-only recovery and cancelled observation. All 88 Swift tests in twenty suites and shell checks pass on macOS 27.0.1 arm64 / Xcode 27. The fresh diagnostic app clone shares the production coordinator and passes ready/deferred/confirmed events, exit zero, actual OTP PID gone/PID-file removal and unchanged original app/probe custody. Quit nested inside an actor dispatch job reproduces the modal-loop regression and passes after run-loop reply delivery. Fresh ad-hoc closure/seals and packaged authenticated IPC/offline maintenance pass. This is programmatic idle-core evidence; active codec-child quit, keyboard/VoiceOver, uncertain-alert interaction, installed updater/background lifecycle and production acceptance remain open |

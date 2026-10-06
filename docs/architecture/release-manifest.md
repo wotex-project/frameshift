@@ -28,6 +28,59 @@ that each corresponding regular file has the recorded size and digest. It
 rejects symlinks and never follows a path outside the supplied artifact
 directory.
 
+## Release tooling ownership and migration
+
+Elixir owns portable release policy: canonical manifests and channel material,
+Ed25519/key identities, frozen source inputs, source/receipt joins, archive
+profiles and publication reconciliation. The planned tool-only Mix project
+is `release/portable/`, with the `FrameshiftRelease` namespace and
+`frameshift-release` executable; these are targets, not existing exports. Keep
+it independent of host application processes and dependencies and declare its
+workspace owner when introduced. Mac-native operations are
+delegated to the [Swift tooling owner](../host/macos.md#mac-release-tooling-implementation)
+through bounded explicit commands. Ubuntu consumers must not require Xcode or
+Swift. Cask/appcast rendering is portable policy despite its current directory.
+Browser rendering and documentation bundling retain their own JS boundaries;
+their release verification must consume the same qualified portable owner.
+
+A language replacement preserves every existing schema/profile, accepted
+identity, byte limit, trust root, refusal exit and retention rule. Compare exact
+manifest, channel body/footer, signature and digest bytes for identical inputs.
+Preserve canonical field/array ordering, UTF-8 and escaping, integer bounds,
+booleans distinct from numbers, duplicate-key refusal and one trailing LF.
+Generic map or sorted-key encoders are not evidence of compatibility. Preserve
+SPKI DER fingerprinting independently of Sparkle's raw public key, and plain
+Ed25519 over the complete admitted message; never sign a substituted hash.
+
+Portable input admission must first qualify the existing no-follow,
+nonblocking descriptor, finite read/hash and pre/post custody semantics on
+Mac and Ubuntu. OTP's ordinary file operations do not expose all required
+flags. Resolve the minimal isolated adapter under
+[D-003](../decisions/README.md#d-003--language-boundary) before using it; no
+path-check/read sequence, application NIF or hidden Node subprocess may stand
+in for this requirement. The selected adapter's operations, byte/time bounds,
+process exit, secret handling and retained failure state require an explicit
+contract and adversarial fixtures before portable callers cut over.
+
+Producer implementation observations can legitimately change when ported.
+Declare the new source/tool profile and independently pin its receipt; do not
+forge former implementation hashes or rewrite a completed output. Within an
+unchanged profile, complete replay must remain read-only. A changed profile at
+an existing output refuses as a conflict. Retained-record consumers validate
+their pinned historical producer assertions and bytes without claiming to have
+executed that producer. Old/new comparison fixtures must distinguish stable
+wire identities from intentionally changed producer observations.
+
+Migration is incremental under the
+[implementation plan](implementation-plan.md#release-tooling-migration).
+Keep the former implementation as a test oracle only while necessary, migrate
+its Mac/Ubuntu and guide/site consumers together, then remove obsolete
+production imports and commands. The separate codec Cargo helper is outside
+the initial Mac migration except where a shared dependency must be qualified;
+do not turn this task into a repository-wide tooling rewrite. Missing signing
+credentials or installed targets do not block specified local implementations
+and refusal fixtures. No port is qualified by this specification update.
+
 ## Manifest creation
 
 The release operator supplies a compact UTF-8 plan containing the same product

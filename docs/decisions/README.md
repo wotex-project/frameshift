@@ -40,6 +40,24 @@ are outside this technical ledger; historical revisions remain in Git.
   evidence. It is never a shipped application runtime.
 - **Detail:** [Software stack research](../research/software-stack.md)
 
+Build-time release tooling follows the same ownership rather than introducing
+a parallel application stack: Swift owns Mac-native inspection, SDK admission
+and package construction; Elixir owns portable manifests, source/receipt joins,
+archive policy and pure channel rendering/signing; POSIX shell owns thin command
+entry points. Keep these tools outside the shipped app and independent of its
+domain state. Existing Node release commands are transitional implementations,
+retained for comparison until each replacement passes its contract. This does
+not change the browser, Svelte or documentation JavaScript boundaries.
+
+Portable descriptor admission must preserve the existing no-follow,
+nonblocking, bounded-read and pre/post custody rules. OTP's ordinary file API
+must not be assumed equivalent. Resolve and qualify the minimal adapter before
+portable cutover; an isolated release-only POSIX worker using the pinned Zig
+toolchain is the researched candidate, not a newly qualified component.
+See [release tooling research](../research/software-stack.md#release-tooling-language-boundary),
+[Mac ownership](../host/macos.md#mac-release-tooling-implementation) and the
+[migration plan](../architecture/implementation-plan.md#release-tooling-migration).
+
 The Linux canonical codec is a separate bounded Rust executable consuming
 pinned memory-safe upstream PNG/JPEG, color and metadata libraries. It does not
 replace Elixir orchestration, the Zig raster worker or Apple's native adapter.

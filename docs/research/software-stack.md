@@ -169,7 +169,7 @@ update, reboot, failed download, or unavailable update service.
 
 ## Swift/SwiftUI boundary
 
-Swift owns only what is genuinely native to macOS:
+In the application, Swift owns the native macOS boundary:
 
 - `MenuBarExtra` and the popover-like window;
 - file pickers, drag/drop, pasteboard, notifications, and accessibility;
@@ -188,6 +188,135 @@ and [Service Management](https://developer.apple.com/documentation/servicemanage
 
 The Swift layer must not duplicate library, recipe, scheduling, or frame state.
 It submits commands and subscribes to snapshots from the Elixir core.
+
+### Release tooling language boundary
+
+**Review date:** 2026-10-06. **Evidence:** repository and upstream source/API
+inspection; this review implements no language port and runs no replacement
+tool. The decision is recorded in [D-003](../decisions/README.md#d-003--language-boundary).
+
+The requirement is maintainable release tooling that preserves exact archive
+identity, independent trust, bounded input admission, retained failure custody
+and immutable replay. The native app remains Swift/SwiftUI plus the Elixir core
+and isolated native workers. Build-time tools are separate from that runtime.
+
+#### Current implementation and ownership
+
+Inspection of `release/macos/` found 51 `.mjs` files, including 17 test files,
+seven fixture files and substantial closure, SDK, packaging and receipt logic.
+`scripts/check-macos-closure` invokes Node; `release/macos/closure.mjs` parses
+Mach-O metadata, `prepare.mjs` transforms only private packaging stages,
+`dmg.mjs` drives Apple tools, and `channels.mjs` renders/signs channel material.
+Shared `release/files.mjs`, `manifest.mjs`, `ustar.mjs` and material consumers
+also serve portable or Ubuntu paths. These are developer/CI tools; their
+existence does not mean the application ships a Node runtime. The count is a
+dated source observation, not a code-quality or release-acceptance measurement.
+
+Reuse of Node's filesystem, crypto and test APIs explains the present shape as
+an inference from these imports and callers. No Apple requirement or recorded
+product constraint establishes JavaScript as the release-tooling language.
+Changing it must retain the working behavior rather than dismissing its tests.
+
+| Candidate | Fit and cost | Decision |
+| --- | --- | --- |
+| Swift/SwiftPM | Direct Foundation, Darwin, Security and CryptoKit access; uses the Mac's selected Xcode toolchain and the app's existing language. Requires careful descriptor, process and wire-format implementation. | Own Mac-native inspection, SDK admission and package construction. |
+| Elixir/OTP | Existing portable orchestration language and pinned Mac/Ubuntu toolchain; suitable for manifests, receipts, channel metadata and release policy. Its public file API does not cover the current descriptor flags. | Own portable release semantics; qualify its input adapter before cutover. |
+| POSIX shell | Direct invocation of `codesign`, `ditto`, `lipo`, `hdiutil` and `xcrun`; easy to audit while small. Poor fit for binary parsing, canonical records and custody state machines. | Keep thin entry points and fixed argument dispatch. |
+| Node/JavaScript | Already implements the contracts and regression corpus. Convenience and shared browser tooling do not justify expanding Mac-native release policy in another language. | Retain temporarily for migration comparison; replace production release callers incrementally. |
+| Ruby/fastlane | Established Apple automation candidate with a documented notarization/stapling action, but adds a Ruby dependency and does not supply Frameshift's source/receipt/custody contracts. | Do not introduce it for this migration. |
+
+Swift's official [command-line guide](https://www.swift.org/get-started/command-line-tools/)
+documents executable tooling; [Swift Package Manager](https://docs.swift.org/main/documentation/packagemanagerdocs/)
+owns packages, builds and tests. The command-line guide presents
+`swift-argument-parser` as an option, not a required dependency. Use the existing
+selected Xcode and a separate tool package; do not add a library until its
+actual command surface warrants it. The official
+[Swift Testing documentation](https://developer.apple.com/xcode/swift-testing/)
+supports package tests. These sources establish supported tooling, not an
+industry-wide mandate to write packaging scripts in Swift.
+
+Apple's [packaging guidance](https://developer.apple.com/documentation/xcode/packaging-mac-software-for-distribution)
+describes disk-image construction/signing and `ditto` copying that preserves
+bundle symlinks. Its [notarization workflow](https://developer.apple.com/documentation/security/customizing-the-notarization-workflow)
+uses Apple's submission/stapling tools. Swift should orchestrate these tools
+with fixed argument arrays; it should not reproduce their signing or
+notarization implementations. The alternative
+[fastlane notarize action](https://docs.fastlane.tools/actions/notarize/)
+also exposes stapling and credentials, but does not remove our contract work.
+
+#### Native validation hazards
+
+The installed Xcode 27 SDK's `Security.framework/Headers/SecStaticCode.h`,
+comments for `SecStaticCodeCheckValidity` and its validation flags, confirms
+that the default check covers only the native CPU and that nested-code checking
+covers standard bundle locations. The public
+[API documentation](https://developer.apple.com/documentation/security/secstaticcodecheckvalidity(_:_:_:))
+and archived [TN2206](https://developer.apple.com/library/archive/technotes/tn2206/_index.html)
+support the distinction between signature validity, trust policy and nested
+code. A native replacement must explicitly cover both universal slices,
+OTP/NIF/renderer roles and the fixed Sparkle containers. It must retain
+pre/post custody: the header warns that validity assumes the code is not
+concurrently modified. This was header/source inspection, not a compiled
+Security-framework integration test. The archived technote is used for these
+semantics, not as a current notarization command guide.
+
+Native signature APIs do not replace bounded Mach-O parsing, bundle-relative
+loader admission, deployment-minimum checks or actual runtime fixtures.
+`Process.waitUntilExit()` alone does not provide an owned deadline. A replacement
+needs bounded output, concurrent pipe draining, child-exit observation and
+retained uncertain state. Existing SDK capture also demonstrates that running
+SwiftPM manifest evaluation against the real workspace can reset unsupported
+state; preserve its separate private scratch directory.
+
+#### Portable validation hazards
+
+OTP provides EdDSA signing/verification, but matching API names do not prove
+the existing whole-message Ed25519 profile or key identity. Inspect the pinned
+[OTP 29.1 crypto source](https://github.com/erlang/otp/blob/OTP-29.1/lib/crypto/src/crypto.erl)
+and qualify it against Sparkle's pinned tool and existing signatures. Preserve
+DER SPKI fingerprinting separately from Sparkle's raw 32-byte public key;
+retain the 1 GiB archive bound and never substitute a prehashed message.
+
+The current [OTP JSON documentation](https://www.erlang.org/doc/apps/stdlib/json.html)
+describes ordered key/value encoders and decoder callbacks. Its default object
+completion uses a map, so it is not a duplicate-key refusal policy. Require
+explicit duplicate detection and exact canonical field order, numeric bounds,
+UTF-8 escaping and trailing LF. Foundation sorted-key JSON and OTP map encoding
+are not substitutes for fixtures comparing the existing signed bytes. The
+online page observed here reports OTP 29.1.1; this is not authorization to
+change the repository's OTP 29.1 pin.
+
+More significantly, the pinned [file mode type](https://github.com/erlang/otp/blob/OTP-29.1/lib/kernel/src/file.erl#L281),
+[mode translation](https://github.com/erlang/otp/blob/OTP-29.1/erts/emulator/nifs/common/prim_file_nif.c#L500)
+and [Unix open implementation](https://github.com/erlang/otp/blob/OTP-29.1/erts/emulator/nifs/unix/unix_prim_file.c#L173)
+do not expose the current reader's `O_NOFOLLOW | O_NONBLOCK` combination.
+A path check followed by ordinary `File.open` is not equivalent under
+replacement races, particularly a file replaced by a FIFO. The first portable
+migration slice must qualify a descriptor adapter on Mac and Ubuntu. A small
+isolated release-only POSIX worker using the already pinned Zig toolchain is
+the candidate if OTP alone cannot meet that contract; specify its finite
+operations, child lifetime and bounded exchange before implementing it. It
+must contain no release policy, run no application NIF and add no shipped
+runtime. This adapter's implementation/qualification remains open.
+
+#### Recommendation and rejection checks
+
+Adopt Swift for native Mac tooling, Elixir for shared portable release policy
+including pure Cask/appcast rendering and signing, and POSIX shell for entry
+points. Directory names do not determine ownership: portable logic currently
+under `release/macos/` belongs with the shared Elixir owner. Keep tool packages
+independent of `FrameshiftShell`, Sparkle and the running host core.
+
+The [Mac tooling contract](../host/macos.md#mac-release-tooling-implementation),
+[portable migration contract](../architecture/release-manifest.md#release-tooling-ownership-and-migration)
+and [delivery order](../architecture/implementation-plan.md#release-tooling-migration)
+define acceptance. Reject a slice if it needs Node behind the replacement
+command, weakens any input/refusal rule, changes signed wire bytes, treats
+cross-compiled execution as native proof, rewrites completed receipts, or
+introduces duplicated release policy. A producer implementation observation
+may change when ported; declare and pin that new profile rather than fabricating
+the old tool/source digest. External signing and installed-machine evidence
+stay separate from the unblocked implementation and fixture work.
 
 ### Native Vision source check
 

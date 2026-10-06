@@ -338,6 +338,64 @@ Cloud labeling is a separate explicit opt-in and is disabled by default.
 
 ## Packaging gates
 
+### Mac release tooling implementation
+
+Swift owns build-time Mac closure inspection, pinned SDK/cache admission,
+private CPU derivation, universal assembly, app sealing and DMG construction.
+Portable source/manifest/receipt/archive policy and channel rendering/signing
+have one [Elixir owner](../architecture/release-manifest.md#release-tooling-ownership-and-migration).
+The application remains a thin Swift/SwiftUI shell; release tools must not link
+`FrameshiftShell`, start its Elixir core, or ship in the application bundle.
+The [research](../research/software-stack.md#release-tooling-language-boundary)
+records the rationale and unqualified adapter work.
+
+The planned package is `release/macos/Package.swift`, with a reusable
+`FrameshiftMacRelease` library, a `frameshift-mac-release` executable and package
+tests under the already selected Xcode/Swift toolchain. These paths and exports
+are implementation targets, not existing components. Declare their workspace
+owner and validation lane when introduced. Keep command parsing inside that
+package; introduce a pinned parser dependency only for demonstrated needs.
+
+Preserve existing `scripts/check-macos-closure`, packaging and source-admission
+interfaces, argument meanings, exit codes and record profiles. Wrappers remain
+small POSIX shell commands. Cut over each wrapper only after its Swift command
+and shared dependencies pass the [migration gates](../architecture/implementation-plan.md#release-tooling-migration);
+the replacement must not invoke the former Node command internally.
+
+Native readers must use descriptor-based no-follow, nonblocking admission,
+finite byte/entry/depth budgets, checked integer arithmetic and pre/post named
+and descriptor custody. Foundation pathname reads alone do not establish this.
+Use typed property-list decoding and bounded Mach-O parsing for admitted
+profiles. Retain exact framework aliases, original SDK bytes, derived CPU bytes
+and regenerated seals as distinct facts. Evaluate SwiftPM manifests in private
+scratch without repairing or resetting the original compiler workspace.
+
+Signature verification must explicitly inspect both universal CPU slices,
+every OTP/NIF/renderer role and the fixed nested Sparkle containers. A
+`SecStaticCodeCheckValidity` adapter must request the applicable strict,
+all-architecture and nested checks and separately validate code outside normal
+bundle locations. It must preserve the selected signature/trust profile and
+custody checks. Adoption of that API instead of `codesign` requires parity
+tests; merely calling the API is not acceptance. Static signatures do not
+prove loader closure, older-OS symbols, notarization or installed execution.
+
+Invoke Apple `codesign`, `ditto`, `lipo`, `hdiutil`, `xcrun notarytool` and
+`xcrun stapler` through fixed executable/argument arrays and the selected
+toolchain. Do not interpret records as shell commands or reproduce Apple's
+signing/notarization algorithms. Observe monotonic deadlines, bound and drain
+stdout/stderr concurrently, close child input and retain custody until actual
+exit. Deadline/cancellation failure must preserve private incomplete state and
+the previous accepted output. Shell wrappers must not grow binary parsers or
+receipt state machines.
+
+Qualification ports the existing compiled Mach-O, real SDK, strict nested-seal,
+mutation, child-timeout, archive readback and replay fixtures. Tests must
+compare unchanged public bytes and refusal/retention behavior, including a
+corrupt nested resource hidden beneath a resealed outer app and a wrong
+non-native CPU slice. Actual native Intel/arm64, supported older OS,
+credentialed signing/notarization and installed update proof remain separate
+release gates. Existing Node test results do not qualify the Swift port.
+
 ### Native closure admission
 
 Before accepting a development or release bundle, inspect every regular file

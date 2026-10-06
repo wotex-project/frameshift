@@ -1063,6 +1063,35 @@ The guide links only to real verified artifacts. See
 6. Build/test the separately signed Nerves appliance's validation/revert,
    credentials, persistent state and logging.
 
+### Release tooling migration
+
+**Decision:** [D-003](../decisions/README.md#d-003--language-boundary), supported by
+[the source review](../research/software-stack.md#release-tooling-language-boundary).
+**State:** specified; replacements and portable descriptor adapter remain
+unimplemented/unqualified. Finish the current capture work at a safe checkpoint,
+then use this order for affected release tooling. Do not extend Mac-native
+policy in new `.mjs` modules. Preserve current work and passing regression
+fixtures; the language port does not replace the R2 native updater or product
+UI/lifecycle deliverables.
+
+| Slice | Contract and implementation boundary | Exit evidence |
+| --- | --- | --- |
+| RT1 — Foundations; first | Declare a separate SwiftPM tool package/owner under `release/macos/` and one portable Elixir release owner. Implement typed CLI errors, bounded Darwin descriptor/hash/plist readers and owned subprocess handling. Resolve the portable descriptor adapter: inspect pinned OTP behavior and specify/qualify the minimal isolated POSIX worker if needed, using the existing pinned native toolchain. No application NIF or background service. | Swift package build/tests pass; FIFO/symlink/device, replacement, truncation/growth, permission, overflow, output-flood, timeout/cancellation and late-exit fixtures preserve refusal/custody. The portable adapter passes on Mac and Ubuntu before portable callers use it. Candidate names alone are not completion. |
+| RT2 — Native admission; after Swift foundations | Port closure/Mach-O, SDK resources, archive/cache comparison and compiler capture first. Preserve scratch manifest evaluation, exact aliases, source-bound original bytes and both-CPU/nested signature rules. Switch `check-macos-closure` and admission wrappers only after parity. | Real compiled CPU/universal fixtures and the pinned actual SDK pass; wrong non-native slice, resealed corrupt nested resources, changed workspace/cache and aggregate bounds refuse without repair. Identical admitted records retain stable wire facts; profile changes are explicit. No Node invocation remains behind switched commands. |
+| RT3 — Package construction; after RT2 | Port private preparation, CPU derivation/merge, nested sealing and DMG producer/readback to Swift. Keep Apple command implementations and existing minimum/loader rules. | Both fixture CPUs merge correctly; aliases/common bytes and seal boundaries remain exact; child faults, mount/readback mutation, partial output and changed input retain custody. Complete replay preserves accepted inodes/times; fresh local packaged IPC/offline maintenance still passes. |
+| RT4 — Portable records and transport; after adapter qualification | Port canonical manifests, trust verification, frozen inputs, source/material/cohort receipts and bounded USTAR policy into the one Elixir owner. Join Swift native observations through existing profiles. Switch the corresponding Mac/Ubuntu and guide/site consumers together. | Exact legacy wire/signature/record fixtures, complete replay and changed producer-profile conflict pass. Both archive profiles retain their distinct link/member rules. CLI tamper/FIFO/partial/child-mutation tests pass on Mac and Ubuntu; Ubuntu requires no Swift. Retained receipts are never rewritten or presented as fresh producer execution. |
+| RT5 — Channel material; after RT4 | Port pure Cask/appcast generation, independent release/Sparkle trust and signing to Elixir; consume final native minimum/identity facts from Swift. Preserve bounded whole-message Ed25519 and publication authority none for local outputs. | Byte-for-byte canonical body/footer, DER/raw key identity and signature interoperability pass against the pinned Sparkle tool; wrong trust, authentic noncanonical body, changed archive and partial/replay cases refuse. A supplied minimum declaration still requires the qualified final-app join. |
+| RT6 — Cutover and removal; after each affected port is qualified | Update wrapper dispatch, release/Mac/Ubuntu/guide checks, CI and command docs to actual replacements. Remove obsolete Mac JS modules/fixtures only after their consumers and regression coverage have moved; retain a temporary comparison oracle only with an identified remaining consumer. | Dependency/import and process-trace checks show no Node production dependency in the migrated release path. Existing product and source-custody regressions pass. The verification map names the actual new tools/tests and remaining installed/credentialed evidence. |
+
+Deliver each coherent port with its own review, proportionate checks and logical
+commit in the active implementation task. Keep acceptance fixtures at the
+owner they exercise instead of creating another generic release engine. RT2
+can proceed while the portable adapter is qualified; RT4/RT5 cannot claim
+completion before that prerequisite. Continue the actual native updater and
+other independent product slices alongside this work rather than adding more
+receipt layers indefinitely. Missing Intel/older-OS machines, production keys
+and installed evidence gate those claims, not this local implementation work.
+
 A guide simulation or host package does not certify a frame assembly. A released
 hardware profile also requires an exact reproducible assembly, signed
 rollback-capable firmware, protocol conformance, interrupted-update recovery
