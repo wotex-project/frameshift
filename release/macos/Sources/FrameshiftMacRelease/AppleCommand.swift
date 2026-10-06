@@ -10,6 +10,8 @@ public enum AppleTool: String, Sendable {
   case xcrun = "/usr/bin/xcrun"
   case swift = "/usr/bin/swift"
   case unzip = "/usr/bin/unzip"
+  case installNameTool = "/usr/bin/install_name_tool"
+  case plutil = "/usr/bin/plutil"
 }
 
 /// A bounded argument array for one selected Apple tool.

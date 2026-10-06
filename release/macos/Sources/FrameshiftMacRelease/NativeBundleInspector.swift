@@ -135,7 +135,8 @@ public enum NativeBundleInspector {
 
   static func inspectWithCustody(
     _ input: String, architecture: NativeBundleArchitecture,
-    observe: ((BundleInspectionPhase) throws -> Void)? = nil
+    observe: ((BundleInspectionPhase) throws -> Void)? = nil,
+    preparationToolchainLibrary: String? = nil
   ) throws -> (observation: NativeBundleObservation, custody: BundleSnapshot) {
     guard !input.isEmpty, !input.utf8.contains(0) else { throw ReleaseToolError.unsafeInput }
     let root = URL(fileURLWithPath: input).standardizedFileURL.path
@@ -200,9 +201,23 @@ public enum NativeBundleInspector {
     let byPath = Dictionary(uniqueKeysWithValues: natives.map { ($0.path, $0) })
     let directories = Set(before.directories.map(\.value.path))
     for file in natives {
+      if let library = preparationToolchainLibrary,
+        file.slices.contains(where: { $0.rpaths.contains(where: { $0.hasPrefix(library) }) })
+      {
+        guard
+          !file.slices.contains(where: {
+            $0.dependencies.contains(where: { $0.hasPrefix("@rpath/") })
+          })
+        else { throw ReleaseToolError.invalidBundle }
+      }
       for slice in file.slices {
         try budget.check()
         for path in slice.rpaths where !applePath(path) {
+          if let library = preparationToolchainLibrary, path.hasPrefix(library),
+            normalized(path) == path
+          {
+            continue
+          }
           guard directories.contains(try localPath(file.path, slice: slice, value: path)) else {
             throw ReleaseToolError.invalidBundle
           }
@@ -234,7 +249,10 @@ public enum NativeBundleInspector {
       case .string(let declared) = info.values["LSMinimumSystemVersion"]
     else { throw ReleaseToolError.invalidBundle }
     let minimum = try natives.flatMap(\.slices).map { try versionNumber($0.minimum) }.max()!
-    guard try versionNumber(declared) >= minimum else { throw ReleaseToolError.invalidBundle }
+    let declaredNumber = try versionNumber(declared)
+    guard preparationToolchainLibrary != nil || declaredNumber >= minimum else {
+      throw ReleaseToolError.invalidBundle
+    }
     try observe?(.checked)
     try budget.check()
     let after = try BundleInventory(root: root, budget: budget).scan()
@@ -246,6 +264,11 @@ public enum NativeBundleInspector {
       directories: before.directories.map(\.value), files: before.files.map(\.value),
       links: framework ? before.links.map(\.value) : nil, natives: natives)
     return (observation, before)
+  }
+
+  // Private producer checkpoints, never a public inspection-policy bypass.
+  static func preparationSnapshot(_ root: String) throws -> BundleSnapshot {
+    try BundleInventory(root: root, budget: BundleBudget()).scan()
   }
 
   private static func versionNumber(_ value: String) throws -> UInt32 {

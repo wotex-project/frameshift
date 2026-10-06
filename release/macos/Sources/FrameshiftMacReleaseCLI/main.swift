@@ -7,10 +7,11 @@ let captureCommand = arguments.first == "capture-swiftpm-inputs"
 let frameworkCommand = arguments.first == "verify-sparkle-framework"
 let resourceCommand = arguments.first == "verify-generation-resources"
 let signatureCommand = arguments.first == "verify-development-bundle"
+let preparationCommand = arguments.first == "prepare-development-bundle"
 let bundleCommand = arguments.first == "check-bundle" || signatureCommand
 guard
   (frameworkCommand && arguments.count == 3)
-    || (bundleCommand && arguments.count == 3
+    || ((bundleCommand || preparationCommand) && arguments.count == 3
       && NativeBundleArchitecture(rawValue: arguments[2]) != nil)
     || (arguments.count == 2
       && [
@@ -22,15 +23,23 @@ guard
 else {
   FileHandle.standardError.write(
     Data(
-      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release capture-swiftpm-inputs REPOSITORY\n"
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release capture-swiftpm-inputs REPOSITORY\n"
         .utf8)
   )
   exit(64)
 }
 let manifestChild = OwnedCommand()
 let materialChild = OwnedCommand()
+let preparer = DevelopmentBundlePreparer()
 do {
-  if captureCommand {
+  if preparationCommand {
+    let result = try await preparer.prepare(
+      arguments[1], architecture: NativeBundleArchitecture(rawValue: arguments[2])!)
+    FileHandle.standardOutput.write(
+      Data(
+        "development bundle: \(result.architecture.rawValue), minimum macOS \(result.declaredMinimum)\n"
+          .utf8))
+  } else if captureCommand {
     var bytes = try await SwiftPMInputCapture.capture(
       repository: arguments[1], manifestChild: manifestChild, materialChild: materialChild
     ).observationBytes()
@@ -75,6 +84,11 @@ do {
     FileHandle.standardOutput.write(bytes)
   }
 } catch {
+  if preparationCommand {
+    FileHandle.standardError.write(Data("development bundle preparation refused\n".utf8))
+    _ = await preparer.retainUntilExitAfterRefusal()
+    exit(1)
+  }
   if captureCommand {
     FileHandle.standardError.write(
       Data("recorded updater compiler inputs unavailable, unsafe or changed\n".utf8))

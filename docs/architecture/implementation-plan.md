@@ -1210,6 +1210,16 @@ child may extend process lifetime beyond the failed admission budget. Continue
 qualified child-bearing native producer/library joins; unknown and externally
 terminated scope cannot count as stopped or production/descendant proof.
 
+`DevelopmentBundlePreparer` now implements RT3's private preparation boundary:
+selected unused-toolchain removal, actual minimum derivation and inside-out
+ad-hoc sealing, with complete custody checkpoints around each owned Apple child.
+Seven new groups pass within all 85 tool tests with actual SDK/resource inputs.
+Real both-CPU/universal fixtures match every retained observation byte, and a
+private copy of the 1,419-file/24-native full host retains original custody.
+Public closure inspection remains strict. The separately observed Swift updater
+shell still needs an explicit loader profile; CPU merge, DMG construction,
+producer/library cutover and fresh full-host acceptance remain RT3 work.
+
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the
 owner they exercise instead of creating another generic release engine. RT2

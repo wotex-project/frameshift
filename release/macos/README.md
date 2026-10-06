@@ -15,7 +15,7 @@ The two generation-resource live-cohort groups require
 the exact pinned JSON files. Without it they are explicitly skipped; synthetic
 refusal fixtures do not establish a passing real cohort.
 
-Six framework groups and four compiler-capture groups require
+Six framework groups, four compiler-capture groups and one development-preparation\ngroup require
 `FRAMESHIFT_SPARKLE_ARCHIVE=/absolute/path/to/the/pinned/archive.zip`. The synthetic
 archive-refusal group remains runnable without that input.
 
@@ -92,6 +92,23 @@ Success emits the unchanged observation; usage/admission exits are 64/1 with
 fixed text. It performs no signing, repair, candidate execution or network
 trust evaluation. Unsealed SDK bytes still need exact archive/resource admission;
 static seals do not establish Developer ID, notarization or installed behavior.
+
+Prepare only an unpublished private development stage with:
+
+```sh
+swift run frameshift-mac-release prepare-development-bundle /absolute/path/to/.package.ABC123/Frameshift.app arm64
+```
+
+`DevelopmentBundlePreparer` owns sequential Apple children and retains the exact
+last child after refusal. Complete custody checks bracket each command; only
+its named code, plist and fixed seal paths may change. It derives the actual
+minimum, removes unused selected-toolchain paths, and signs inside out before
+strict complete admission. It never rewrites native minima/imports, deletes a
+failed stage, publishes or replaces accepted output. The five-minute job admits
+at most 512 children with 15-second/64-KiB-per-pipe limits. Success prints the
+existing development-bundle line; usage/refusal exits are 64/1. Retained producer
+libraries and the full-host packaging script still require cutover qualification.
+The Swift-linked updater shell requires a separate loader profile.
 
 Inspect the exact private generation SDK descriptors with:
 

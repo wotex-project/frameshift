@@ -500,6 +500,21 @@ do not qualify Intel execution, a universal host release, macOS 14 or 15
 runtime behavior, production signatures or a DMG. See the
 [Mac closure contract](../host/macos.md#native-closure-admission).
 
+**Native preparation observation:** 2026-10-06 on the same Mac/Xcode cohort.
+The native one-shot producer preserves the retained rule that any removable
+selected-toolchain search path combined with an `@rpath` import refuses.
+Apple's pinned
+[`install_name_tool.c`](https://github.com/apple-oss-distributions/cctools/blob/e0d56624eca2a76c2ace4c21850df9e666de4ca5/misc/install_name_tool.c)
+was retrieved with `gh`; its option implementation deletes the named `LC_RPATH`,
+independently of imported-name and deployment commands. Actual arm64, Intel and
+universal fixtures match the retained producer's complete observation bytes.
+A private full-host copy retains all 1,419 file/24 native facts and original
+custody after native preparation. Actual pinned SDK nested seals and observed
+mutation/cancellation/child-deadline refusal pass. This supports the bounded
+private producer; it does not admit the Swift updater's different loader paths,
+prove an installed runtime or authorize replacing a retained producer profile.
+See [the owning contract](../host/macos.md#private-native-development-preparation).
+
 ### Development disk-image source and readback
 
 Observed 2026-10-05 with the same Mac/SDK cohort. Apple's

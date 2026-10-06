@@ -810,6 +810,65 @@ import, restart and offline maintenance checks on the observed Mac. Those
 checks do not qualify macOS 14, Intel execution, universal OTP/NIF packaging,
 Developer ID, hardened runtime, notarization or installed DMG/update behavior.
 
+### Private native development preparation
+
+The native producer prepares only `Frameshift.app` inside a real current-user,
+mode-0700 `.package.` directory with an alphanumeric suffix. Retain its directory
+descriptor and complete named identity throughout the job. It never publishes,
+replaces an accepted app or removes a failed stage. A one-shot caller retains
+the exact last child after refusal until direct-child exit is known, as defined
+by [child custody](#native-release-child-custody).
+
+Use the selected `/usr/bin/xcrun --find swift` result to identify its canonical
+`usr/lib/` prefix. Before mutation, admit the complete bounded closure with only
+two preparation exceptions: its plist may understate the actual native minimum,
+and unused canonical search paths below that exact prefix may remain. Any native
+file containing both a removable search path and an `@rpath` import refuses.
+Foreign search paths, unresolved imports, malformed metadata, CPU/role errors
+and unsafe input retain their strict inspection refusals. This is an internal
+producer admission, never a public inspection-policy bypass or an admission of
+the separately observed Swift updater shell.
+
+Remove signatures before deleting those search paths with fixed Apple tools.
+Set only `LSMinimumSystemVersion` to the greatest actual native minimum, preserving
+every other typed plist value. Never alter deployment headers or imported names.
+Sign native leaves except the outer main executable, fixed pinned SDK containers
+inside out, then the outer app. Complete closure and strict all-architecture,
+nested signature admission must pass before returning the prepared observation.
+
+Complete inventory/custody checkpoints bracket each command. Only the command's
+named native file, plist or fixed container `CodeResources` seal may change;
+only its fixed `_CodeSignature` directory may be created or removed. Preserve
+all other file identities and bytes, exact aliases, native roles, modes, CPU
+membership, deployment minima and imports. Directory identities and modes remain
+stable; timestamp changes are permitted only on ancestors of the command's
+mutable paths. A private stage has one writer; these checks detect observed
+interference rather than making concurrent writes to the tool's own mutable
+target safe.
+
+The job admits at most 512 child launches within a five-minute monotonic budget,
+with 15 seconds and 64 KiB separately per output pipe for each child. Check
+cancellation between phases and operations; no failed or cancelled result can
+promote late child output. Budgets do not preempt blocked filesystem or Security
+calls. Acceptance requires real arm64/Intel/universal preparation and exact final
+closure observation, actual nested SDK seals, wrong-stage/loader/typed-metadata
+refusal, unrelated and final mutation refusal, cancellation and retained child
+exit. Producer/library cutover and fresh full-host lifecycle remain separate
+checks before this command replaces retained packaging consumers.
+
+Seven `DevelopmentBundlePreparerTests` groups pass within all 85 release-tool
+tests on macOS 27.0.1 arm64 / Xcode 27 with actual SDK/resource inputs and no
+exclusions. Actual arm64, Intel and universal preparation matches every retained
+schema-two byte and the exact success line. The real pinned universal SDK's
+five code roles and nested containers receive strict complete seals. Wrong
+stage/mode/alias, foreign/noncanonical paths, run-path imports, unrelated
+same-byte/namespace/parent and final mutation, actual child deadline and
+cancellation after real plist preparation refuse while retaining stage/custody.
+A private copy of the retained full host also matches all 1,419 files/24 native
+records with strict seals and unchanged original identities. This is local
+producer/static evidence; fresh host lifecycle and packaging/library cutover,
+Swift updater loader profile, CPU merge, DMG and installed release remain open.
+
 ### Native release development signatures
 
 `NativeSignatureVerifier.verifyDevelopmentBundle(_:architecture:)` is the Swift
