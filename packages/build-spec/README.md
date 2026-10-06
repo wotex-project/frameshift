@@ -45,6 +45,12 @@ producer delivery and product fixtures while both sides are developed.
   [input contract](../../docs/architecture/conjunct-v1-inputs.md) requires a
   complete pinned closure and exact compilation-context replay. Results keep
   full original bytes and IDs; they do not create Conjunct successors.
+- `FrameshiftBuild.ConjunctAdapter.v1_inventory/5` and browser `v1Inventory`
+  independently enumerate every original JSON node in that verified closure.
+  The [source inventory contract](../../docs/architecture/conjunct-v1-inventory.md)
+  retains exact values, container structure, source locators and required
+  migration references under a 10000-node ceiling. Complete coverage concerns
+  syntax custody; physical equivalence and successor execution remain separate.
 - `FrameshiftBuild.inspect_profile/1` derives the same identity, public metadata
   and each fact/port's source citations. Applications resolve these citations;
   the shared library performs no source lookup or evidence promotion.

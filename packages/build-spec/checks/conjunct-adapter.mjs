@@ -39,6 +39,7 @@ const selected={
   files:normFiles.concat(['packages/build-spec/lib/frameshift_build/conjunct_adapter.ex','packages/build-spec/js/conjunct-adapter.mjs',
     'packages/build-spec/checks/conjunct-adapter.mjs','packages/build-spec/checks/conjunct-adapter-js-observe.mjs','packages/build-spec/checks/conjunct-adapter-observe.exs','packages/build-spec/checks/conjunct-adapter-fault.exs',
     'packages/build-spec/lib/frameshift_build/conjunct_inputs.ex','packages/build-spec/js/v1-inputs.mjs',
+    'packages/build-spec/lib/frameshift_build/conjunct_inventory.ex','packages/build-spec/js/v1-inventory.mjs',
     'scripts/check-conjunct-adapter','scripts/check-build-spec','scripts/check','packages/build-spec/mix.exs','packages/build-spec/mix.lock',
     'packages/build-spec/gleam.toml','packages/build-spec/manifest.toml']).map(source),
   buildSpec:inventory(join(packageRoot,'src')),physical:inventory(join(root,'packages/decision-kernel/src')),
@@ -142,7 +143,8 @@ for(const [id,elixBefore,elixAfter,jsBefore,jsAfter] of mutations){
   if(id==='offset') elixSource=elixSource.replace('[x, y, z] = Enum.zip_with','[_x, _y, _z] = Enum.zip_with');
   const jsSource=sources.javascript.replace(jsBefore,jsAfter)
     .replaceAll("'../build/dev/javascript/",`'${pathToFileURL(join(packageRoot,'build/dev/javascript/')).href}`)
-    .replace("'./v1-inputs.mjs'",`'${pathToFileURL(join(packageRoot,'js/v1-inputs.mjs')).href}'`);
+    .replace("'./v1-inputs.mjs'",`'${pathToFileURL(join(packageRoot,'js/v1-inputs.mjs')).href}'`)
+    .replace("'./v1-inventory.mjs'",`'${pathToFileURL(join(packageRoot,'js/v1-inventory.mjs')).href}'`);
   writeFileSync(join(own,'fault.ex'),elixSource,{flag:'wx'});writeFileSync(join(own,'fault.mjs'),jsSource,{flag:'wx'});
   retain(`${id}-mutation-original.json`,{sources,replacements:{elixBefore,elixAfter,jsBefore,jsAfter},module,elixSource,jsSource});
   command(`${id}-compile`,'mix',['run','--no-start','--no-compile','checks/conjunct-adapter-fault.exs',join(own,'fault.ex'),join(own,'beams'),join(own,'diagnostics.etf')],packageRoot,{MIX_ENV:'test'});

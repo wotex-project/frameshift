@@ -40,6 +40,12 @@ defmodule FrameshiftBuild.ConjunctAdapter do
     to: FrameshiftBuild.ConjunctInputs,
     as: :import
 
+  @doc "Inventories every original JSON node in a complete exact v1 closure."
+  @spec v1_inventory(term(), term(), term(), term(), term()) :: {:ok, map()} | {:error, binary()}
+  defdelegate v1_inventory(assembly, profiles, mappings, layouts, context),
+    to: FrameshiftBuild.ConjunctInventory,
+    as: :import
+
   @doc "Converts one registered v1 numeric property to a canonical inclusive interval."
   @spec quantity(term(), term(), term(), term(), term()) :: {:ok, map()} | {:error, binary()}
   def quantity(scope, key, unit, lower, upper)

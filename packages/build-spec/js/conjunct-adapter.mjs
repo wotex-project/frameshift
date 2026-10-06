@@ -5,6 +5,7 @@ import {
 import {Result$isOk, Result$Ok$0} from '../build/dev/javascript/prelude.mjs';
 
 export {v1Inputs} from './v1-inputs.mjs';
+export {v1Inventory} from './v1-inventory.mjs';
 
 const scopes = new Map([
   ['component', Scope$Component()], ['power', Scope$PowerPort()],

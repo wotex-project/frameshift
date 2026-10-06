@@ -250,17 +250,30 @@ These results establish complete retained v1 input custody. Conjunct successor
 artifacts, thirteen-stage migration, installed producer resolution and physical
 acceptance remain open.
 
-The [v1 source inventory](conjunct-v1-inventory.md) requires complete original
-node enumeration on both runtimes, independent tree reconstruction, a retained
-oversized valid closure, 300 seeded schedules, two actual omission faults and
-ten null-budget smoke calls per runtime. These checks are planned; the authored
-full-result hands precede the inventory implementation. Complete syntax coverage
-does not qualify physical migration or successor execution.
+The [v1 source inventory](conjunct-v1-inventory.md) passed its complete owning
+gate on 2026-10-07 against the authored, committed full-result hands. Each runtime
+passed 33 hands, including a valid closure refused at the 10,000-node limit,
+300 seeded schedules and independent reconstruction of every original JSON
+tree. Two actual omission faults were compiled or executed on each runtime;
+each retained two reduction trials and a smaller complete failing witness.
+Ten null-budget smoke calls per runtime passed. The JavaScript boundary also
+passed passive loading, deeply frozen results, independent callers and mutation
+of caller arrays during asynchronous hashing.
+
+Complete original, expected, actual, source and compiled BEAM records remain
+under ignored `var/conjunct-v1-inventory/run.lEDfZF`. An earlier attempt retained
+complete observations but failed its final source guard after a shared checker
+changed during the run; it remains a failed attempt. The final full package gate
+passed 183 Gleam tests per target, 30 Elixir and 45 JavaScript tests, all prior
+adapter/parity/oracle checks and the isolated package release. Strict Credo and
+policy checks passed. This establishes complete retained v1 syntax coverage;
+physical migration, successor execution and installed producer qualification
+remain open.
 
 ### Physical compiler evidence
 
 Run `scripts/check build-spec` for the shared package. The current gate passes
-183 Gleam tests per target, 28 Elixir and 40 browser/data tests, all listed
+183 Gleam tests per target, 30 Elixir and 45 JavaScript tests, all listed
 parity/oracle fixtures and an isolated OTP release without test modules. These
 are bounded software claims under declared inputs. Full BuildSpec admission,
 qualified contracts and physical evidence remain required.
