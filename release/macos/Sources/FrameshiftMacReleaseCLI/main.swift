@@ -3,6 +3,7 @@ import Foundation
 import FrameshiftMacRelease
 
 let arguments = Array(CommandLine.arguments.dropFirst())
+let captureCommand = arguments.first == "capture-swiftpm-inputs"
 let frameworkCommand = arguments.first == "verify-sparkle-framework"
 let resourceCommand = arguments.first == "verify-generation-resources"
 let signatureCommand = arguments.first == "verify-development-bundle"
@@ -15,18 +16,23 @@ guard
       && [
         "verify-sparkle-archive", "verify-sparkle-plist", "inspect-macho",
         "verify-generation-resources",
+        "capture-swiftpm-inputs",
       ]
       .contains(arguments[0]))
 else {
   FileHandle.standardError.write(
     Data(
-      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n"
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release capture-swiftpm-inputs REPOSITORY\n"
         .utf8)
   )
   exit(64)
 }
 do {
-  if frameworkCommand {
+  if captureCommand {
+    var bytes = try await SwiftPMInputCapture.capture(repository: arguments[1]).observationBytes()
+    bytes.append(10)
+    FileHandle.standardOutput.write(bytes)
+  } else if frameworkCommand {
     var bytes = try await PinnedSparkleFramework.verify(
       archive: arguments[1], framework: arguments[2]
     ).observationBytes()
@@ -65,6 +71,11 @@ do {
     FileHandle.standardOutput.write(bytes)
   }
 } catch {
+  if captureCommand {
+    FileHandle.standardError.write(
+      Data("recorded updater compiler inputs unavailable, unsafe or changed\n".utf8))
+    exit(1)
+  }
   if frameworkCommand {
     FileHandle.standardError.write(
       Data("pinned updater material unavailable, unsafe or changed\n".utf8))

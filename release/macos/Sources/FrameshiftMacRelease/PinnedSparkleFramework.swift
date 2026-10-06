@@ -95,13 +95,13 @@ public enum PinnedSparkleFramework {
 
   static func verify(
     archive: String, framework: String, work: String?, child: OwnedCommand,
-    limits: ChildLimits? = nil,
+    limits: ChildLimits? = nil, seconds: Double = 120,
     observe: (@Sendable (SparkleAdmissionPhase) throws -> Void)? = nil
   ) async throws -> PinnedSparkleFrameworkObservation {
     guard !archive.isEmpty, !framework.isEmpty, !archive.utf8.contains(0),
       !framework.utf8.contains(0)
     else { throw ReleaseToolError.unsafeInput }
-    let budget = SparkleBudget()
+    let budget = try SparkleBudget(seconds: seconds)
     let source = URL(fileURLWithPath: archive).standardizedFileURL.path
     let cache = URL(fileURLWithPath: framework).standardizedFileURL.path
     let archiveIdentity = try SparkleInventory.named(source)
@@ -204,6 +204,11 @@ public enum PinnedSparkleFramework {
     return observation
   }
 
+  /// Capture joins bracket the material gate with the same bounded complete inventory.
+  static func custody(framework: String, seconds: Double) throws -> [String: FileIdentity] {
+    try SparkleInventory(root: framework, budget: SparkleBudget(seconds: seconds)).scan().custody
+  }
+
   private static func writeArchive(
     _ bytes: Data, directory: Int32, path: String, budget: SparkleBudget
   ) throws -> FileIdentity {
@@ -240,7 +245,13 @@ public enum PinnedSparkleFramework {
 enum SparkleAdmissionPhase: Sendable { case archiveCopied, extracted, cacheChecked }
 
 private struct SparkleBudget {
-  let deadline = ContinuousClock.now.advanced(by: .seconds(120))
+  let deadline: ContinuousClock.Instant
+  init(seconds: Double = 120) throws {
+    guard seconds.isFinite, seconds > 0, seconds <= 120 else {
+      throw ReleaseToolError.invalidBounds
+    }
+    deadline = ContinuousClock.now.advanced(by: .nanoseconds(Int64(seconds * 1_000_000_000)))
+  }
   func check() throws {
     guard !Task.isCancelled else { throw ReleaseToolError.admissionCancelled }
     guard ContinuousClock.now < deadline else { throw ReleaseToolError.deadline }

@@ -1047,6 +1047,59 @@ Perform no fetch, resolution, compilation, thinning, signing or cache repair
 in this capture gate. Repeat admission around native compilation; when the
 parsed package has no binary target, preserve the existing input inventory.
 
+The native replacement is `SwiftPMInputCapture.capture(repository:)` with
+`frameshift-mac-release capture-swiftpm-inputs REPOSITORY`. Resolve the repository
+with POSIX
+`realpath` to preserve the physical path actually recorded by SwiftPM. Retain
+no-follow parent descriptors from that repository through every manifest, state,
+archive and framework parent; compare their device/inode, type, mode and owner
+at completion. Directory write timestamps may change during owned compiler work,
+but redirected or replaced parents may not. Manifest and state leaves require
+single-link protected custody and complete unchanged bytes/times. Require mode
+`0600` for the recorded original ZIP. A parsed no-binary package returns the
+existing empty SDK inventory only after manifest and parent rechecks.
+
+Use an owned `/usr/bin/swift` manifest child with `package`, explicit
+`--package-path` and separate `--scratch-path`, then `dump-package`. Apply a
+sixty-second deadline and separate 512 KiB output bounds. Scratch is newly created mode `0700`, separate from `.build`. Validate
+strict UTF-8 JSON before interpreting the bounded manifest/workspace: at most
+32 container levels, 8,192 values, 64 KiB per string and 512 KiB aggregate string
+storage; duplicate object keys, malformed numbers/escapes, trailing content and
+Boolean version values refuse. Workspace versions are integer tokens `6`/`7`,
+with exactly their defined keys and the fixed root artifact; absent targets or
+unrecognized binary identities refuse. Repeat complete SDK/cache/archive and
+manifest/state/parent custody before returning the existing ordered bare JSON
+file array, within 64 KiB including LF. The complete SDK charges 152 entries
+against its producer's shared ceiling, although only 86 regular-file facts are
+returned. Usage/admission exits are 64/1 with fixed compiler-input refusal text.
+Check cancellation and the three-minute monotonic software budget between
+operations; do not claim blocked syscall preemption. Failure retains scratch and
+owned-child custody, and late child success cannot become admitted input. Remove
+only completed, custody-confirmed scratch. Require actual SwiftPM-produced
+schema-seven cache/state, separately identified synthetic schema-six acceptance,
+retained malformed state, alias/size/key/type/custody refusal and existing
+consumer byte parity before capture or wrapper cutover.
+
+Eleven `SwiftPMInputCaptureTests` groups pass within all 76 Mac release-tool tests
+on macOS 27.0.1 arm64 / Xcode 27 with both actual SDK inputs and no exclusions.
+Real SwiftPM-produced schema-seven state and separately synthetic schema-six
+state return the same admitted file facts with original custody preserved.
+Repeated release-built CLI capture matches all retained 86-file JSON bytes,
+including member/order conventions, and preserves every manifest/state/ZIP and
+framework file/directory/alias identity. Malformed retained state remains intact
+for an actual no-binary manifest; missing packages return `[]` without a child.
+Unknown/duplicate/type/format/redirected identities and external dependency/
+prebuilt claims, unsafe manifest/state leaves and parents, exact JSON node/depth/
+string limits, same-byte manifest/state/ZIP/header rewrites, replaced parents,
+child deadline/output overflow and cancellation after child success refuse with
+retained scratch and descriptor cleanup. Read-only exit observation confirms
+both refused children stopped; it does not prove all descendants stopped.
+Fixed CLI 64/1 refusals pass. Without `FRAMESHIFT_SPARKLE_ARCHIVE`, four actual
+compiler-artifact groups are explicitly excluded; the remaining seven retain
+manifest/parser/refusal coverage. This closes the native capture port's local
+acceptance, with wrapper/native producer joins, shared aggregate integration,
+actual updater execution, Intel/older-OS and installed/production gates separate.
+
 Updater-bearing candidates must additionally join an independently hashed
 `sparkle-material.json` from the pinned updater source gate. Capture its 85
 regular framework files below

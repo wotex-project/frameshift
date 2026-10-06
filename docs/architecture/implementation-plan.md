@@ -1088,10 +1088,9 @@ The guide links only to real verified artifacts. See
 [the source review](../research/software-stack.md#release-tooling-language-boundary).
 **State:** Swift descriptor/hash, owned-process and typed-plist foundations
 and bounded Mach-O/whole-bundle observation, strict development signatures and
-pinned SDK resource/archive/cache comparison implemented;
-compiler workspace capture/native packaging
-ports and the portable descriptor adapter remain
-unimplemented/unqualified. The
+pinned SDK resource/archive/cache comparison and compiler workspace capture
+implemented locally; wrapper/native producer integration, native packaging
+ports and the portable descriptor adapter remain unimplemented/unqualified. The
 pinned compiler capture is at its validated checkpoint. Use this order for
 affected release tooling. Do not extend Mac-native
 policy in new `.mjs` modules. Preserve current work and passing regression
@@ -1121,8 +1120,8 @@ through scoped descriptor custody. Ten groups join malformed/overflow/string/
 deployment/refusal, exact command bounds, actual descriptor reuse and compiled
 arm64/Intel/universal inputs to the 43-test Swift package gate. The release-built
 CLI matches the retained observer on 34 actual compiled/SDK/app files and 40
-CPU slices with unchanged bytes/metadata. Compiler workspace capture and wrapper
-integration remain open. This is
+CPU slices with unchanged bytes/metadata. Qualified wrapper/native producer
+integration remains open. This is
 metadata parity, not a passing full RT2 cutover or Intel execution. See the
 [loader metadata contract](../host/macos.md#native-release-loader-metadata).
 
@@ -1133,7 +1132,7 @@ actual 8,192-entry boundary and same-byte/tree mutation refusals. Five real
 compiled/SDK/fresh-app closures match the retained schema-two JSON bytes exactly,
 including Unicode/escaping and traversal order. The command is available for
 inspection; production wrappers retain their current implementation until
-compiler-capture and integration parity completes RT2.
+individual wrapper/native producer integration completes RT2.
 See the [closure contract](../host/macos.md#native-closure-admission).
 
 `NativeSignatureVerifier` now brackets strict all-architecture/nested Security
@@ -1153,7 +1152,7 @@ hashes. Four groups pass within all 58 tool tests using the actual admitted
 resources; absent fixture input explicitly excludes the two live-cohort groups.
 Release-built CLI bytes match the retained result and preserve custody around
 the actual offline SDK child. This closes native resource inspection only;
-Sparkle compiler capture and qualified wrapper cutover remain RT2 work.
+Qualified wrapper/native producer cutover remains RT2 work.
 Full model weights and the shipping native
 worker's root/network/generation/cancellation gates remain H4 requirements. See
 the [resource contract](content-pipeline.md#pinned-sdk-resource-custody-check).
@@ -1166,10 +1165,24 @@ schema-one bytes and preserves all original identities. Unsealed-resource,
 alias/mode/link/FIFO, original/copy/tree/namespace mutation, real entry and byte/
 path/depth limits, owned unzip deadline and cancellation after child exit refuse
 without cache repair or late success. Absent archive input excludes six live
-groups explicitly. Continue native compiler workspace capture and individual
-wrapper/consumer cutover, then RT3 preparation/CPU merge/package and H3-L3 updater
+groups explicitly. Continue individual wrapper/native producer cutover, then
+RT3 preparation/CPU merge/package and H3-L3 updater
 integration. See the
 [material contract](../host/macos.md#pinned-updater-material-and-private-cpu-derivation).
+
+`SwiftPMInputCapture` now binds the separately parsed target to strict recorded
+compiler workspace versions six/seven, the physical root package and pinned
+archive/cache. Eleven groups pass within all 76 tool tests with actual input:
+real schema seven, identified synthetic six, malformed-state preservation,
+strict JSON/key/type/identity/limit refusal, unsafe leaves/parents, late mutation,
+owned child refusal/read-only exit and cancellation. Repeated release-built
+CLI bytes match all 86 retained file facts with complete original custody
+unchanged; the full SDK still charges 152 entries against the producer's shared
+ceiling. Without the archive four actual artifact groups are excluded. These
+ports are ready for qualified individual wrapper/native producer integration;
+the shared aggregate, around-compiler join and RT3 packaging/updater work still
+need that acceptance. See the
+[capture contract](../host/macos.md#dependency-source-receipt-archive-handoff).
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

@@ -15,7 +15,7 @@ The two generation-resource live-cohort groups require
 the exact pinned JSON files. Without it they are explicitly skipped; synthetic
 refusal fixtures do not establish a passing real cohort.
 
-Six additional live SDK groups require
+Six framework groups and four compiler-capture groups require
 `FRAMESHIFT_SPARKLE_ARCHIVE=/absolute/path/to/the/pinned/archive.zip`. The synthetic
 archive-refusal group remains runnable without that input.
 
@@ -123,6 +123,25 @@ exits are 64/1 with fixed text. Failures retain scratch and any owned monitor;
 only completed verified scratch is removed. Cancellation after child success
 still refuses. This does not resolve/repair the compiler workspace, derive CPU
 code, re-sign, execute the SDK or establish upstream build/license/release trust.
+
+Capture the original SDK inputs recorded by the actual root-package compiler:
+
+```sh
+swift run frameshift-mac-release capture-swiftpm-inputs /absolute/path/to/repository
+```
+
+`SwiftPMInputCapture` uses POSIX `realpath` for the exact package identity and
+retains no-follow parent descriptors across a separately scratched SwiftPM
+manifest child. Strict bounded JSON admits only workspace versions six/seven,
+the fixed root `macos` artifact, URL/checksum/path and empty dependency/prebuilt
+sets. The manifest/state and original ZIP/cache custody remain unchanged; no
+fetch, resolve, compile, thin, sign or cache repair is performed. Success returns
+the existing ordered bare 86-file JSON array, or `[]` for no binary target;
+`inventoryEntries` charges all 152 SDK/archive members to the producer's shared
+ceiling. Output is below 64 KiB including LF. Fixed usage/admission exits are
+64/1. Incomplete scratch and owned child custody remain retained; cancellation
+never admits a late result. Existing compiler/receipt consumers remain on their
+current implementation until the individual integration cutover is qualified.
 
 See the [updater material contract](../../docs/host/macos.md#pinned-updater-material-and-private-cpu-derivation),
 [generation resource contract](../../docs/architecture/content-pipeline.md#pinned-sdk-resource-custody-check),

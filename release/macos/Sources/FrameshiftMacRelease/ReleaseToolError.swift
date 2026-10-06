@@ -25,6 +25,7 @@ public enum ReleaseToolError: Error, Equatable, Sendable, CustomStringConvertibl
   case invalidBundle
   case invalidSignature
   case admissionCancelled
+  case invalidSwiftPMInputs
 
   public var description: String {
     switch self {
@@ -49,6 +50,7 @@ public enum ReleaseToolError: Error, Equatable, Sendable, CustomStringConvertibl
     case .invalidBundle: "Mac bundle closure refused"
     case .invalidSignature: "Mac development signatures refused"
     case .admissionCancelled: "Mac release admission cancelled; retain incomplete output"
+    case .invalidSwiftPMInputs: "recorded updater compiler inputs unavailable, unsafe or changed"
     }
   }
 }

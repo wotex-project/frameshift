@@ -1394,6 +1394,24 @@ and retains incomplete custody when the final app omits the SDK or a cached
 header changes during the build. Full Frameshift host/runtime updater,
 native Intel/older OS, installed and production acceptance remain separate.
 
+**Native capture observation:** 2026-10-06, macOS 27.0.1 arm64 / Xcode 27.
+`SwiftPMInputCapture` evaluates the same protected manifest through an owned
+Apple child with separate scratch and validates the actual recorded artifact
+through the qualified native archive/cache reader. POSIX `realpath` matches the
+physical package location written by the compiler; in this experiment the
+Foundation URL normalizer retained the `/tmp` alias, causing exact location
+refusal until physical resolution was used. This is an observed path mismatch
+in this producer environment, not a general claim about Foundation filesystem
+behavior. Eleven groups pass within all 76 Mac release-tool tests using actual
+SDK/resource inputs. Real schema-seven and explicitly synthetic schema-six
+facts match; strict JSON and unsafe/changed input, retained malformed state,
+owned child deadline/output overflow and cancellation refuse without repair.
+Repeated release-built capture matches all 86 retained file-array bytes and
+preserves every original manifest/state/ZIP/framework identity. The full SDK
+still contributes 152 entries to the producer's aggregate ceiling. Native
+wrapper/around-compiler/shared-inventory joining, updater execution and installed
+qualification remain independent checks.
+
 The material consumer verifies archive size/hash before invoking extraction
 on those fixed admitted bytes, compares all 85 regular files, 57 directories and
 nine aliases with the actual SwiftPM framework, and preserves pre/post archive
