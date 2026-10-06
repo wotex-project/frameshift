@@ -6,6 +6,51 @@ import XCTest
 
 @MainActor
 final class SwiftUpdaterPreparationTests: XCTestCase {
+  func testExplicitSwiftBuildProfileKeepsV1DistinctAndRemovesOnlyItsObservedLoaderPaths()
+    async throws
+  {
+    for architecture: NativeBundleArchitecture in [.arm64, .intel, .universal] {
+      let fixture = try await SwiftUpdaterFixture(architecture: architecture, swiftBuild: true)
+      defer { fixture.remove() }
+      let before = try NativeBundleInspector.preparationSnapshot(fixture.app)
+      let original = try MachOInspector.inspect(fixture.shell)
+      do {
+        _ = try await DevelopmentBundlePreparer().prepareSwiftUpdater(
+          fixture.app, architecture: architecture)
+        XCTFail("v1 accepted the default Swift Build profile")
+      } catch { XCTAssertEqual(error as? ReleaseToolError, .invalidBundle) }
+      XCTAssertEqual(before, try NativeBundleInspector.preparationSnapshot(fixture.app))
+      let result = try await DevelopmentBundlePreparer().prepareSwiftBuildUpdater(
+        fixture.app, architecture: architecture)
+      for (left, right) in zip(original, try MachOInspector.inspect(fixture.shell)) {
+        XCTAssertEqual(
+          left.rpaths,
+          [
+            "/usr/lib/swift", "@loader_path", fixture.library + "swift-6.2/macosx",
+            "@executable_path/../Frameworks",
+          ])
+        XCTAssertEqual(right.rpaths, ["@executable_path/../Frameworks"])
+        XCTAssertEqual(left.dependencies, right.dependencies)
+        XCTAssertEqual(left.minimum, right.minimum)
+      }
+      XCTAssertEqual(
+        try result.observationBytes(),
+        try NativeSignatureVerifier.verifyDevelopmentBundle(
+          fixture.app, architecture: architecture
+        ).observationBytes())
+      XCTAssertEqual(before.links, try NativeBundleInspector.preparationSnapshot(fixture.app).links)
+    }
+    let fixture = try await SwiftUpdaterFixture()
+    defer { fixture.remove() }
+    let before = try NativeBundleInspector.preparationSnapshot(fixture.app)
+    do {
+      _ = try await DevelopmentBundlePreparer().prepareSwiftBuildUpdater(
+        fixture.app, architecture: .arm64)
+      XCTFail("v2 accepted v1 or guessed a missing loader path")
+    } catch { XCTAssertEqual(error as? ReleaseToolError, .invalidBundle) }
+    XCTAssertEqual(before, try NativeBundleInspector.preparationSnapshot(fixture.app))
+  }
+
   func testActualSwiftBothCPUAndUniversalProfilesFinishWithStrictClosureAndStoppedController()
     async throws
   {
@@ -158,7 +203,9 @@ private final class SwiftUpdaterFixture {
   let library: String
   let header = BundleSparkle.root + "/Versions/B/Headers/Sparkle.h"
 
-  init(architecture: NativeBundleArchitecture = .arm64, selected: Bool = true) async throws {
+  init(
+    architecture: NativeBundleArchitecture = .arm64, selected: Bool = true, swiftBuild: Bool = false
+  ) async throws {
     guard let archive = ProcessInfo.processInfo.environment["FRAMESHIFT_SPARKLE_ARCHIVE"] else {
       throw XCTSkip("FRAMESHIFT_SPARKLE_ARCHIVE is required for the actual Swift updater profile")
     }
@@ -207,7 +254,7 @@ private final class SwiftUpdaterFixture {
             "swiftc", "-parse-as-library", "-O", "-target", "\(arch)-apple-macos14.0", "-F",
             URL(fileURLWithPath: framework).deletingLastPathComponent().path, "-framework",
             "Sparkle",
-          ] + extra + [
+          ] + (swiftBuild ? ["-Xlinker", "-rpath", "-Xlinker", "@loader_path"] : []) + extra + [
             "-Xlinker", "-rpath", "-Xlinker", "@executable_path/../Frameworks", source, "-o",
             output,
           ])

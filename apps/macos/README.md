@@ -45,7 +45,12 @@ tracked product gates.
 
 `SignedUpdateChannel` admits typed initial updater defaults and separately pinned
 HTTPS/public-key identity without linking Sparkle or changing preferences.
-Development metadata contains no production feed or key. Actual SDK/controller,
+Development metadata contains no production feed or key. The separate
+`FrameshiftUpdater.NativeUpdater` target now owns the actual stopped pinned
+standard SDK controller and retains its delegate, current-state subscriptions
+and guarded relaunch handler. Six adapter groups and all 108 shell tests pass.
+A private sealed `frameshift-updater-probe` app verifies actual stored choices
+without starting the SDK; its isolated defaults domain is removed. Application
 user-choice/cycle/UI and installed update joins remain open under the
 [updater contract](../../docs/host/macos.md#native-updater-lifecycle).
 `FRAMESHIFT_PACKAGED_APP_FIXTURE=/absolute/path/to/development/Frameshift.app`

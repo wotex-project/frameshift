@@ -379,6 +379,41 @@ running Sparkle installer. Actual SDK startup/preferences/cycles, signed-feed
 runtime tamper, native UI, installed updates and production qualification remain
 independent H3-L3/R2 work.
 
+#### Stopped native SDK adapter
+
+`FrameshiftUpdater.NativeUpdater` owns the pinned standard SDK controller in a
+separate target; `FrameshiftShell`, the diagnostic IPC executable and
+`frameshiftctl` retain their SDK-free dependencies. Construct it stopped, retain
+its weakly referenced SDK delegate strongly and construct no controller when
+channel admission is absent. `startForQualifiedDistribution()` belongs only to
+the independently qualified release integration after application launch. It
+rechecks actual `Bundle.main` metadata against the admitted pins and uses the
+throwing SDK startup API; refusal/failure must not become readiness or an
+automatic retry. This API is not distribution/signing evidence. The development
+menu application does not invoke it.
+
+Refresh published readiness and the automatic-check choice from current SDK
+getters when KVO is delivered through common run-loop modes. Do not apply a
+queued historical boolean or infer readiness from session completion. The
+explicit automatic-check setter refuses while stopped or paused. Quiescence
+denies new checks while preserving an already retained installation handler.
+Keep a separate identity for each relaunch operation and each exit-observation
+attempt. A canceled operation or an earlier uncertain attempt cannot resume or
+alter a newer handler/retry. The SDK's cycle-finish delegate consumes the pending
+handler and cancels only its matching coordinator callback.
+
+Six adapter test groups pass alongside all 108 shell tests on macOS 27.0.1 arm64
+/ Xcode 27. They use the actual stopped Sparkle 2.10.0 controller, verify all four
+delegate selectors, pinned feed, missing channel/main-bundle refusal and guarded
+continuation/retry/cancellation/stale-delivery behavior. A separately compiled,
+privately sealed `FrameshiftUpdaterProbe` app with a unique fixture bundle ID
+seeds its own defaults domain and verifies the actual stopped controller preserves
+automatic checks/downloads, profiling, interval and stored feed override. It
+removes only that fixture domain. Strict CPU/nested seals and original SDK/probe
+bytes pass before/after. No updater is started by these fixtures. App Settings/
+menu integration, running SDK permission/KVO/cycles, signed-feed tamper and
+installed/production acceptance remain distinct work.
+
 #### Signed channel admission and initial defaults
 
 Before constructing a running updater, compare the app's `SUFeedURL` and
@@ -422,7 +457,7 @@ empty and overflowing ports to appear as absent; comparing the original
 canonical authority closes that observed ambiguity. All 102 Mac release fixture
 groups pass without exclusions, with fresh ad-hoc closure/seals, packaged IPC
 and actual core quit. No production feed/key or running updater is configured;
-SDK adapter, user-choice/cycle/UI/quit joins and runtime signed-feed tamper remain
+Running SDK user-choice/cycle/UI/quit joins and runtime signed-feed tamper remain
 H3-L3 work, alongside separate packaging/installed release gates.
 
 ## Discovery and pairing
@@ -978,6 +1013,27 @@ failure or external process interruption. Current development packaging does
 not include the SDK; source-bound candidate and updater joins remain open.
 
 #### Swift updater shell preparation profile
+
+The default Swift Build engine used by the application emits an additional
+`@loader_path` search entry and does not add an app Frameworks path for its
+indirect SDK dependency. SDK-bearing app/probe targets must explicitly link
+`@loader_path/../Frameworks`. Select the distinct
+`swift-updater-shell-preparation-v2` operation through
+`DevelopmentBundlePreparer.prepareSwiftBuildUpdater(_:architecture:)` or
+`prepare-swiftbuild-updater-bundle`. It accepts exactly the observed four ordered
+paths: `/usr/lib/swift`, `@loader_path`, the selected compiler's
+`usr/lib/swift-6.2/macosx`, and one owned Frameworks path. With the same exact
+Sparkle/Swift imports, remove the first three paths before unchanged strict
+inspection and sealing. Neither profile falls back to the other. A retained
+receipt is not relabeled as a new producer execution.
+
+The additional test group passes within all 96 release-tool tests with actual
+SDK/resource inputs and no exclusions. Real compiled arm64/Intel/universal
+fixtures preserve imports, deployment headers and aliases with strict final
+seals; v1/v2 reject each other's incoming shapes unchanged. The actual default
+Swift Build-produced application probe passes native CPU framework derivation,
+v2 preparation, complete signatures and stopped-controller execution. Intel
+execution, source-bound full-host packaging and installed update remain open.
 
 Select `swift-updater-shell-preparation-v1` explicitly through
 `DevelopmentBundlePreparer.prepareSwiftUpdater(_:architecture:)` and the

@@ -1502,6 +1502,39 @@ throwing Swift `try controller.updater.start()` API, avoiding the standard
 controller wrapper's delayed developer alert. No updater was started by that
 compile-only check.
 
+**Stopped adapter source/consumer review:** retrieved 2026-10-06 through `gh`,
+Sparkle commit `eef1a539a373c1f1a320624b1130fc5de7b2e100`.
+[`SPUStandardUpdaterController.m`](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUStandardUpdaterController.m#L47-L94)
+always uses the main bundle, accepts explicitly stopped construction and wraps
+startup failure in a delayed developer alert. The adapter instead retains its
+delegate and calls the throwing underlying startup API after actual main-bundle
+pin comparison. The
+[`SPUUpdater.m` cycle completion](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUUpdater.m#L791-L840)
+clears the driver and publishes SDK state before notifying the delegate; refresh
+current getters instead of inventing readiness or applying an older queued KVO
+value. Its [feed selection](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUUpdater.m#L1150-L1204)
+prioritizes the delegate over a stored override, allowing channel enforcement
+without deleting user preferences. The
+[`SPUUpdaterSettings.m` policy/getters](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUUpdaterSettings.m#L285-L360)
+distinguish stored choices from Info-only automatic-install policy. A stored
+profiling preference can override its initial default; construction must not
+claim that initial defaults reset later choices.
+
+Six actual-SDK adapter groups and all 108 shell tests pass. The disposable sealed
+probe preserves its unique seeded defaults domain while stopped, and native
+archive/cache/CPU/preparation/seal checks pass before/after execution. The
+application's default Swift Build engine produces system, executable-directory
+and selected `swift-6.2/macosx` search paths; its indirect SDK dependency requires
+an explicit owned Frameworks path. This observed fourth-path input qualifies
+the separate v2 producer, preserving v1 rather than widening retained receipt
+meaning. Both CPU/universal compiled fixtures and actual arm64 default-engine
+probe pass within all 96 tool tests. A Swift 6.4 compiler IR-generation crash
+occurred when the test invoked the optional throwing Objective-C protocol method
+through its existential; concrete delegate calls plus actual selector checks
+compile and pass. This is a local compiler observation, not an SDK runtime
+failure or a claim about other compiler releases. Running cycles, production
+pins, native UI and installed update remain independent checks.
+
 **Native CPU derivation source review:** 2026-10-06. Apple cctools commit
 `e0d56624eca2a76c2ace4c21850df9e666de4ca5`
 [`misc/lipo.c`, `thin_flag` branch](https://github.com/apple-oss-distributions/cctools/blob/e0d56624eca2a76c2ace4c21850df9e666de4ca5/misc/lipo.c#L586-L630)

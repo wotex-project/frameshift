@@ -136,7 +136,8 @@ public enum NativeBundleInspector {
   static func inspectWithCustody(
     _ input: String, architecture: NativeBundleArchitecture,
     observe: ((BundleInspectionPhase) throws -> Void)? = nil,
-    preparationToolchainLibrary: String? = nil, preparationSwiftUpdater: Bool = false
+    preparationToolchainLibrary: String? = nil, preparationSwiftUpdater: Bool = false,
+    preparationSwiftBuild: Bool = false
   ) throws -> (observation: NativeBundleObservation, custody: BundleSnapshot) {
     guard !input.isEmpty, !input.utf8.contains(0) else { throw ReleaseToolError.unsafeInput }
     let root = URL(fileURLWithPath: input).standardizedFileURL.path
@@ -203,7 +204,9 @@ public enum NativeBundleInspector {
     if preparationSwiftUpdater {
       guard let library = preparationToolchainLibrary, framework,
         let shell = byPath["Contents/MacOS/Frameshift"],
-        shell.slices.allSatisfy({ swiftUpdaterPaths($0, library: library) })
+        shell.slices.allSatisfy({
+          swiftUpdaterPaths($0, library: library, swiftBuild: preparationSwiftBuild)
+        })
       else { throw ReleaseToolError.invalidBundle }
     }
     for file in natives {
@@ -280,13 +283,18 @@ public enum NativeBundleInspector {
     try BundleInventory(root: root, budget: BundleBudget()).scan()
   }
 
-  private static func swiftUpdaterPaths(_ slice: MachOSlice, library: String) -> Bool {
+  private static func swiftUpdaterPaths(_ slice: MachOSlice, library: String, swiftBuild: Bool)
+    -> Bool
+  {
     guard slice.filetype == 2,
       slice.dependencies.contains("/usr/lib/swift/libswiftCore.dylib"),
       slice.dependencies.filter({ $0.hasPrefix("@rpath/") }) == [BundleSparkle.importPath],
       let own = slice.rpaths.last,
       ["@loader_path/../Frameworks", "@executable_path/../Frameworks"].contains(own)
     else { return false }
+    if swiftBuild {
+      return slice.rpaths == ["/usr/lib/swift", "@loader_path", library + "swift-6.2/macosx", own]
+    }
     return slice.rpaths == ["/usr/lib/swift", own]
       || slice.rpaths == ["/usr/lib/swift", library + "swift-6.2/macosx", own]
   }

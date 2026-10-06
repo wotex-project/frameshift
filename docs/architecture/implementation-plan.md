@@ -920,8 +920,8 @@ defaults. Five new groups pass within all 103 Swift tests/23 suites; the freshly
 packaged development metadata preserves no feed/key and passes the same gate
 with explicit in-memory fixture pins. All 102 Mac release fixture groups,
 fresh ad-hoc packaging, packaged IPC and actual core quit pass. This closes
-channel/default admission only. Implement the actual retained standard SDK
-adapter, user-choice/KVO/cycle state and signed-feed/UI/quit joins; use its
+channel/default admission only. The stopped SDK boundary described below still
+requires running user-choice/KVO/cycle and signed-feed/UI/quit joins; use its
 qualified explicit Swift loader preparation when joining the shipping app.
 Production and installed acceptance retain R2's independent gates.
 
@@ -932,8 +932,20 @@ cancellation/queued delivery and the cached-exit normal-quit race. All 102 Mac
 release fixture groups pass without exclusions. Final fresh native packaging,
 IPC/offline maintenance and both real AppKit/core probes pass with launcher exit,
 OTP PID removal and the shared continuation recorded before quit confirmation.
-This closes the coordinator boundary; actual SDK controller/preferences/cycles,
+This closes the coordinator boundary; running SDK preferences/cycles,
 runtime signed-feed tamper and native updater UI remain implementation work.
+
+The separate `FrameshiftUpdater.NativeUpdater` now retains an actual pinned
+stopped standard controller/delegate, publishes current SDK getters and retains
+one guarded installation handler with per-operation/per-observation identities.
+Six groups and all 108 shell tests pass. A uniquely identified private sealed
+app preserves actual stored automatic-check/download/profile/interval/feed
+choices while stopped. The default Swift Build engine's observed loader shape
+uses the explicitly qualified v2 preparation profile; an additional both-CPU/
+universal group passes within all 96 tool tests with actual inputs. Original
+v1/legacy rules and strict final admission are unchanged. Next join Settings/menu
+and the full app/package, then running SDK permission/KVO/cycles and signed-feed
+tamper. This stopped boundary establishes no production or installed update.
 
 Run these coherent native-shell slices alongside RT1–RT6; portable adapter,
 production credentials and unavailable Intel/older-OS hosts do not block the

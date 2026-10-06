@@ -9,7 +9,10 @@ let frameworkCommand = arguments.first == "verify-sparkle-framework"
 let resourceCommand = arguments.first == "verify-generation-resources"
 let signatureCommand = arguments.first == "verify-development-bundle"
 let swiftPreparationCommand = arguments.first == "prepare-swift-updater-bundle"
-let preparationCommand = arguments.first == "prepare-development-bundle" || swiftPreparationCommand
+let swiftBuildPreparationCommand = arguments.first == "prepare-swiftbuild-updater-bundle"
+let preparationCommand =
+  arguments.first == "prepare-development-bundle" || swiftPreparationCommand
+  || swiftBuildPreparationCommand
 let bundleCommand = arguments.first == "check-bundle" || signatureCommand
 guard
   (frameworkCommand && arguments.count == 3)
@@ -27,7 +30,7 @@ guard
 else {
   FileHandle.standardError.write(
     Data(
-      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP arm64|x86_64\n       frameshift-mac-release capture-swiftpm-inputs REPOSITORY\n"
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle|prepare-swiftbuild-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP arm64|x86_64\n       frameshift-mac-release capture-swiftpm-inputs REPOSITORY\n"
         .utf8)
   )
   exit(64)
@@ -46,10 +49,14 @@ do {
     FileHandle.standardOutput.write(bytes)
   } else if preparationCommand {
     let architecture = NativeBundleArchitecture(rawValue: arguments[2])!
-    let result =
-      swiftPreparationCommand
-      ? try await preparer.prepareSwiftUpdater(arguments[1], architecture: architecture)
-      : try await preparer.prepare(arguments[1], architecture: architecture)
+    let result: NativeBundleObservation
+    if swiftBuildPreparationCommand {
+      result = try await preparer.prepareSwiftBuildUpdater(arguments[1], architecture: architecture)
+    } else if swiftPreparationCommand {
+      result = try await preparer.prepareSwiftUpdater(arguments[1], architecture: architecture)
+    } else {
+      result = try await preparer.prepare(arguments[1], architecture: architecture)
+    }
     FileHandle.standardOutput.write(
       Data(
         "development bundle: \(result.architecture.rawValue), minimum macOS \(result.declaredMinimum)\n"

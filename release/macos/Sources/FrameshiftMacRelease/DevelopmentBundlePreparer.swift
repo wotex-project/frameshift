@@ -52,6 +52,18 @@ public actor DevelopmentBundlePreparer {
     try await prepare(input, architecture: architecture, swiftUpdater: true, observe: nil)
   }
 
+  /// Selects the explicit default Swift Build engine profile, preserving v1.
+  ///
+  /// `swift-updater-shell-preparation-v2` requires the observed four ordered
+  /// search paths, including the unused executable-directory path. It removes
+  /// that path and both Swift paths, preserving only the app's Frameworks path.
+  public func prepareSwiftBuildUpdater(_ input: String, architecture: NativeBundleArchitecture)
+    async throws -> NativeBundleObservation
+  {
+    try await prepare(
+      input, architecture: architecture, swiftUpdater: true, swiftBuild: true, observe: nil)
+  }
+
   /// Retains the exact last child without changing the refused job's outcome.
   public func retainUntilExitAfterRefusal() async -> OwnedChildStatus {
     guard let child else { return .notStarted }
@@ -67,6 +79,7 @@ public actor DevelopmentBundlePreparer {
   func prepare(
     _ input: String, architecture: NativeBundleArchitecture,
     seconds: Double = 300, childSeconds: Double = 15, swiftUpdater: Bool = false,
+    swiftBuild: Bool = false,
     observe: (@Sendable (DevelopmentPreparationPhase) throws -> Void)?
   ) async throws -> NativeBundleObservation {
     guard !attempted else { throw ReleaseToolError.childAlreadyStarted }
@@ -99,7 +112,7 @@ public actor DevelopmentBundlePreparer {
     }
     let initial = try NativeBundleInspector.inspectWithCustody(
       stage.root, architecture: architecture, preparationToolchainLibrary: library,
-      preparationSwiftUpdater: swiftUpdater)
+      preparationSwiftUpdater: swiftUpdater, preparationSwiftBuild: swiftBuild)
     var checkpoint = initial.custody
     let infoPath = "Contents/Info.plist"
     let initialInfo = try NativePropertyList.read(
@@ -114,7 +127,7 @@ public actor DevelopmentBundlePreparer {
           native.slices.flatMap(\.rpaths).filter {
             $0.hasPrefix(library)
               || (swiftUpdater && native.path == "Contents/MacOS/Frameshift"
-                && $0 == "/usr/lib/swift")
+                && ($0 == "/usr/lib/swift" || (swiftBuild && $0 == "@loader_path")))
           })
       ).sorted()
       guard !removable.isEmpty else { continue }
@@ -149,7 +162,7 @@ public actor DevelopmentBundlePreparer {
     guard prepared.custody == checkpoint else { throw ReleaseToolError.inputChanged }
     try DevelopmentTransition.checkNative(
       initial.observation.natives, prepared.observation.natives, removing: library,
-      removingSwiftSearch: swiftUpdater)
+      removingSwiftSearch: swiftUpdater, removingSwiftBuildLoader: swiftBuild)
     try observe?(.metadataPrepared)
     try check()
 
@@ -339,7 +352,8 @@ enum DevelopmentTransition {
   }
   static func checkNative(
     _ before: [NativeBundleObservation.Native], _ after: [NativeBundleObservation.Native],
-    removing library: String?, removingSwiftSearch: Bool = false
+    removing library: String?, removingSwiftSearch: Bool = false,
+    removingSwiftBuildLoader: Bool = false
   ) throws {
     guard before.count == after.count else { throw ReleaseToolError.inputChanged }
     for (old, new) in zip(before, after) {
@@ -350,7 +364,7 @@ enum DevelopmentTransition {
         let rpaths = left.rpaths.filter {
           !(library.map($0.hasPrefix) ?? false)
             && !(removingSwiftSearch && old.path == "Contents/MacOS/Frameshift"
-              && $0 == "/usr/lib/swift")
+              && ($0 == "/usr/lib/swift" || (removingSwiftBuildLoader && $0 == "@loader_path")))
         }
         guard left.arch == right.arch, left.filetype == right.filetype,
           left.minimum == right.minimum, left.dependencies == right.dependencies,

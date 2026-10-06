@@ -117,6 +117,23 @@ paths and the owned framework path, removes the first two and retains unchanged
 strict final inspection. Legacy preparation never falls back to this profile.
 Actual source/cache/CPU/package and shipping controller joins remain separate.
 
+The application default Swift Build engine uses the separately qualified
+`swift-updater-shell-preparation-v2` operation:
+`prepare-swiftbuild-updater-bundle PRIVATE_APP CPU` or
+`DevelopmentBundlePreparer.prepareSwiftBuildUpdater(_:architecture:)`. Its
+incoming paths are exactly Swift system, executable directory, selected
+`swift-6.2/macosx`, then the explicitly linked app Frameworks path. It removes
+the first three and preserves imports/deployment headers before strict final
+admission. Both profiles refuse the other's shape; no implicit fallback or
+retained-receipt relabeling occurs.
+
+`native-updater-fixture.mjs ARCHIVE CACHE_FRAMEWORK PROBE_EXECUTABLE` joins the
+actual release-built `frameshift-updater-probe` to original archive/cache
+admission, private CPU staging, v2 preparation and strict seals. Its disposable
+unique defaults domain checks stopped SDK preference preservation and is removed
+by the probe. Failure retains private work. It does not start/check an updater,
+use production pins or prove installed behavior.
+
 Inspect the exact private generation SDK descriptors with:
 
 ```sh
