@@ -3,23 +3,33 @@ import Foundation
 import FrameshiftMacRelease
 
 let arguments = Array(CommandLine.arguments.dropFirst())
+let resourceCommand = arguments.first == "verify-generation-resources"
 let signatureCommand = arguments.first == "verify-development-bundle"
 let bundleCommand = arguments.first == "check-bundle" || signatureCommand
 guard
   (bundleCommand && arguments.count == 3
     && NativeBundleArchitecture(rawValue: arguments[2]) != nil)
     || (arguments.count == 2
-      && ["verify-sparkle-archive", "verify-sparkle-plist", "inspect-macho"].contains(arguments[0]))
+      && [
+        "verify-sparkle-archive", "verify-sparkle-plist", "inspect-macho",
+        "verify-generation-resources",
+      ]
+      .contains(arguments[0]))
 else {
   FileHandle.standardError.write(
     Data(
-      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle] APP arm64|x86_64|universal\n"
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle] APP arm64|x86_64|universal\n"
         .utf8)
   )
   exit(64)
 }
 do {
-  if arguments[0] == "verify-sparkle-archive" {
+  if resourceCommand {
+    var bytes = try PinnedGenerationResources.verify(arguments[1])
+    guard bytes.count < 64 * 1024 else { throw ReleaseToolError.inputLimit }
+    bytes.append(10)
+    FileHandle.standardOutput.write(bytes)
+  } else if arguments[0] == "verify-sparkle-archive" {
     try PinnedSparkleArchive.verify(arguments[1])
     FileHandle.standardOutput.write(
       Data("Sparkle \(PinnedSparkleArchive.version) archive verified\n".utf8))
@@ -47,6 +57,11 @@ do {
     FileHandle.standardOutput.write(bytes)
   }
 } catch {
+  if resourceCommand {
+    FileHandle.standardError.write(
+      Data("generation SDK resources: unavailable, unsafe or changed custody\n".utf8))
+    exit(1)
+  }
   if bundleCommand {
     let message =
       signatureCommand ? "Mac development signatures refused" : "Mac bundle closure refused"

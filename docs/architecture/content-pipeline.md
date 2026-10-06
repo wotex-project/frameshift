@@ -164,6 +164,34 @@ changed/special/bounded-input and mutation-during-read refusals. The actual-reso
 positive fixture has an explicit local input requirement; missing input is an
 excluded live-cohort check, never a synthetic passing result.
 
+The native replacement is `PinnedGenerationResources.verify(_:)` in the separate
+Mac release-tool package, exposed as
+`frameshift-mac-release verify-generation-resources RESOURCE_ROOT`. Keep the
+fixed schema-one native facts and their exact JSON member/number/string order;
+no caller data belongs in this observation. Open the root with a no-follow,
+nonblocking directory descriptor, stream a bounded two-name inventory and refuse
+another entry, preflight
+both named files before hashing, and keep the directory descriptor through the
+final repeated namespace/identity check. Reuse protected leaf hashing and retain
+full device/inode/mode/owner/link/size/nanosecond time custody. A sixty-second
+monotonic job budget is checked between operations; it cannot interrupt a
+blocked filesystem syscall. Output is the existing observation plus LF, bounded
+to 64 KiB. Usage/admission exits remain 64/1 with the existing fixed refusal text.
+Switch the wrapper only after exact actual-resource bytes and refusal/custody
+parity pass. This does not activate the SDK/provider or replace weight admission.
+
+Four `PinnedGenerationResourcesTests` groups pass within all 58 release-tool
+tests on macOS 27.0.1 arm64 / Xcode 27, with actual resource input and no
+exclusions. Unsafe namespace/modes/aliases/links/FIFOs/directories refuse before
+hashing; wrong digest/size, same-byte rewrite, replacement, directory mode and
+added empty names refuse without repair or descriptor leaks. The release-built
+command reproduces the retained result bytes exactly and preserves resource
+custody around the actual offline SDK child: 313 catalog entries, both selected
+models resolved without download, zero observed URLSession attempts and an empty
+private model root. Fixed CLI 64/1 refusals pass. Without the explicit fixture
+input, the two live-resource groups are reported as exclusions. The production
+wrapper and full-weight/shipping-worker qualification remain separate gates.
+
 ### Composition recipe
 
 Records target frame/profile, crop rectangle, focal point, rotation, mat-safe

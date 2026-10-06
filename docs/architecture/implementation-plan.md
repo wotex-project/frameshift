@@ -1146,6 +1146,17 @@ This completes the local development-signature port, not full RT2 or production
 trust/installed acceptance. See the
 [signature contract](../host/macos.md#native-release-development-signatures).
 
+`PinnedGenerationResources` now ports the separate generation SDK's two exact
+private JSON inputs with a bounded directory descriptor and protected leaf
+hashes. Four groups pass within all 58 tool tests using the actual admitted
+resources; absent fixture input explicitly excludes the two live-cohort groups.
+Release-built CLI bytes match the retained result and preserve custody around
+the actual offline SDK child. This closes native resource inspection only;
+Sparkle's complete framework/archive/cache/compiler-capture port and qualified
+wrapper cutover remain RT2 work. Full model weights and the shipping native
+worker's root/network/generation/cancellation gates remain H4 requirements. See
+the [resource contract](content-pipeline.md#pinned-sdk-resource-custody-check).
+
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the
 owner they exercise instead of creating another generic release engine. RT2

@@ -10,6 +10,11 @@ Run its independent formatter, package tests and release build with:
 ./scripts/check mac-release
 ```
 
+The two generation-resource live-cohort groups require
+`FRAMESHIFT_SDK_RESOURCES_FIXTURE=/absolute/path/to/private/resources` containing
+the exact pinned JSON files. Without it they are explicitly skipped; synthetic
+refusal fixtures do not establish a passing real cohort.
+
 From this directory, independently verify the exact pinned Sparkle 2.10.0 ZIP:
 
 ```sh
@@ -84,7 +89,23 @@ fixed text. It performs no signing, repair, candidate execution or network
 trust evaluation. Unsealed SDK bytes still need exact archive/resource admission;
 static seals do not establish Developer ID, notarization or installed behavior.
 
-See the [signature contract](../../docs/host/macos.md#native-release-development-signatures),
+Inspect the exact private generation SDK descriptors with:
+
+```sh
+swift run frameshift-mac-release verify-generation-resources /absolute/path/to/private/resources
+```
+
+`PinnedGenerationResources` admits only current nonroot-user 0700 directory
+custody and the two single-link 0600 pinned files. It preflights both names/files
+before protected hashes and repeats complete descriptor/namespace custody.
+The fixed schema-one observation preserves existing bytes, includes no private
+path and is bounded to 64 KiB including LF; usage/admission exits are 64/1.
+No SDK/model/network operation or repair occurs. The existing wrapper remains on
+its current implementation until its qualified cutover; exact weight bytes and
+shipping-worker qualification are independent.
+
+See the [generation resource contract](../../docs/architecture/content-pipeline.md#pinned-sdk-resource-custody-check),
+[signature contract](../../docs/host/macos.md#native-release-development-signatures),
 [closure contract](../../docs/host/macos.md#native-closure-admission),
 [loader metadata contract](../../docs/host/macos.md#native-release-loader-metadata),
 [plist contract](../../docs/host/macos.md#native-release-property-lists),
