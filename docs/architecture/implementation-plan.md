@@ -83,6 +83,13 @@ metadata cannot relabel existing bytes, and successful display does not silently
 repair degraded storage. Persistent synthetic fixtures exercise those paths;
 exact MCU storage/transport and measured display recovery remain required.
 
+Receiver integrity fixtures additionally verify exact recorded length and digest
+at boot and before cache/activation completion. Corrupt, missing, grown,
+truncated and nonregular files leave recovery available with protected pointers
+and degraded health; replay never silently repairs them. A different verified
+asset may display without clearing the fault. These are bounded software checks,
+not flash durability, concurrent hostile filesystem or panel-state evidence.
+
 M1-01/M1-02 still need received module/revision and flash capacity, complete
 power/mechanical parts, a pinned isolated C/ESP-IDF build, mTLS/key custody,
 recoverable app/asset partitions and a bounded physical adapter. The reviewed

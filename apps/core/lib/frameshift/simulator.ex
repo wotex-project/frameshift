@@ -26,6 +26,10 @@ defmodule Frameshift.Simulator do
   activation and receiver-owned dwell. `set_faults/2` injects contact, storage,
   transfer, display and power interruptions. Restart loads checksummed artwork
   state rather than treating an interrupted display as newly completed.
+  Boot also checks each retained object's exact byte count and SHA-256 identity.
+  Missing, corrupt or nonregular objects retain their metadata and artwork
+  pointers in recovering/degraded state. Cache and activation checks reverify
+  bytes before claiming completion; they do not repair or replace corrupt files.
 
   Pairing is separately modeled with a physical-only window and fail-closed
   single-use authority; an older artwork slot cannot restore a consumed secret.
@@ -174,8 +178,8 @@ defmodule Frameshift.Simulator do
              Keyword.get(options, :pairing_secret)
            ),
          {:ok, thing_source} <- validate_thing(Keyword.get(options, :thing_source), capabilities),
-         :ok <- verify_assets(state),
-         {:ok, interrupted} <- recover_interrupted(state),
+         {:ok, verified} <- recover_assets(state),
+         {:ok, interrupted} <- recover_interrupted(verified),
          {:ok, recovered} <- recover_profiles(interrupted) do
       {:ok, %{recovered | pairing: pairing, thing_source: thing_source}}
     else
@@ -388,7 +392,7 @@ defmodule Frameshift.Simulator do
 
   defp recover_profiles(state) do
     if Enum.any?(state.assets, fn {digest, asset} ->
-         not asset_compatible?(state, digest, asset["profileId"])
+         not asset_profile_compatible?(state, digest, asset["profileId"])
        end) do
       recovered = %{
         state
@@ -414,12 +418,30 @@ defmodule Frameshift.Simulator do
     end
   end
 
-  defp verify_assets(state) do
-    case Enum.find(Map.keys(state.assets), fn digest ->
-           not File.regular?(ContentStore.object_path(state.data_dir, digest))
-         end) do
-      nil -> :ok
-      digest -> {:error, {:asset_missing, digest}}
+  defp recover_assets(state) do
+    if Enum.any?(Map.keys(state.assets), &(not asset_verified?(state, &1))) do
+      recovered = %{
+        state
+        | storage_degraded: true,
+          display_state: "recovering",
+          last_error: problem("asset-corrupt", "Stored artwork requires integrity recovery")
+      }
+
+      persist_recovery(state, recovered)
+    else
+      {:ok, state}
+    end
+  end
+
+  defp asset_verified?(state, digest) do
+    with %{"byteCount" => byte_count} when is_integer(byte_count) and byte_count > 0 <-
+           state.assets[digest],
+         {:ok, %File.Stat{type: :regular, size: ^byte_count}} <-
+           File.lstat(ContentStore.object_path(state.data_dir, digest)),
+         {:ok, bytes} <- ContentStore.read(state.data_dir, digest, byte_count) do
+      byte_size(bytes) == byte_count
+    else
+      _ -> false
     end
   end
 
@@ -468,6 +490,10 @@ defmodule Frameshift.Simulator do
   end
 
   defp asset_compatible?(state, digest, profile_id) do
+    asset_profile_compatible?(state, digest, profile_id) and asset_verified?(state, digest)
+  end
+
+  defp asset_profile_compatible?(state, digest, profile_id) do
     with %{"profileId" => ^profile_id, "profileDigest" => stored_digest} <- state.assets[digest],
          {:ok, _} <- find_profile(state, profile_id),
          {:ok, ^stored_digest} <- Profile.digest(state.capabilities, profile_id) do
@@ -478,9 +504,10 @@ defmodule Frameshift.Simulator do
   end
 
   defp validate_existing_metadata(state, digest, profile_id) do
-    if not Map.has_key?(state.assets, digest) or asset_compatible?(state, digest, profile_id),
-      do: :ok,
-      else: {:error, :asset_metadata_conflict}
+    if not Map.has_key?(state.assets, digest) or
+         asset_profile_compatible?(state, digest, profile_id),
+       do: :ok,
+       else: {:error, :asset_metadata_conflict}
   end
 
   defp record_metadata_conflict(state) do

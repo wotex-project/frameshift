@@ -485,6 +485,16 @@ text, or artwork bytes.
 - A bistable frame does not refresh merely because it rebooted if the retained
   panel image and confirmed metadata are consistent.
 
+Missing, wrong-length, corrupt or nonregular cached objects cannot authorize
+activation or a fresh displayed acknowledgement, including the cached outbox
+shortcut. Verify exact recorded length and SHA-256 within a bounded read before
+using cached bytes. Boot must remain available for recovery, retain protected
+metadata/pointers and any surviving bytes, and report recovering display state
+with degraded storage health. Do not delete, overwrite or manufacture content
+for a recorded digest. Successful display of a different verified asset does
+not establish repair of corrupt storage. The receiver's physical completion
+signal and flash/power-loss qualification remain independent of these checks.
+
 ## 15. Compliance tests
 
 A conforming v0.1 implementation must demonstrate:
