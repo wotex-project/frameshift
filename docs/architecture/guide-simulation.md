@@ -75,6 +75,17 @@ and avoid framing/inline script. Versioned release download links appear only
 when a checked release manifest and signed artifact channel exist; until then
 the guide states that installation artifacts are unavailable.
 
+Publish the lab at the canonical `frameshift.wotex.io` site with `/download/`
+and generated documentation under the
+[installation/publication contract](install-and-guide.md). Retain static
+`/docs/vX.Y.Z/` output and clearly label `/docs/dev/`; the latest docs entry point
+cannot present development content as a released install. GitHub Actions builds
+and checks these assets before Cloudflare deployment. Integrating the workbench
+must preserve documentation/download routes and the lab's offline behavior.
+The local site builder joins the guide, Markdown and API documentation and
+checks retained versions. Public hostname configuration and deployment remain
+open; Wrangler assets configuration alone does not establish publication.
+
 Acceptance covers the two compiled Gleam targets, a local HTTP offline lab
 exercise, keyboard and small-screen inspection, safety refusals, and build
 reproducibility. Physical and installed claims need their separate gates. See

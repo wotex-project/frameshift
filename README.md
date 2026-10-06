@@ -127,11 +127,24 @@ from completed evidence.
 
 ## Installation direction
 
-The first public guide is planned for `frameshift.wotex.io`. It will lead from
-frame choice through a browser simulation that runs locally after loading to a
-signed Mac download or Homebrew Cask, with separate Ubuntu and Pi-host
-instructions. The browser simulation cannot pair a physical frame; installed
-native software performs pairing and delivery. See the
+The canonical public home is `frameshift.wotex.io`: the guide and browser lab
+at `/`, installation instructions at `/download/`, latest qualified release
+documentation at `/docs/`, retained release docs at `/docs/vX.Y.Z/`, and clearly
+labelled unreleased docs at `/docs/dev/`. An optional `frameshift.se` domain
+can redirect to that site.
+
+GitHub Actions will build self-contained signed/notarized universal Mac DMGs
+for direct download, a project Homebrew Cask and Sparkle updates, and Ubuntu
+amd64/arm64 DEBs for the headless service and `frameshiftctl`. Pi 5 Ubuntu
+Server uses the arm64 package; a Nerves image is a separate appliance target.
+The guide and generated Markdown/ExDoc pages deploy to Cloudflare Workers
+Static Assets; versioned binary downloads use the public GitHub Releases
+channel. Installer and docs publication workflows are planned, not implemented.
+Check CI, manual Mac/Ubuntu candidate workflows and local development
+app/DMG/DEB packaging exist; they grant no public release authority.
+
+The browser simulation runs locally after loading; installed native software
+performs physical pairing and delivery. See the
 [installation and guide contract](docs/architecture/install-and-guide.md) and
 [Linux host specification](docs/host/linux.md). No public download is available
 until signing, packaging, licensing and installed-release gates pass.

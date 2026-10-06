@@ -28,6 +28,12 @@ that each corresponding regular file has the recorded size and digest. It
 rejects symlinks and never follows a path outside the supplied artifact
 directory.
 
+The 8 GiB parser limit is not an artifact-hosting allowance. The GitHub Releases
+publication adapter must enforce its stricter per-file limit (under 2 GiB in
+the official documentation checked on 2026-10-04). Oversized artifacts refuse
+publication; the release cannot silently split or replace an archive while
+retaining its declared identity.
+
 ## Release tooling ownership and migration
 
 Elixir owns portable release policy: canonical manifests and channel material,
@@ -246,6 +252,36 @@ during reads, strict fingerprint grammar, private-key modes and sanitized CLI
 failure. Test FIFOs in bounded child processes so a regression cannot hang the
 verification lane. Public readback and native installed/signing evidence remain
 independent.
+
+## Workflow and documentation consumers
+
+The [installation contract](install-and-guide.md) owns the tagged GitHub Actions
+release workflow, public archive readback and Cloudflare site publication.
+The manifest is generated after final signing/notarization/packaging; later
+archive changes invalidate it. Jobs verify transferred archive hashes and the
+separately pinned trust root. A rerun must reconcile already-published exact
+bytes and refuse a moved tag or changed archive under an existing version.
+
+The direct Mac download, project Homebrew Cask and signed Sparkle feed identify
+the same universal DMG and supported app version. Ubuntu direct links identify
+the corresponding self-contained amd64/arm64 DEBs; a signed APT repository is
+a later channel. Neither update metadata nor mutable `latest` links replace
+this manifest's immutable artifact URLs.
+
+At `frameshift.wotex.io`, `/download/` and the latest qualified docs entry point
+`/docs/` advance only after signed local/public archive verification and the
+claimed platform's release gates. Retained `/docs/vX.Y.Z/` pages record the same
+tag/source commit used to build the artifacts. That source/build record is
+separate from the fixed manifest v1 schema; do not invent extra manifest fields
+or treat a digest as source provenance. `/docs/dev/` uses a visible unreleased
+commit label and cannot supply customer download links from synthetic fixtures.
+
+Public GitHub assets, Cask/Sparkle metadata and the site have separate external
+publication steps. Record which completed, halt promotion on failure and
+reconcile before retry; the workflow cannot claim atomic publication across
+those services. Preserve the last good download/docs site until its replacement
+passes. Manifest fixture checks currently exist; production release and docs
+publication workflows remain required work rather than passing evidence.
 
 ## Frozen source inputs
 
@@ -889,4 +925,5 @@ private key and a pinned public-key fingerprint in the publication pipeline.
 
 Primary evidence: [Node Ed25519 sign and verify](https://nodejs.org/api/crypto.html),
 [Sparkle distribution and independent signatures](https://sparkle-project.org/documentation/),
-and [Homebrew Cask digest policy](https://docs.brew.sh/Cask-Cookbook).
+[Homebrew Cask digest policy](https://docs.brew.sh/Cask-Cookbook), and
+[GitHub Releases asset limits](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases).

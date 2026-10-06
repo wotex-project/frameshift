@@ -10,6 +10,13 @@ identifies the producer contracts and implemented exports. [CI-01–CI-08](conju
 defines identity migration and producer ownership. Existing site presentations
 are implementation evidence only where the verification map names a test.
 
+The [installation and publication contract](install-and-guide.md) owns the
+canonical `frameshift.wotex.io` hostname, `/download/` and versioned Markdown/API
+docs. Workbench deployment preserves those static routes and the offline lab;
+GitHub Actions/Cloudflare publication does not move Phoenix/Ash or its database
+into the static hosting runtime. A functioning catalog is not installer or docs
+publication evidence.
+
 ## Product and output contract
 
 Frameshift is the first modular reference product and integration proof of

@@ -217,12 +217,23 @@ Other formats and installed target closure require separate qualification.
 
 - **State:** accepted delivery design; public release evidence remains open
 - **Decision:** Publish an accessible static installation guide first at
-  `frameshift.wotex.io`. Mac direct download, Homebrew Cask, and Sparkle consume
-  one signed and notarized release artifact. Ubuntu uses architecture-specific
-  packages authenticated by a signed release manifest or APT repository.
+  `frameshift.wotex.io`, with installation at `/download/`, latest qualified
+  release docs at `/docs/`, retained `/docs/vX.Y.Z/` and labelled unreleased
+  `/docs/dev/`. Generate Markdown/ExDoc pages from maintained source and deploy
+  them with the guide through Cloudflare Workers Static Assets. GitHub Actions
+  builds installers from exact version tags and publishes verified versioned
+  assets through GitHub Releases. Mac direct download, a project Homebrew Cask,
+  and Sparkle consume one self-contained universal signed/notarized DMG.
+  Ubuntu amd64/arm64 uses self-contained DEBs for a headless service and CLI,
+  authenticated by a signed release manifest; signed APT follows direct-package
+  acceptance. Pi 5 Ubuntu Server uses arm64; Nerves is a separate image.
   Source visibility and public artifact distribution are separate decisions;
   this work does not change repository visibility.
-- **Consequence:** `frameshift.se` is optional. No public release claim or
+- **Consequence:** `frameshift.se` is an optional redirect. Development docs can
+  publish independently; stable docs and install channels advance only after
+  public artifact readback and version/source agreement. Publication workflows
+  remain unimplemented; local checks/packaging are not a published release.
+  No public release claim or
   install command precedes signing, licensing, notices, clean-install tests,
   and manifest/digest verification.
 - **Detail:** [Installation and interactive guide](../architecture/install-and-guide.md)

@@ -179,11 +179,16 @@ queued, current, previous-known-good, or inside the trash retention window.
 
 ## Background operation
 
-The first distribution target is one Developer ID signed, hardened-runtime,
-notarized, stapled DMG. Direct download, Homebrew Cask, and Sparkle updates
-consume that same versioned artifact under the
+The first distribution target is one self-contained universal DMG containing
+the Developer ID signed, hardened-runtime, notarized app, with stapled
+notarization. GitHub Actions builds the app/runtime/NIF/renderer closure for
+Intel and Apple Silicon from the exact release tag and signs the final app and
+DMG. Direct download at `frameshift.wotex.io/download/`, a project-tap Homebrew
+Cask, and Sparkle updates consume that same versioned artifact under the
 [installation contract](../architecture/install-and-guide.md). The current
-development bundle does not satisfy these release claims. App Store
+development bundle does not satisfy these release claims; production packaging
+and release workflows remain open. Customers install the bundled runtime
+without language/build tools. App Store
 constraints are a separate product decision.
 
 Use Apple's `SMAppService` to register a bundled per-user login item or launch

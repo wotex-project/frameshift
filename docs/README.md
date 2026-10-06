@@ -36,6 +36,22 @@ The [verification map](architecture/verification.md) records what has actually
 passed. Missing producer exports leave the dependent profile unavailable;
 they do not stop independent native, host or frame-profile work.
 
+## Published documentation
+
+The canonical site is `frameshift.wotex.io`. The required publication layout is
+`/docs/` for the latest qualified release, `/docs/vX.Y.Z/` for retained release
+documentation and `/docs/dev/` for clearly labelled unreleased content. Before
+the first release, the docs entry point states that no release is available.
+`/download/` lists only qualified platform artifacts. Generate site and API
+pages from this maintained corpus and source documentation; publication does
+not introduce a second documentation tree or require a Hex package release.
+
+The [installation and publication contract](architecture/install-and-guide.md)
+owns URL/version behavior, GitHub Actions installer/docs workflows, Cloudflare
+hosting and failure recovery. These are specified requirements; docs generation
+exists, but public publication and installer workflows remain open in the
+[verification map](architecture/verification.md).
+
 ## Decisions
 
 - [Decision ledger](decisions/README.md)
@@ -94,6 +110,8 @@ they do not stop independent native, host or frame-profile work.
 - [Consolidated composition research, current producer exports and specification plan](research/conjunct-adoption.md)
 - [Hardware platforms and power feasibility](research/hardware-platforms.md)
 - [Software stack](research/software-stack.md)
+- [Native Swift lifecycle guidance and CodexBar/helper review](research/software-stack.md#native-shell-lifecycle-practices)
+  and [H3-L1–H3-L3 follow-through](architecture/implementation-plan.md#native-shell-lifecycle-follow-through)
 - [Release tooling language research](research/software-stack.md#release-tooling-language-boundary)
   and [migration sequence](architecture/implementation-plan.md#release-tooling-migration)
 - [Technical build decisions, producer seams and model qualification](research/build-platform-decisions.md)

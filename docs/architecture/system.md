@@ -15,6 +15,12 @@ macOS is the first shell; Linux and Raspberry Pi-class Linux hosts reuse the
 same core and frame semantics through platform adapters.
 The [installation guide](install-and-guide.md) retains a static/offline surface
 and bounded browser simulation outside the authenticated frame-command path.
+The canonical `frameshift.wotex.io` site serves `/download/`, released docs at
+`/docs/` and `/docs/vX.Y.Z/`, and labelled development docs at `/docs/dev/`.
+GitHub Actions builds versioned self-contained installers; verified release
+archives are distributed through GitHub Releases and generated guide/docs
+assets through Cloudflare Workers Static Assets. These publication workflows
+remain planned work under the installation contract.
 The companion [composition workbench](build-platform.md) uses Phoenix/Ash and
 phoenix-assets/Svelte 5. Frameshift supplies a product bundle to the planned
 Conjunct engine and demonstrates exact composition and visual instructions.

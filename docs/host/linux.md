@@ -20,6 +20,21 @@ interface.
 
 ## Ubuntu host
 
+GitHub Actions builds architecture-specific, self-contained `.deb` packages
+from the exact release tag/commit with the pinned toolchains and locked
+dependencies. Customers install the packaged runtime and `frameshiftctl`
+without an Elixir/Erlang/Zig development environment. The initial Linux
+interface is the headless service and local CLI. Publish only exact qualified
+Ubuntu versions and architectures at `frameshift.wotex.io/download/`, with
+matching retained release docs and signed-manifest-verified GitHub Release
+downloads. A signed APT repository follows direct-package install/update and
+recovery acceptance. Pi 5 Ubuntu Server uses the qualified arm64 package;
+other distributions and graphical shells require separate qualification.
+The [installation and workflow contract](../architecture/install-and-guide.md)
+defines version identity and failed-publication recovery. Development DEB
+assembly and container lifecycle checks are implemented;
+stable-tag build and publication workflows remain required.
+
 - Package target-specific OTP and Exqlite releases plus the native Zig raster
   worker; verify all NIF/shared-library dependencies on clean supported images.
 - Run as an unprivileged dedicated service identity through systemd, with

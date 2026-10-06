@@ -177,6 +177,16 @@ release and renderer inside the macOS app; Developer ID signing, hardened
 runtime, notarization, and Service Management registration remain distribution
 gates.
 
+The [installation/workflow contract](../../docs/architecture/install-and-guide.md)
+packages this runtime and its native dependencies inside a universal Mac app
+or target-specific Ubuntu amd64/arm64 DEB, without customer build tools. Linux
+starts as a headless systemd service with `frameshiftctl`; Pi 5 Ubuntu Server
+uses the arm64 package. Development Linux DEB assembly and candidate build
+workflows exist; production installer publication and installed-release
+qualification remain open. The canonical site hosts generated documentation at
+`frameshift.wotex.io/docs/`, with exact release versions and separate labelled
+development docs.
+
 The Mac shell bridges allowlisted structured core logs to Apple unified
 logging. The core keeps a rotating, sanitized error fallback under
 `<data-dir>/diagnostics/core-fallback.log`. Neither log sink is the durable

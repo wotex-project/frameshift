@@ -43,6 +43,13 @@ exact target previews, live direct push interoperability, Vision metadata,
 Developer ID signing, hardened runtime, and notarization remain
 tracked product gates.
 
+The [installation contract](../../docs/architecture/install-and-guide.md) requires
+GitHub Actions to build a self-contained universal signed/notarized DMG from an
+exact release tag. Direct download at `frameshift.wotex.io/download/`, a project
+Homebrew Cask and Sparkle updates use the same archive. Customers need no
+Elixir/Erlang/Zig toolchain. The current script builds an ad-hoc development
+`.app`; production DMG generation and release publication remain unimplemented.
+
 `SignedUpdateChannel` admits typed initial updater defaults and separately pinned
 HTTPS/public-key identity without linking Sparkle or changing preferences.
 Development metadata contains no production feed or key. The separate

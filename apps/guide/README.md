@@ -17,10 +17,10 @@ test.
 
 `apps/guide/wrangler.jsonc` points Workers Static Assets at `apps/guide/dist`. Its
 `workers_dev` setting is disabled. A domain owner must separately configure
-the intended hostname and public release artifact channel before any
-deployment. The guide contains no live download links until a checked release
-manifest and signed artifacts exist. The source repository's visibility is
-not part of this deployment path.
+the canonical `frameshift.wotex.io` hostname and public release artifact
+channel before any deployment. The guide contains no live download links until
+a checked release manifest and signed artifacts exist. The source repository's
+visibility is not part of this deployment path.
 
 For a release-mode build, set all five `FRAMESHIFT_RELEASE_MANIFEST`,
 `FRAMESHIFT_RELEASE_SIGNATURE`, `FRAMESHIFT_RELEASE_PUBLIC_KEY`,
@@ -29,6 +29,22 @@ before `./scripts/check guide`. A missing or invalid input refuses the build;
 the trust file comes from the owner-approved release configuration. The site
 publisher must separately fetch each public URL and verify its bytes before
 deployment.
+
+The [installation/publication contract](../../docs/architecture/install-and-guide.md)
+requires the combined site to serve the guide/lab at `/`, qualified installation
+instructions at `/download/`, latest released docs at `/docs/`, retained docs
+at `/docs/vX.Y.Z/` and labelled unreleased docs at `/docs/dev/`. Generate Markdown
+and ExDoc pages from maintained source, preserving nested links, search and API
+anchors. GitHub Actions publishes development docs from an exact `main` commit
+and released docs from the verified installer's version/commit. It must retain
+old release directories and keep the last verified site when publication fails.
+An optional `frameshift.se` domain redirects to this canonical host.
+
+The guide builder produces the guide/lab only; the local site builder below
+joins documentation and an explicit no-release download page. Public
+release/docs deployment workflows remain planned work;
+`wrangler.jsonc` alone does not configure or deploy the public hostname. Installer
+archives belong to the versioned public GitHub Releases channel.
 
 For the local combined documentation site, run `./scripts/check docs` or
 `./scripts/check docs-browser` from the repository root. The first renders all

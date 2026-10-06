@@ -82,6 +82,12 @@ after their consumers move. Existing commands and test results remain current
 until cutover. The [research](../docs/research/software-stack.md#release-tooling-language-boundary)
 records source evidence, alternatives and the OTP descriptor limitation.
 
+The [external wrapper/library review](../docs/research/software-stack.md#external-release-wrapper-and-function-library)
+classifies CodexBar's `agent-scripts` helper as shared personal automation.
+Its credential/keychain setup, Python/Node helpers and Git publication effects
+are not dependencies of this toolchain. Follow the existing typed owners and
+immutable publication/recovery contract; keep shell entry points thin.
+
 ## Local Mac update metadata
 
 `./scripts/derive-macos-channels MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR RELEASE_TRUST MINIMUM_OS SPARKLE_SIGNATURE SPARKLE_TRUST OUTPUT`
@@ -172,6 +178,32 @@ The example URL is a fixture. The signer refuses symlinked archives, weak key
 permissions, mismatched trust fingerprints, unsafe output parents, and an
 existing output directory. A release operator must separately qualify and
 publish real archives, then run the public readback verifier.
+
+## Planned publication workflow
+
+GitHub Actions will build self-contained universal Mac DMGs and Ubuntu
+amd64/arm64 DEBs from exact `vX.Y.Z` tags. The Mac direct download, project
+Homebrew Cask and Sparkle feed consume the same signed/notarized DMG. Ubuntu
+starts with direct DEBs for the headless service and `frameshiftctl`; signed
+APT updates follow package acceptance. Nerves is a separate image target.
+
+The [installation contract](../docs/architecture/install-and-guide.md) specifies
+job order, signing boundaries, artifact handoff, public readback and interrupted
+publication recovery. Final archive bytes must be signed/packaged before these
+manifest tools run. GitHub Release uploads are read back and verified before
+customer links or update metadata use them; Actions build artifacts alone are
+not public installers. Record the exact source commit separately from the v1
+manifest schema and enforce the release host's asset size limits.
+
+Publish the guide and generated Markdown/ExDoc pages to Cloudflare at
+`frameshift.wotex.io`: `/download/`, latest qualified `/docs/`, retained
+`/docs/vX.Y.Z/` and labelled unreleased `/docs/dev/`. Development docs may publish
+before installer signing; they cannot promote stable install instructions.
+The release/docs publication workflows, production installer packaging,
+installed update acceptance and public channel promotion remain open. Check CI
+and manual Mac/Ubuntu candidate workflows exist, together with development
+DMG/DEB packaging, signed local channel metadata and site assembly. These tools
+do not publish assets or change repository visibility.
 
 ## Ubuntu development closure
 

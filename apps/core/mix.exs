@@ -150,10 +150,12 @@ defmodule FrameshiftCore.MixProject do
           {"../../data/physical/README.md",
            title: "Sourced physical candidates", filename: "physical-candidates"},
           {"../../docs/research/build-platform-decisions.md", title: "Build platform decisions"},
+          {"../../docs/research/ai-image-generation.md", title: "AI image generation research"},
           {"../../docs/research/conjunct-adoption.md", title: "Conjunct adoption"},
           {"../../docs/research/thin-composition-evidence.md",
            title: "Thin composition evidence"},
           {"../../docs/architecture/host-core.md", title: "Portable host core"},
+          {"../../docs/architecture/content-pipeline.md", title: "Content pipeline"},
           {"../../docs/architecture/library-backup.md", title: "Library backup and restore"},
           {"../../docs/architecture/container-frame-simulator.md",
            title: "Networked frame simulator"},
@@ -174,6 +176,7 @@ defmodule FrameshiftCore.MixProject do
           {"../../docs/host/linux.md", title: "Linux host"},
           {"../../docs/host/macos.md", title: "macOS host"},
           {"../../docs/host/guide-handoff.md", title: "Guide handoff"},
+          {"../../docs/host/menu-bar-interface.md", title: "Native menu interface"},
           {"../../docs/research/protocol-foundations.md", title: "Protocol foundations"}
         ] ++ Path.wildcard("bench/output/*.md"),
       groups_for_extras: [

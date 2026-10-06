@@ -988,12 +988,17 @@ and rejects corrupt or missing objects before activation.
   fixtures, integer bounds, and generated cases;
 - turn the desktop HTML draft into the static interactive installation guide
   at `frameshift.wotex.io`; present simulated profiles and failures honestly;
+- generate documentation from maintained Markdown and source API docs for
+  `/docs/dev/`, with a visible unreleased label and exact `main` commit; retain
+  release docs separately and qualify nested routes, links and offline reading;
 - hand non-secret setup choices to the native app after installation, with
   pairing and delivery still performed by the installed host.
 
 **Exit:** BEAM/JavaScript decisions agree for valid and adversarial inputs;
 the guide works without an account or hosted code execution; no browser
-simulation is described as physical display evidence. See
+simulation is described as physical display evidence. Development docs can
+publish before installers, preserve retained release versions and cannot
+advance `/docs/` or public download links. See
 [installation and guide](install-and-guide.md). Generic physical extraction
 must preserve this parity and retain product-owned decisions where appropriate.
 
@@ -1248,24 +1253,33 @@ security review. Product and upstream conformance are checked separately.
 ## Distribution and platform gates
 
 Mac distribution uses one signed, notarized DMG for direct download, Homebrew
-Cask and Sparkle. Ubuntu amd64/arm64 and Pi 5 Ubuntu Server arm64 use target
-packages authenticated by a signed release manifest or APT repository and the
-same host contracts. Nerves Pi 5 is a separately qualified external appliance.
-The guide links only to real verified artifacts. See
+Cask and Sparkle. The universal app contains Intel/Apple Silicon native
+dependencies and its OTP runtime; the first Cask uses a project-owned tap.
+Ubuntu amd64/arm64 and Pi 5 Ubuntu Server arm64 use self-contained DEBs for the
+headless systemd service and `frameshiftctl`, authenticated by a signed release
+manifest. A signed APT repository follows direct-package acceptance. Nerves Pi 5
+is a separately qualified external appliance. Each platform progresses through
+its own gates; customers need no language toolchain to install a package.
+
+The canonical Cloudflare site is `frameshift.wotex.io`, with `/download/`,
+`/docs/`, retained `/docs/vX.Y.Z/` and labelled `/docs/dev/`. `frameshift.se` is
+an optional redirect. The guide links only to real verified artifacts in the
+public GitHub Releases channel. GitHub Actions installer and docs publication
+workflows are required implementation work. Check CI, manual Mac/Ubuntu
+candidate workflows, development app/DMG/DEB packaging, local manifest/channel
+signing and verification, and guide/docs site assembly exist. Production
+signing, installed-release acceptance and public publication remain open. See
 [installation and guide](install-and-guide.md) and [Linux host](../host/linux.md).
 
-1. Freeze release manifest, OS/CPU matrix, signing identities, package names
-   and external artifact channel without changing source visibility.
-2. Qualify object/SQLite backup and restore, native logging limits and the Mac
-   signed/notarized lifecycle.
-3. Prove Gleam on the pinned OTP and JavaScript targets; build and accessibility
-   test the guide against exact fixtures.
-4. Publish only after direct Mac/Cask/Sparkle artifact identity and update
-   tests pass and the actual claimed product/hardware evidence exists.
-5. Port the same core to Ubuntu amd64/arm64; qualify Pi-host storage, power and
-   service behavior; publish each package only after its own gates.
-6. Build/test the separately signed Nerves appliance's validation/revert,
-   credentials, persistent state and logging.
+| Slice and dependency | Implementation and owning contract | Required exit evidence |
+| --- | --- | --- |
+| R1 — Release inputs; first | Freeze the stable `vX.Y.Z` tag/commit contract, supported OS versions/CPUs, locked dependencies/toolchains, package names and manifest trust configuration. Record license/notices, signing identity and public channel/DNS inputs; their external setup gates publication, not packaging/refusal implementation. | Version mismatch, moved tags and conflicting version reuse refuse. Build records identify exact inputs, missing evidence and channel size limits; source visibility remains unchanged. |
+| R2 — Mac installer; after R1 | Build both native architectures and a universal self-contained app; sign nested OTP/NIF/renderer binaries and the app, produce/sign/notarize/staple the DMG, integrate Sparkle and derive the project Cask from the same archive. | Clean Intel/Apple Silicon direct/Cask install, signed update, Gatekeeper, background registration, removal, data preservation and rollback recovery pass on the supported matrix. |
+| R3 — Ubuntu packages; after R1, independent of R2 | Port adapters and full local command CLI; package amd64/arm64 OTP/native/renderer closures in DEBs with unprivileged systemd, peer-authenticated sockets, streamed import, protected credentials and journald. Qualify Pi-host storage/power separately; add APT after direct-package acceptance. | Clean install/update/removal, dependency closure, group admission, backup/restore, downgrade refusal, full-disk and failure recovery pass for each claimed Ubuntu target. |
+| R4 — Documentation/site build; can proceed alongside R2/R3 | Render maintained Markdown and ExDoc HTML; build `/docs/dev/` from an exact `main` commit and release docs from the release tag. Compose guide, lab, `/download/` and version directories into the Cloudflare static deployment. | Coverage/index, nested routes, Markdown/API links, anchors, search, version navigation, accessibility and browser/offline checks pass. No-release/development labels and retention of old versions pass; no unverified installer links. |
+| R5 — GitHub release workflow; after R1 and the claimed R2/R3 targets | Automate exact-tag checks/builds, signing/packaging, final manifest generation and public versioned archive upload. Separate trusted signing/deployment jobs from PR checks; verify downloaded public bytes before channel promotion. | Tagged build and explicit rerun preserve source and archive identity. Signing/credential, artifact-handoff, wrong-target, tamper and public-readback failures refuse promotion. Release-job fixtures complement installed/manual evidence rather than replacing it. |
+| R6 — Publication; after R4/R5 and applicable product gates | Publish accepted Cask/Sparkle metadata and matching versioned docs/download page; advance `/docs/` only after exact version/digest/source checks. The main-docs workflow updates only development docs; serialize site writes and retain all release docs. | Public route/asset checks and interrupted/retried publication demonstrate the last good site survives failure. Reconcile partial external channel updates without replacing released bytes. Missing frame evidence limits profile claims, not independent docs/build work. |
+| R7 — Nerves appliance; separate target | Build/test the signed Pi 5 image's validation/revert, credentials, persistent state and bounded logging under the Linux host contract. | Exact appliance boot/update/recovery and physical provisioning evidence passes before that image joins the release manifest. |
 
 ### Release tooling migration
 
@@ -1496,6 +1510,12 @@ completion before that prerequisite. Continue the actual native updater and
 other independent product slices alongside this work rather than adding more
 receipt layers indefinitely. Missing Intel/older-OS machines, production keys
 and installed evidence gate those claims, not this local implementation work.
+
+Complete each coherent specification/build slice with its own validation.
+Signing credentials, DNS/channel configuration, license selection and exact
+installed/hardware evidence gate their corresponding publication claims;
+they do not block documentation generation, packaging automation or refusal
+fixtures whose contracts are defined.
 
 A guide simulation or host package does not certify a frame assembly. A released
 hardware profile also requires an exact reproducible assembly, signed

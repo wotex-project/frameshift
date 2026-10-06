@@ -5,22 +5,72 @@ remain unqualified until their release gates pass
 
 ## Public entry point
 
-Use `frameshift.wotex.io` as the first public home and installation guide.
-Buying `frameshift.se` is optional; the guide and installed app cannot depend
-on a new domain. The maintainer's `Frameshift.html` desktop draft is visual
-draft material, not a published installer or compatibility claim. Rebuild its
+Use `https://frameshift.wotex.io` as the canonical public home, installation
+guide and documentation host. Buying `frameshift.se` is optional; if acquired,
+it redirects to the canonical site while preserving paths. Domain availability
+and registration cost need a current registrar check before purchase. The
+guide and installed app cannot depend on a new domain. The maintainer's
+`Frameshift.html` desktop draft is visual draft material, not a published
+installer or compatibility claim. Rebuild its
 Paper, Photo, and Pixel paths as a responsive, accessible guide with real
 requirements, parts/evidence status, setup steps, failure recovery, and a
 clearly identified simulation. Windows is outside supported host scope.
 
-The installation guide and offline lab retain a static export that works
-without an application server or account. Deploy those static assets on
-Cloudflare Workers Static Assets under the Wotex subdomain.
+The installation guide, documentation and offline lab retain a static export
+that works without an application server or account. Deploy those static assets
+on Cloudflare Workers Static Assets under the canonical hostname.
 Cloudflare's documented static-asset limit is 25 MiB per file as checked on
-2026-09-24; installation
-archives belong in the public release artifact channel, not the site bundle.
-The user or domain owner must configure DNS and any public release repository;
-the private source repository's visibility is never changed by automation.
+2026-09-24; installation archives belong in the public release artifact channel,
+not the site bundle.
+The domain owner configures DNS and the public release channel. Release and
+site automation never changes source-repository visibility.
+
+## Public routes and documentation
+
+These are required publication routes, not claims that a site is deployed:
+
+| Route on `frameshift.wotex.io` | Required content and version behavior |
+| --- | --- |
+| `/` | Product guide, independent Paper/Photo/Pixel choices and browser lab |
+| `/download/` | Supported OS/CPU matrix, Mac direct/Cask installation and Ubuntu package instructions for qualified artifacts only |
+| `/docs/` | Entry point for the latest qualified release's documentation, with its version visible |
+| `/docs/vX.Y.Z/` | Retained documentation generated from that exact release tag and source commit |
+| `/docs/dev/` | Documentation generated from a named `main` commit, visibly labelled unreleased development content |
+
+Before the first qualified release, `/docs/` states that no release is available
+and links to `/docs/dev/`; it must not present development content as released.
+The download page can explain intended installation before release, but keeps
+artifact links and executable customer install commands absent until the
+corresponding platform passes its gates. A Mac release does not imply Linux or
+Nerves availability. `/docs/` and `/download/` advance only to verified releases;
+their download URLs always identify immutable versioned archive bytes.
+
+Generate documentation from maintained `docs/` Markdown, component READMEs and
+source documentation. The publication build checks the documentation index for
+coverage and resolves repository-relative links in the rendered site. Generate
+Elixir API pages with the existing ExDoc configuration and link them from the
+same version's documentation. Preserve module/function anchors, styles, search
+assets and exact source-commit links. ExDoc HTML is self-hosted here; publishing
+an application or package to Hex is not a prerequisite. Do not maintain a second
+copy of the documentation to feed the site.
+
+The self-hosted ExDoc publication includes `docs_config.js` with `versionNodes`
+for the retained release URLs and a labelled development entry; ExDoc's
+automatic HexDocs version menu is not assumed on this host. Configure security
+headers for the actual guide/docs assets, including hashes for generated inline
+scripts where needed, and test them in a browser instead of applying the lab's
+script policy unchanged to API pages.
+
+Each versioned docs build records its release version, source commit and
+toolchain inputs. Retain older version directories when publishing development
+or new release docs. The stable entry point and development docs need
+revalidation caching; versioned assets need consistent content and cache
+identity. Publishing an older version must not rewind the latest-release entry
+point, and a rerun refuses conflicting content for an existing version. Test
+nested routes, trailing slashes, direct links, search, API
+anchors, version navigation and real 404 responses. Essential installation and
+recovery instructions remain readable without JavaScript. Site routing must
+preserve these static paths when the companion application is connected.
 
 ## Development documentation build
 
@@ -204,14 +254,20 @@ guide, engine-consumer proof or native installation.
 
 ## One Mac release artifact
 
-Publish one Developer ID signed, hardened-runtime, notarized, stapled Mac DMG
-for direct download, Homebrew Cask, and Sparkle updates. Its version, digest,
-bundle identity, and minimum macOS version are fixed in a release manifest.
+Publish one self-contained, universal Mac DMG with a Developer ID signed,
+hardened-runtime, notarized, stapled app for direct download, Homebrew Cask and
+Sparkle updates. Bundle the OTP runtime, native dependencies and Zig renderer;
+customers do not install Elixir, Erlang, Zig or developer tools. Qualify both
+Intel and Apple Silicon slices, including the nested executables and NIFs.
+The signed artifact manifest fixes its version and digest; the release's build
+record also fixes the bundle identity and minimum supported macOS version.
 The [release artifact manifest](release-manifest.md) is detached-signed and
 checked against each local archive before any guide link is published.
-The first Cask can live in a project tap; upstream Homebrew acceptance is a
-separate gate. The Cask pins the artifact digest and marks in-app updates
-accurately. Sparkle
+Provide the first Homebrew Cask through a project-owned tap; upstream Homebrew
+acceptance is a separate gate. The Cask downloads the same DMG as the direct
+installation path, pins its digest, declares the supported macOS version and
+marks in-app updates accurately. Homebrew is an optional installation channel,
+not a build dependency for customers. Sparkle
 uses an independently signed EdDSA archive/appcast and verifies the app's
 Developer ID identity; the updater must not downgrade or replace library data.
 Test fresh installation, update, rollback recovery, removal, and Gatekeeper on
@@ -339,7 +395,11 @@ update, production keys, Developer ID/notarization, public delivery or promotion
 ## Linux and Pi delivery
 
 Ubuntu amd64 and arm64 receive architecture-specific OTP releases and native
-renderer binaries inside versioned `.deb` packages. Direct downloads are
+dependencies and renderer binaries inside self-contained versioned `.deb`
+packages. The initial interface is an unprivileged systemd service and the
+local `frameshiftctl` command/diagnostic CLI. Freeze exact supported Ubuntu
+versions before publication; a Linux graphical shell and support for other
+distributions require their own qualification. Direct downloads are
 verified against a signed release manifest; `dpkg` alone does not authenticate
 a downloaded package. A signed APT repository may
 offer updates after the direct package path passes installation and recovery
@@ -348,6 +408,73 @@ package and the same core/protocol contract. A separately qualified Nerves Pi 5
 image serves a dedicated bridge/appliance role; it is not the Ubuntu package,
 and its firmware update, credential, persistent-data, and log paths are
 qualified separately. See [Linux host](../host/linux.md).
+
+## GitHub build and publication workflows
+
+GitHub Actions owns repeatable installer builds and site publication. The
+production release and docs publication workflows remain planned work.
+`.github/workflows/check.yml` tests development builds; the manual Mac and
+Ubuntu candidate workflows join remote-source identity, target build/check
+staging and separately retained archives with publication authority none. Local
+tools produce ad-hoc Mac apps, universal development bundles/DMGs and Ubuntu
+development DEBs. Manifest signing/readback, signed Cask/Sparkle metadata and
+combined Markdown/API/guide site assembly also exist. Production signing,
+notarization, installed update acceptance and public release/docs deployment
+remain open.
+
+A release workflow starts from a stable `vX.Y.Z` tag and resolves it to one
+source commit. An explicit rerun uses that same tag, commit and recorded build
+inputs. Refuse a version/tag mismatch, a moved tag or conflicting existing
+release bytes. Use `.mise.toml` and locked dependencies, record source/dependency
+revisions and licenses/notices, and build only the claimed platform matrix.
+Signing and deployment credentials are confined to trusted release/deployment
+jobs; pull-request checks can build and validate without access to those keys.
+
+The release job dependency order is:
+
+1. **Build and check:** build each claimed OS/CPU target on a qualified runner
+   or build image. Run its existing checks and validate native dependency
+   closure. Mac and Ubuntu packaging work can progress independently.
+2. **Sign and package:** sign all nested Mac binaries and the app, produce and
+   sign the DMG, notarize/staple and verify its distribution identity; prepare the
+   Sparkle signature. Assemble and test each Ubuntu DEB. Run clean installed
+   install/update/remove, data-preservation and recovery acceptance against
+   these final artifacts, retaining exact-byte evidence for checks that require
+   manual or physical environments. Failed or missing target evidence excludes
+   that target from the release claim.
+3. **Freeze release material:** generate and verify the detached-signed
+   [release manifest](release-manifest.md) over final archive bytes; generate
+   versioned docs from the same commit. Preserve hashes when passing artifacts
+   between jobs. Build outputs retained by Actions are development/staging
+   artifacts until release acceptance passes.
+4. **Publish and read back:** upload the accepted archives and signed manifest
+   to the owner-controlled public GitHub Releases channel at versioned URLs.
+   Read each archive back without repository credentials and verify its exact
+   size/digest before using it in customer links or update metadata. A private
+   draft upload alone cannot satisfy this public check. Enforce the channel's
+   per-asset size limit as well as the manifest's format limit.
+5. **Promote channels and site:** derive the project Cask and signed Sparkle
+   feed from those exact accepted bytes, test their version/digest agreement,
+   then deploy `/download/`, the versioned docs and `/docs/` through Cloudflare.
+   Add signed APT metadata only when its separate update acceptance passes.
+   Recheck public site routes, artifact links and version/source identity.
+
+A docs publication workflow builds the documentation and API pages on `main`
+changes, runs rendering/link checks and publishes only `/docs/dev/` with the
+source commit and development label. It may run before installer signing is
+available. Release docs publication consumes the release workflow's exact
+version/commit and requires its verified artifacts before advancing stable
+install instructions. Serialize site publishing and retain the existing
+release directories so a development publish cannot erase released docs.
+
+Failures do not advance the last good download page or stable docs entry point.
+Record completed external publication steps: GitHub assets, a Cask, Sparkle
+and Cloudflare cannot be assumed to update atomically. Recovery reconciles
+already-published bytes and channel state, resumes only missing steps, and
+never replaces an existing version with different content. An interrupted
+site deployment keeps or restores the previous verified deployment. Publishing
+these workflows does not require or authorize buying a domain, changing source
+visibility or disclosing credentials.
 
 ## Public release reconciliation
 
@@ -537,6 +664,16 @@ or a commissioning dependency. The public guide remains usable without it.
    Ubuntu/Pi packages preserve data across upgrade and removal.
 6. Every support claim links to exact installed or physical evidence. The page
    never calls a simulated frame physically validated.
+7. `/docs/vX.Y.Z/` records the exact release commit; `/docs/` names that qualified
+   release and `/docs/dev/` names an unreleased commit. Rendered Markdown/API
+   links, search, anchors, nested routes and accessibility checks pass. Publishing
+   development docs or another release preserves all retained versioned docs.
+8. A trusted tag workflow produces all claimed installers without customer
+   build tools, verifies their signed manifest and public bytes, and checks
+   direct/Cask/Sparkle version agreement. Wrong architecture, failed signing,
+   missing credentials, failed public readback, moved tags and conflicting
+   reruns refuse promotion. Interrupted channel/site publication recovers
+   without replacing archives or exposing unverified download links.
 
 Upstream evidence: [Gleam targets](https://gleam.run/documentation/command-line-reference/),
 [Gleam JavaScript integer range](https://gleam.run/news/context-aware-compilation/),
@@ -544,6 +681,10 @@ Upstream evidence: [Gleam targets](https://gleam.run/documentation/command-line-
 [Elixir/OTP compatibility](https://hexdocs.pm/elixir/compatibility-and-deprecations.html),
 [Cloudflare static asset limits](https://developers.cloudflare.com/workers/platform/limits/),
 [Cloudflare static asset billing](https://developers.cloudflare.com/workers/static-assets/billing-and-limitations/),
+[Cloudflare GitHub Actions deployment](https://developers.cloudflare.com/workers/ci-cd/external-cicd/github-actions/),
+[GitHub Releases and asset limits](https://docs.github.com/en/repositories/releasing-projects-on-github/about-releases),
+[GitHub Actions secrets](https://docs.github.com/en/actions/how-tos/write-workflows/choose-what-workflows-do/use-secrets),
+[ExDoc HTML and additional pages](https://ex-doc.hexdocs.pm/readme.html),
 [Homebrew Cask format](https://docs.brew.sh/Cask-Cookbook),
 [APT repository authentication](https://manpages.debian.org/testing/apt/apt-secure.8.en.html),
 [Sparkle distribution](https://sparkle-project.org/documentation/), and

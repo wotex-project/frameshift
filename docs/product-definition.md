@@ -139,7 +139,14 @@ them. Optional service requirement 14 applies only to an enabled service profile
 11. The public guide lists only qualified installs/profiles, runs simulation
     without remote code execution and hands non-secret choices to the native
     flow. Mac direct/Cask/Sparkle and each claimed Ubuntu/Pi package pass clean
-    install/update/recovery and data-preservation tests.
+    install/update/recovery and data-preservation tests. GitHub Actions builds
+    self-contained universal Mac DMGs and target-specific Ubuntu DEBs from exact
+    version tags; public archive bytes match their signed manifest. The canonical
+    `frameshift.wotex.io` site provides `/download/`, latest qualified docs at
+    `/docs/`, retained `/docs/vX.Y.Z/` and labelled unreleased `/docs/dev/`,
+    generated from maintained Markdown/API documentation. Failed publication
+    preserves the last verified site; development docs cannot imply availability.
+    See the [installation contract](architecture/install-and-guide.md).
 12. The visual builder/list satisfies BP-01–BP-09 and PB-01–PB-09, including
     unknown/custom facts, deterministic identity, provenance, explanations,
     cross-runtime parity and verifier evidence. Conjunct extraction preserves
