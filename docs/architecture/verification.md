@@ -215,6 +215,11 @@ This establishes the current-contract refusal and product availability gate.
 It does not complete S2's positive/violated/unknown corpus, S3 migration or S4;
 generic producer flow/route/group/support/raster assessments remain required.
 
+The [exact v1 adapter requirements](conjunct-integration.md#exact-v1-adapter-requirements)
+now specify unit/count concepts, all rotated origins, native-ID lineage and
+required loss/refusal cases. These are planned acceptance requirements; no new
+adapter, installed-package or migration test result is asserted here.
+
 ### Physical compiler evidence
 
 Run `scripts/check build-spec` for the shared package. The current gate passes

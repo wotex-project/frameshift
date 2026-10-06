@@ -124,6 +124,13 @@ dependent operator or formal claim waits for the real producer join. A
 per-profile C-to-D slice does not wait for the remaining frame classes or optional CAD/service/device profile;
 complete claimed Paper/Photo/Pixel coverage remains the overall C/D gate.
 
+C starts from the [exact v1 adapter requirements](conjunct-integration.md#exact-v1-adapter-requirements):
+retained original identities, exact unit/count concepts, rotated-origin
+conversion, independently enumerated mapping and explicit loss/refusal. Commit
+complete expectations before implementing that adapter, then qualify every
+mandatory planning stage through its actual producer owner. This contract
+amendment does not establish installed consumer or physical acceptance.
+
 Host, protocol, receiver and simulator work below remains a separate product
 lane. Conjunct proof-of-concept completion does not claim these installed-product
 requirements have passed. The native product stays independent of the platform

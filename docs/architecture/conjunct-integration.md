@@ -123,6 +123,118 @@ its broader limits do not silently raise the existing Frameshift v1 ceilings.
 The producer's readable/writable/executable profile matrix accompanies the
 consumer migration. Required unknowns cannot become not-applicable or accepted.
 
+### Exact v1 adapter requirements
+
+The adapter imports the five retained canonical v1 formats through their
+existing hashing/validation boundaries. It retains every original byte string,
+identity and source reference before constructing Conjunct successors. Import
+performs no catalog lookup, source promotion, current-use admission or device
+operation. The v1 per-document, depth, collection and combined-context ceilings
+still apply before the producer's separate limits. A broader producer limit
+cannot authorize a larger v1 document.
+
+The product mapping uses the following exact conversions for each inclusive
+integer bound `v`. Reduce the resulting rational; never pass through a floating
+point number, select a nominal value or average an interval.
+
+| v1 unit/property | Conjunct kind/unit | Exact value |
+| --- | --- | --- |
+| `um` | `length` / `m` | `v / 1000000` |
+| `mv` | `voltage` / `V` | `v / 1000` |
+| `ma` | `current` / `A` | `v / 1000` |
+| `mw` | `power` / `W` | `v / 1000` |
+| `g` | `mass` / `kg` | `v / 1000` |
+| `ms` | `duration` / `s` | `v / 1000` |
+| `mc`, operating/ambient temperature | `temperature` / `K` | `(v + 273150) / 1000` |
+| `mc`, ambient rise | `temperature-difference` / `K` | `v / 1000` |
+| `count`, raster dimensions or fanout | `count` / `1` | `v / 1`, with the original property concept |
+| `byte`, storage/artifact capacity | `count` / `1` | `v / 1`, counting eight-bit storage units under an explicit byte-count property concept |
+
+The last row is a product definition of counted entities, not a new generic
+information quantity kind or a conversion between bits and bytes. The property
+mapping must distinguish storage byte count, raster pixel count, retained
+artifact count and installed occurrence count. It refuses a rule that mixes
+these concepts without an explicitly evidenced relationship. A byte count may
+be zero or reach the v1 byte ceiling of `1099511627776`; it does not acquire the
+v1 `count` field's `1000000` ceiling. Each selected occurrence instead represents
+one discrete use and has positive integral quantity. Preserve original `byte`
+wording and bounds in the source-bound conversion record. No decimal/binary
+prefix, information-rate or entropy conversion is implied. A future information
+kind requires the producer's explicit registry revision.
+
+This choice follows CJ2-09's integer `count` contract and the
+[JCGM definition of numbers of entities](https://jcgm.bipm.org/vim/en/1.8.html).
+The [IEC unit table](https://styleguide.iec.ch/?docs=iec/typographic/units-and-symbols)
+distinguishes byte and decimal/binary prefixes; these sources were inspected on
+2026-10-06. Applying entity counting to these storage properties is this product
+profile's decision. Neither source establishes a manufacturer capacity.
+
+Conjunct's initial draft normalizer does not accept every v1 spelling, including
+`um`, `mw` and `mc`. The importer must perform the declared exact conversion
+before supplying canonical quantities and retain both sides. A normalizer
+refusal cannot be bypassed by relabeling the original number with another unit.
+Known token alternatives become an exact finite token set; case and punctuation
+remain significant. A missing fact remains unknown. A v1 conflict supplies
+citations but no conflicting numeric/token values: retain that conflict and all
+citations, and refuse an exact state-preserving mapping until the contradictory
+claims are supplied. Do not manufacture distinct known values to force a
+producer conflict, choose a favorable citation or turn either state into
+not-applicable.
+
+Use a right-handed basis change `S = diag(1, -1, -1)` from the v1 planning axes
+to Conjunct's metre/+Y-up/+Z-forward axes. The v1 origin is the top-left-front of
+the **rotated** bare outline. For bare width `W`, height `H`, position `p` and
+clockwise front-view quarter turn, the Conjunct rigid transform is
+`R' = S R S`, `t' = S (p + o) / 1000000`; local vertices become
+`S vertex / 1000000`. The required origin offsets are:
+
+| v1 rotation | Offset `o` in micrometres | Conjunct in-plane turn |
+| --- | --- | --- |
+| `0` | `(0, 0, 0)` | `0` |
+| `90` | `(H, 0, 0)` | `270` |
+| `180` | `(W, H, 0)` | `180` |
+| `270` | `(0, W, 0)` | `90` |
+
+For `W=20`, `H=10`, `p=(3,4,5)`, transformed origins are respectively
+`(3,-4,-5)`, `(13,-4,-5)`, `(23,-14,-5)` and `(3,-24,-5)` micrometres,
+then converted exactly to metres. Every source corner, directional clearance
+and active/opening offset must agree with the retained v1 transformation.
+If an offset needs an uncertain or missing width/height, an exact rigid pose is
+unavailable. Preserve the interval/unknown and report the affected geometry
+mapping as unsupported; never choose an endpoint or midpoint as an exact pose.
+Synthetic exact boxes can qualify the converter without qualifying candidate
+manufacturer geometry. Enclosure topology and external-instance obligations
+retain the physical contract's existing meaning.
+
+Core local identifiers cannot hold every v1 identifier. Preserve native strings
+and generate each successor local ID as `v1-` followed by the full lowercase
+SHA-256 of `UTF8("frameshift.conjunct.local.v1")`, NUL, the owning concept-kind
+string, NUL, and the exact native identifier. Record that kind and both IDs in
+the mapping. Scope native IDs to their owning profile/document; detect any
+noninjective result and refuse it. Never lowercase, truncate or replace the
+original ID. Artifact identities remain the producer's separate hash domain.
+
+Before mechanism or measurement, commit complete original/expected adapter
+fixtures for both runtimes: all five v1 identity domains; each unit at zero,
+signed temperature and v1 extrema; singleton and uncertain intervals; all four
+rotations and corners; same-looking case-sensitive IDs; repeated occurrences;
+missing/conflicting claims; stale scope and exact source closure. Independently
+enumerate the source/target concepts for CJ3-11 mapping validation. A required
+unsupported, ambiguous or lost concept prevents an exact migration claim.
+Qualification must retain the full report, original/expected/actual values,
+typed refusals and actual producer/package/runtime identities.
+
+Map all thirteen retained planning stages (`graph`, `completeness`, `geometry`,
+`viewing`, `power_interfaces`, `power_loads`, `power_contracts`, `thermal`,
+`mounting`, `signals`, `signal_routes`, `operation`, `artifacts`) to mandatory
+product rules and the actual qualified producer export that evaluates them. A calculation or graph
+operation absent from the producer is an upstream implementation gap with a
+reproducing fixture. Its unavailable result remains explicit; an empty caller
+RequirementSet, precomputed favorable boolean or v1 preview cannot qualify it.
+The installed adapter is passive, offline and independently configurable for
+two consumers. Existing v1 authority is retired boundary by boundary only after
+the corresponding producer and joined consumer qualification passes.
+
 ## Extraction ownership
 
 **CI-04 — Extract only demonstrated shared semantics.** `packages/build-spec/`
