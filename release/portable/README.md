@@ -6,6 +6,23 @@ Existing Node manifest/receipt/channel consumers remain until their byte and
 refusal compatibility fixtures pass. No host application dependency, NIF,
 background service or publication authority is added.
 
+`FrameshiftRelease.Manifest`, `FrameshiftRelease.Trust` and
+`FrameshiftRelease.Verifier` now join exact compact manifests, independently
+pinned public SPKI, whole-message signatures and streamed local archive facts.
+The escript CLI exposes distinct local and signature-only observations:
+
+```sh
+release/portable/frameshift-release verify MANIFEST SIGNATURE PUBLIC_KEY ARTIFACT_DIR TRUST_FILE
+release/portable/frameshift-release verify-signature MANIFEST SIGNATURE PUBLIC_KEY TRUST_FILE
+```
+
+Build with `./scripts/check release-portable` first. The default worker is built
+in that checkout; `--worker ABSOLUTE_TOOL` explicitly selects another qualified
+native worker for the execution OS. The standalone escript needs pinned OTP;
+an installed app's reduced runtime is not a complete developer toolchain.
+Neither command performs public URL readback. Usage/refusal exits are 64/1 with
+fixed diagnostics, and no input, receipt or archive is changed.
+
 ```sh
 ./scripts/check release-portable
 cd release/portable

@@ -334,8 +334,12 @@ check_release_portable() {
   )
   (
     cd "$repository_root/release/portable"
+    FRAMESHIFT_NODE=$(mise which node)
+    FRAMESHIFT_ESCRIPT=$(mise which escript)
+    export FRAMESHIFT_NODE FRAMESHIFT_ESCRIPT
     mise exec -- mix format --check-formatted
     mise exec -- mix compile --warnings-as-errors
+    mise exec -- mix escript.build
     mise exec -- mix test --warnings-as-errors
   )
 }

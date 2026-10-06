@@ -13,7 +13,13 @@ defmodule FrameshiftRelease.MixProject do
   use Mix.Project
 
   def project do
-    [app: :frameshift_release, version: "0.1.0", elixir: "~> 1.20", deps: []]
+    [
+      app: :frameshift_release,
+      version: "0.1.0",
+      elixir: "~> 1.20",
+      deps: [],
+      escript: [main_module: FrameshiftRelease.CLI, name: "frameshift-release"]
+    ]
   end
 
   def application, do: [extra_applications: [:crypto, :public_key]]

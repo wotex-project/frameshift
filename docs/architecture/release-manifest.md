@@ -34,7 +34,7 @@ Elixir owns portable release policy: canonical manifests and channel material,
 Ed25519/key identities, frozen source inputs, source/receipt joins, archive
 profiles and publication reconciliation. The tool-only Mix project
 is `release/portable/`, with the `FrameshiftRelease` namespace; its descriptor
-owner now exists, while the `frameshift-release` executable remains planned. Keep
+owner and `frameshift-release` executable now exist. Keep
 it independent of host application processes and dependencies and declare its
 workspace owner when introduced. Mac-native operations are
 delegated to the [Swift tooling owner](../host/macos.md#mac-release-tooling-implementation)
@@ -177,6 +177,30 @@ installed platform tests, and applicable frame evidence. Repository visibility
 does not change to publish release artifacts.
 
 ### Local file admission
+
+The public-key input profile `release-public-spki-v1` requires exactly one
+unencrypted PEM `PUBLIC KEY` block. Admit canonical base64 after removing only
+ASCII space, tab, CR and LF; permit that whitespace around the block. Its DER
+must be the canonical 44-byte Ed25519 SubjectPublicKeyInfo with absent algorithm
+parameters. Fingerprint those complete DER bytes, independently of the raw
+32-byte Sparkle key. Reject private-key/certificate/other PEM labels, multiple
+blocks, extraneous content, noncanonical base64 and different DER identities.
+Do not let a convenience public-key loader derive identity from private PEM.
+This closes a public-only input defect; signed manifest bytes and key identities
+are unchanged. Signers continue to emit this public SPKI separately from their
+private signing input.
+
+`FrameshiftRelease.Manifest` owns compact schema-one manifest parsing and
+canonical creation; `FrameshiftRelease.Trust` owns this public SPKI and exact
+whole-message Ed25519 verification. Keep ordered JSON object pairs through
+round-trip checking, reject duplicate keys and distinguish booleans/numbers.
+Verify the original admitted message, never a re-encoded object or substituted
+hash. Preserve supported target tuples, limits, flat/versioned names, unique
+targets/names and the existing Node 26.9 canonical HTTPS URL behavior. Empty
+query/fragment delimiters carry no data and remain accepted; nonempty values
+refuse. ASCII host/path spelling, canonical IPv4/IPv6 and exact version suffix
+must agree with the retained verifier. Qualify byte/semantic/refusal and real
+signature interoperability on Mac and Ubuntu before switching consumers.
 
 All local manifest, signature, public key, signing plan, private key, trust
 fingerprint and archive inputs MUST be regular files. Refuse a nonregular final

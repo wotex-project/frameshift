@@ -450,6 +450,43 @@ with explicit admitted bounds and retains Zig safety checks. These are exact
 source/runtime fixture observations, not native amd64, physical durability,
 portable policy cutover or production release qualification.
 
+**Manifest, trust and executable qualification:** rechecked 2026-10-06 through
+`gh` against Node 26.9.0 and OTP 29.1, then exercised through the portable owner.
+The following distinctions determine the implementation; using a similarly
+named parser or crypto function is insufficient.
+
+| Question | Primary evidence and conclusion | Implementation consequence |
+| --- | --- | --- |
+| Can default OTP JSON decoding preserve the signed object? | [OTP 29.1 decoder callbacks](https://github.com/erlang/otp/blob/OTP-29.1/lib/stdlib/src/json.erl#L897-L942) finish objects with `maps:from_list/1`; [ordered encoding](https://github.com/erlang/otp/blob/OTP-29.1/lib/stdlib/src/json.erl#L278-L287) accepts key/value lists. A map alone loses duplicate keys and source order. | Decode ordered pairs with explicit duplicate refusal, reject floating numeric spellings, compare the complete compact encoding plus LF to the original, and only then return semantic maps. Authenticate the original message, never the recreated one. |
+| Does a public-key loader enforce public-only input? | [Node 26.9.0 `createPublicKey`](https://github.com/nodejs/node/blob/v26.9.0/doc/api/crypto.md#cryptocreatepublickeykey) explicitly accepts private keys and PEM certificates. The previous verifier passed its public input directly to this convenience API. A real private PKCS8 fixture demonstrates the defect. | The explicit `release-public-spki-v1` profile now precedes crypto loading in both implementations. Admit one public block with canonical base64 and exact Ed25519 DER; reject private/certificate/multiple blocks, extraneous data, nonzero base64 pad bits and changed DER. This deliberate input tightening leaves signed manifest bytes and public-key fingerprints unchanged. |
+| Why exactly 44 DER bytes? | [RFC 8410 sections 3–4](https://www.rfc-editor.org/rfc/rfc8410.html#section-3) assign Ed25519 OID `1.3.101.112`, require absent algorithm parameters and encode the public byte string as a BIT STRING. With a 32-byte key this fixes the 12-byte prefix `302a300506032b6570032100`. | Fingerprint the complete canonical SPKI, independently of Sparkle's raw key. A NULL parameter is refused rather than normalized into a different admitted identity. This profile does not establish X.509 certificate trust. |
+| Is OTP verification the whole-message algorithm? | [OTP 29.1 `verify/5`](https://github.com/erlang/otp/blob/OTP-29.1/lib/crypto/src/crypto.erl#L3324-L3387) accepts EdDSA, `none`, complete iodata and the raw key/curve pair. [RFC 8032 section 5.1](https://www.rfc-editor.org/rfc/rfc8032.html#section-5.1) defines Ed25519 separately from its prehash variant. Actual Node-produced signatures verify in native OTP on both systems; OTP-produced signatures verify locally and in pinned Node on the Mac. | Pass the original bounded metadata directly with `:eddsa`, `:none` and `:ed25519`. This qualifies metadata, not the separate 1 GiB whole-archive Sparkle operation, key custody or installed updates. |
+| Is canonical HTTPS validation interchangeable with DNS validation or an IDNA library? | Node's pinned [Ada host parser](https://github.com/nodejs/node/blob/v26.9.0/deps/ada/ada.cpp#L9528-L9586) lowercases ASCII, dispatches numeric terminal labels to IPv4 parsing, and has an ASCII fast path. Its [ASCII conversion](https://github.com/nodejs/node/blob/v26.9.0/deps/ada/ada.cpp#L6327-L6359) retains even malformed ASCII ACE labels; the conversion path has a 16,384-byte bound. Node URL serialization also preserves empty `?`/`#` delimiters while their data fields remain empty. | Preserve the existing manifest's exact ASCII URL acceptance, canonical IPv4/IPv6 spelling and version/file suffix. No new IDNA dependency or stricter DNS-label policy is justified by this port. URL syntax acceptance proves neither reachability nor public artifact bytes; those remain the public readback contract. |
+| Can an installed reduced OTP release run an escript? | [OTP 29.1 escript launcher](https://github.com/erlang/otp/blob/OTP-29.1/erts/etc/common/escript.c#L513-L516) explicitly requests `no_dot_erlang` boot data. The installed Ubuntu application deliberately omits that development boot file; the first CLI fixture therefore refuses to boot. | Use the full pinned development runtime for the tool. Ubuntu qualification uses a private copy of the installed pinned ERTS plus pinned boot data and read-only code libraries; installed application files and services stay untouched. Resolve Node/escript fixture executables explicitly through `mise`, since an inherited child PATH selected a different Homebrew Node. |
+
+The public test corpus records **334** pinned Node parse observations: **165**
+accepted and **169** refused. It covers every ASCII byte in host/path positions,
+IPv4/IPv6 and numeric-label normalization, malformed ACE labels and conversion
+bounds, delimiters, path spelling, field/numeric/target identities, duplicate
+keys, escaping and invalid UTF-8. All agree with the portable parser. This is a
+bounded comparison corpus, not proof of a general WHATWG URL implementation.
+The temporary Node oracle serves this exact remaining migration comparison;
+the portable CLI invokes no Node parser or crypto process.
+
+All **21** portable groups now pass on macOS 27.0.1 arm64 and booted Ubuntu
+24.04.5 arm64 using the separately qualified native worker. Actual escripts
+join original metadata, independently protected trust and streamed archives;
+wrong trust, unsafe metadata, changed archives and fixed usage/refusal behavior
+are exercised. Ubuntu repeats native OTP crypto against the public corpus and
+actual CLI; reverse Node interoperability runs on the Mac only. The Node
+release regression passes all 120 shared cases and 83 Mac cases, with 19 explicit
+SDK/resource fixture-environment skips in that Mac invocation. These
+observations do not qualify native amd64, stock Ubuntu
+kernel, production signing, public readback, receipts/replay or consumer cutover.
+The next rejection checks are exact retained record/schema parity, complete
+producer-profile joins and both archive policies; those must pass before
+switching the corresponding build/site consumers.
+
 Adopt Swift for native Mac tooling, Elixir for shared portable release policy
 including pure Cask/appcast rendering and signing, and POSIX shell for entry
 points. Directory names do not determine ownership: portable logic currently

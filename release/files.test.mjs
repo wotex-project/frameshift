@@ -75,6 +75,31 @@ test('metadata bounds refuse before parsing and owner-private signing modes are 
     signaturePath: join(f.outputDirectory, 'manifest.sig'), publicKeyPath: join(f.outputDirectory, 'release.pub.pem') }), f.manifest);
 });
 
+test('public verification admits only one canonical public Ed25519 SPKI block', async t => {
+  const f = await fixture(t);
+  const publicPEM = await readFile(f.publicKeyPath);
+  const privatePEM = await readFile(f.privateKeyPath);
+  const encoded = publicPEM.toString().split('\n')[1];
+  const der = Buffer.from(encoded, 'base64');
+  const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/';
+  const index = alphabet.indexOf(encoded.at(-2));
+  const noncanonical = encoded.slice(0, -2) + alphabet[index + 1] + '=';
+  assert.deepEqual(Buffer.from(noncanonical, 'base64'), der);
+  const pem = body => Buffer.from(`-----BEGIN PUBLIC KEY-----\n${body}\n-----END PUBLIC KEY-----\n`);
+  const nullParameters = Buffer.concat([Buffer.from('302c300706032b65700500032100', 'hex'), der.subarray(12)]);
+  assert.deepEqual(await verifyManifestSignature(f), f.manifest);
+  for (const bytes of [privatePEM, Buffer.concat([publicPEM, publicPEM]),
+    Buffer.concat([Buffer.from('extra content\n'), publicPEM]),
+    Buffer.from(publicPEM.toString().replace('PUBLIC KEY', 'CERTIFICATE')),
+    pem(noncanonical), pem(nullParameters.toString('base64')),
+    pem(Buffer.concat([der, Buffer.from([0])]).toString('base64'))]) {
+    await writeFile(f.publicKeyPath, bytes, { mode: 0o600 });
+    await assert.rejects(() => verifyManifestSignature(f), /invalid release public key/);
+  }
+  await writeFile(f.publicKeyPath, publicPEM.toString().replaceAll('\n', '\r\n'));
+  assert.deepEqual(await verifyManifestSignature(f), f.manifest);
+});
+
 function cli(f, signing) {
   const path = join(import.meta.dirname, signing ? 'sign.mjs' : 'verify.mjs');
   const args = signing ? [f.planPath, f.artifactDirectory, f.privateKeyPath, f.trustPath, f.outputDirectory] :

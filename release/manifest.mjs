@@ -126,7 +126,16 @@ export async function verifyManifestSignature({ manifestPath, signaturePath, pub
   ]);
   const manifest = parseManifest(bytes);
   let key;
-  try { key = createPublicKey(pem); } catch { throw new Error('invalid release public key'); }
+  try {
+    const text = decoder.decode(pem);
+    const block = /^[ \t\r\n]*-----BEGIN PUBLIC KEY-----\r?\n([A-Za-z0-9+/= \t\r\n]+)-----END PUBLIC KEY-----[ \t\r\n]*$/.exec(text);
+    if (!block) throw new Error();
+    const body = block[1].replace(/[ \t\r\n]/g, '');
+    const der = Buffer.from(body, 'base64');
+    if (der.toString('base64') !== body || der.length !== 44 ||
+        !der.subarray(0, 12).equals(Buffer.from('302a300506032b6570032100', 'hex'))) throw new Error();
+    key = createPublicKey({ key: der, format: 'der', type: 'spki' });
+  } catch { throw new Error('invalid release public key'); }
   const keyDigest = createHash('sha256').update(key.export({ type: 'spki', format: 'der' })).digest('hex');
   if (key.asymmetricKeyType !== 'ed25519' || keyDigest !== trustedKeyDigest ||
       signature.length !== 64 || !verify(null, bytes, key, signature)) {

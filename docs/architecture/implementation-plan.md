@@ -1149,7 +1149,8 @@ private preparation/CPU derivation, universal staging and native DMG
 construction/readback implemented locally.
 Closure/resource wrappers and development SDK packaging are qualified; remaining
 source-bound portable receipt/library joins remain unimplemented/unqualified.
-The portable descriptor owner is qualified locally on Mac and Ubuntu. Use this order for
+The portable descriptor owner, canonical manifest/SPKI verifier and local CLI
+are qualified locally on Mac and Ubuntu. Use this order for
 affected release tooling. Do not extend Mac-native
 policy in new `.mjs` modules. Preserve current work and passing regression
 fixtures; the language port does not replace the R2 native updater or product
@@ -1327,7 +1328,16 @@ and same-byte changes, actual copy/create/attach/detach deadlines, live-mount
 cancellation and independent one-shot recovery. Failed work stays retained;
 direct exit never substitutes for mount restoration. These native observations
 have no publication authority and do not replace portable replay records.
-Next implement canonical manifest/trust verification and source-bound record consumers
+RT4's portable manifest/trust/local-verification slice now passes 21 groups on
+the same Mac and Ubuntu arm64 configurations. A pinned Node 26.9 test oracle
+supplies 334 schema/encoding/URL cases; all 165 acceptances and 169 refusals agree.
+Original complete messages verify under independent canonical public SPKI, with
+Node/OTP signature interoperability qualified on Mac and native OTP crypto on
+Ubuntu. Actual escript local and signature-only commands pass with the qualified
+native workers. The public-only SPKI defect is also closed in the retained Node
+verifier. Receipt/replay, public readback, signing and guide/site cutover remain
+separate; this slice writes and publishes nothing.
+Next implement source-bound record consumers
 and their explicit native producer cutover. Installed image acceptance remains R2.
 
 Deliver each coherent port with its own review, proportionate checks and logical
