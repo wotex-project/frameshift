@@ -134,6 +134,18 @@ unique defaults domain checks stopped SDK preference preservation and is removed
 by the probe. Failure retains private work. It does not start/check an updater,
 use production pins or prove installed behavior.
 
+`compile-updater-inputs REPOSITORY` selects the separate fixed root release-build
+producer. `SwiftPMInputCapture.compileUpdater` holds the original admitted
+manifest/state/ZIP and complete SDK cache through one owned default Swift Build
+child, disabling resolution/netrc/Keychain. The actual main executable must
+import pinned Sparkle; the unchanged bare 86-file observation is returned only
+after closing custody. The shared job limit is 180 seconds, with a 120-second/
+512-KiB-per-pipe compiler bound. Missing SDK, child failure or changed input
+refuses with scratch and actual child custody retained; no receipt/publication
+authority follows. Local packaging calls this producer before copying/deriving
+the SDK, then selects v2 preparation. Source-bound universal/candidate and
+installed/production joins remain independent.
+
 Inspect the exact private generation SDK descriptors with:
 
 ```sh

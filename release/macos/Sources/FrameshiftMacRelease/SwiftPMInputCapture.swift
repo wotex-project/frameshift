@@ -35,9 +35,11 @@ public struct SwiftPMInputObservation: Sendable {
 /// in the evidence workspace. Strict bounded workspace versions six/seven must
 /// bind the parsed binary target to the fixed root package, URL, checksum and
 /// artifact path. Parent descriptors, manifest/state bytes and complete original
-/// archive/cache custody bracket admission. No fetch, resolve, build, thinning,
-/// signing or cache repair occurs here. Retained source/receipt joins and checks
-/// around the compiler remain the producer's responsibility.
+/// archive/cache custody bracket admission. `capture(repository:)` does no fetch,
+/// resolve, build, thinning, signing or cache repair. The separate
+/// `compileUpdater(repository:manifestChild:materialChild:compilerChild:)` holds
+/// these inputs through one fixed default-engine release build. Retained source/
+/// receipt joins remain the calling producer's responsibility.
 ///
 /// Success returns the existing ordered file facts and removes only completed
 /// scratch. Failure retains scratch and any owned child monitor. Cancellation
@@ -62,11 +64,45 @@ public enum SwiftPMInputCapture {
       repository: repository, work: nil, child: manifestChild, materialChild: materialChild)
   }
 
+  /// Builds the fixed root application products while retaining admitted SDK inputs.
+  ///
+  /// This separate producer disables resolution/netrc/Keychain, uses one owned
+  /// release-build child and retains manifest/state/archive and complete cache
+  /// custody through its exit. It requires the pinned SDK and the actual main
+  /// executable's Sparkle import. Returned file facts have no receipt/publication
+  /// authority. All three borrowed child owners remain with the caller on refusal.
+  public static func compileUpdater(
+    repository: String, manifestChild: OwnedCommand, materialChild: OwnedCommand,
+    compilerChild: OwnedCommand
+  ) async throws -> SwiftPMInputObservation {
+    try await capture(
+      repository: repository, work: nil, child: manifestChild, materialChild: materialChild,
+      consume: { root, deadline in
+        let duration = ContinuousClock.now.duration(to: deadline).components
+        let remaining = Double(duration.seconds) + Double(duration.attoseconds) / 1e18
+        _ = try await compilerChild.run(
+          AppleCommand(
+            .swift,
+            arguments: [
+              "build", "--quiet", "--disable-automatic-resolution", "--disable-netrc",
+              "--disable-keychain", "--package-path", root + "/apps/macos",
+              "--configuration", "release", "--build-system", "swiftbuild",
+            ]), limits: ChildLimits(outputBytes: 512 * 1024, seconds: min(120, remaining)))
+        let slices = try MachOInspector.inspect(root + "/apps/macos/.build/release/frameshift-menu")
+        guard !slices.isEmpty,
+          slices.allSatisfy({
+            $0.filetype == 2 && $0.dependencies.contains(BundleSparkle.importPath)
+          })
+        else { throw ReleaseToolError.invalidSwiftPMInputs }
+      })
+  }
+
   static func capture(
     repository: String, work: String?, child: OwnedCommand, seconds: Double = 180,
     materialChild: OwnedCommand = OwnedCommand(),
     limits: ChildLimits? = nil,
-    observe: (@Sendable (SwiftPMCapturePhase) throws -> Void)? = nil
+    observe: (@Sendable (SwiftPMCapturePhase) throws -> Void)? = nil,
+    consume: (@Sendable (String, ContinuousClock.Instant) async throws -> Void)? = nil
   ) async throws -> SwiftPMInputObservation {
     guard !repository.isEmpty, !repository.utf8.contains(0) else {
       throw ReleaseToolError.unsafeInput
@@ -82,6 +118,7 @@ public enum SwiftPMInputCapture {
     var state = stat()
     if lstat(packagePath, &state) != 0 {
       guard errno == ENOENT else { throw ReleaseToolError.readFailed }
+      guard consume == nil else { throw ReleaseToolError.invalidSwiftPMInputs }
       try parents.check()
       try budget.check()
       return SwiftPMInputObservation(files: [])
@@ -127,9 +164,11 @@ public enum SwiftPMInputCapture {
     let completedScratch = try scratchIdentity()
     try observe?(.manifestEvaluated)
     let binary = try binaryTarget(parsed.standardOutput, check: budget.check)
+    guard consume == nil || binary else { throw ReleaseToolError.invalidSwiftPMInputs }
     var files: [NativeBundleObservation.File] = []
     var stateWitness: CaptureLeaf?
     var archiveWitness: FileIdentity?
+    var cacheWitness: [String: FileIdentity]?
     if binary {
       let archive = root + "/" + archivePath
       let framework = root + "/" + String(frameworkPath.dropLast())
@@ -144,6 +183,7 @@ public enum SwiftPMInputCapture {
       archiveWitness = original
       let cached = try PinnedSparkleFramework.custody(
         framework: framework, seconds: budget.remaining(maximum: 120))
+      cacheWitness = cached
       try observe?(.workspaceChecked)
       let material = try await PinnedSparkleFramework.verify(
         archive: archive, framework: framework, work: nil, child: materialChild,
@@ -161,6 +201,16 @@ public enum SwiftPMInputCapture {
         .init(
           path: archivePath, mode: 0o600, bytes: PinnedSparkleArchive.bytes,
           sha256: PinnedSparkleArchive.sha256))
+    }
+    try budget.check()
+    try await consume?(root, budget.deadline)
+    try budget.check()
+    if let cacheWitness {
+      guard
+        try PinnedSparkleFramework.custody(
+          framework: root + "/" + String(frameworkPath.dropLast()),
+          seconds: budget.remaining(maximum: 120)) == cacheWitness
+      else { throw ReleaseToolError.inputChanged }
     }
     try manifest.check(budget: budget)
     try stateWitness?.check(budget: budget)

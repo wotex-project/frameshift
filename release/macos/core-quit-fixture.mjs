@@ -26,6 +26,9 @@ try {
   work = await mkdtemp('/tmp/frameshift-quit.'); await chmod(work, 0o700);
   const stage = join(work, '.package.quit'); await mkdir(stage, { mode: 0o700 });
   const app = join(stage, 'Frameshift.app'); run('/usr/bin/ditto', [source, app]);
+  // This diagnostic executable has no SDK dependency. Remove the SDK only from
+  // its private clone; original full-app SDK bytes/seals remain checked below.
+  if (before.links) await rm(join(app, 'Contents/Frameworks'), { recursive: true });
   const executable = join(app, 'Contents/MacOS/Frameshift');
   await writeFile(executable, probeBytes, { mode: 0o755 }); await chmod(executable, 0o755);
   run('/usr/bin/plutil', ['-replace', 'CFBundleIdentifier', '-string', 'io.frameshift.quit-probe', join(app, 'Contents/Info.plist')]);

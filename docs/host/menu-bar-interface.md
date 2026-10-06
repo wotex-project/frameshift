@@ -368,6 +368,15 @@ Settings contains:
 
 ## Accessibility and keyboard behavior
 
+The app menu and Settings share Check for Updates availability from the one
+native updater. Development builds show unavailable updates and disable the
+action. A running eligible updater exposes an automatic-check toggle in Settings;
+only an explicit choice changes its stored preference. Settings shows pending
+core exit and offers Retry Install after an uncertain observation. Sparkle owns
+its update dialogs; this integration uses the existing Settings scene and does
+not introduce another window controller. Keyboard/VoiceOver and dialog overlap
+remain native interaction acceptance, separate from compile/fixture results.
+
 - All icon-only actions have labels and Help tags.
 - Full keyboard traversal follows visual order.
 - Return runs the current primary action; Command-Return generates when the

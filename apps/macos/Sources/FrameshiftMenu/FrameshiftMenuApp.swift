@@ -1,5 +1,6 @@
 import AppKit
 import FrameshiftShell
+import FrameshiftUpdater
 import SwiftUI
 
 @MainActor
@@ -9,6 +10,18 @@ private enum ShellSession {
   static let loginSettings = LoginSettingsModel(service: SystemLoginItemService())
   static let discovery = FrameDiscovery()
   static let pairingSettings = PairingSettingsModel()
+  static let outboxAdvertisement = OutboxAdvertisement()
+  static let termination = CoreTerminationCoordinator { quiesce() }
+  // Development has no qualified production channel. Do not infer eligibility
+  // from bundle metadata or start Sparkle with a sample feed/key.
+  static let updater = NativeUpdater(channel: nil, termination: termination)
+
+  static func quiesce() {
+    model.quiesce()
+    discovery.stop()
+    outboxAdvertisement.stop()
+    updater.quiesce()
+  }
 }
 
 @main
@@ -38,7 +51,8 @@ struct FrameshiftMenuApp: App {
         model: ShellSession.loginSettings,
         discovery: ShellSession.discovery,
         pairing: ShellSession.pairingSettings,
-        shell: ShellSession.model
+        shell: ShellSession.model,
+        updater: ShellSession.updater
       )
     }
     .defaultSize(width: 580, height: 620)
@@ -50,6 +64,10 @@ private struct LibraryCommands: Commands {
   @Environment(\.openWindow) private var openWindow
 
   var body: some Commands {
+    CommandGroup(after: .appInfo) {
+      Button("Check for Updates…") { ShellSession.updater.checkForUpdates() }
+        .disabled(!ShellSession.updater.canCheckForUpdates)
+    }
     CommandGroup(after: .newItem) {
       Button("Open Library") { openWindow(id: "library") }
         .keyboardShortcut("l", modifiers: .command)
@@ -109,12 +127,6 @@ enum AppIcon {
 
 @MainActor
 private final class FrameshiftAppDelegate: NSObject, NSApplicationDelegate {
-  private let outboxAdvertisement = OutboxAdvertisement()
-  private let termination = CoreTerminationCoordinator {
-    ShellSession.model.quiesce()
-    ShellSession.discovery.stop()
-  }
-
   func application(_ application: NSApplication, open urls: [URL]) {
     _ = application
     for url in urls {
@@ -124,18 +136,19 @@ private final class FrameshiftAppDelegate: NSObject, NSApplicationDelegate {
 
   func applicationDidFinishLaunching(_ notification: Notification) {
     _ = notification
-    outboxAdvertisement.start()
+    ShellSession.outboxAdvertisement.start()
     ShellSession.model.start()
   }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
-    outboxAdvertisement.stop()
-    return termination.requestTermination(sender)
+    ShellSession.termination.requestTermination(sender)
   }
 
   func applicationWillTerminate(_ notification: Notification) {
     _ = notification
-    outboxAdvertisement.stop()
+    ShellSession.outboxAdvertisement.stop()
     ShellSession.model.quiesce()
+    ShellSession.discovery.stop()
+    ShellSession.updater.quiesce()
   }
 }

@@ -50,8 +50,10 @@ Development metadata contains no production feed or key. The separate
 standard SDK controller and retains its delegate, current-state subscriptions
 and guarded relaunch handler. Six adapter groups and all 108 shell tests pass.
 A private sealed `frameshift-updater-probe` app verifies actual stored choices
-without starting the SDK; its isolated defaults domain is removed. Application
-user-choice/cycle/UI and installed update joins remain open under the
+without starting the SDK; its isolated defaults domain is removed. Settings and
+the app menu share one adapter/coordinator; development updates are explicitly
+unavailable. Running user-choice/cycle/UI and installed update joins remain open
+under the
 [updater contract](../../docs/host/macos.md#native-updater-lifecycle).
 `FRAMESHIFT_PACKAGED_APP_FIXTURE=/absolute/path/to/development/Frameshift.app`
 adds that explicitly supplied plist to the channel test's default-metadata check.
@@ -125,12 +127,16 @@ bundled core is available only in the packaged `.app`. The package script
 creates an ad-hoc-signed local artifact; release signing and notarization require
 external Apple credentials and services.
 
-The development packager uses the separate native release tool for private
-preparation, inside-out seals and final closure. It preserves failed or
+The development packager uses the separate native release tool for admitted
+SDK compilation, private CPU framework derivation, explicit v2 preparation,
+inside-out seals and final closure. It preserves failed or
 interrupted `.package.*` work and reports its location; only successful admission
-allows the local development artifact replacement. The current app remains
-SDK-free. Source-bound candidate producers and actual updater integration retain
-their separate gates.
+allows the local development artifact replacement. Build-time
+`scripts/prepare-macos-sdk` uses `gh` only to bootstrap an absent pinned original
+ZIP, and resolves only absent workspace state. Existing/partial SDK inputs must
+pass admission without repair. The shell library, IPC probe and `frameshiftctl`
+keep their SDK-free dependencies. Source-bound candidates, running SDK cycles
+and installed update retain their separate gates.
 
 Development packaging rebuilds the renderer and local NIFs with explicit macOS
 14 targets, signs native leaves before the app and declares the greatest actual

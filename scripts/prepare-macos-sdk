@@ -1,0 +1,29 @@
+#!/bin/sh
+set -eu
+
+repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+package_root="$repository_root/apps/macos"
+native_tool="$repository_root/release/macos/.build/release/frameshift-mac-release"
+archive="$package_root/.build/sparkle/Sparkle-for-Swift-Package-Manager.zip"
+
+mkdir -p "$package_root/.build"
+if [ ! -e "$archive" ] && [ ! -L "$archive" ]; then
+  # Only bootstrap an absent namespace. Existing/partial evidence is not repaired.
+  mkdir -m 700 "$package_root/.build/sparkle"
+  work=$(mktemp -d "$package_root/.build/.sparkle.XXXXXX")
+  gh release download 2.10.0 --repo sparkle-project/Sparkle \
+    --pattern Sparkle-for-Swift-Package-Manager.zip --dir "$work"
+  downloaded="$work/Sparkle-for-Swift-Package-Manager.zip"
+  chmod 600 "$downloaded"
+  "$native_tool" verify-sparkle-archive "$downloaded" >/dev/null
+  # A competing leaf cannot be overwritten; a skipped move leaves work behind
+  # and rmdir refuses rather than admitting someone else's publication.
+  mv -n "$downloaded" "$archive"
+  rmdir "$work"
+fi
+
+"$native_tool" verify-sparkle-archive "$archive" >/dev/null
+if [ ! -e "$package_root/.build/workspace-state.json" ] && [ ! -L "$package_root/.build/workspace-state.json" ]; then
+  /usr/bin/swift package --disable-netrc --disable-keychain --package-path "$package_root" resolve >&2
+fi
+"$native_tool" capture-swiftpm-inputs "$repository_root" >/dev/null

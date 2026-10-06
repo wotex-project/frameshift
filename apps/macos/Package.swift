@@ -30,7 +30,10 @@ let package = Package(
       ]),
     .executableTarget(
       name: "FrameshiftMenu",
-      dependencies: ["FrameshiftShell"]
+      dependencies: ["FrameshiftShell", "FrameshiftUpdater"],
+      linkerSettings: [
+        .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@loader_path/../Frameworks"])
+      ]
     ),
     .executableTarget(
       name: "FrameshiftShellChecks",

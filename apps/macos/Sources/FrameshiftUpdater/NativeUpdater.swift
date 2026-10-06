@@ -143,6 +143,7 @@ public final class NativeUpdater {
 
   func postponeRelaunch(_ handler: @escaping () -> Void) {
     guard pending == nil else { return }
+    quiesce()
     let id = UUID()
     pending = Relaunch(id: id, handler: handler)
     isWaitingForCoreExit = true

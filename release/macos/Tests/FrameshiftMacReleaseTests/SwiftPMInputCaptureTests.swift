@@ -6,6 +6,79 @@ import XCTest
 
 @MainActor
 final class SwiftPMInputCaptureTests: XCTestCase {
+  func testActualFixedUpdaterCompileKeepsAllOriginalInputsThroughOwnedExit() async throws {
+    let fixture = try await SwiftPMCaptureFixture.resolved(products: true)
+    defer { fixture.remove() }
+    let before = try fixture.identities()
+    let compiler = OwnedCommand()
+    let result = try await SwiftPMInputCapture.compileUpdater(
+      repository: fixture.root, manifestChild: OwnedCommand(), materialChild: OwnedCommand(),
+      compilerChild: compiler)
+    XCTAssertEqual(result.files.count, 86)
+    XCTAssertEqual(result.inventoryEntries, 152)
+    XCTAssertEqual(before, try fixture.identities())
+    let status = await compiler.retainUntilExitAfterRefusal()
+    XCTAssertEqual(status, .stopped(.exited(0)))
+    let repeated = try await SwiftPMInputCapture.capture(repository: fixture.root)
+    XCTAssertEqual(try result.observationBytes(), try repeated.observationBytes())
+  }
+
+  func testConsumedManifestStateArchiveCacheAndAliasMutationCannotReturnCompilerFacts()
+    async throws
+  {
+    for change in 0..<5 {
+      let fixture = try await SwiftPMCaptureFixture.resolved()
+      defer { fixture.remove() }
+      let path = [
+        fixture.manifest, fixture.statePath, fixture.archive,
+        fixture.framework + "/Versions/B/Headers/Sparkle.h", fixture.framework + "/Headers",
+      ][change]
+      do {
+        _ = try await SwiftPMInputCapture.capture(
+          repository: fixture.root, work: fixture.work, child: OwnedCommand(),
+          consume: { _, _ in
+            if change == 4 {
+              XCTAssertEqual(unlink(path), 0)
+              XCTAssertEqual(symlink("Versions/Current/Headers", path), 0)
+            } else {
+              try Data(contentsOf: URL(fileURLWithPath: path)).write(to: URL(fileURLWithPath: path))
+            }
+          })
+        XCTFail("Consumer changed input custody")
+      } catch { XCTAssertEqual(error as? ReleaseToolError, .inputChanged) }
+      XCTAssertTrue(FileManager.default.fileExists(atPath: fixture.work))
+    }
+  }
+
+  func testNoSDKAndActualCompilerFailureRefuseWithoutPromotingInputFacts() async throws {
+    let empty = try SwiftPMCaptureFixture(binary: false)
+    defer { empty.remove() }
+    let unused = OwnedCommand()
+    do {
+      _ = try await SwiftPMInputCapture.compileUpdater(
+        repository: empty.root, manifestChild: OwnedCommand(), materialChild: OwnedCommand(),
+        compilerChild: unused)
+      XCTFail("SDK-free compiler profile admitted")
+    } catch { XCTAssertEqual(error as? ReleaseToolError, .invalidSwiftPMInputs) }
+    let unusedStatus = await unused.status()
+    XCTAssertEqual(unusedStatus, .notStarted)
+    let fixture = try await SwiftPMCaptureFixture.resolved(products: true)
+    defer { fixture.remove() }
+    try Data("invalid Swift fixture input".utf8).write(
+      to: URL(fileURLWithPath: fixture.packageRoot + "/Sources/FrameshiftMenu/main.swift"))
+    let before = try fixture.identities()
+    let compiler = OwnedCommand()
+    do {
+      _ = try await SwiftPMInputCapture.compileUpdater(
+        repository: fixture.root, manifestChild: OwnedCommand(), materialChild: OwnedCommand(),
+        compilerChild: compiler)
+      XCTFail("Failed compiler promoted input facts")
+    } catch {}
+    let status = await compiler.retainUntilExitAfterRefusal()
+    XCTAssertEqual(status, .stopped(.exited(1)))
+    XCTAssertEqual(before, try fixture.identities())
+  }
+
   func testActualSwiftPMSevenAndSyntheticSixReturnExactFactsWithoutChangingInputs() async throws {
     let fixture = try await SwiftPMCaptureFixture.resolved()
     defer { fixture.remove() }
@@ -434,7 +507,7 @@ private final class SwiftPMCaptureFixture: Sendable {
     try Data(text.utf8).write(to: URL(fileURLWithPath: manifest))
     guard chmod(manifest, 0o644) == 0 else { throw ReleaseToolError.readFailed }
   }
-  static func resolved() async throws -> SwiftPMCaptureFixture {
+  static func resolved(products: Bool = false) async throws -> SwiftPMCaptureFixture {
     guard let input = ProcessInfo.processInfo.environment["FRAMESHIFT_SPARKLE_ARCHIVE"] else {
       throw XCTSkip(
         "FRAMESHIFT_SPARKLE_ARCHIVE is required for the actual SwiftPM compiler artifact")
@@ -443,6 +516,32 @@ private final class SwiftPMCaptureFixture: Sendable {
     let fixture = try SwiftPMCaptureFixture(binary: true)
     let child = OwnedCommand()
     do {
+      if products {
+        let manifest = """
+          // swift-tools-version: 6.0
+          import PackageDescription
+          let package = Package(name: "CompilerJoinFixture", platforms: [.macOS(.v14)], products: [
+            .executable(name: "frameshift-menu", targets: ["FrameshiftMenu"]),
+            .executable(name: "frameshiftctl", targets: ["FrameshiftCTL"])
+          ], targets: [
+            .binaryTarget(name: "Sparkle", url: "\(PinnedSparkleArchive.url)", checksum: "\(PinnedSparkleArchive.sha256)"),
+            .executableTarget(name: "FrameshiftMenu", dependencies: ["Sparkle"], linkerSettings: [
+              .unsafeFlags(["-Xlinker", "-rpath", "-Xlinker", "@loader_path/../Frameworks"])
+            ]),
+            .executableTarget(name: "FrameshiftCTL")
+          ])
+          """
+        try Data(manifest.utf8).write(to: URL(fileURLWithPath: fixture.manifest))
+        for target in ["FrameshiftMenu", "FrameshiftCTL"] {
+          let source = fixture.packageRoot + "/Sources/" + target
+          try FileManager.default.createDirectory(atPath: source, withIntermediateDirectories: true)
+          let text =
+            target == "FrameshiftMenu"
+            ? "import Sparkle\n@main struct Probe { @MainActor static func main() { _ = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: nil, userDriverDelegate: nil) } }\n"
+            : "print(\"SDK-free CLI fixture\")\n"
+          try Data(text.utf8).write(to: URL(fileURLWithPath: source + "/main.swift"))
+        }
+      }
       try FileManager.default.createDirectory(
         atPath: fixture.packageRoot + "/.build/sparkle", withIntermediateDirectories: true,
         attributes: [.posixPermissions: 0o700])

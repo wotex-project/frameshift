@@ -3,7 +3,8 @@ import Foundation
 import FrameshiftMacRelease
 
 let arguments = Array(CommandLine.arguments.dropFirst())
-let captureCommand = arguments.first == "capture-swiftpm-inputs"
+let compileCommand = arguments.first == "compile-updater-inputs"
+let captureCommand = arguments.first == "capture-swiftpm-inputs" || compileCommand
 let stagingCommand = arguments.first == "stage-sparkle-framework"
 let frameworkCommand = arguments.first == "verify-sparkle-framework"
 let resourceCommand = arguments.first == "verify-generation-resources"
@@ -25,18 +26,20 @@ guard
         "verify-sparkle-archive", "verify-sparkle-plist", "inspect-macho",
         "verify-generation-resources",
         "capture-swiftpm-inputs",
+        "compile-updater-inputs",
       ]
       .contains(arguments[0]))
 else {
   FileHandle.standardError.write(
     Data(
-      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle|prepare-swiftbuild-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP arm64|x86_64\n       frameshift-mac-release capture-swiftpm-inputs REPOSITORY\n"
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle|prepare-swiftbuild-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP arm64|x86_64\n       frameshift-mac-release [capture-swiftpm-inputs|compile-updater-inputs] REPOSITORY\n"
         .utf8)
   )
   exit(64)
 }
 let manifestChild = OwnedCommand()
 let materialChild = OwnedCommand()
+let compilerChild = OwnedCommand()
 let preparer = DevelopmentBundlePreparer()
 let stager = SparkleFrameworkStager()
 do {
@@ -62,9 +65,16 @@ do {
         "development bundle: \(result.architecture.rawValue), minimum macOS \(result.declaredMinimum)\n"
           .utf8))
   } else if captureCommand {
-    var bytes = try await SwiftPMInputCapture.capture(
-      repository: arguments[1], manifestChild: manifestChild, materialChild: materialChild
-    ).observationBytes()
+    let result: SwiftPMInputObservation
+    if compileCommand {
+      result = try await SwiftPMInputCapture.compileUpdater(
+        repository: arguments[1], manifestChild: manifestChild, materialChild: materialChild,
+        compilerChild: compilerChild)
+    } else {
+      result = try await SwiftPMInputCapture.capture(
+        repository: arguments[1], manifestChild: manifestChild, materialChild: materialChild)
+    }
+    var bytes = try result.observationBytes()
     bytes.append(10)
     FileHandle.standardOutput.write(bytes)
   } else if frameworkCommand {
@@ -120,6 +130,7 @@ do {
   if captureCommand {
     FileHandle.standardError.write(
       Data("recorded updater compiler inputs unavailable, unsafe or changed\n".utf8))
+    _ = await compilerChild.retainUntilExitAfterRefusal()
     _ = await manifestChild.retainUntilExitAfterRefusal()
     _ = await materialChild.retainUntilExitAfterRefusal()
     exit(1)

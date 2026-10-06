@@ -410,11 +410,34 @@ privately sealed `FrameshiftUpdaterProbe` app with a unique fixture bundle ID
 seeds its own defaults domain and verifies the actual stopped controller preserves
 automatic checks/downloads, profiling, interval and stored feed override. It
 removes only that fixture domain. Strict CPU/nested seals and original SDK/probe
-bytes pass before/after. No updater is started by these fixtures. App Settings/
-menu integration, running SDK permission/KVO/cycles, signed-feed tamper and
+bytes pass before/after. No updater is started by these fixtures. Application
+integration is qualified below; running SDK permission/KVO/cycles, signed-feed tamper and
 installed/production acceptance remain distinct work.
 
 #### Signed channel admission and initial defaults
+
+The menu application owns one session-level updater and core-exit coordinator.
+Its shared quiescence stops the model, discovery, outbox advertisement and new
+updater checks. The normal AppKit delegate uses that same coordinator. A
+development build supplies no admitted production channel, shows unavailable
+updates in Settings and disables Check for Updates in Settings and the app menu.
+Only a running eligible adapter exposes the explicit automatic-check toggle.
+Settings presents pending/uncertain core exit and an explicit Retry Install
+action; that action re-observes exit without replaying installation or signals.
+Sparkle retains ownership of its check/download/install dialogs. Native window,
+keyboard/VoiceOver and overlapping-dialog interaction need their own runtime
+acceptance; successful compilation is not UI qualification.
+
+The full development join passes on macOS 27.0.1 arm64 / Xcode 27: all 102 Mac
+release fixture groups without exclusions, six adapter groups and 108 shell
+tests, fresh 1,504-file/29-native/nine-alias SDK-bearing app, strict signatures,
+isolated stopped preference fixture and authenticated packaged IPC/offline
+maintenance. Both real core-quit probes confirm launcher exit and OTP PID removal.
+Their SDK-free diagnostic clones remove the SDK only from private copies;
+original full-app bytes/seals stay checked before/after. These probes establish
+the production coordinator's idle-core behavior, not running SDK installation
+or interactive menu/Settings focus. Production pins, running cycles/signed-feed
+tamper and installed/Intel/older-OS qualification remain open.
 
 Before constructing a running updater, compare the app's `SUFeedURL` and
 `SUPublicEDKey` with separately supplied release pins. The pin source and
@@ -941,14 +964,24 @@ the exact last child after refusal until direct-child exit is known, as defined
 by [child custody](#native-release-child-custody).
 
 `scripts/package-macos` builds the dependency-free release tool separately, then
-calls `prepare-development-bundle` and the native final `check-bundle` directly
-for its current SDK-free development app. It invokes no Node preparation command.
+uses native compiler-input custody, private SDK CPU derivation, the explicit v2
+Swift updater preparation and final `check-bundle`. It invokes no Node producer.
 Its failure/interrupt trap reports and retains `.package.*` work; it does not
 remove a stage whose child custody or admission failed. Only successful
 preparation and final closure allow the existing local artifact replacement.
 An externally interrupted shell/tool does not establish child or descendant
-exit. Candidate/source-bound producers remain separate consumers; SDK inclusion
-must select its explicit updater profile and original/compiler/CPU gates.
+exit. Candidate/source-bound producers remain separate consumers with their
+independent frozen-source/receipt/shared-inventory and publication gates.
+
+`scripts/prepare-macos-sdk` is build-time setup, separate from admission. Only an
+absent original SDK namespace can download the pinned 2.10.0 ZIP through `gh`;
+verify exact size/hash before storing its single-link mode-0600 original under
+mode-0700 `.build/sparkle`. Resolve only when original workspace state is absent.
+An existing or partial original namespace is never overwritten or fetched again.
+State/cache evidence must pass native capture or refuse unchanged; an initial
+original bootstrap does not repair retained state/cache. A competing original
+leaf leaves bootstrap work retained and refuses. Failed bootstrap work stays
+private and retained. This is no application-runtime network/update path.
 
 Use the selected `/usr/bin/xcrun --find swift` result to identify its canonical
 `usr/lib/` prefix. Before mutation, admit the complete bounded closure with only
@@ -1435,6 +1468,33 @@ but redirected or replaced parents may not. Manifest and state leaves require
 single-link protected custody and complete unchanged bytes/times. Require mode
 `0600` for the recorded original ZIP. A parsed no-binary package returns the
 existing empty SDK inventory only after manifest and parent rechecks.
+
+The separate `SwiftPMInputCapture.compileUpdater(repository:manifestChild:materialChild:compilerChild:)`
+and `compile-updater-inputs REPOSITORY` operation retains this same admission
+through one owned fixed release build of the root application products. Disable
+automatic resolution, netrc and Keychain; explicitly select the default Swift
+Build engine. Require the SDK, retain the original manifest/state/archive and
+complete cache identities across compilation, and require the actual produced
+main executable's pinned Sparkle import before returning the unchanged 86 file
+facts. A missing SDK or failed/changed compiler scope returns no facts. The
+three-minute admission budget remains shared; the compiler child has at most
+120 seconds and separate 512 KiB pipe bounds. Refusal retains private scratch
+and all actual borrowed child owners; the CLI waits read-only on the compiler
+before exit. Unknown direct exit cannot become accepted output or descendant
+proof. These native observations do not replace frozen-source or source receipts.
+
+Three added compiler groups pass within all 99 release-tool tests with actual
+SDK/resource inputs and no exclusions. A real resolved/compiler-produced fixture
+retains every original input identity and reaps the fixed compiler successfully;
+the actual app compile returns all 86 facts byte-identical to independent
+capture. Consumer-time same-byte manifest/state/archive/cache/alias replacement,
+missing SDK and a real invalid-source compiler exit refuse without input-fact
+promotion. The successful full local package above joins this compiler to native
+CPU derivation/preparation. Bootstrap refusal fixtures use the actual setup
+script and native reader with an explicitly isolated GH transport stand-in;
+existing/partial originals, a competing publication leaf and invalid retained
+state preserve prior bytes and retained work. This is local build/input evidence,
+not upstream/license clearance, source receipts or installed update proof.
 
 Use an owned `/usr/bin/swift` manifest child with `package`, explicit
 `--package-path` and separate `--scratch-path`, then `dump-package`. Apply a

@@ -1,5 +1,6 @@
 import AppKit
 import FrameshiftShell
+import FrameshiftUpdater
 import ServiceManagement
 import SwiftUI
 import UniformTypeIdentifiers
@@ -10,6 +11,7 @@ struct SettingsView: View {
   let discovery: FrameDiscovery
   let pairing: PairingSettingsModel
   let shell: ShellModel
+  let updater: NativeUpdater
 
   var body: some View {
     ScrollView {
@@ -44,6 +46,7 @@ struct SettingsView: View {
         nearbyFrames
           .disabled(shell.isQuiescing)
         startup
+        updates
       }
       .padding(24)
       .frame(maxWidth: .infinity, alignment: .leading)
@@ -97,6 +100,45 @@ struct SettingsView: View {
       if let message = settings.message {
         Text(message).fixedSize(horizontal: false, vertical: true)
       }
+    }
+  }
+
+  private var updates: some View {
+    SettingsSection("Updates") {
+      Text(updateStatus)
+        .foregroundStyle(.secondary)
+        .fixedSize(horizontal: false, vertical: true)
+      if updater.state == .running {
+        Toggle(
+          "Automatically check for updates",
+          isOn: Binding(
+            get: { updater.automaticallyChecksForUpdates },
+            set: { updater.setAutomaticallyChecksForUpdates($0) }))
+      }
+      Button("Check for Updates…") { updater.checkForUpdates() }
+        .disabled(!updater.canCheckForUpdates)
+      if updater.canRetryCoreExit {
+        Button("Retry Install") { updater.retryCoreExit() }
+        Text("New artwork work stays paused while Frameshift confirms that the core stopped.")
+          .font(.callout)
+          .foregroundStyle(.secondary)
+          .fixedSize(horizontal: false, vertical: true)
+      }
+    }
+  }
+
+  private var updateStatus: String {
+    if updater.isWaitingForCoreExit {
+      return updater.canRetryCoreExit
+        ? "Frameshift could not confirm that the core stopped. The update is waiting."
+        : "Waiting for the core to finish quitting before installing the update."
+    }
+    switch updater.state {
+    case .unavailable: return "Updates are unavailable for this development build."
+    case .stopped: return "Update checking has not started."
+    case .running: return "Frameshift uses the standard update dialog to check and install updates."
+    case .failed: return "Update checking could not start. Restart Frameshift to try again."
+    case .paused: return "New update checks are paused while Frameshift finishes quitting."
     }
   }
 

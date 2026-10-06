@@ -943,9 +943,22 @@ app preserves actual stored automatic-check/download/profile/interval/feed
 choices while stopped. The default Swift Build engine's observed loader shape
 uses the explicitly qualified v2 preparation profile; an additional both-CPU/
 universal group passes within all 96 tool tests with actual inputs. Original
-v1/legacy rules and strict final admission are unchanged. Next join Settings/menu
-and the full app/package, then running SDK permission/KVO/cycles and signed-feed
+v1/legacy rules and strict final admission are unchanged. Settings/menu and the
+full app/package now join that boundary below; continue running SDK permission/
+KVO/cycles and signed-feed
 tamper. This stopped boundary establishes no production or installed update.
+
+The app now shares one updater/coordinator between Settings, menu commands and
+normal quit; shared quiescence stops model/discovery/outbox/check work. The
+development build shows unavailable updates without production pins or SDK
+startup. Native `compile-updater-inputs` holds the actual manifest/state/ZIP/
+complete cache through the fixed compiler child, then private SDK CPU staging
+and v2 preparation produce a 1,504-file/29-native/nine-alias full app at its real
+macOS 15.0.0 minimum. All 102 Mac fixture groups, six updater groups, 108 shell
+tests, stopped preference/seal fixture, packaged IPC/offline maintenance and both
+real core-quit probes pass. Three compiler groups pass within all 99 tool tests
+with actual inputs. Running SDK cycles/signed-feed tamper and native UI/focus
+remain H3-L3/L2 work; source-bound/universal and installed release stay R2/RT3.
 
 Run these coherent native-shell slices alongside RT1–RT6; portable adapter,
 production credentials and unavailable Intel/older-OS hosts do not block the
@@ -1265,15 +1278,17 @@ native roles/nine aliases. CPU merge, DMG construction, actual app
 SDK/source-bound producer/library cutover and full-host acceptance remain RT3
 and H3-L3 work.
 
-The SDK-free development `scripts/package-macos` consumer now uses the native
-preparer and final inspection directly, with failed/interrupt work retained.
-Fresh packaging and packaged IPC/offline maintenance pass with an invalid Node
-startup option; strict admission reports 1,419 files/24 natives and the actual
-macOS 15.0.0 minimum. Real AppKit quit confirms launcher exit and OTP PID removal.
-An actual isolated packager trap/admission/publication tail refuses a broken
-native role while preserving failed-stage and previous-output identities.
-This closes that local consumer cutover; SDK inclusion, other source-bound
-producer/library joins, universal assembly and installed qualification stay open.
+The development `scripts/package-macos` consumer now uses native admitted SDK
+compilation, private CPU framework staging, v2 preparation and final inspection,
+with failed/interrupt work retained. The full SDK-bearing app passes at 1,504
+files/29 natives/nine aliases and macOS 15.0.0, with packaged IPC/offline
+maintenance and actual core quit. The compile operation's 86 SDK input facts
+match a separate capture byte for byte. Actual compiler failure and consumer-time
+manifest/state/ZIP/cache/alias changes refuse, preserving source custody and
+retained work. Build-time `gh` setup is separate and never repairs retained
+evidence. This closes the local SDK development consumer join; source-bound
+producer/library joins, universal assembly, DMG ports and installed qualification
+remain open.
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

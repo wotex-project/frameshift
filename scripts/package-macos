@@ -35,28 +35,15 @@ esac
   mise exec -- env MIX_ENV=prod MACOSX_DEPLOYMENT_TARGET=14.0 mix release --overwrite
 )
 
-swift build \
-  --package-path "$package_root" \
-  --configuration release \
-  --product frameshift-menu
-
-swift build \
-  --package-path "$package_root" \
-  --configuration release \
-  --product frameshiftctl
-
-binary_directory=$(
-  swift build \
-    --package-path "$package_root" \
-    --configuration release \
-    --show-bin-path
-)
-
-# Build the dependency-free native producer before creating mutable app work.
+# Build the dependency-free native producer before SDK admission or compilation.
 /usr/bin/swift build --quiet --disable-automatic-resolution --disable-netrc --disable-keychain \
   --package-path "$repository_root/release/macos" --configuration release \
   --product frameshift-mac-release >&2
 native_release_tool="$repository_root/release/macos/.build/release/frameshift-mac-release"
+"$repository_root/scripts/prepare-macos-sdk"
+"$native_release_tool" compile-updater-inputs "$repository_root" >/dev/null
+
+binary_directory="$package_root/.build/release"
 
 mkdir -p "$artifact_root"
 staging_root=$(mktemp -d "$artifact_root/.package.XXXXXX")
@@ -95,7 +82,9 @@ find "$stage" -type f -exec chmod go-w,u-s,g-s {} +
 find "$stage" -type d -exec chmod go-w,u-s,g-s,-t {} +
 
 plutil -lint "$stage/Contents/Info.plist" >/dev/null
-"$native_release_tool" prepare-development-bundle "$stage" "$architecture" >&2
+"$native_release_tool" stage-sparkle-framework \
+  "$package_root/.build/sparkle/Sparkle-for-Swift-Package-Manager.zip" "$stage" "$architecture" >/dev/null
+"$native_release_tool" prepare-swiftbuild-updater-bundle "$stage" "$architecture" >&2
 "$native_release_tool" check-bundle "$stage" "$architecture" >/dev/null
 
 if [ -e "$app_bundle" ]; then

@@ -47,6 +47,7 @@ check_policy() {
     "$repository_root/scripts/index" \
     "$repository_root/scripts/launch-bundled-core" \
     "$repository_root/scripts/package-macos" \
+    "$repository_root/scripts/prepare-macos-sdk" \
     "$repository_root/scripts/package-macos-dmg" \
     "$repository_root/scripts/package-macos-universal" \
     "$repository_root/scripts/package-macos-candidate" \
@@ -346,6 +347,12 @@ check_macos() {
   )
 
   "$repository_root/scripts/package-macos" >/dev/null
+  mise exec -- node "$repository_root/release/macos/updater-bootstrap-fixture.mjs" \
+    "$repository_root/apps/macos/.build/sparkle/Sparkle-for-Swift-Package-Manager.zip"
+  mise exec -- node "$repository_root/release/macos/native-updater-fixture.mjs" \
+    "$repository_root/apps/macos/.build/sparkle/Sparkle-for-Swift-Package-Manager.zip" \
+    "$repository_root/apps/macos/.build/artifacts/macos/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework" \
+    "$repository_root/apps/macos/.build/release/frameshift-updater-probe"
 
   app_bundle="$repository_root/apps/macos/.build/artifacts/Frameshift.app"
   test -x "$app_bundle/Contents/MacOS/Frameshift"
