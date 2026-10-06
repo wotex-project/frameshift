@@ -1,0 +1,1490 @@
+{
+  "format": "frameshift.conjunct.v1-inputs.hands/1",
+  "sources": {
+    "assembly": "{\"class\":\"paper\",\"connections\":[{\"from\":{\"instance\":\"adapter-0\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-1\",\"port\":\"in\"}},{\"from\":{\"instance\":\"adapter-1\",\"port\":\"out\"},\"to\":{\"instance\":\"panel\",\"port\":\"dc\"}},{\"from\":{\"instance\":\"controller\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-0\",\"port\":\"in\"}}],\"dependencies\":[{\"consumer\":\"panel\",\"provider\":\"controller\",\"role\":\"controller\"}],\"instances\":[{\"id\":\"adapter-0\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\"},{\"id\":\"adapter-1\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\"},{\"id\":\"controller\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:b5d4dc5165298e4f39ecb1a65731d7d22a0b3a7b558b6f7aa9cd19ab08f7b7e3\"},{\"id\":\"panel\",\"location\":\"internal\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":100},\"profile\":\"sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5\"}],\"intent\":{\"ambient_mc\":{\"max\":35000,\"min\":-1000},\"artifact\":\"fixture-rgb24\",\"dwell_ms\":600000,\"firmware\":\"fixture-v1\",\"mounting\":\"wall\",\"protocol\":\"fixture-protocol\",\"storage_bytes\":1000000},\"schema\":1,\"semantics\":\"frameshift-physical-1\"}\n",
+    "profile-0": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter-2\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n",
+    "profile-1": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1010,\"min\":1000,\"state\":\"known\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"consumer\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-0\",\"kind\":\"display\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"dc\",\"kind\":\"signal\",\"required\":true}],\"requires\":[\"controller\"],\"revision\":\"1\",\"schema\":1}\n",
+    "profile-2": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1011,\"min\":1001,\"state\":\"known\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"source\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-1\",\"kind\":\"controller\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n",
+    "profile-3": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n",
+    "mapping-0": "{\"artifact\":\"fixture-rgb24\",\"firmware\":\"fixture-v1\",\"pairs\":[{\"input\":\"in\",\"output\":\"out\"}],\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\",\"protocol\":\"fixture-protocol\",\"schema\":1,\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}]}\n",
+    "mapping-1": "{\"artifact\":\"fixture-rgb24\",\"firmware\":\"fixture-v1\",\"pairs\":[{\"input\":\"in\",\"output\":\"out\"}],\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\",\"protocol\":\"fixture-protocol\",\"schema\":1,\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}]}\n",
+    "layout": "{\"artifact\":\"fixture-rgb24\",\"controller\":\"controller\",\"encoding\":\"rgb24-srgb-v1\",\"firmware\":\"fixture-v1\",\"height\":3,\"protocol\":\"fixture-protocol\",\"schema\":1,\"tiles\":[{\"display\":\"panel\",\"rotation\":0,\"x\":0,\"y\":0}],\"width\":2}\n",
+    "context": "{\"assembly\":\"sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76\",\"bindings\":[{\"identity\":\"sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1\",\"kind\":\"signal-mapping\"},{\"identity\":\"sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01\",\"kind\":\"artifact-layout\"},{\"identity\":\"sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11\",\"kind\":\"signal-mapping\"}],\"compiler\":\"frameshift-physical-1\",\"schema\":1}\n",
+    "unreferenced-profile": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1010,\"min\":1000,\"state\":\"known\"}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-0\",\"kind\":\"display\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}}],\"id\":\"dc\",\"kind\":\"power\",\"required\":true}],\"requires\":[\"controller\",\"power\"],\"revision\":\"1\",\"schema\":1}\n",
+    "context-without-bindings": "{\"assembly\":\"sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76\",\"bindings\":[],\"compiler\":\"frameshift-physical-1\",\"schema\":1}\n",
+    "profile-2-conflicting": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"},{\"digest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"state\":\"conflicting\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"source\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-1\",\"kind\":\"controller\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n",
+    "assembly-conflicting": "{\"class\":\"paper\",\"connections\":[{\"from\":{\"instance\":\"adapter-0\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-1\",\"port\":\"in\"}},{\"from\":{\"instance\":\"adapter-1\",\"port\":\"out\"},\"to\":{\"instance\":\"panel\",\"port\":\"dc\"}},{\"from\":{\"instance\":\"controller\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-0\",\"port\":\"in\"}}],\"dependencies\":[{\"consumer\":\"panel\",\"provider\":\"controller\",\"role\":\"controller\"}],\"instances\":[{\"id\":\"adapter-0\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\"},{\"id\":\"adapter-1\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\"},{\"id\":\"controller\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:23c41ae855c48530d22ad292af884d66cc0e27e99e71b603216f18f8e9790cda\"},{\"id\":\"panel\",\"location\":\"internal\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":100},\"profile\":\"sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5\"}],\"intent\":{\"ambient_mc\":{\"max\":35000,\"min\":-1000},\"artifact\":\"fixture-rgb24\",\"dwell_ms\":600000,\"firmware\":\"fixture-v1\",\"mounting\":\"wall\",\"protocol\":\"fixture-protocol\",\"storage_bytes\":1000000},\"schema\":1,\"semantics\":\"frameshift-physical-1\"}\n",
+    "context-conflicting": "{\"assembly\":\"sha256:b8b3bbc9dc0c752e74f8131adf10754840a6265051ea8678e7fa975db82c48cc\",\"bindings\":[{\"identity\":\"sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1\",\"kind\":\"signal-mapping\"},{\"identity\":\"sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01\",\"kind\":\"artifact-layout\"},{\"identity\":\"sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11\",\"kind\":\"signal-mapping\"}],\"compiler\":\"frameshift-physical-1\",\"schema\":1}\n",
+    "profile-noncanonical": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter-2\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n ",
+    "mapping-stale": "{\"artifact\":\"fixture-rgb24\",\"firmware\":\"other\",\"pairs\":[{\"input\":\"in\",\"output\":\"out\"}],\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\",\"protocol\":\"fixture-protocol\",\"schema\":1,\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}]}\n",
+    "profile-unsupported": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter-2\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":2}\n",
+    "context-truncated": "{\"assembly\":\"sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76\",\"bindings\":[{\"identity\":\"sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1\",\"kind\":\"signal-mapping\"},{\"identity\":\"sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01\",\"kind\":\"artifact-layout\"},{\"identity\":\"sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11\",\"kind\":\"signal-mapping\"}],\"compiler\":\"frameshift-physical-1\",\"schema\":1}",
+    "context-appended": "{\"assembly\":\"sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76\",\"bindings\":[{\"identity\":\"sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1\",\"kind\":\"signal-mapping\"},{\"identity\":\"sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01\",\"kind\":\"artifact-layout\"},{\"identity\":\"sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11\",\"kind\":\"signal-mapping\"}],\"compiler\":\"frameshift-physical-1\",\"schema\":1}\n "
+  },
+  "domains": {
+    "assembly": "frameshift.build.v1",
+    "component-profile": "frameshift.profile.v1",
+    "signal-mapping": "frameshift.signal-mapping.v1",
+    "artifact-layout": "frameshift.artifact-layout.v1",
+    "compilation-context": "frameshift.compilation.v1"
+  },
+  "cases": [
+    {
+      "id": "complete",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "format": "frameshift.conjunct.v1-inputs/1",
+          "assembly_identity": "sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76",
+          "context_identity": "sha256:69c6b95344c12fc9690e3a0d22ebf485c9931aa6d2c1f8923faa3b8d53e5ea3d",
+          "documents": [
+            {
+              "kind": "artifact-layout",
+              "identity": "sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01",
+              "bytes": "{\"artifact\":\"fixture-rgb24\",\"controller\":\"controller\",\"encoding\":\"rgb24-srgb-v1\",\"firmware\":\"fixture-v1\",\"height\":3,\"protocol\":\"fixture-protocol\",\"schema\":1,\"tiles\":[{\"display\":\"panel\",\"rotation\":0,\"x\":0,\"y\":0}],\"width\":2}\n"
+            },
+            {
+              "kind": "assembly",
+              "identity": "sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76",
+              "bytes": "{\"class\":\"paper\",\"connections\":[{\"from\":{\"instance\":\"adapter-0\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-1\",\"port\":\"in\"}},{\"from\":{\"instance\":\"adapter-1\",\"port\":\"out\"},\"to\":{\"instance\":\"panel\",\"port\":\"dc\"}},{\"from\":{\"instance\":\"controller\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-0\",\"port\":\"in\"}}],\"dependencies\":[{\"consumer\":\"panel\",\"provider\":\"controller\",\"role\":\"controller\"}],\"instances\":[{\"id\":\"adapter-0\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\"},{\"id\":\"adapter-1\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\"},{\"id\":\"controller\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:b5d4dc5165298e4f39ecb1a65731d7d22a0b3a7b558b6f7aa9cd19ab08f7b7e3\"},{\"id\":\"panel\",\"location\":\"internal\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":100},\"profile\":\"sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5\"}],\"intent\":{\"ambient_mc\":{\"max\":35000,\"min\":-1000},\"artifact\":\"fixture-rgb24\",\"dwell_ms\":600000,\"firmware\":\"fixture-v1\",\"mounting\":\"wall\",\"protocol\":\"fixture-protocol\",\"storage_bytes\":1000000},\"schema\":1,\"semantics\":\"frameshift-physical-1\"}\n"
+            },
+            {
+              "kind": "compilation-context",
+              "identity": "sha256:69c6b95344c12fc9690e3a0d22ebf485c9931aa6d2c1f8923faa3b8d53e5ea3d",
+              "bytes": "{\"assembly\":\"sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76\",\"bindings\":[{\"identity\":\"sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1\",\"kind\":\"signal-mapping\"},{\"identity\":\"sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01\",\"kind\":\"artifact-layout\"},{\"identity\":\"sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11\",\"kind\":\"signal-mapping\"}],\"compiler\":\"frameshift-physical-1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter-2\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:b5d4dc5165298e4f39ecb1a65731d7d22a0b3a7b558b6f7aa9cd19ab08f7b7e3",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1011,\"min\":1001,\"state\":\"known\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"source\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-1\",\"kind\":\"controller\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1010,\"min\":1000,\"state\":\"known\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"consumer\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-0\",\"kind\":\"display\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"dc\",\"kind\":\"signal\",\"required\":true}],\"requires\":[\"controller\"],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "signal-mapping",
+              "identity": "sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1",
+              "bytes": "{\"artifact\":\"fixture-rgb24\",\"firmware\":\"fixture-v1\",\"pairs\":[{\"input\":\"in\",\"output\":\"out\"}],\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\",\"protocol\":\"fixture-protocol\",\"schema\":1,\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}]}\n"
+            },
+            {
+              "kind": "signal-mapping",
+              "identity": "sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11",
+              "bytes": "{\"artifact\":\"fixture-rgb24\",\"firmware\":\"fixture-v1\",\"pairs\":[{\"input\":\"in\",\"output\":\"out\"}],\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\",\"protocol\":\"fixture-protocol\",\"schema\":1,\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}]}\n"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "reordered",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-3"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-0"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-1"
+          },
+          {
+            "$source": "mapping-0"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "format": "frameshift.conjunct.v1-inputs/1",
+          "assembly_identity": "sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76",
+          "context_identity": "sha256:69c6b95344c12fc9690e3a0d22ebf485c9931aa6d2c1f8923faa3b8d53e5ea3d",
+          "documents": [
+            {
+              "kind": "artifact-layout",
+              "identity": "sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01",
+              "bytes": "{\"artifact\":\"fixture-rgb24\",\"controller\":\"controller\",\"encoding\":\"rgb24-srgb-v1\",\"firmware\":\"fixture-v1\",\"height\":3,\"protocol\":\"fixture-protocol\",\"schema\":1,\"tiles\":[{\"display\":\"panel\",\"rotation\":0,\"x\":0,\"y\":0}],\"width\":2}\n"
+            },
+            {
+              "kind": "assembly",
+              "identity": "sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76",
+              "bytes": "{\"class\":\"paper\",\"connections\":[{\"from\":{\"instance\":\"adapter-0\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-1\",\"port\":\"in\"}},{\"from\":{\"instance\":\"adapter-1\",\"port\":\"out\"},\"to\":{\"instance\":\"panel\",\"port\":\"dc\"}},{\"from\":{\"instance\":\"controller\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-0\",\"port\":\"in\"}}],\"dependencies\":[{\"consumer\":\"panel\",\"provider\":\"controller\",\"role\":\"controller\"}],\"instances\":[{\"id\":\"adapter-0\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\"},{\"id\":\"adapter-1\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\"},{\"id\":\"controller\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:b5d4dc5165298e4f39ecb1a65731d7d22a0b3a7b558b6f7aa9cd19ab08f7b7e3\"},{\"id\":\"panel\",\"location\":\"internal\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":100},\"profile\":\"sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5\"}],\"intent\":{\"ambient_mc\":{\"max\":35000,\"min\":-1000},\"artifact\":\"fixture-rgb24\",\"dwell_ms\":600000,\"firmware\":\"fixture-v1\",\"mounting\":\"wall\",\"protocol\":\"fixture-protocol\",\"storage_bytes\":1000000},\"schema\":1,\"semantics\":\"frameshift-physical-1\"}\n"
+            },
+            {
+              "kind": "compilation-context",
+              "identity": "sha256:69c6b95344c12fc9690e3a0d22ebf485c9931aa6d2c1f8923faa3b8d53e5ea3d",
+              "bytes": "{\"assembly\":\"sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76\",\"bindings\":[{\"identity\":\"sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1\",\"kind\":\"signal-mapping\"},{\"identity\":\"sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01\",\"kind\":\"artifact-layout\"},{\"identity\":\"sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11\",\"kind\":\"signal-mapping\"}],\"compiler\":\"frameshift-physical-1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter-2\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:b5d4dc5165298e4f39ecb1a65731d7d22a0b3a7b558b6f7aa9cd19ab08f7b7e3",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1011,\"min\":1001,\"state\":\"known\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"source\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-1\",\"kind\":\"controller\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1010,\"min\":1000,\"state\":\"known\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"consumer\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-0\",\"kind\":\"display\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"dc\",\"kind\":\"signal\",\"required\":true}],\"requires\":[\"controller\"],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "signal-mapping",
+              "identity": "sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1",
+              "bytes": "{\"artifact\":\"fixture-rgb24\",\"firmware\":\"fixture-v1\",\"pairs\":[{\"input\":\"in\",\"output\":\"out\"}],\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\",\"protocol\":\"fixture-protocol\",\"schema\":1,\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}]}\n"
+            },
+            {
+              "kind": "signal-mapping",
+              "identity": "sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11",
+              "bytes": "{\"artifact\":\"fixture-rgb24\",\"firmware\":\"fixture-v1\",\"pairs\":[{\"input\":\"in\",\"output\":\"out\"}],\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\",\"protocol\":\"fixture-protocol\",\"schema\":1,\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}]}\n"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "without-bindings",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [],
+        [],
+        {
+          "$source": "context-without-bindings"
+        }
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "format": "frameshift.conjunct.v1-inputs/1",
+          "assembly_identity": "sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76",
+          "context_identity": "sha256:c914903933ee2771b678e62ea310b3d6cc1efd91b130a0e7262ecb0d6e3c3615",
+          "documents": [
+            {
+              "kind": "assembly",
+              "identity": "sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76",
+              "bytes": "{\"class\":\"paper\",\"connections\":[{\"from\":{\"instance\":\"adapter-0\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-1\",\"port\":\"in\"}},{\"from\":{\"instance\":\"adapter-1\",\"port\":\"out\"},\"to\":{\"instance\":\"panel\",\"port\":\"dc\"}},{\"from\":{\"instance\":\"controller\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-0\",\"port\":\"in\"}}],\"dependencies\":[{\"consumer\":\"panel\",\"provider\":\"controller\",\"role\":\"controller\"}],\"instances\":[{\"id\":\"adapter-0\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\"},{\"id\":\"adapter-1\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\"},{\"id\":\"controller\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:b5d4dc5165298e4f39ecb1a65731d7d22a0b3a7b558b6f7aa9cd19ab08f7b7e3\"},{\"id\":\"panel\",\"location\":\"internal\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":100},\"profile\":\"sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5\"}],\"intent\":{\"ambient_mc\":{\"max\":35000,\"min\":-1000},\"artifact\":\"fixture-rgb24\",\"dwell_ms\":600000,\"firmware\":\"fixture-v1\",\"mounting\":\"wall\",\"protocol\":\"fixture-protocol\",\"storage_bytes\":1000000},\"schema\":1,\"semantics\":\"frameshift-physical-1\"}\n"
+            },
+            {
+              "kind": "compilation-context",
+              "identity": "sha256:c914903933ee2771b678e62ea310b3d6cc1efd91b130a0e7262ecb0d6e3c3615",
+              "bytes": "{\"assembly\":\"sha256:4ce33cfbce2e6b2d55c4b8fd34c4fb8fdcbef032867c04a0af16186e45350c76\",\"bindings\":[],\"compiler\":\"frameshift-physical-1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter-2\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:b5d4dc5165298e4f39ecb1a65731d7d22a0b3a7b558b6f7aa9cd19ab08f7b7e3",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1011,\"min\":1001,\"state\":\"known\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"source\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-1\",\"kind\":\"controller\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1010,\"min\":1000,\"state\":\"known\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"consumer\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-0\",\"kind\":\"display\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"dc\",\"kind\":\"signal\",\"required\":true}],\"requires\":[\"controller\"],\"revision\":\"1\",\"schema\":1}\n"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "preserve-conflicting-and-missing",
+      "args": [
+        {
+          "$source": "assembly-conflicting"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2-conflicting"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context-conflicting"
+        }
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "format": "frameshift.conjunct.v1-inputs/1",
+          "assembly_identity": "sha256:b8b3bbc9dc0c752e74f8131adf10754840a6265051ea8678e7fa975db82c48cc",
+          "context_identity": "sha256:2df32ab5ca74e631967ac94881a5cfe940ac6503332af51f2ce718d6fe392251",
+          "documents": [
+            {
+              "kind": "artifact-layout",
+              "identity": "sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01",
+              "bytes": "{\"artifact\":\"fixture-rgb24\",\"controller\":\"controller\",\"encoding\":\"rgb24-srgb-v1\",\"firmware\":\"fixture-v1\",\"height\":3,\"protocol\":\"fixture-protocol\",\"schema\":1,\"tiles\":[{\"display\":\"panel\",\"rotation\":0,\"x\":0,\"y\":0}],\"width\":2}\n"
+            },
+            {
+              "kind": "assembly",
+              "identity": "sha256:b8b3bbc9dc0c752e74f8131adf10754840a6265051ea8678e7fa975db82c48cc",
+              "bytes": "{\"class\":\"paper\",\"connections\":[{\"from\":{\"instance\":\"adapter-0\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-1\",\"port\":\"in\"}},{\"from\":{\"instance\":\"adapter-1\",\"port\":\"out\"},\"to\":{\"instance\":\"panel\",\"port\":\"dc\"}},{\"from\":{\"instance\":\"controller\",\"port\":\"out\"},\"to\":{\"instance\":\"adapter-0\",\"port\":\"in\"}}],\"dependencies\":[{\"consumer\":\"panel\",\"provider\":\"controller\",\"role\":\"controller\"}],\"instances\":[{\"id\":\"adapter-0\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\"},{\"id\":\"adapter-1\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\"},{\"id\":\"controller\",\"location\":\"external\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":0},\"profile\":\"sha256:23c41ae855c48530d22ad292af884d66cc0e27e99e71b603216f18f8e9790cda\"},{\"id\":\"panel\",\"location\":\"internal\",\"placement\":{\"rotation\":0,\"x_um\":0,\"y_um\":0,\"z_um\":100},\"profile\":\"sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5\"}],\"intent\":{\"ambient_mc\":{\"max\":35000,\"min\":-1000},\"artifact\":\"fixture-rgb24\",\"dwell_ms\":600000,\"firmware\":\"fixture-v1\",\"mounting\":\"wall\",\"protocol\":\"fixture-protocol\",\"storage_bytes\":1000000},\"schema\":1,\"semantics\":\"frameshift-physical-1\"}\n"
+            },
+            {
+              "kind": "compilation-context",
+              "identity": "sha256:2df32ab5ca74e631967ac94881a5cfe940ac6503332af51f2ce718d6fe392251",
+              "bytes": "{\"assembly\":\"sha256:b8b3bbc9dc0c752e74f8131adf10754840a6265051ea8678e7fa975db82c48cc\",\"bindings\":[{\"identity\":\"sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1\",\"kind\":\"signal-mapping\"},{\"identity\":\"sha256:9acb1b67fb0039448fb57f65f344be4ac0f33ca4f7ca49eaeed14db87e5bde01\",\"kind\":\"artifact-layout\"},{\"identity\":\"sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11\",\"kind\":\"signal-mapping\"}],\"compiler\":\"frameshift-physical-1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:23c41ae855c48530d22ad292af884d66cc0e27e99e71b603216f18f8e9790cda",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"},{\"digest\":\"bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"state\":\"conflicting\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"source\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-1\",\"kind\":\"controller\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"passthrough\"]}}],\"id\":\"fixture-adapter-2\",\"kind\":\"cable\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"in\",\"kind\":\"signal\",\"required\":true},{\"direction\":\"source\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3300,\"min\":2700,\"state\":\"known\"}},{\"key\":\"output.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5250,\"min\":4750,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"A\",\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}},{\"key\":\"voltage.drop\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":0,\"min\":0,\"state\":\"known\"}}],\"id\":\"out\",\"kind\":\"signal\",\"required\":true}],\"requires\":[],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "component-profile",
+              "identity": "sha256:eebaa22acd45a6bfe7eda95f28d027668f5e85cace9cfe2f887ed1b7799fc5b5",
+              "bytes": "{\"classes\":[\"paper\"],\"facts\":[{\"key\":\"outline.width\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"um\",\"value\":{\"max\":1010,\"min\":1000,\"state\":\"known\"}},{\"key\":\"power.mode\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"consumer\"]}},{\"key\":\"thermal\",\"sources\":[],\"unit\":\"mc\",\"value\":{\"state\":\"missing\"}}],\"id\":\"fixture-0\",\"kind\":\"display\",\"manufacturer\":\"synthetic\",\"part\":\"test-part\",\"part_revision\":\"R1\",\"ports\":[{\"direction\":\"sink\",\"facts\":[{\"key\":\"connector.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-connector.contract\"]}},{\"key\":\"driver.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-driver\"]}},{\"key\":\"input.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":5500,\"min\":4500,\"state\":\"known\"}},{\"key\":\"logic.voltage\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"mv\",\"value\":{\"max\":3600,\"min\":2500,\"state\":\"known\"}},{\"key\":\"pinout.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-pinout.contract\"]}},{\"key\":\"polarity\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"positive\"]}},{\"key\":\"protection.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-protection.contract\"]}},{\"key\":\"reference.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"B\"]}},{\"key\":\"strain_relief.contract\",\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}],\"unit\":\"token\",\"value\":{\"state\":\"known\",\"terms\":[\"fixture-strain_relief.contract\"]}}],\"id\":\"dc\",\"kind\":\"signal\",\"required\":true}],\"requires\":[\"controller\"],\"revision\":\"1\",\"schema\":1}\n"
+            },
+            {
+              "kind": "signal-mapping",
+              "identity": "sha256:64ea924725ca41c35e7e57b539ca10ef60c6e2625828c93e8d047992d4916ce1",
+              "bytes": "{\"artifact\":\"fixture-rgb24\",\"firmware\":\"fixture-v1\",\"pairs\":[{\"input\":\"in\",\"output\":\"out\"}],\"profile\":\"sha256:53c0346b3b2f01310b5f0616772a3c97f6688c07c069e2845129c94524a916a2\",\"protocol\":\"fixture-protocol\",\"schema\":1,\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}]}\n"
+            },
+            {
+              "kind": "signal-mapping",
+              "identity": "sha256:af33087bb099f9b9af83630a99c159206a8febcb7dc7fd4671dc85b787db0a11",
+              "bytes": "{\"artifact\":\"fixture-rgb24\",\"firmware\":\"fixture-v1\",\"pairs\":[{\"input\":\"in\",\"output\":\"out\"}],\"profile\":\"sha256:7ed366677e173c333408126c7f3d98456d5966c0a56a9817af9fbdb1acdff110\",\"protocol\":\"fixture-protocol\",\"schema\":1,\"sources\":[{\"digest\":\"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\",\"evidence\":\"custom\",\"locator\":\"fixture-only\",\"revision\":\"test-1\"}]}\n"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "context-truncated",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context-truncated"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "context_mismatch"
+      }
+    },
+    {
+      "id": "context-substituted",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context-without-bindings"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "context_mismatch"
+      }
+    },
+    {
+      "id": "context-appended",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context-appended"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "context_mismatch"
+      }
+    },
+    {
+      "id": "missing-all-profiles",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [],
+        [],
+        [],
+        {
+          "$source": "context-without-bindings"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "missing_profile"
+      }
+    },
+    {
+      "id": "missing-one-profile",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [],
+        [],
+        {
+          "$source": "context-without-bindings"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "missing_profile"
+      }
+    },
+    {
+      "id": "duplicate-profile",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          },
+          {
+            "$source": "profile-0"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "duplicate_identifier"
+      }
+    },
+    {
+      "id": "duplicate-mapping",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          },
+          {
+            "$source": "mapping-0"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "duplicate_identifier"
+      }
+    },
+    {
+      "id": "unreferenced-profile",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          },
+          {
+            "$source": "unreferenced-profile"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "unreferenced_profile"
+      }
+    },
+    {
+      "id": "stale-mapping",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-stale"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_reference"
+      }
+    },
+    {
+      "id": "noncanonical-profile",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-noncanonical"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "noncanonical"
+      }
+    },
+    {
+      "id": "unsupported-profile",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-unsupported"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "unsupported_version"
+      }
+    },
+    {
+      "id": "invalid-type-0",
+      "args": [
+        null,
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "invalid-type-1",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        {},
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "invalid-type-2",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        {},
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "invalid-type-3",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        {},
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "invalid-type-4",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        null
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "invalid-member-1",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          42
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "collection-ceiling-1",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        {
+          "$copies": {
+            "value": "",
+            "count": 65
+          }
+        },
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_count"
+      }
+    },
+    {
+      "id": "invalid-member-2",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          42
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "collection-ceiling-2",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        {
+          "$copies": {
+            "value": "",
+            "count": 65
+          }
+        },
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_count"
+      }
+    },
+    {
+      "id": "invalid-member-3",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          42
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "collection-ceiling-3",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        {
+          "$copies": {
+            "value": "",
+            "count": 65
+          }
+        },
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_count"
+      }
+    },
+    {
+      "id": "document-ceiling-0",
+      "args": [
+        {
+          "$repeat": {
+            "value": "x",
+            "count": 262145
+          }
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "too_large"
+      }
+    },
+    {
+      "id": "document-ceiling-1",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$repeat": {
+              "value": "x",
+              "count": 262145
+            }
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "too_large"
+      }
+    },
+    {
+      "id": "document-ceiling-2",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$repeat": {
+              "value": "x",
+              "count": 262145
+            }
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "too_large"
+      }
+    },
+    {
+      "id": "document-ceiling-3",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$repeat": {
+              "value": "x",
+              "count": 262145
+            }
+          }
+        ],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "too_large"
+      }
+    },
+    {
+      "id": "document-ceiling-4",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        [
+          {
+            "$source": "profile-0"
+          },
+          {
+            "$source": "profile-1"
+          },
+          {
+            "$source": "profile-2"
+          },
+          {
+            "$source": "profile-3"
+          }
+        ],
+        [
+          {
+            "$source": "mapping-0"
+          },
+          {
+            "$source": "mapping-1"
+          }
+        ],
+        [
+          {
+            "$source": "layout"
+          }
+        ],
+        {
+          "$repeat": {
+            "value": "x",
+            "count": 262145
+          }
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "too_large"
+      }
+    },
+    {
+      "id": "combined-ceiling",
+      "args": [
+        {
+          "$source": "assembly"
+        },
+        {
+          "$copies": {
+            "value": {
+              "$repeat": {
+                "value": "x",
+                "count": 262144
+              }
+            },
+            "count": 8
+          }
+        },
+        {
+          "$copies": {
+            "value": {
+              "$repeat": {
+                "value": "x",
+                "count": 262144
+              }
+            },
+            "count": 8
+          }
+        },
+        [],
+        {
+          "$source": "context"
+        }
+      ],
+      "expected": {
+        "ok": false,
+        "error": "too_large"
+      }
+    }
+  ],
+  "seeds": [
+    20261006,
+    27182818,
+    31415926
+  ],
+  "runs_per_seed": 300,
+  "faults": [
+    "omit-context-comparison",
+    "accept-missing-profiles"
+  ],
+  "reduction_trials": 8,
+  "smoke": {
+    "latency_budget_ns": null,
+    "memory_budget_bytes": null,
+    "case_ids": [
+      "complete",
+      "without-bindings"
+    ],
+    "repeats": 5
+  }
+}

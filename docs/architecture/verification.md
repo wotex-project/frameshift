@@ -228,6 +228,11 @@ isolated release. Policy passed its 19 workspace fixtures. This is primitive
 conversion evidence; complete profile migration, installed producer resolution
 and the mandatory frame-check join remain open.
 
+The [retained v1 input boundary](conjunct-v1-inputs.md) specifies complete
+five-domain custody, missing-pin refusal and exact context reconstruction.
+Its 32 authored full-result hands, three-seed campaign, executed source faults
+and null-budget smoke checks are required next; no execution result is claimed.
+
 ### Physical compiler evidence
 
 Run `scripts/check build-spec` for the shared package. The current gate passes

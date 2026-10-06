@@ -223,6 +223,12 @@ updates the verification map only with results actually obtained.
 
 ### First consumer experiment and authority boundary
 
+The [retained v1 input contract](conjunct-v1-inputs.md) defines the next bounded
+S3 adapter prerequisite: complete original closure, all five identity domains,
+missing-pin refusal and exact compilation-context replay. Implement and qualify
+it before constructing successors. Its custody result cannot close S3 or the
+thirteen-stage S2 mapping.
+
 After S1–S3 fixtures are frozen, build a test-only vertical slice in the
 existing product host/browser. Load one complete synthetic Paper composition
 and its reviewed synthetic procedure/content through the public producer
