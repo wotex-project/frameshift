@@ -315,6 +315,15 @@ check_core() {
   "$repository_root/scripts/check-core-release"
 }
 
+check_mac_release() {
+  (
+    cd "$repository_root/release/macos"
+    swift format lint --recursive --strict Sources Tests Package.swift
+    swift test --parallel
+    swift build --configuration release --product frameshift-mac-release
+  )
+}
+
 check_macos() {
   mise exec -- node --test "$repository_root"/release/macos/*.test.mjs
   (
@@ -432,6 +441,7 @@ case "${1:-all}" in
     check_release
     check_guide
     check_docs
+    check_mac_release
     check_macos
     ;;
   policy) check_policy ;;
@@ -453,12 +463,13 @@ case "${1:-all}" in
   core) check_core ;;
   release) check_release ;;
   macos) check_macos ;;
+  mac-release) check_mac_release ;;
   container) check_container ;;
   linux-ipc) check_linux_ipc ;;
   linux-discovery) check_linux_discovery ;;
   keychain-pairing) "$repository_root/scripts/check-keychain-pairing" ;;
   *)
-    echo "usage: scripts/check [all|policy|platform|platform-browser|platform-observability|renderer|codec|linux-codec|linux-release|linux-deb|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
+    echo "usage: scripts/check [all|policy|platform|platform-browser|platform-observability|renderer|codec|linux-codec|linux-release|linux-deb|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|mac-release|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
     exit 64
     ;;
 esac

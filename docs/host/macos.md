@@ -349,12 +349,13 @@ The application remains a thin Swift/SwiftUI shell; release tools must not link
 The [research](../research/software-stack.md#release-tooling-language-boundary)
 records the rationale and unqualified adapter work.
 
-The planned package is `release/macos/Package.swift`, with a reusable
-`FrameshiftMacRelease` library, a `frameshift-mac-release` executable and package
-tests under the already selected Xcode/Swift toolchain. These paths and exports
-are implementation targets, not existing components. Declare their workspace
-owner and validation lane when introduced. Keep command parsing inside that
-package; introduce a pinned parser dependency only for demonstrated needs.
+The separate package is `release/macos/Package.swift`, with the reusable
+`FrameshiftMacRelease` library, `frameshift-mac-release` executable and package
+tests under the selected Xcode/Swift toolchain. Its `mac-release` workspace owner
+and validation lane have no application dependencies. The descriptor/hash
+foundation below exists; full inspection and packaging ports remain open. Keep
+command parsing inside that package; introduce a pinned parser dependency only
+for demonstrated needs.
 
 Preserve existing `scripts/check-macos-closure`, packaging and source-admission
 interfaces, argument meanings, exit codes and record profiles. Wrappers remain
@@ -395,6 +396,43 @@ corrupt nested resource hidden beneath a resealed outer app and a wrong
 non-native CPU slice. Actual native Intel/arm64, supported older OS,
 credentialed signing/notarization and installed update proof remain separate
 release gates. Existing Node test results do not qualify the Swift port.
+
+### Native release input foundation
+
+`AdmittedFile.read(_:policy:)` admits at most 16 MiB into memory;
+`AdmittedFile.sha256(_:policy:)` streams at most 8 GiB through 64 KiB blocks.
+Each consumer supplies a smaller explicit minimum/maximum where its profile
+requires one. `FileReadPolicy` refuses negative/inverted/overflowing bounds and
+nonfinite, nonpositive or over-900-second budgets before accessing a path.
+Leaf admission uses `lstat`, `open(O_RDONLY | O_NOFOLLOW | O_NONBLOCK | O_CLOEXEC)`
+and `fstat`. It accepts regular files only and compares device, inode, size,
+mode, owner/group, link count and nanosecond modification/change times before
+and after the stream. Short reads, growth, replacement and metadata changes
+refuse, and every opened descriptor closes on success or failure.
+
+The caller selects ordinary regular-file policy, protected root/current-user
+ownership with no group/other writes or special permission bits, or a private
+current-user file with mode 0400/0600 and one link. Other profiles may also
+require one link. Parent-directory identity/aliases remain the consuming
+operation's responsibility; this leaf reader does not claim that boundary.
+Monotonic deadlines are checked between synchronous filesystem calls. They do
+not preempt an already blocked kernel or filesystem operation.
+
+`frameshift-mac-release verify-sparkle-archive ARCHIVE` uses protected single-link
+admission and the exact pinned 10,193,895-byte Sparkle 2.10.0 ZIP/SHA-256. Its
+only success output is `Sparkle 2.10.0 archive verified` plus LF. Usage failures
+exit 64; admission failures exit 65 with a fixed category containing no paths,
+input content or key material. It performs no fetch, extraction, SwiftPM
+resolution, cache repair or write. Success establishes archive bytes/custody,
+not SDK closure, signing, runtime integration or an installed update.
+
+`AdmittedFileTests` exercise FIFO/device/directory/symlink refusal, replacement
+between naming/opening and after opening/reading, truncation/growth/same-byte
+rewrite, permission changes, hard links, sparse oversize files, invalid bounds,
+monotonic expiry and descriptor cleanup. Independently running the CLI on the
+pinned actual ZIP joins this foundation to upstream bytes. Native closure,
+property-list and owned-process foundations require their own acceptance
+before a release wrapper switches.
 
 ### Native closure admission
 

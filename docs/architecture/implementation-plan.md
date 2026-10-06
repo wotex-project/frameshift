@@ -1067,9 +1067,10 @@ The guide links only to real verified artifacts. See
 
 **Decision:** [D-003](../decisions/README.md#d-003--language-boundary), supported by
 [the source review](../research/software-stack.md#release-tooling-language-boundary).
-**State:** specified; replacements and portable descriptor adapter remain
-unimplemented/unqualified. Finish the current capture work at a safe checkpoint,
-then use this order for affected release tooling. Do not extend Mac-native
+**State:** Swift descriptor/hash foundation implemented; the remaining native
+ports and portable descriptor adapter remain unimplemented/unqualified. The
+pinned compiler capture is at its validated checkpoint. Use this order for
+affected release tooling. Do not extend Mac-native
 policy in new `.mjs` modules. Preserve current work and passing regression
 fixtures; the language port does not replace the R2 native updater or product
 UI/lifecycle deliverables.
@@ -1082,6 +1083,13 @@ UI/lifecycle deliverables.
 | RT4 — Portable records and transport; after adapter qualification | Port canonical manifests, trust verification, frozen inputs, source/material/cohort receipts and bounded USTAR policy into the one Elixir owner. Join Swift native observations through existing profiles. Switch the corresponding Mac/Ubuntu and guide/site consumers together. | Exact legacy wire/signature/record fixtures, complete replay and changed producer-profile conflict pass. Both archive profiles retain their distinct link/member rules. CLI tamper/FIFO/partial/child-mutation tests pass on Mac and Ubuntu; Ubuntu requires no Swift. Retained receipts are never rewritten or presented as fresh producer execution. |
 | RT5 — Channel material; after RT4 | Port pure Cask/appcast generation, independent release/Sparkle trust and signing to Elixir; consume final native minimum/identity facts from Swift. Preserve bounded whole-message Ed25519 and publication authority none for local outputs. | Byte-for-byte canonical body/footer, DER/raw key identity and signature interoperability pass against the pinned Sparkle tool; wrong trust, authentic noncanonical body, changed archive and partial/replay cases refuse. A supplied minimum declaration still requires the qualified final-app join. |
 | RT6 — Cutover and removal; after each affected port is qualified | Update wrapper dispatch, release/Mac/Ubuntu/guide checks, CI and command docs to actual replacements. Remove obsolete Mac JS modules/fixtures only after their consumers and regression coverage have moved; retain a temporary comparison oracle only with an identified remaining consumer. | Dependency/import and process-trace checks show no Node production dependency in the migrated release path. Existing product and source-custody regressions pass. The verification map names the actual new tools/tests and remaining installed/credentialed evidence. |
+
+RT1's separate Swift package, workspace owner and `mac-release` lane now exist.
+Its twelve descriptor/hash fixtures and actual pinned archive CLI admission pass
+on macOS 27.0.1 arm64 / Xcode 27. This qualifies only the input foundation;
+property-list, owned-process and portable adapter work remain open, and no
+existing release wrapper has switched. See the
+[foundation contract](../host/macos.md#native-release-input-foundation).
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

@@ -163,6 +163,11 @@ make check
 `./scripts/check-workspace` checks the graph and static Elixir imports before
 component moves; it also runs as part of the repository policy gate.
 
+The independent [Mac release tool package](release/macos/README.md) has a
+`./scripts/check mac-release` lane for native input admission. It is build-time
+tooling and does not link or ship with the application. Existing release
+wrappers remain in place until their ports pass parity.
+
 The [isolated Linux codec](codec/README.md) has bounded static-PNG and JPEG profiles.
 `./scripts/check codec` runs its native format/static/debug/release gate;
 `./scripts/check linux-codec` builds the pinned Linux arm64/amd64 fixtures and

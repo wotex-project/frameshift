@@ -110,6 +110,8 @@ jobs:
         run: mix deps.get --check-locked
       - name: Check Swift shell
         run: ./scripts/check macos
+      - name: Check native Mac release tools
+        run: ./scripts/check mac-release
       - name: Check native codec on macOS
         run: ./scripts/check codec
 

@@ -33,6 +33,8 @@
 /.build/
 /apps/macos/.build/
 /apps/macos/.swiftpm/
+/release/macos/.build/
+/release/macos/.swiftpm/
 
 # macOS and editor state
 .DS_Store

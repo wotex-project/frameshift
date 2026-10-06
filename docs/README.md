@@ -68,6 +68,7 @@ they do not stop independent native, host or frame-profile work.
 ## Host
 
 - [macOS controller](host/macos.md)
+- [Native Mac release tools](../release/macos/README.md)
 - [Browser guide handoff](host/guide-handoff.md)
 - [Linux and Raspberry Pi hosts](host/linux.md)
 - [Menu-bar interface](host/menu-bar-interface.md)

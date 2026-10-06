@@ -24,3 +24,8 @@ repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
   cd "$repository_root/apps/macos"
   swift format format --in-place --recursive Sources Tests Package.swift
 )
+
+(
+  cd "$repository_root/release/macos"
+  swift format format --in-place --recursive Sources Tests Package.swift
+)
