@@ -38,7 +38,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           persist_github_token: false
           cache: false
       - name: Refuse absent or moved remote source
@@ -53,7 +53,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           working_directory: candidate-source
           persist_github_token: false
           cache: false
@@ -92,7 +92,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           persist_github_token: false
           cache: false
       - name: Admit the selected native target

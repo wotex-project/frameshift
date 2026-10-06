@@ -75,7 +75,7 @@ test('actual arm64, Intel and universal binaries satisfy only their static CPU a
     const expected = Buffer.from(JSON.stringify(report) + '\n');
     for (const app of [root, '.']) {
       const wrapped = spawnSync(script, [app, architecture], { cwd: root, env, timeout: 180000, maxBuffer: 16 * 1024 * 1024 });
-      assert.equal(wrapped.error, undefined); assert.equal(wrapped.status, 0); assert.equal(wrapped.stderr.length, 0); assert.deepEqual(wrapped.stdout, expected);
+      assert.equal(wrapped.error, undefined); assert.equal(wrapped.status, 0, `${architecture}: ${wrapped.stderr}`); assert.equal(wrapped.stderr.length, 0); assert.deepEqual(wrapped.stdout, expected);
     }
     if (architecture !== 'universal') {
       await assert.rejects(auditMacBundle(root, 'universal'), /CPU/);

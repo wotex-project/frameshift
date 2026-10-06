@@ -123,20 +123,25 @@ check_codec() {
 }
 
 check_linux_codec() {
+  case "${1:-all}" in
+    all) codec_architectures='arm64 amd64' ;;
+    arm64|amd64) codec_architectures="$1" ;;
+    *)
+      echo 'usage: scripts/check linux-codec [arm64|amd64]' >&2
+      return 64
+      ;;
+  esac
   (
     cd "$repository_root/apps/core"
     mise exec -- env MIX_ENV=test mix compile --warnings-as-errors
   )
-  docker build --platform linux/arm64 --file "$repository_root/codec/test.Dockerfile" \
-    --tag frameshift-codec-arm64:fixture "$repository_root/codec"
-  docker run --rm --platform linux/arm64 --network none --read-only \
-    frameshift-codec-arm64:fixture
-  "$repository_root/scripts/check-linux-codec-owner" arm64
-  docker build --platform linux/amd64 --file "$repository_root/codec/test.Dockerfile" \
-    --tag frameshift-codec-amd64:fixture "$repository_root/codec"
-  docker run --rm --platform linux/amd64 --network none --read-only \
-    frameshift-codec-amd64:fixture
-  "$repository_root/scripts/check-linux-codec-owner" amd64
+  for codec_architecture in $codec_architectures; do
+    docker build --platform "linux/$codec_architecture" --file "$repository_root/codec/test.Dockerfile" \
+      --tag "frameshift-codec-$codec_architecture:fixture" "$repository_root/codec"
+    docker run --rm --platform "linux/$codec_architecture" --network none --read-only \
+      "frameshift-codec-$codec_architecture:fixture"
+    "$repository_root/scripts/check-linux-codec-owner" "$codec_architecture"
+  done
 }
 
 check_linux_release() {
@@ -481,7 +486,7 @@ case "${1:-all}" in
   platform-observability) "$repository_root/scripts/check-platform-observability" ;;
   renderer) check_renderer ;;
   codec) check_codec ;;
-  linux-codec) check_linux_codec ;;
+  linux-codec) check_linux_codec "${2:-all}" ;;
   linux-release) check_linux_release ;;
   linux-deb) check_linux_deb ;;
   kernel) check_kernel ;;

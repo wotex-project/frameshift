@@ -34,7 +34,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           persist_github_token: false
       - name: Install server dependencies
         working-directory: apps/build-platform
@@ -69,7 +69,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           persist_github_token: false
       - name: Install Elixir dependencies
         working-directory: apps/core
@@ -97,23 +97,28 @@ jobs:
     name: Swift macOS shell
     runs-on: macos-15
     timeout-minutes: 20
+    env:
+      DEVELOPER_DIR: /Applications/Xcode_26.3.app/Contents/Developer
+      MISE_ERLANG_COMPILE: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           persist_github_token: false
       - name: Report Swift toolchain
-        run: swift --version
+        run: |
+          test "$(xcodebuild -version)" = "$(printf 'Xcode 26.3\nBuild version 17C529')"
+          swift --version
       - name: Install Elixir dependencies
         working-directory: apps/core
         run: mix deps.get --check-locked
-      - name: Check Swift shell
-        run: ./scripts/check macos
       - name: Check native Mac release tools
         run: ./scripts/check mac-release
+      - name: Check Swift shell
+        run: ./scripts/check macos
       - name: Check portable release input custody
         run: ./scripts/check release-portable
       - name: Check native codec on macOS
@@ -129,7 +134,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           persist_github_token: false
       - name: Install Elixir dependencies
         working-directory: apps/core
@@ -140,9 +145,29 @@ jobs:
         run: ./scripts/check linux-ipc
       - name: Check Linux Avahi discovery
         run: ./scripts/check linux-discovery
-      - uses: docker/setup-qemu-action@99012661954931238ded8c8b007157a8430204e1 # v4.4.0
+
+  linux-codec:
+    name: Linux codec (${{ matrix.architecture }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - architecture: arm64
+            runner: ubuntu-24.04-arm
+          - architecture: amd64
+            runner: ubuntu-24.04
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
-          platforms: arm64
-          image: tonistiigi/binfmt@sha256:400a4873b838d1b89194d982c45e5fb3cda4593fbfd7e08a02e76b03b21166f0
+          persist-credentials: false
+      - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
+        with:
+          version: 2026.10.3
+          persist_github_token: false
+      - name: Install Elixir dependencies
+        working-directory: apps/core
+        run: mix deps.get --check-locked
       - name: Check Linux codec source cohort
-        run: ./scripts/check linux-codec
+        run: ./scripts/check linux-codec "${{ matrix.architecture }}"

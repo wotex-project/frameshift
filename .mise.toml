@@ -1,11 +1,11 @@
 [tools]
 actionlint = "1.7.12"
-"aqua:remoteoss/dexter" = "0.7.1"
+"aqua:remoteoss/dexter" = "0.7.2"
 elixir = "1.20.4-otp-29"
 erlang = "29.1"
 gleam = "1.18.1"
 node = "26.9.0"
-rust = "1.97.1"
+rust = { version = "1.97.1", profile = "minimal", components = ["rustfmt", "clippy"] }
 shellcheck = "0.11.0"
 zig = "0.16.0"
 

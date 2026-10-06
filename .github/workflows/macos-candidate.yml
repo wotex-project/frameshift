@@ -38,7 +38,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           persist_github_token: false
           cache: false
       - name: Refuse absent or moved remote source
@@ -53,7 +53,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           working_directory: candidate-source
           persist_github_token: false
           cache: false
@@ -85,6 +85,7 @@ jobs:
       SOURCE_INPUTS_SHA256: ${{ needs.source.outputs.source_inputs_sha256 }}
       TARGET_ARCHITECTURE: ${{ matrix.architecture }}
       DEVELOPER_DIR: /Applications/Xcode_26.6.app/Contents/Developer
+      MISE_ERLANG_COMPILE: "false"
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
@@ -93,7 +94,7 @@ jobs:
           persist-credentials: false
       - uses: jdx/mise-action@2d8d4cafcbd33be2ea37d2b6f5ad595363d1f1ca # v5.1.1
         with:
-          version: 2026.9.11
+          version: 2026.10.3
           persist_github_token: false
           cache: false
       - name: Admit the inspected physical target and Apple toolchain
