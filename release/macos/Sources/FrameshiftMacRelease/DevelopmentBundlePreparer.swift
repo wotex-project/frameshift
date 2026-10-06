@@ -35,6 +35,7 @@ public actor DevelopmentBundlePreparer {
   private var attempted = false
   private var child: OwnedCommand?
   private var commands = 0
+  private var inputCheck: (@Sendable () throws -> Void)?
 
   public init() {}
 
@@ -80,6 +81,7 @@ public actor DevelopmentBundlePreparer {
     _ input: String, architecture: NativeBundleArchitecture,
     seconds: Double = 300, childSeconds: Double = 15, swiftUpdater: Bool = false,
     swiftBuild: Bool = false,
+    checkInputs: (@Sendable () throws -> Void)? = nil,
     observe: (@Sendable (DevelopmentPreparationPhase) throws -> Void)?
   ) async throws -> NativeBundleObservation {
     guard !attempted else { throw ReleaseToolError.childAlreadyStarted }
@@ -87,6 +89,7 @@ public actor DevelopmentBundlePreparer {
     guard seconds.isFinite, seconds > 0, seconds <= 300,
       childSeconds.isFinite, childSeconds > 0, childSeconds <= 15
     else { throw ReleaseToolError.invalidBounds }
+    inputCheck = checkInputs
     let deadline = ContinuousClock.now.advanced(by: .seconds(seconds))
     let stage = try DevelopmentStage(input)
     func check() throws {
@@ -230,6 +233,7 @@ public actor DevelopmentBundlePreparer {
   private func run(
     _ tool: AppleTool, _ arguments: [String], deadline: ContinuousClock.Instant, seconds: Double
   ) async throws -> OwnedCommandOutput {
+    try inputCheck?()
     guard !Task.isCancelled else { throw ReleaseToolError.admissionCancelled }
     let remaining = ContinuousClock.now.duration(to: deadline).components
     let available = Double(remaining.seconds) + Double(remaining.attoseconds) / 1e18
@@ -238,9 +242,11 @@ public actor DevelopmentBundlePreparer {
     commands += 1
     let owned = OwnedCommand()
     child = owned
-    return try await owned.run(
+    let result = try await owned.run(
       AppleCommand(tool, arguments: arguments),
       limits: ChildLimits(outputBytes: 64 * 1024, seconds: min(seconds, available)))
+    try inputCheck?()
+    return result
   }
 }
 

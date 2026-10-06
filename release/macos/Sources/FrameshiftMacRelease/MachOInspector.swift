@@ -32,15 +32,7 @@ public enum MachOInspector {
   {
     let policy = try FileReadPolicy(maximum: 128 * 1024 * 1024, seconds: seconds)
     return try AdmittedFile.withRegions(path, policy: policy, observe: observe) { reader in
-      let first = try reader.read(offset: 0, count: 8)
-      let marker = try word(first, 0, bigEndian: true)
-      let regions: [Region]
-      if marker == 0xcafe_babe || marker == 0xcafe_babf {
-        regions = try fatRegions(first, reader: reader, wide: marker == 0xcafe_babf)
-      } else {
-        guard marker == 0xcffa_edfe else { throw ReleaseToolError.invalidMachO }
-        regions = [Region(offset: 0, size: reader.size, type: nil, subtype: nil)]
-      }
+      let regions = try regions(reader)
       return try regions.map { try thin($0, reader: reader) }.sorted { $0.arch < $1.arch }
     }
   }
@@ -50,6 +42,49 @@ public enum MachOInspector {
     let size: Int64
     let type: UInt32?
     let subtype: UInt32?
+  }
+
+  /// Checks complete pre-sealing CPU slice bytes through admitted scoped descriptors.
+  /// Fat padding is excluded; each exact source slice must occur once in output.
+  static func verifyMerge(_ output: String, inputs: [String], seconds: Double = 60) throws {
+    guard inputs.count == 2 else { throw ReleaseToolError.invalidBounds }
+    let policy = try FileReadPolicy(maximum: 128 * 1024 * 1024, seconds: seconds)
+    try AdmittedFile.withRegions(output, policy: policy) { merged in
+      let regions = try regions(merged)
+      guard regions.count == 2 else { throw ReleaseToolError.invalidMachO }
+      let slices = try regions.map { try thin($0, reader: merged) }
+      var matched = Set<String>()
+      for input in inputs {
+        try AdmittedFile.withRegions(input, policy: policy) { source in
+          let originals = try self.regions(source)
+          guard originals.count == 1 else { throw ReleaseToolError.invalidMachO }
+          let original = originals[0]
+          let slice = try thin(original, reader: source)
+          guard let index = slices.firstIndex(of: slice), matched.insert(slice.arch).inserted,
+            regions[index].size == original.size
+          else { throw ReleaseToolError.digestMismatch }
+          var offset: Int64 = 0
+          while offset < original.size {
+            let count = Int(min(64 * 1024, original.size - offset))
+            guard
+              try source.read(offset: original.offset + offset, count: count)
+                == merged.read(offset: regions[index].offset + offset, count: count)
+            else { throw ReleaseToolError.digestMismatch }
+            offset += Int64(count)
+          }
+        }
+      }
+    }
+  }
+
+  private static func regions(_ reader: NativeRegionReader) throws -> [Region] {
+    let first = try reader.read(offset: 0, count: 8)
+    let marker = try word(first, 0, bigEndian: true)
+    if marker == 0xcafe_babe || marker == 0xcafe_babf {
+      return try fatRegions(first, reader: reader, wide: marker == 0xcafe_babf)
+    }
+    guard marker == 0xcffa_edfe else { throw ReleaseToolError.invalidMachO }
+    return [Region(offset: 0, size: reader.size, type: nil, subtype: nil)]
   }
 
   private static func fatRegions(_ first: Data, reader: NativeRegionReader, wide: Bool) throws

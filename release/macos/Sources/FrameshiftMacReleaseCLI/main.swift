@@ -6,6 +6,7 @@ let arguments = Array(CommandLine.arguments.dropFirst())
 let compileCommand = arguments.first == "compile-updater-inputs"
 let captureCommand = arguments.first == "capture-swiftpm-inputs" || compileCommand
 let stagingCommand = arguments.first == "stage-sparkle-framework"
+let mergeCommand = arguments.first == "merge-development-bundles"
 let frameworkCommand = arguments.first == "verify-sparkle-framework"
 let resourceCommand = arguments.first == "verify-generation-resources"
 let signatureCommand = arguments.first == "verify-development-bundle"
@@ -17,6 +18,7 @@ let preparationCommand =
 let bundleCommand = arguments.first == "check-bundle" || signatureCommand
 guard
   (frameworkCommand && arguments.count == 3)
+    || (mergeCommand && arguments.count == 4)
     || (stagingCommand && arguments.count == 4
       && ["arm64", "x86_64"].contains(arguments[3]))
     || ((bundleCommand || preparationCommand) && arguments.count == 3
@@ -32,7 +34,7 @@ guard
 else {
   FileHandle.standardError.write(
     Data(
-      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle|prepare-swiftbuild-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP arm64|x86_64\n       frameshift-mac-release [capture-swiftpm-inputs|compile-updater-inputs] REPOSITORY\n"
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle|prepare-swiftbuild-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP arm64|x86_64\n       frameshift-mac-release merge-development-bundles ARM_APP INTEL_APP EMPTY_PRIVATE_APP\n       frameshift-mac-release [capture-swiftpm-inputs|compile-updater-inputs] REPOSITORY\n"
         .utf8)
   )
   exit(64)
@@ -42,8 +44,14 @@ let materialChild = OwnedCommand()
 let compilerChild = OwnedCommand()
 let preparer = DevelopmentBundlePreparer()
 let stager = SparkleFrameworkStager()
+let merger = UniversalBundleMerger()
 do {
-  if stagingCommand {
+  if mergeCommand {
+    var bytes = try await merger.merge(arm: arguments[1], intel: arguments[2], stage: arguments[3])
+      .observationBytes()
+    bytes.append(10)
+    FileHandle.standardOutput.write(bytes)
+  } else if stagingCommand {
     var bytes = try await stager.stage(
       archive: arguments[1], app: arguments[2],
       architecture: NativeBundleArchitecture(rawValue: arguments[3])!
@@ -116,6 +124,12 @@ do {
     FileHandle.standardOutput.write(bytes)
   }
 } catch {
+  if mergeCommand {
+    FileHandle.standardError.write(
+      Data("universal development stage refused; private work retained\n".utf8))
+    _ = await merger.retainUntilExitAfterRefusal()
+    exit(1)
+  }
   if stagingCommand {
     FileHandle.standardError.write(
       Data("pinned updater material unavailable, unsafe or changed\n".utf8))

@@ -1595,6 +1595,19 @@ refuse with work and direct-child custody retained. These are local native
 producer/consumer facts; shipping app/controller and source-bound package joins,
 CPU assembly, Intel execution and installed/production qualification remain open.
 
+**Universal creation boundary:** inspected 2026-10-06 at the same Apple cctools
+revision. [`lipo.c` create branch](https://github.com/apple-oss-distributions/cctools/blob/e0d56624eca2a76c2ace4c21850df9e666de4ca5/misc/lipo.c#L542-L584)
+rejects duplicate CPU/subtype inputs and forwards admitted slices to fat-file
+creation. This does not compare common app resources, metadata, seals or source
+custody. `UniversalBundleMerger` supplies the disjoint sealed single-CPU inputs,
+absent private merged leaf, exact two-slice headers and descriptor-scoped full
+slice-byte comparisons before re-signing. Metadata-equivalent code changes
+must refuse. The
+native observation remains separate from the portable record/replay owner;
+source-byte and metadata custody cannot be inferred from `lipo` success alone.
+Actual compiled and pinned SDK fixtures exercise that boundary; native Intel,
+older systems, full source-bound cohorts and installed release remain distinct.
+
 The universal merger now compares complete fixed alias inventories and admits
 differences in only the four actual SDK `CodeResources` paths. They encode
 per-CPU nested seals and are regenerated after actual native merging; every

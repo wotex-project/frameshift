@@ -1144,11 +1144,11 @@ The guide links only to real verified artifacts. See
 [the source review](../research/software-stack.md#release-tooling-language-boundary).
 **State:** Swift descriptor/hash, owned-process and typed-plist foundations
 and bounded Mach-O/whole-bundle observation, strict development signatures and
-pinned SDK resource/archive/cache comparison and compiler workspace capture
-implemented locally, with closure/resource wrapper cutover qualified; remaining
-native producer/library integration, native packaging
-ports and the portable descriptor adapter remain unimplemented/unqualified. The
-pinned compiler capture is at its validated checkpoint. Use this order for
+pinned SDK resource/archive/cache comparison, guarded compiler consumption,
+private preparation/CPU derivation and universal staging implemented locally.
+Closure/resource wrappers and development SDK packaging are qualified; remaining
+source-bound portable receipt/library joins, native DMG construction/readback
+and the portable descriptor adapter remain unimplemented/unqualified. Use this order for
 affected release tooling. Do not extend Mac-native
 policy in new `.mjs` modules. Preserve current work and passing regression
 fixtures; the language port does not replace the R2 native updater or product
@@ -1298,8 +1298,22 @@ match a separate capture byte for byte. Actual compiler failure and consumer-tim
 manifest/state/ZIP/cache/alias changes refuse, preserving source custody and
 retained work. Build-time `gh` setup is separate and never repairs retained
 evidence. This closes the local SDK development consumer join; source-bound
-producer/library joins, universal assembly, DMG ports and installed qualification
+producer/library joins, portable universal receipt joins, DMG ports and installed qualification
 remain open.
+
+RT3 now has a native private universal-stage producer using the existing closure
+and strict signature readers, owned children and development preparer. It
+requires two actually sealed single-CPU inputs and an empty private app, merges
+every native role and holds complete source custody across all commands and
+sealing. Eight groups cover both compiled CPUs, actual pinned SDK/controller,
+CLI observation/refusal, conflicts, same-byte source/stage/intermediate changes,
+preparation-time mutation, cancellation and real child deadline. All 107 native
+tool tests pass with actual SDK/resource inputs, without exclusions, alongside
+strict format and release build. The portable
+record/replay wrapper remains unchanged until RT4 joins explicit producer
+identity; do not relabel retained output or count that wrapper as a native port.
+Next complete DMG creation/mounted readback and the portable descriptor adapter,
+then source-bound record consumers and their native producer cutover.
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

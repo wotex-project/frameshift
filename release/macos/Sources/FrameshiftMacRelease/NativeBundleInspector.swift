@@ -421,12 +421,12 @@ private struct BundleBudget {
   }
 }
 
-struct BundleSnapshot: Equatable {
-  struct Member<Value: Equatable>: Equatable {
+struct BundleSnapshot: Equatable, Sendable {
+  struct Member<Value: Equatable & Sendable>: Equatable, Sendable {
     let value: Value
     let identity: FileIdentity
   }
-  struct File: Equatable {
+  struct File: Equatable, Sendable {
     let value: NativeBundleObservation.File
     let native: Bool
     let identity: FileIdentity

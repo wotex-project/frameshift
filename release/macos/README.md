@@ -191,8 +191,31 @@ source/derived observation below 64 KiB including LF. It does not access or
 repair the compiler cache, sign the app or publish a result. The one-writer
 stage has a two-minute job budget and fifteen-second/64-KiB child bounds;
 refusal retains all failed work and the exact last child until its exit is
-known. Only fully checked scratch/work is removed. CPU assembly and actual
-source-bound packaging/library cutover still require separate qualification.
+known. Only fully checked scratch/work is removed. The portable universal
+receipt consumer and source-bound packaging/library cutover remain separate.
+
+Construct only a caller-owned empty private universal app with:
+
+```sh
+swift run frameshift-mac-release merge-development-bundles ARM_APP INTEL_APP EMPTY_PRIVATE_APP
+```
+
+`UniversalBundleMerger` admits two disjoint sealed single-CPU inputs and an empty
+`Frameshift.app` in a current-user mode-0700 `.package.` parent. Exact common
+bytes/modes/aliases and typed metadata agree except fixed regenerated seals and
+the minimum. Owned `ditto`/`lipo` children preserve actual slice headers; the
+complete slice bytes are compared with both sources before replacement, and the
+existing preparer derives the greatest minimum and seals inside out. Complete
+source custody brackets every child, including preparation/sealing, under one
+five-minute job. Source or stage changes, cancellation, child failure and partial
+work refuse without cleanup/promotion. The caller retains this actor until the
+last child/preparer's direct exit is known.
+
+Success emits existing schema-two observation bytes plus LF, bounded to 16 MiB;
+usage/refusal exits are 64/1 with fixed text. `native-universal-staging-v1` does
+not write or relabel a portable receipt, implement replay, replace accepted
+output, qualify native Intel execution or establish installed release. The
+legacy record wrapper remains separate until its portable consumer is joined.
 
 Child-bearing CLI commands borrow the same `OwnedCommand` objects used by the
 library. On failure they print their fixed refusal, then retain those owners

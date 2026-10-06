@@ -1787,6 +1787,52 @@ fixture is cross-compiled purpose code, not a full native Intel OTP producer.
 
 ### Universal development bundle join
 
+The native `UniversalBundleMerger.merge(arm:intel:stage:)` boundary owns only
+private app construction. It requires a caller-created empty `Frameshift.app`
+inside an exclusive current-user mode-0700 `.package.` parent. Both read-only
+input roots and the output must be physically disjoint. Admit both exact
+single-CPU closures and all their seals before copying or merging. Compare the
+original supplied source-root identities with the physical inputs throughout;
+source leaf aliases refuse, and retargeted ancestor aliases cannot hide a changed
+source name. Compare the
+same common bytes, aliases, directory/file modes and typed plist properties
+defined below; preserve each native slice's type, imports, search paths and
+minimum. Reserve the same conservative space before the first child.
+
+Use fixed owned `ditto`/`lipo` children and the existing development preparer;
+do not create another sealing policy. Complete source identities/bytes and
+private-stage checkpoints bracket every command, including preparation/sealing
+children. Temporary merged files are absent leaves inside private app work;
+compare each complete CPU slice byte with its exact source through scoped
+admitted descriptors, and check two-slice headers/mode before replacing the corresponding
+copied native role. Remove only successful empty work. Derive the real greatest
+minimum and preserve common bytes/aliases through final strict all-CPU/nested
+seals. One five-minute budget covers copy, merge and preparation, with bounded
+child output/deadlines and no restart on refusal. Retain the actual last direct
+child/preparer and the whole stage until exit is observed; never delete a failed
+stage or promote uncertain output.
+
+Return only the existing bounded schema-two native observation, with publication
+authority `none`. This `native-universal-staging-v1` producer is distinct from a
+portable receipt/replay owner and does not replace or relabel retained legacy
+records. Qualify actual separately compiled CPUs, all native roles, common-byte/
+plist/type/CPU/alias refusals, changed/same-byte source or stage identities,
+intermediate output, cancellation/deadline and preparation-time mutation. The
+existing record wrapper below switches only after the native producer and its
+portable receipt consumer are joined with explicit producer identity.
+
+Eight merger groups pass within all 107 native release-tool tests with actual
+SDK/resource inputs and no exclusions on macOS 27.0.1 arm64 / Xcode 27. Both
+compiled CPUs contribute every generic role. Actually derived pinned SDK inputs
+join twelve native roles/nine aliases at the real macOS 15.0.0 minimum, with
+stopped-controller execution on arm64 and unchanged source/ZIP custody. CLI
+bytes equal independent final strict observation; wrong usage/nonempty replay
+refuse. Common bytes, metadata, modes, sets/types/CPU, physical overlap and
+same-byte source/stage/intermediate or preparation-time mutations and changed slice bytes with identical loader metadata refuse. Real
+owned-child deadline/cancellation retain stage and direct-child exit custody.
+This qualifies native private staging; the portable record/replay wrapper, full
+source-bound cohorts, native Intel/older OS and installed release remain open.
+
 `scripts/package-macos-universal ARM_APP INTEL_APP OUTPUT` joins two admitted
 ad-hoc development bundles without building either source or selecting a
 production signing identity. Each input must contain exactly its one generic
