@@ -26,13 +26,14 @@ defmodule FrameshiftPlatform.MixProject do
       elixirc_paths: elixirc_paths(Mix.env()),
       start_permanent: Mix.env() == :prod,
       elixirc_options: [warnings_as_errors: true],
-      # Current paths use Bandit/Req and guarded Gun headers, never cowlib encoders.
+      # Current paths use Bandit/Req, guarded Gun headers and GCM-only encryption.
       # See the scoped reachability record and DependencyBoundaryTest.
       hex: [
         ignore_advisories: [
           "EEF-CVE-2026-43966",
           "EEF-CVE-2026-43969",
-          "GHSA-w4f7-4cxr-rv3c"
+          "GHSA-w4f7-4cxr-rv3c",
+          "EEF-CVE-2026-95105"
         ]
       ],
       aliases: aliases(),

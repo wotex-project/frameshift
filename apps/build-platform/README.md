@@ -158,9 +158,17 @@ the maintainer's control. Native runtime dependencies use the pinned Rust toolch
 AshPostgres uses Refpath's published, pinned dynamic-repository fork. This is
 required for upserts through the shared host pool; ordinary reads alone do not
 qualify the integration. The test suite covers repeated upserts and migrations.
-See the [dependency refresh](../../docs/research/build-platform-decisions.md#dependency-refresh-2026-10-04)
+See the [dependency refresh](../../docs/research/build-platform-decisions.md#dependency-refresh-2026-10-06)
 and [original qualification record](../../docs/research/build-platform-decisions.md#embedded-runtime-dependency-qualification-2026-09-24)
-for compatible native/numerical pins and the three scoped advisory exceptions.
+for compatible native/numerical pins and the four scoped advisory exceptions.
+
+The configured Refpath vault uses only AES-256-GCM with a 12-byte IV. No current
+or deprecated AES-CTR cipher is configured as a decryption fallback. Cloak 1.1.4
+has no patched release for CVE-2026-95105; the scoped exception follows the
+advisory's GCM-only workaround. The boundary test exercises the actual vault
+against a chosen-plaintext forgery and changes to its IV, authentication tag and
+ciphertext. Reassess this exception before changing ciphers or importing encrypted
+data from another deployment.
 
 The frontend retains SvelteKit 2.70.3 and TypeScript 6.0.3. SvelteKit 3 removes
 `svelte.config.js`, which phoenix-assets 1.1.1's doctor and type-check setup

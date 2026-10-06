@@ -448,6 +448,106 @@ no unsafe atom attribute or generic filter endpoint is introduced. Joined accoun
 HTTP, resource-policy, generated-schema and migration checks qualify this patch
 with the existing scoped Gun/cowlib exceptions and no additional audit exclusion.
 
+## Dependency refresh, 2026-10-06
+
+Review used `gh` for releases, source comparisons and Actions logs, signed Hex
+resolution for both complete Elixir graphs, npm metadata/audit and the Cargo
+registry. Select compatible patches and the OTP security update; preserve the
+qualified producer and numerical/native boundaries described below.
+
+| Surface | Selected update | Consumer assessment |
+| --- | --- | --- |
+| Protocol validation | JSV 0.26.0 in core and platform | The [changelog](https://github.com/lud/jsv/blob/v0.26.0/CHANGELOG.md) exposes context in normalized keyword errors. The core still uses embedded offline schemas; library/delivery owners retain fixed public refusal reasons. No new normalized error context is published. |
+| Platform queries | AshSQL 0.8.1 | The [source comparison](https://github.com/ash-project/ash_sql/compare/v0.8.0...v0.8.1) fixes false aggregate defaults and list aggregates sorted on other fields. Keep the pinned AshPostgres dynamic-repo correction and existing shared-pool upsert checks. |
+| HTTP clients | Req 0.7.5 | The [release](https://github.com/wojtekmach/req/releases/tag/v0.7.5) corrects SigV4 retry signing and HTTP 303 method selection. Existing Req consumers require no new callback or streaming API. |
+| Frontend | Svelte 5.57.2; Vite 8.3.3 | [Svelte](https://github.com/sveltejs/svelte/releases/tag/svelte%405.57.2) fixes derived subscription retention, async component disposal and production event attachment. [Vite](https://github.com/vitejs/vite/releases/tag/v8.3.3) corrects development file-access checks for WASM queries and safe-module identities. No application feature or permission expansion is required. |
+| Source maps | source-map-js 1.2.2 | The [release](https://github.com/7rulnik/source-map-js/releases/tag/v1.2.2) fixes indexed-source-map denial of service (CVE-2026-93749) and restrictive-CSP execution. Apply the patch directly to the maintained lock after closing the redundant Dependabot PR. |
+| BEAM runtime | OTP 29.1.1 with Elixir 1.20.4 | The [security patch](https://github.com/erlang/otp/releases/tag/OTP-29.1.1) bounds ASN.1 OID decoding, rejects unsolicited TLS 1.3 pre-shared keys and corrects SSH channel/session limits. The host does not enable an SSH daemon. Host selection, Linux fixture images, candidate build identity and source-material checks advance together. |
+| CI/tooling | Mise 2026.10.3; Dexter 0.7.2 | [Mise](https://github.com/jdx/mise/releases/tag/v2026.10.3) changes secret-derived session/cache handling and fixes environment expansion. [Dexter](https://github.com/remoteoss/dexter/releases/tag/v0.7.2) fixes source indexing, inherited Phoenix definitions and module renames. Rust's explicit `rustfmt`/`clippy` components follow the [Mise Rust configuration](https://mise.jdx.dev/lang/rust.html); a preinstalled local toolchain had masked their absence on clean runners. |
+
+### Cloak AES-CTR advisory boundary
+
+Cloak's latest published version remains 1.1.4, affected by
+[CVE-2026-95105](https://cna.erlef.org/cves/CVE-2026-95105.html). Current and
+deprecated CTR ciphers accept attacker-modified ciphertext without
+authentication. The advisory recommends GCM as the default and removal of
+both CTR implementations from the decryption configuration. This is a
+configuration workaround, not a patched package.
+
+The host's development, test and production configurations each select only
+`Cloak.Ciphers.AES.GCM`, a 32-byte key and a 12-byte IV. Production requires
+an explicit key. Inspection of the selected Refpath revision found its
+AshCloak resources use `Refpath.Security.Vault`; no library call selects CTR.
+Dependency configuration files do not override the embedding host's settings.
+No CTR fallback is introduced for existing or imported records.
+
+`FrameshiftPlatform.DependencyBoundaryTest` starts the actual Refpath vault,
+checks that sole cipher selection, round-trips an unchanged value and performs
+the advisory's chosen-plaintext forgery. It also flips one bit in each byte
+of the IV, authentication tag and encrypted body. Cloak's GCM API returns
+`{:ok, :error}` for these authentication failures, never the forged plaintext;
+the test preserves that distinction instead of claiming an exception-shaped
+return. CTR ciphertext does not recover its original value through this vault.
+Only `EEF-CVE-2026-95105` is newly excluded from Hex audit. Reassess the exception
+when changing the producer pin, cipher configuration, encrypted-resource paths
+or imported ciphertext; the existing three Gun/cowlib exclusions stay unchanged.
+
+### CI runner boundaries
+
+Actions logs identify missing Rust components, the new Cloak advisory and a
+20-minute receiver-job timeout during serial emulated codec/NIF checks. Both
+Linux architecture lanes now run the unchanged codec corpus and five joined
+upload/import checks on their respective
+[native Ubuntu runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners).
+The local lane still checks both architectures by default and accepts one
+explicit architecture for CI. No test or architecture coverage is removed.
+
+The Mac runner's default Xcode 16.4/Swift 6.1.2 fails two closure/preparation
+fixtures which pass locally with Xcode 27/Swift 6.4. Select Xcode 26.3/build
+17C529 from the [runner image inventory](https://github.com/actions/runner-images/blob/main/images/macos/macos-15-arm64-Readme.md)
+and build/check release tools before invoking the wrapper tests. This exposes
+compiler failures previously hidden by the wrapper's fixed private error.
+The observed logs do not establish the precise older-tool failure or a passing
+hosted rerun. The minimum-OS and closure/signature refusal policies are unchanged.
+
+Mac CI explicitly requires the precompiled OTP runtime. The existing local
+29.1.1 source build imports Homebrew OpenSSL 4 and correctly fails package
+closure admission. The [EEF build assets](https://github.com/erlef/otp_builds/releases/tag/OTP-29.1.1)
+have SHA-256 `0e80f209b06d9d13cf3b5f7c07228d9561aff983e6e55ea9c8ebda085db286cc`
+(arm64) and `474373887e7a3395bbe033353be74113a59cfc9f3d1565ca740972c3b7c02aa0`
+(Intel); both inspected crypto NIFs import only system libSystem. A private
+arm64 installation of those checked upstream bytes passes actual app packaging,
+30-native-member closure/signature admission and the Swift-to-core IPC probe,
+with an observed minimum of macOS 15.0.0. The unrelated existing installation
+is preserved. Intel archive inspection is static evidence; this host lacks
+Rosetta and cannot establish Intel execution.
+
+Retain Refpath `ee60f58cb885f8fe6875ce9468b0c6ffdb5496c0`, the AshPostgres fork
+and the Wotex cohort. Current Refpath work adds acquisition/plugin capabilities
+outside this enabled embedded-host slice; adopting those exports needs joined
+consumer qualification. Nx/Axon/Scholar, authentication dependencies,
+SvelteKit/static adapter and TypeScript retain their compatible cohort
+constraints. Node, Gleam, Rust and Zig remain the explicit release-material
+toolchains; newer feature releases do not authorize changing the producer
+identity without its complete material checks. Direct Rust and Gleam packages
+already select current compatible releases. MuonTrap 2 replaces the cgroup API;
+the selected producer still constrains its dependency to version 1.
+
+Verification on 2026-10-06: the patched host passes the core lane's 437
+tests/properties with 14 environment-gated exclusions, Dialyzer, documentation,
+static checks and dependency audits. The platform lane passes 75 tests, strict
+Credo, generated-contract checks, production assets, migration drift and the
+scoped Hex audit; npm audit reports zero advisories. Both Linux codec cohorts
+pass the native corpus and five joined import/upload groups; receiver, Linux
+IPC and Avahi fixtures pass 14, 15 and one group respectively. The incoming
+Conjunct adapter/build-spec checks, policy and rendered documentation pass.
+Release checks pass 120 portable-input/material Node groups, 83 Mac Node
+groups (19 exact SDK fixtures excluded) and 41 Elixir portable-release groups.
+The independent Swift release-tool and shell lanes pass locally. A fresh
+minimal Rust installation includes both declared check components. None of
+these local results is a passing hosted Actions rerun, installed updater
+qualification or physical-frame evidence.
+
 ## Dependency refresh, 2026-10-04
 
 GitHub source and changelog inspection used `gh`; Hex/npm resolution produced

@@ -83,7 +83,7 @@ defmodule FrameshiftCore.MixProject do
       {:exile, "0.15.0"},
       {:telemetry, "~> 1.4"},
       {:telemetry_metrics, "~> 1.1"},
-      {:jsv, "~> 0.25.0"},
+      {:jsv, "~> 0.26.0"},
       {:rfc8785, "~> 1.0.0"},
       {:mint, "~> 1.11.0"},
       {:wotex,
