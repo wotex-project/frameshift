@@ -24,6 +24,7 @@ public enum ReleaseToolError: Error, Equatable, Sendable, CustomStringConvertibl
   case invalidMachO
   case invalidBundle
   case invalidSignature
+  case admissionCancelled
 
   public var description: String {
     switch self {
@@ -47,6 +48,7 @@ public enum ReleaseToolError: Error, Equatable, Sendable, CustomStringConvertibl
     case .invalidMachO: "invalid native release loader metadata"
     case .invalidBundle: "Mac bundle closure refused"
     case .invalidSignature: "Mac development signatures refused"
+    case .admissionCancelled: "Mac release admission cancelled; retain incomplete output"
     }
   }
 }

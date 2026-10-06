@@ -15,6 +15,10 @@ The two generation-resource live-cohort groups require
 the exact pinned JSON files. Without it they are explicitly skipped; synthetic
 refusal fixtures do not establish a passing real cohort.
 
+Six additional live SDK groups require
+`FRAMESHIFT_SPARKLE_ARCHIVE=/absolute/path/to/the/pinned/archive.zip`. The synthetic
+archive-refusal group remains runnable without that input.
+
 From this directory, independently verify the exact pinned Sparkle 2.10.0 ZIP:
 
 ```sh
@@ -104,7 +108,24 @@ No SDK/model/network operation or repair occurs. The existing wrapper remains on
 its current implementation until its qualified cutover; exact weight bytes and
 shipping-worker qualification are independent.
 
-See the [generation resource contract](../../docs/architecture/content-pipeline.md#pinned-sdk-resource-custody-check),
+Compare the actual compiler framework with its separately pinned original ZIP:
+
+```sh
+swift run frameshift-mac-release verify-sparkle-framework /absolute/path/to/archive.zip /absolute/path/to/Sparkle.framework
+```
+
+`PinnedSparkleFramework` extracts only the fixed framework into new private
+scratch through an owned Apple child, hashes all 85 files, compares 57 directory
+modes/nine aliases and records both CPU headers for the five native roles.
+Complete original/copy/cache/extracted custody is repeated before returning the
+existing schema-one observation, bounded to 64 KiB including LF. Usage/admission
+exits are 64/1 with fixed text. Failures retain scratch and any owned monitor;
+only completed verified scratch is removed. Cancellation after child success
+still refuses. This does not resolve/repair the compiler workspace, derive CPU
+code, re-sign, execute the SDK or establish upstream build/license/release trust.
+
+See the [updater material contract](../../docs/host/macos.md#pinned-updater-material-and-private-cpu-derivation),
+[generation resource contract](../../docs/architecture/content-pipeline.md#pinned-sdk-resource-custody-check),
 [signature contract](../../docs/host/macos.md#native-release-development-signatures),
 [closure contract](../../docs/host/macos.md#native-closure-admission),
 [loader metadata contract](../../docs/host/macos.md#native-release-loader-metadata),

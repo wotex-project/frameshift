@@ -348,12 +348,14 @@ enum BundleSparkle {
         "XPCServices",
       ].map { ($0, "Versions/Current/" + $0) }
   ).reduce(into: [String: String]()) { $0[root + "/" + $1.key] = $1.value }
+  static let orderedRoles: [(path: String, type: UInt32)] = [
+    ("Versions/B/Sparkle", 6), ("Versions/B/Autoupdate", 2),
+    ("Versions/B/Updater.app/Contents/MacOS/Updater", 2),
+    ("Versions/B/XPCServices/Downloader.xpc/Contents/MacOS/Downloader", 2),
+    ("Versions/B/XPCServices/Installer.xpc/Contents/MacOS/Installer", 2),
+  ]
   static let roles = Dictionary(
-    uniqueKeysWithValues: [
-      ("Sparkle", UInt32(6)), ("Autoupdate", 2), ("Updater.app/Contents/MacOS/Updater", 2),
-      ("XPCServices/Downloader.xpc/Contents/MacOS/Downloader", 2),
-      ("XPCServices/Installer.xpc/Contents/MacOS/Installer", 2),
-    ].map { (root + "/Versions/B/" + $0.0, $0.1) })
+    uniqueKeysWithValues: orderedRoles.map { (root + "/" + $0.path, $0.type) })
 }
 
 private struct BundleBudget {
@@ -505,7 +507,7 @@ private final class BundleInventory {
   }
 }
 
-private struct NativeObservationWriter {
+struct NativeObservationWriter {
   var bytes = Data()
   private let encoder: JSONEncoder = {
     let encoder = JSONEncoder()

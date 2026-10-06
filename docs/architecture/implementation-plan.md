@@ -1087,8 +1087,9 @@ The guide links only to real verified artifacts. See
 **Decision:** [D-003](../decisions/README.md#d-003--language-boundary), supported by
 [the source review](../research/software-stack.md#release-tooling-language-boundary).
 **State:** Swift descriptor/hash, owned-process and typed-plist foundations
-and bounded Mach-O/whole-bundle observation and strict development signatures
-implemented; SDK/native packaging
+and bounded Mach-O/whole-bundle observation, strict development signatures and
+pinned SDK resource/archive/cache comparison implemented;
+compiler workspace capture/native packaging
 ports and the portable descriptor adapter remain
 unimplemented/unqualified. The
 pinned compiler capture is at its validated checkpoint. Use this order for
@@ -1120,8 +1121,8 @@ through scoped descriptor custody. Ten groups join malformed/overflow/string/
 deployment/refusal, exact command bounds, actual descriptor reuse and compiled
 arm64/Intel/universal inputs to the 43-test Swift package gate. The release-built
 CLI matches the retained observer on 34 actual compiled/SDK/app files and 40
-CPU slices with unchanged bytes/metadata. SDK resource/archive/cache ports
-remain open. This is
+CPU slices with unchanged bytes/metadata. Compiler workspace capture and wrapper
+integration remain open. This is
 metadata parity, not a passing full RT2 cutover or Intel execution. See the
 [loader metadata contract](../host/macos.md#native-release-loader-metadata).
 
@@ -1131,8 +1132,8 @@ custody scan. Six groups pass within the 49-test package lane, including the
 actual 8,192-entry boundary and same-byte/tree mutation refusals. Five real
 compiled/SDK/fresh-app closures match the retained schema-two JSON bytes exactly,
 including Unicode/escaping and traversal order. The command is available for
-inspection; production wrappers retain their current implementation until SDK
-resource/archive/cache/compiler-capture parity completes RT2.
+inspection; production wrappers retain their current implementation until
+compiler-capture and integration parity completes RT2.
 See the [closure contract](../host/macos.md#native-closure-admission).
 
 `NativeSignatureVerifier` now brackets strict all-architecture/nested Security
@@ -1152,10 +1153,23 @@ hashes. Four groups pass within all 58 tool tests using the actual admitted
 resources; absent fixture input explicitly excludes the two live-cohort groups.
 Release-built CLI bytes match the retained result and preserve custody around
 the actual offline SDK child. This closes native resource inspection only;
-Sparkle's complete framework/archive/cache/compiler-capture port and qualified
-wrapper cutover remain RT2 work. Full model weights and the shipping native
+Sparkle compiler capture and qualified wrapper cutover remain RT2 work.
+Full model weights and the shipping native
 worker's root/network/generation/cancellation gates remain H4 requirements. See
 the [resource contract](content-pipeline.md#pinned-sdk-resource-custody-check).
+
+`PinnedSparkleFramework` now compares every original archive/cache file, directory
+mode and exact alias with bounded private extraction and repeated custody. Seven
+groups pass within all 65 tool tests using both actual SDK/resource inputs, with
+no exclusions. Repeated release-built CLI admission matches the complete retained
+schema-one bytes and preserves all original identities. Unsealed-resource,
+alias/mode/link/FIFO, original/copy/tree/namespace mutation, real entry and byte/
+path/depth limits, owned unzip deadline and cancellation after child exit refuse
+without cache repair or late success. Absent archive input excludes six live
+groups explicitly. Continue native compiler workspace capture and individual
+wrapper/consumer cutover, then RT3 preparation/CPU merge/package and H3-L3 updater
+integration. See the
+[material contract](../host/macos.md#pinned-updater-material-and-private-cpu-derivation).
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

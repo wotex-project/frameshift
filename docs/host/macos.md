@@ -862,6 +862,45 @@ missing, aliased, changed, unsafe, oversized or special members. Retain the
 archive and cache unchanged; a missing or altered cache is not repaired by the
 admission consumer. Independently bound extraction time and tree processing.
 
+The native replacement is
+`PinnedSparkleFramework.verify(archive:framework:)` in the Mac release-tool
+package, with `frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK`.
+Use the already qualified protected archive/leaf reader, scoped directory
+descriptors, Mach-O metadata and owned Apple `unzip` command. Extract from a
+0600 copy of admitted archive bytes in a new 0700 private scratch directory;
+never extract into or repair the actual compiler cache. Bound the fixed tree to
+512 entries, 24 directory levels, 512-byte relative paths, 16 MiB per file and
+64 MiB total. Compare all 85 files, 57 directories and nine exact aliases, then
+retain both CPU facts for the five fixed native roles. Preserve the existing
+schema-one JSON member/array bytes, including the pinned names' English ordering,
+within 64 KiB including LF. These are native observations, not a second portable
+receipt encoder.
+
+Bracket extraction/comparison with complete expected/cache inventories and full
+original/copied archive custody checks. A same-byte rewrite, empty name, mode,
+owner, link or namespace change refuses. The child has a thirty-second bound;
+the job has a two-minute monotonic budget checked between operations, without a
+promise to preempt a blocked syscall. Failure retains private scratch and the
+owned-child monitor; no late result may become success. Only a completed,
+custody-confirmed scratch is removed. Usage/admission exits are 64/1 with fixed
+pinned-material refusal text. Require actual pinned ZIP/cache byte parity and
+mutation/alias/resource/child-failure refusal before wrapper or capture cutover.
+
+Seven `PinnedSparkleFrameworkTests` groups pass within all 65 tool tests on
+macOS 27.0.1 arm64 / Xcode 27 with actual pinned inputs and zero exclusions.
+Complete cache/archive observation bytes match the retained observer on repeated
+release-built CLI admission; all original file/directory/link/archive identities
+remain unchanged. Wrong size/hash/alias before extraction, changed unsealed
+`PkgInfo`, missing/extra resources, retargeted aliases, modes, actual header hard
+links, FIFOs and unknown links refuse without cache repair. Late original/copied
+archive, expected/cache tree, same-byte and scratch namespace changes refuse
+with descriptor cleanup. Actual 512/513-entry, file/aggregate/path/depth limits,
+an owned unzip deadline with confirmed retained exit, and cancellation after
+child success refuse without returning a late observation. Fixed 64/1 CLI
+refusals pass. Without `FRAMESHIFT_SPARKLE_ARCHIVE`, six live groups are explicitly
+excluded. Compiler workspace capture, CPU derivation/package cutover and runtime
+updater/installed/production qualification retain their independent gates.
+
 Single-CPU development packaging derives the five SDK native files with actual
 `lipo -thin` operations in an unpublished private `.package.*` stage. Keep all
 other files, permissions and nine aliases from the admitted archive; never thin
