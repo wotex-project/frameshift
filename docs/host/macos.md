@@ -431,8 +431,8 @@ between naming/opening and after opening/reading, truncation/growth/same-byte
 rewrite, permission changes, hard links, sparse oversize files, invalid bounds,
 monotonic expiry and descriptor cleanup. Independently running the CLI on the
 pinned actual ZIP joins this foundation to upstream bytes. Native closure,
-property-list and closure ports require their own acceptance before a release
-wrapper switches. The owned-process foundation is defined below.
+closure and SDK ports require their own acceptance before a release wrapper
+switches. Owned-process and property-list foundations are defined below.
 
 ### Native release child custody
 
@@ -479,6 +479,51 @@ deadline/actual exit, ignored TERM and late private-stage mutation, exactly one
 TERM across read-only observations, cancellation before/after launch, nonzero
 exit, inherited-pipe refusal, failed-launch descriptor cleanup, selected Xcode
 execution, working-directory isolation and argument/limit refusal.
+
+### Native release property lists
+
+`NativePropertyList.read(_:protection:)` uses the admitted protected single-link
+file reader with a 64 KiB cap. `decode(_:)` accepts an immutable XML or bplist00
+root dictionary and returns typed `NativePlistValue` strings, booleans, signed
+Int64 integers, finite reals, arrays and dictionaries. Numeric 0/1 are not
+booleans. Preserve Unicode value bytes and reject duplicate or canonically
+ambiguous dictionary keys instead of silently collapsing them. Data/date/UID/
+set/null, OpenStep, unsupported markers and non-dictionary roots are outside
+this native metadata profile. This is not a portable release-wire encoder.
+
+Before Foundation decoding, bound the reachable graph to depth 32, 8192 expanded
+nodes and 1 MiB expanded UTF-8 string payload. The binary preflight checks trailer
+counts/widths, exact offset-table extent, distinct in-range object offsets,
+object/ref extents, extended-length arithmetic, dictionary keys and ancestor
+cycles. Repeated references count toward expansion rather than bypassing limits.
+XML preflight validates element/key/value structure and bounds depth/nodes/text.
+Disable external resolution and reject entity declarations/references even if
+unused; the ordinary Apple plist DOCTYPE remains admitted without loading its
+external DTD. Validate XML integer range before Foundation can narrow it.
+
+Foundation decodes the admitted bytes without a pathname reopen. Typed conversion
+rechecks graph/type/range limits. Bound its compact JSON-compatible metadata to
+256 KiB, retaining the current converter's output cap; these internal size-check
+bytes are never emitted as a release record or signature message. Foundation's
+synchronous calls are not preemptible. This finite-input/graph qualification
+makes no measured whole-job RSS claim. Plist, offset, expansion, duplicate-key
+and field-type failures return a fixed category without private input content.
+Sources: [Apple plist formats](https://developer.apple.com/documentation/foundation/propertylistserialization/propertylistformat),
+[external entity policy](https://developer.apple.com/documentation/foundation/xmlparser/externalentityresolvingpolicy-swift.property)
+and [pinned binary-format source](https://github.com/apple/swift-corelibs-foundation/blob/b2112d2d80c4365dbb32479d89bb3177bfda8ea8/Sources/CoreFoundation/CFBinaryPList.c).
+
+`frameshift-mac-release verify-sparkle-plist PLIST` checks seven exact typed
+identity fields of the pinned framework: identifier/executable/package type,
+display version 2.10.0, build 2064, declared minimum 12.0 and MacOSX platform.
+Its fixed success line is `Sparkle 2.10.0 plist identity verified` plus LF; usage
+and admission exits remain 64/65. It does not establish native CPU minimums,
+whole-framework bytes, cache/archive equality or signatures. Those separate
+closure/SDK gates remain required. The nine `NativePropertyListTests` qualify
+Apple-generated XML/binary values, exact type/Unicode preservation, duplicate
+keys, entity refusal, malformed/cyclic binary references, all truncations,
+integer/real/type refusal, exact depth/node/metadata bounds, descriptor custody
+and typed SDK identities. Independently run the command on the actual pinned
+SDK Info.plist; fixture identities alone do not prove that upstream input.
 
 ### Native closure admission
 

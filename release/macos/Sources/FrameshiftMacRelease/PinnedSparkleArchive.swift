@@ -15,4 +15,17 @@ public enum PinnedSparkleArchive {
     guard try AdmittedFile.sha256(path, policy: policy).sha256 == sha256
     else { throw ReleaseToolError.digestMismatch }
   }
+
+  /// Checks seven typed SDK identity fields; this does not establish archive/cache equality.
+  public static func verifyFrameworkInfo(_ path: String) throws {
+    let values = try NativePropertyList.read(path).values
+    let identity = [
+      "CFBundleIdentifier": "org.sparkle-project.Sparkle", "CFBundleExecutable": "Sparkle",
+      "CFBundlePackageType": "FMWK", "CFBundleShortVersionString": version,
+      "CFBundleVersion": "2064", "LSMinimumSystemVersion": "12.0",
+    ]
+    guard identity.allSatisfy({ values[$0.key] == .string($0.value) }),
+      values["CFBundleSupportedPlatforms"] == .array([.string("MacOSX")])
+    else { throw ReleaseToolError.invalidPropertyList }
+  }
 }

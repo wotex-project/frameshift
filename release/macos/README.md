@@ -37,7 +37,16 @@ or effect. Failed native producers retain their private pending stage and never
 promote late output. This owner claims only its direct child; inherited pipes
 held by descendants refuse separately.
 
-See the [child contract](../../docs/host/macos.md#native-release-child-custody) and
+`NativePropertyList` preflights XML/bplist00 structure and expansion before
+typed Foundation decoding. It preserves boolean/integer/real distinctions and
+Unicode value bytes, with input/depth/node/string and compact-metadata bounds.
+Declared entities, duplicate keys, cyclic/out-of-range references and unsupported
+metadata types refuse. `verify-sparkle-plist /absolute/path/to/Info.plist` checks
+the seven pinned SDK identity fields only; it does not qualify CPU headers,
+framework contents or signatures.
+
+See the [plist contract](../../docs/host/macos.md#native-release-property-lists),
+[child contract](../../docs/host/macos.md#native-release-child-custody) and
 the [owning contract](../../docs/host/macos.md#native-release-input-foundation),
 [migration sequence](../../docs/architecture/implementation-plan.md#release-tooling-migration)
 and [verification map](../../docs/architecture/verification.md#installed-product-and-guide).
