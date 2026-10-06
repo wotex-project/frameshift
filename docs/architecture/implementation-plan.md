@@ -1243,6 +1243,16 @@ native roles/nine aliases. CPU merge, DMG construction, actual app
 SDK/source-bound producer/library cutover and full-host acceptance remain RT3
 and H3-L3 work.
 
+The SDK-free development `scripts/package-macos` consumer now uses the native
+preparer and final inspection directly, with failed/interrupt work retained.
+Fresh packaging and packaged IPC/offline maintenance pass with an invalid Node
+startup option; strict admission reports 1,419 files/24 natives and the actual
+macOS 15.0.0 minimum. Real AppKit quit confirms launcher exit and OTP PID removal.
+An actual isolated packager trap/admission/publication tail refuses a broken
+native role while preserving failed-stage and previous-output identities.
+This closes that local consumer cutover; SDK inclusion, other source-bound
+producer/library joins, universal assembly and installed qualification stay open.
+
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the
 owner they exercise instead of creating another generic release engine. RT2

@@ -112,6 +112,13 @@ bundled core is available only in the packaged `.app`. The package script
 creates an ad-hoc-signed local artifact; release signing and notarization require
 external Apple credentials and services.
 
+The development packager uses the separate native release tool for private
+preparation, inside-out seals and final closure. It preserves failed or
+interrupted `.package.*` work and reports its location; only successful admission
+allows the local development artifact replacement. The current app remains
+SDK-free. Source-bound candidate producers and actual updater integration retain
+their separate gates.
+
 Development packaging rebuilds the renderer and local NIFs with explicit macOS
 14 targets, signs native leaves before the app and declares the greatest actual
 native minimum. The current OTP runtime makes the bundle require macOS 15.0.0;

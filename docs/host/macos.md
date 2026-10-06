@@ -865,6 +865,16 @@ replaces an accepted app or removes a failed stage. A one-shot caller retains
 the exact last child after refusal until direct-child exit is known, as defined
 by [child custody](#native-release-child-custody).
 
+`scripts/package-macos` builds the dependency-free release tool separately, then
+calls `prepare-development-bundle` and the native final `check-bundle` directly
+for its current SDK-free development app. It invokes no Node preparation command.
+Its failure/interrupt trap reports and retains `.package.*` work; it does not
+remove a stage whose child custody or admission failed. Only successful
+preparation and final closure allow the existing local artifact replacement.
+An externally interrupted shell/tool does not establish child or descendant
+exit. Candidate/source-bound producers remain separate consumers; SDK inclusion
+must select its explicit updater profile and original/compiler/CPU gates.
+
 Use the selected `/usr/bin/xcrun --find swift` result to identify its canonical
 `usr/lib/` prefix. Before mutation, admit the complete bounded closure with only
 two preparation exceptions: its plist may understate the actual native minimum,
@@ -914,6 +924,18 @@ A private copy of the retained full host also matches all 1,419 files/24 native
 records with strict seals and unchanged original identities. This is local
 producer/static evidence; fresh host lifecycle and packaging/library cutover,
 Swift updater loader profile, CPU merge, DMG and installed release remain open.
+
+The SDK-free development packager cutover passes on macOS 27.0.1 arm64 /
+Xcode 27: fresh native preparation and strict seals produce 1,419 files and
+24 native roles with the actual macOS 15.0.0 minimum. Packaging and packaged
+IPC/offline maintenance pass with a deliberately invalid Node startup option;
+authenticated import/snapshot, backup/verify/restore refusals and actual deferred
+AppKit quit with launcher exit/OTP PID removal pass. An isolated fixture executes
+the actual packager trap/admission/publication tail with a deliberately broken
+native role: refusal preserves the failed stage and every prior output identity,
+with no output promotion. This tail fixture does not simulate a complete compiler
+failure or external process interruption. Current development packaging does
+not include the SDK; source-bound candidate and updater joins remain open.
 
 #### Swift updater shell preparation profile
 

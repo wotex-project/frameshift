@@ -52,17 +52,25 @@ binary_directory=$(
     --show-bin-path
 )
 
+# Build the dependency-free native producer before creating mutable app work.
+/usr/bin/swift build --quiet --disable-automatic-resolution --disable-netrc --disable-keychain \
+  --package-path "$repository_root/release/macos" --configuration release \
+  --product frameshift-mac-release >&2
+native_release_tool="$repository_root/release/macos/.build/release/frameshift-mac-release"
+
 mkdir -p "$artifact_root"
 staging_root=$(mktemp -d "$artifact_root/.package.XXXXXX")
 stage="$staging_root/Frameshift.app"
 
-cleanup() {
+retain_failed_stage() {
   if [ -n "${staging_root:-}" ] && [ -d "$staging_root" ]; then
-    rm -rf "$staging_root"
+    printf 'development package failed; private stage retained: %s\n' "$staging_root" >&2
   fi
 }
 
-trap cleanup EXIT HUP INT TERM
+# Refusal or interruption cannot delete the native producer's retained work.
+trap retain_failed_stage EXIT
+trap 'exit 1' HUP INT TERM
 
 mkdir -p "$stage/Contents/MacOS" "$stage/Contents/Resources"
 install -m 755 "$binary_directory/frameshift-menu" "$stage/Contents/MacOS/Frameshift"
@@ -87,8 +95,8 @@ find "$stage" -type f -exec chmod go-w,u-s,g-s {} +
 find "$stage" -type d -exec chmod go-w,u-s,g-s,-t {} +
 
 plutil -lint "$stage/Contents/Info.plist" >/dev/null
-mise exec -- node "$repository_root/release/macos/prepare.mjs" "$stage" "$architecture" >&2
-"$repository_root/scripts/check-macos-closure" "$stage" "$architecture" >/dev/null
+"$native_release_tool" prepare-development-bundle "$stage" "$architecture" >&2
+"$native_release_tool" check-bundle "$stage" "$architecture" >/dev/null
 
 if [ -e "$app_bundle" ]; then
   rm -rf "$app_bundle"
