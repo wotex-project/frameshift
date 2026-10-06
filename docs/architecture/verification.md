@@ -79,6 +79,12 @@ assign the next consumer evidence without promoting these source checks.
 
 ### Staged Conjunct consumers, 2026-10-04
 
+The [S1 attempt custody amendment](conjunct-integration.md#s1-retained-attempt-custody)
+now specifies retained failures and complete original/actual child records.
+Its seven hands, three hundred schedules, two loaded faults/reductions and ten
+null-budget smokes have not run. The earlier S1 result below retains its
+original scope; it does not qualify this new custody mechanism.
+
 `scripts/check conjunct` builds the exact pinned source archive and verifies
 the [S1 consumer contract](conjunct-integration.md#s1-consumer-bundle-and-acceptance).
 On macOS arm64, Rust 1.97.1, Node 26.9.0, TypeScript 6.0.3 and

@@ -532,3 +532,62 @@ Passing these fixtures establishes only the recorded package/data/transport
 consumer scope. Full operation semantics, thirteen frame obligations, v1
 migration, procedure content and physical/current-use admission remain S2–S7
 gates. No existing catalog identity or semantic authority changes in S1.
+
+### S1 retained attempt custody
+
+Commit this amendment and the complete
+[retained-attempt hands](../../scripts/conjunct/test/fixtures/retained-attempt.expected.json) before
+changing the S1 runner. This concerns the unsigned source-built experiment
+above; it does not qualify producer archives, thirteen-stage mappings or a
+physical configuration.
+
+The caller explicitly starts each stage/check attempt in a fresh directory
+under ignored `var/conjunct/attempts/`. Importing its helpers starts nothing.
+Retain the original request, complete relevant consumer source bytes and
+permission modes, exact cohort bytes and an incomplete initial state before
+acquisition or execution. Two attempts use independent directories. Before
+every child, retain its exact executable, arguments, cwd, environment and
+output ceiling. Retain complete available stdout/stderr bytes, exit status,
+signal and spawn error before interpreting success. Preserve embedded NULs,
+empty output, zero and null distinctly. A buffer overflow or spawn failure is
+incomplete, never a killed semantic fault or successful empty output.
+
+Retain downloaded/cached source and runtime archives before checking their
+expected digests or extracting them. Keep accepted bundle inventories and the
+original manifest digest before copied consumers execute. Record full source
+again at closure. Changed consumer source or permission modes, missing paired
+records, recording errors and unfinished required children prevent a pass.
+With complete custody, a reached nonzero child status produces failed;
+missing execution/recording produces incomplete. Required successful execution is
+passed only for the named stage/check scope.
+
+Failed attempts preserve their original inputs, partial actuals, owned build
+workspace, copied consumer and candidate bundle. Exception handlers cannot
+remove those directories or overwrite an earlier result. Successful attempts
+also retain their workspace until separately verified preservation/cleanup.
+The joint runner begins incomplete before starting stage, binds both child
+attempts and succeeds only when both independently reopened records pass.
+The stage's stdout remains one JSON result for the existing joint runner;
+child display output goes to stderr and is retained separately. Do not add
+network, publication, application startup or semantic authority to this change.
+
+The authored hands use only explicit caller paths substituted for
+`<source>`, `<attempt>` and `<node>` before invocation; these substitutions
+are not copied from actual records. Each hand's expected summary is complete
+for its declared fields. Keep the full command/source records beside that
+summary and independently reopen them before comparison. The generated
+campaign uses seeds 20261007, 27182818 and 31415926, one hundred schedules per
+seed, varying command count, output bytes and the failure position. Retain the
+full original schedule/expectation before each actual attempt. Execute two
+actually loaded source faults: omit a child actual record; promote an empty
+required prefix. Each must produce an observed wrong result and a strictly
+smaller rerun retaining complete original/actual records. Loader, syntax,
+recording and infrastructure failures do not kill either fault. Run ten pure
+record/readback smoke calls with a null timing budget; they make no latency,
+peak-memory or runtime-profile claim.
+
+The mandatory `./scripts/check conjunct` lane runs these hands, campaigns,
+faults, reduction, smoke and independent readback before the original complete
+S1 experiment. Preserve its earlier fixtures and cohort. Changing producer
+selection or replacing source copies with actual package archives requires its
+own prior exact cohort and installed acceptance; it remains the next S1 join.

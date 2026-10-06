@@ -223,6 +223,14 @@ updates the verification map only with results actually obtained.
 
 ### First consumer experiment and authority boundary
 
+The [S1 attempt custody amendment](conjunct-integration.md#s1-retained-attempt-custody)
+requires complete command/source observations and preserves failed workspaces
+before the source-built experiment can qualify again. Its seven hands,
+three hundred generated schedules, two loaded faults with actual reduction,
+ten null-budget smokes and independent readback are specified, not executed.
+Implement this custody repair before changing producer selection or joining
+the actual standalone package archives. It changes no semantic authority.
+
 The [retained v1 input contract](conjunct-v1-inputs.md) defines the next bounded
 S3 adapter prerequisite: complete original closure, all five identity domains,
 missing-pin refusal and exact compilation-context replay. Implement and qualify

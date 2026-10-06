@@ -1,0 +1,484 @@
+{
+  "version": "frameshift.conjunct-retained-attempt.hands.v1",
+  "predecessor": "6bead86b880cfe33099d91d6256cff73300e0701",
+  "original_sources": {
+    "scripts/conjunct/stage.mjs": "import assert from 'node:assert/strict';\nimport { spawnSync } from 'node:child_process';\nimport { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';\nimport { tmpdir } from 'node:os';\nimport { join, resolve } from 'node:path';\nimport { fileURLToPath } from 'node:url';\nimport { cohort, digest, inventory, verifyArchive, verifyBundle, verifyDiscovery } from './artifacts.mjs';\n\nconst repository = resolve(fileURLToPath(new URL('../..', import.meta.url)));\nconst work = mkdtempSync(join(tmpdir(), 'frameshift-conjunct-build-'));\nconst cache = join(repository, 'var/conjunct/cache');\nconst bundles = join(repository, 'var/conjunct/bundles');\nmkdirSync(cache, { recursive: true });\nmkdirSync(bundles, { recursive: true });\nconst bundle = mkdtempSync(join(bundles, `${cohort.revision.slice(0, 12)}-`));\nconst env = { ...process.env, CONJUNCT_SOURCE_REVISION: cohort.revision,\n  CARGO_BUILD_JOBS: process.env.CARGO_BUILD_JOBS || '2', ERL_FLAGS: process.env.ERL_FLAGS || '+S 2:2' };\n\nfunction run(command, args, cwd = repository, options = {}) {\n  const result = spawnSync(command, args, { cwd, env, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,\n    stdio: options.capture ? 'pipe' : 'inherit', ...options });\n  if (result.error) throw result.error;\n  assert.equal(result.status, 0, `${command} ${args.join(' ')} failed: ${result.stderr || ''}`);\n  return result.stdout?.trimEnd();\n}\n\nfunction extract(archive, destination, strip = false) {\n  verifyArchive(run('tar', ['-tf', archive], repository, { capture: true }),\n    run('tar', ['-tvf', archive], repository, { capture: true }));\n  mkdirSync(destination, { recursive: true });\n  run('tar', ['-xf', archive, '-C', destination, ...(strip ? ['--strip-components=1'] : [])]);\n}\n\nfunction copy(source, destination) {\n  mkdirSync(resolve(destination, '..'), { recursive: true });\n  cpSync(source, destination, { recursive: true });\n}\n\ntry {\n  const archive = join(cache, `${cohort.revision}.tar.gz`);\n  if (!existsSync(archive)) {\n    const result = spawnSync('gh', ['api', `repos/${cohort.repository}/tarball/${cohort.revision}`],\n      { cwd: repository, maxBuffer: 64 * 1024 * 1024 });\n    assert.equal(result.status, 0, result.stderr?.toString());\n    writeFileSync(archive, result.stdout);\n  }\n  assert.equal(digest(readFileSync(archive)), cohort.source_archive_digest, 'producer source archive changed');\n  const source = join(work, 'source');\n  extract(archive, source, true);\n  for (const record of Object.values(cohort.algorithm_sources)) {\n    assert.equal(digest(readFileSync(join(source, record.path))), record.digest);\n  }\n  const rust = run('rustc', ['-vV'], repository, { capture: true });\n  assert(rust.startsWith('rustc 1.97.1 '), 'select the Frameshift pinned Rust compiler');\n  const target = rust.match(/^host: (.+)$/m)[1];\n  const tsc = join(repository, 'apps/build-platform/assets/node_modules/typescript/bin/tsc');\n  const typescript = run(process.execPath, [tsc, '--version'], repository, { capture: true });\n  assert.equal(typescript, 'Version 6.0.3');\n  assert.equal(process.versions.node, '26.9.0');\n  const beam = run('elixir', ['-e', 'IO.puts(System.version()); IO.puts(File.read!(Path.join([:code.root_dir(), \"releases\", :erlang.system_info(:otp_release), \"OTP_VERSION\"])))'], repository, { capture: true });\n  assert.equal(beam, '1.20.4\\n29.1.1', 'select the Frameshift pinned BEAM runtime');\n  env.CARGO_TARGET_DIR = join(cache, 'cargo');\n  run('cargo', ['build', '--locked', '--release', '--manifest-path', join(source, 'Cargo.toml'), '-p', 'conjunct-port']);\n  run('cargo', ['build', '--locked', '--release', '--manifest-path', join(source, 'Cargo.toml'), '-p', 'conjunct-abi', '--target', 'wasm32-unknown-unknown']);\n  run('cargo', ['build', '--locked', '--release', '--manifest-path', join(source, 'Cargo.toml'), '-p', 'conjunct-distribution', '--example', 'discovery']);\n  copy(join(env.CARGO_TARGET_DIR, 'release/conjunct-port'), join(bundle, 'native', target, 'conjunct-port'));\n  chmodSync(join(bundle, 'native', target, 'conjunct-port'), 0o755);\n  copy(join(env.CARGO_TARGET_DIR, 'wasm32-unknown-unknown/release/conjunct_abi.wasm'), join(bundle, 'wasm/conjunct_abi.wasm'));\n  mkdirSync(join(bundle, 'discovery'));\n  const discovery = run(join(env.CARGO_TARGET_DIR, 'release/examples/discovery'), ['port'], repository, { capture: true });\n  verifyDiscovery(JSON.parse(discovery), 'cj/port/1');\n  writeFileSync(join(bundle, 'discovery/port.json'), discovery);\n\n  for (const [name, directory] of [['kernel', 'bindings/typescript/conjunct-kernel'],\n    ['data', 'bindings/typescript/conjunct-data'], ['guide', 'frontend/guide']]) {\n    const input = join(source, directory);\n    run(process.execPath, [tsc, '-p', join(input, 'tsconfig.json')]);\n    const output = join(bundle, 'js', name);\n    for (const file of ['dist', 'package.json', 'README.md']) copy(join(input, file), join(output, file));\n    copy(join(source, 'LICENSE'), join(output, 'LICENSE'));\n    if (name === 'data') {\n      for (const file of ['src/generated', 'generation-manifest.json', 'generation-config.json']) {\n        copy(join(input, file), join(output, file));\n      }\n    }\n  }\n  const { RawKernel } = await import(`file://${join(bundle, 'js/kernel/dist/index.js')}`);\n  const kernel = await RawKernel.instantiate(readFileSync(join(bundle, 'wasm/conjunct_abi.wasm')));\n  const wasmDiscovery = kernel.describe();\n  verifyDiscovery(JSON.parse(new TextDecoder().decode(wasmDiscovery)), 'cj/wasm-abi/1');\n  writeFileSync(join(bundle, 'discovery/wasm.json'), wasmDiscovery);\n\n  for (const name of ['wire', 'data', 'kernel']) {\n    const input = join(source, `bindings/elixir/conjunct_${name}`);\n    const output = join(bundle, `elixir/conjunct_${name}`);\n    for (const file of ['lib', 'mix.exs', 'README.md', 'LICENSE']) copy(join(input, file), join(output, file));\n    if (name === 'data') {\n      for (const file of ['generation-manifest.json', 'generation-config.json']) copy(join(input, file), join(output, file));\n    }\n  }\n  const telemetryArchive = join(cache, `telemetry-${cohort.telemetry.version}.tar`);\n  if (!existsSync(telemetryArchive)) {\n    const response = await fetch(`https://repo.hex.pm/tarballs/telemetry-${cohort.telemetry.version}.tar`,\n      { signal: AbortSignal.timeout(30_000) });\n    assert(response.ok, `telemetry download failed: ${response.status}`);\n    writeFileSync(telemetryArchive, new Uint8Array(await response.arrayBuffer()));\n  }\n  assert.equal(digest(readFileSync(telemetryArchive)), cohort.telemetry.archive_digest);\n  const hex = join(work, 'telemetry');\n  extract(telemetryArchive, hex);\n  extract(join(hex, 'contents.tar.gz'), join(bundle, 'elixir/telemetry'));\n  copy(join(source, 'LICENSE'), join(bundle, 'licenses/conjunct-MIT.txt'));\n  copy(join(source, 'Cargo.lock'), join(bundle, 'provenance/Cargo.lock'));\n  copy(join(source, 'bindings/elixir/conjunct_kernel/mix.lock'), join(bundle, 'provenance/kernel.mix.lock'));\n  const cargo = JSON.parse(run('cargo', ['metadata', '--locked', '--manifest-path', join(source, 'Cargo.toml'),\n    '--format-version=1'], repository, { capture: true }));\n  const abi = cargo.packages.find(package_ => package_.name === 'conjunct-abi');\n  const port = cargo.packages.find(package_ => package_.name === 'conjunct-port');\n  const selected = new Set();\n  function dependency(id) {\n    if (selected.has(id)) return;\n    selected.add(id);\n    const node = cargo.resolve.nodes.find(node_ => node_.id === id);\n    for (const edge of node.deps.filter(edge_ => edge_.dep_kinds.some(kind => kind.kind !== 'dev'))) dependency(edge.pkg);\n  }\n  dependency(abi.id);\n  dependency(port.id);\n  const dependencies = cargo.packages.filter(package_ => selected.has(package_.id)).map(package_ => ({\n    name: package_.name, version: package_.version, license: package_.license, source: package_.source,\n  })).sort((a, b) => a.name.localeCompare(b.name));\n  assert(dependencies.every(dependency_ => dependency_.license), 'undeclared dependency license');\n  const manifest = { version: 'frameshift.conjunct-bundle.v1', cohort, target,\n    toolchains: { rust, node: process.versions.node, typescript, beam,\n      elixir: run('elixir', ['--version'], repository, { capture: true }) },\n    publishable: false, blockers: ['unsigned consumer experiment; no physical or operated qualification'],\n    dependencies: [...dependencies, { name: 'telemetry', version: cohort.telemetry.version, license: 'Apache-2.0' }],\n    files: inventory(bundle) };\n  const bytes = JSON.stringify(manifest, null, 2) + '\\n';\n  writeFileSync(join(bundle, 'manifest.json'), bytes);\n  verifyBundle(bundle, digest(bytes));\n  console.log(JSON.stringify({ bundle, manifest_digest: digest(bytes) }));\n} catch (error) {\n  rmSync(bundle, { recursive: true, force: true });\n  throw error;\n} finally {\n  rmSync(work, { recursive: true, force: true });\n}\n",
+    "scripts/conjunct/check.mjs": "import assert from 'node:assert/strict';\nimport { spawn, spawnSync } from 'node:child_process';\nimport { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';\nimport { createServer } from 'node:http';\nimport { tmpdir } from 'node:os';\nimport { extname, join, resolve, sep } from 'node:path';\nimport { fileURLToPath } from 'node:url';\nimport { cohort, digest, inventory, verifyBundle } from './artifacts.mjs';\n\nconst repository = resolve(fileURLToPath(new URL('../..', import.meta.url)));\nconst [bundleArgument, expectedDigest] = process.argv.slice(2);\nassert(bundleArgument && expectedDigest, 'usage: check.mjs BUNDLE MANIFEST_DIGEST');\nconst sourceBundle = resolve(bundleArgument);\nverifyBundle(sourceBundle, expectedDigest);\nconst work = mkdtempSync(join(tmpdir(), 'frameshift-conjunct-consumer-'));\nconst bundle = join(work, 'bundle');\ncpSync(sourceBundle, bundle, { recursive: true });\nconst manifest = verifyBundle(bundle, expectedDigest);\nconst tsc = join(repository, 'apps/build-platform/assets/node_modules/typescript/bin/tsc');\n\nfunction run(command, args, options = {}) {\n  const result = spawnSync(command, args, { cwd: work, stdio: 'inherit', ...options });\n  if (result.error) throw result.error;\n  assert.equal(result.status, 0, `${command} failed`);\n}\n\nasync function browser() {\n  const chromePath = process.env.FRAMESHIFT_CHROME || (process.platform === 'darwin'\n    ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' : '/usr/bin/google-chrome');\n  assert(existsSync(chromePath), `Chrome required: set FRAMESHIFT_CHROME (${chromePath})`);\n  const profile = join(work, 'chrome');\n  const mime = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json',\n    '.html': 'text/html', '.wasm': 'application/wasm' };\n  const server = createServer((request, response) => {\n    const path = resolve(work, `.${new URL(request.url, 'http://localhost').pathname}`);\n    if (!path.startsWith(work + sep)) return response.writeHead(403).end();\n    try {\n      response.setHeader('Content-Type', mime[extname(path)] || 'application/octet-stream');\n      response.setHeader('Content-Security-Policy', \"default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; connect-src 'self'\");\n      response.end(readFileSync(path));\n    } catch { response.writeHead(404).end(); }\n  });\n  let chrome;\n  let socket;\n  const pending = new Map();\n  let sequence = 0;\n  const requests = [];\n  const exceptions = [];\n  const delay = ms => new Promise(resolve_ => setTimeout(resolve_, ms));\n  async function wait(check, description) {\n    for (let attempt = 0; attempt < 200; attempt++) {\n      const result = await check();\n      if (result) return result;\n      await delay(50);\n    }\n    throw new Error(`timed out: ${description}`);\n  }\n  try {\n    await new Promise(resolve_ => server.listen(0, '127.0.0.1', resolve_));\n    const origin = `http://127.0.0.1:${server.address().port}`;\n    const url = `${origin}/index.html`;\n    chrome = spawn(chromePath, ['--headless=new', '--no-first-run', '--disable-gpu',\n      '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });\n    const active = join(profile, 'DevToolsActivePort');\n    await wait(() => existsSync(active), 'Chrome DevTools');\n    const port = Number(readFileSync(active, 'utf8').split('\\n')[0]);\n    const pages = await (await fetch(`http://127.0.0.1:${port}/json`)).json();\n    const page = pages.find(item => item.type === 'page');\n    socket = new WebSocket(page.webSocketDebuggerUrl);\n    await new Promise((resolve_, reject) => {\n      socket.addEventListener('open', resolve_, { once: true });\n      socket.addEventListener('error', reject, { once: true });\n    });\n    socket.addEventListener('message', event => {\n      const message = JSON.parse(event.data);\n      if (message.method === 'Network.requestWillBeSent') requests.push(message.params.request.url);\n      if (message.method === 'Runtime.exceptionThrown') exceptions.push(message.params.exceptionDetails);\n      const request = pending.get(message.id);\n      if (request) {\n        pending.delete(message.id);\n        clearTimeout(request.timer);\n        if (message.error) request.reject(new Error(JSON.stringify(message.error)));\n        else request.resolve(message.result);\n      }\n    });\n    const command = (method, params = {}) => new Promise((resolve_, reject) => {\n      const id = ++sequence;\n      const timer = setTimeout(() => { pending.delete(id); reject(new Error(`CDP timeout: ${method}`)); }, 15_000);\n      pending.set(id, { resolve: resolve_, reject, timer });\n      socket.send(JSON.stringify({ id, method, params }));\n    });\n    const evaluate = async expression => {\n      const result = await command('Runtime.evaluate', { expression, returnByValue: true, awaitPromise: true });\n      assert(!result.exceptionDetails, JSON.stringify(result.exceptionDetails));\n      return result.result.value;\n    };\n    await command('Runtime.enable');\n    await command('Network.enable');\n    await command('Page.navigate', { url });\n    await wait(() => evaluate('globalThis.conjunctReady === true'), 'browser Worker readiness');\n    // After loading local artifacts, an actual browser network disconnect\n    // establishes that data and kernel work do not call a host service.\n    await command('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });\n    const report = await evaluate('globalThis.runConjunct()');\n    assert.deepEqual(report, JSON.parse(readFileSync(join(work, 'node-report.json'), 'utf8')));\n    assert.equal(exceptions.length, 0, JSON.stringify(exceptions));\n    assert(requests.every(request => request.startsWith(origin + '/')), 'browser requested an external resource');\n    writeFileSync(join(work, 'browser-report.json'), JSON.stringify(report));\n    const version = await command('Browser.getVersion');\n    return { browser: version.product, offline: true, external_requests: 0 };\n  } finally {\n    socket?.close();\n    for (const item of pending.values()) clearTimeout(item.timer);\n    if (chrome) {\n      const exited = new Promise(resolve_ => chrome.once('exit', resolve_));\n      chrome.kill('SIGTERM');\n      await Promise.race([exited, delay(3000).then(() => chrome.kill('SIGKILL'))]);\n    }\n    await new Promise(resolve_ => server.close(resolve_));\n  }\n}\n\ntry {\n  mkdirSync(join(work, 'node_modules/@conjunct'), { recursive: true });\n  for (const name of ['kernel', 'data', 'guide']) cpSync(join(bundle, 'js', name), join(work, 'node_modules/@conjunct', name), { recursive: true });\n  for (const name of ['consumer.mjs', 'node.mjs', 'worker.mjs', 'browser.mjs', 'types.ts', 'elixir.exs', 'fixtures']) {\n    cpSync(new URL(`./test/${name}`, import.meta.url), join(work, name), { recursive: true });\n  }\n  writeFileSync(join(work, 'package.json'), JSON.stringify({ type: 'module', private: true }));\n  writeFileSync(join(work, 'cohort.json'), JSON.stringify(cohort));\n  writeFileSync(join(work, 'configuration.json'), JSON.stringify({ protocol: cohort.protocol, contract: cohort.contract, limits: cohort.limits }));\n  writeFileSync(join(work, 'wrong-contract.json'), JSON.stringify({ protocol: cohort.protocol,\n    contract: { ...cohort.contract, digest: 'sha256:' + '0'.repeat(64) }, limits: cohort.limits }));\n  writeFileSync(join(work, 'index.html'), '<!doctype html><html lang=\"en\"><meta charset=\"utf-8\"><title>Conjunct consumer</title><script type=\"module\" src=\"./browser.mjs\"></script></html>');\n  run(process.execPath, [tsc, '--noEmit', '--strict', '--skipLibCheck', 'false', '--moduleResolution', 'bundler',\n    '--module', 'esnext', '--target', 'es2024', 'types.ts']);\n  run(process.execPath, ['node.mjs']);\n  const dependencies = ['conjunct_kernel', 'conjunct_wire', 'conjunct_data', 'telemetry'].map(name =>\n    `{:${name}, path: ${JSON.stringify(join(bundle, 'elixir', name))}, override: true}`).join(',\\n');\n  writeFileSync(join(work, 'mix.exs'), `defmodule FrameshiftConsumer.MixProject do\n  @moduledoc \"\"\"\n  Isolated qualification project consuming only verified staged producer packages.\n\n  Local dependency paths bind the copied artifact bundle; no source checkout or\n  package repository is consulted by the consumer. It starts no host service.\n  \"\"\"\n\n  use Mix.Project\n  def project, do: [app: :frameshift_consumer, version: \"0.1.0\", deps: [${dependencies}]]\nend\n`);\n  const offline = { ...process.env, MIX_ENV: 'prod', HEX_OFFLINE: '1', CJ_LOCAL_DEPS: '0', ERL_FLAGS: '+S 2:2',\n    MIX_HOME: join(work, 'mix-home'), HEX_HOME: join(work, 'hex-home') };\n  // Rebar is a build tool supplied by the pinned Mix installation, not a\n  // package fetched by the isolated consumer. Runtime packages are all staged.\n  const rebar = spawnSync('mix', ['local.rebar', '--if-missing'], { cwd: repository, encoding: 'utf8' });\n  assert.equal(rebar.status, 0, rebar.stderr);\n  const rebarPath = process.env.MIX_REBAR3 || join(process.env.MIX_HOME || join(process.env.HOME, '.mix'), 'elixir/1-20-otp-29/rebar3');\n  assert(existsSync(rebarPath), 'pinned Mix rebar3 unavailable');\n  offline.MIX_REBAR3 = rebarPath;\n  mkdirSync(offline.MIX_HOME);\n  mkdirSync(offline.HEX_HOME);\n  run('mix', ['deps.get', '--offline'], { env: offline });\n  run('mix', ['compile', '--warnings-as-errors'], { env: offline });\n  run('mix', ['run', 'elixir.exs', bundle, manifest.target, join(work, 'elixir-report.json')], { env: offline });\n  assert.deepEqual(JSON.parse(readFileSync(join(work, 'elixir-report.json'), 'utf8')),\n    JSON.parse(readFileSync(join(work, 'node-report.json'), 'utf8')), 'port/WASM original responses differ');\n  const browserResult = await browser();\n  const evidence = mkdtempSync(join(sourceBundle, '..', `${sourceBundle.split(sep).at(-1)}-consumer-`));\n  for (const name of ['elixir-report.json', 'node-report.json', 'browser-report.json', 'frame-profile-probe.json',\n    'configuration.json', 'wrong-contract.json', 'fixtures']) cpSync(join(work, name), join(evidence, name), { recursive: true });\n  const output = join(evidence, 'report.json');\n  const report = { version: 'frameshift.conjunct-consumer.v1', cohort_revision: cohort.revision,\n    manifest_digest: expectedDigest, target: manifest.target, browser: browserResult,\n    elixir_tests: 3, semantic_qualification: false,\n    checker_files: inventory(fileURLToPath(new URL('.', import.meta.url))),\n    responses_digest: digest(readFileSync(join(work, 'elixir-report.json'))) };\n  writeFileSync(output, JSON.stringify(report, null, 2) + '\\n');\n  console.log(`Staged Elixir/Node/browser consumers pass: ${output}`);\n} finally {\n  rmSync(work, { recursive: true, force: true });\n}\n",
+    "scripts/conjunct/run.mjs": "import assert from 'node:assert/strict';\nimport { spawnSync } from 'node:child_process';\nimport { fileURLToPath } from 'node:url';\n\nconst stage = spawnSync(process.execPath, [fileURLToPath(new URL('./stage.mjs', import.meta.url))],\n  { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 32 * 1024 * 1024 });\nif (stage.error) throw stage.error;\nassert.equal(stage.status, 0, stage.stdout);\nconst result = JSON.parse(stage.stdout.trim());\nconsole.log(`Verified bundle: ${result.bundle} (${result.manifest_digest})`);\nconst check = spawnSync(process.execPath, [fileURLToPath(new URL('./check.mjs', import.meta.url)), result.bundle, result.manifest_digest],\n  { stdio: 'inherit' });\nif (check.error) throw check.error;\nassert.equal(check.status, 0);\n",
+    "scripts/conjunct/artifacts.mjs": "import assert from 'node:assert/strict';\nimport { createHash } from 'node:crypto';\nimport { lstatSync, readdirSync, readFileSync } from 'node:fs';\nimport { join, posix } from 'node:path';\n\nexport const cohort = JSON.parse(readFileSync(new URL('./cohort.json', import.meta.url), 'utf8'));\nexport const digest = bytes => `sha256:${createHash('sha256').update(bytes).digest('hex')}`;\n\n// Inventory only ordinary files. Symlinks and special files must never enter a\n// runtime bundle, including when their target would happen to be inside it.\nexport function inventory(root, relative = '') {\n  return readdirSync(join(root, relative)).sort().flatMap(name => {\n    const path = posix.join(relative, name);\n    const absolute = join(root, path);\n    const stat = lstatSync(absolute);\n    assert(!stat.isSymbolicLink(), `symlink in artifact bundle: ${path}`);\n    if (stat.isDirectory()) return inventory(root, path);\n    assert(stat.isFile(), `special file in artifact bundle: ${path}`);\n    return [{ path, bytes: stat.size, digest: digest(readFileSync(absolute)), executable: (stat.mode & 0o111) !== 0 }];\n  });\n}\n\nexport function verifyBundle(root, expectedDigest) {\n  const bytes = readFileSync(join(root, 'manifest.json'));\n  assert.equal(digest(bytes), expectedDigest, 'bundle manifest digest changed');\n  const manifest = JSON.parse(bytes.toString('utf8'));\n  assert.equal(manifest.version, 'frameshift.conjunct-bundle.v1');\n  assert.deepEqual(manifest.cohort, cohort, 'bundle selects a different producer cohort');\n  assert.equal(manifest.publishable, false, 'this consumer bundle is unsigned');\n  assert.deepEqual(inventory(root).filter(file => file.path !== 'manifest.json'), manifest.files,\n    'artifact inventory, digest, size or executable permission changed');\n  for (const transport of ['port', 'wasm']) {\n    verifyDiscovery(JSON.parse(readFileSync(join(root, `discovery/${transport}.json`), 'utf8')), `cj/${transport === 'port' ? 'port/1' : 'wasm-abi/1'}`);\n  }\n  return manifest;\n}\n\nexport function verifyDiscovery(discovery, transport) {\n  assert.equal(discovery.protocol, cohort.protocol);\n  assert.deepEqual(discovery.transports, [transport]);\n  assert.equal(discovery.implementation.source_revision, cohort.revision);\n  assert.equal(discovery.contracts.length, 1);\n  const selected = discovery.contracts[0];\n  assert.deepEqual(selected.contract, cohort.contract);\n  assert.deepEqual(selected.profiles, cohort.profiles);\n  assert.deepEqual(selected.operations, cohort.operations);\n  assert.deepEqual(selected.readable_schemas, cohort.readable_schemas);\n  assert.deepEqual(selected.writable_schemas, cohort.readable_schemas.slice(0, 1));\n  for (const [name, maximum] of Object.entries(cohort.limits)) {\n    assert(Number.isSafeInteger(discovery.limits[name]) && discovery.limits[name] >= maximum,\n      `producer cannot satisfy consumer limit: ${name}`);\n  }\n  return selected;\n}\n\n// The tar reader is the operating system tool, but paths and member types are\n// checked before extraction. The source archive is also pinned by raw digest.\nexport function verifyArchive(entries, types) {\n  const paths = entries.trimEnd().split('\\n');\n  assert(paths.length > 0 && !paths.includes(''));\n  assert.equal(new Set(paths).size, paths.length, 'duplicate archive path');\n  for (const path of paths) {\n    assert(!path.startsWith('/') && !path.includes('\\\\') &&\n      !path.split('/').includes('..'), `unsafe archive path: ${path}`);\n  }\n  const members = types.trimEnd().split('\\n');\n  assert.equal(members.length, paths.length);\n  assert(members.every(line => line.startsWith('-') || line.startsWith('d')),\n    'archive contains a link or special file');\n}\n",
+    "scripts/conjunct/cohort.json": "{\n  \"version\": \"frameshift.conjunct-cohort.v1\",\n  \"repository\": \"futhr/conjunct\",\n  \"revision\": \"f6609c5e4c2188626f5e1f345446fec04e78d6c9\",\n  \"source_archive_digest\": \"sha256:82ca2782073ad3addf40fd47d68f08aa0fb6056b19b969765e82c908d724450b\",\n  \"protocol\": \"cj/kernel/0.1\",\n  \"contract\": {\n    \"id\": \"urn:conjunct:contract:unreleased:12f27e6a8f4fa1d12299fead419b9db21785d3308061731741e61207ea116e81\",\n    \"digest\": \"sha256:e507190774d13621442c423717dc9a490612d34351d06fff362d9af43b0cfc8e\"\n  },\n  \"profiles\": [\"cj/core/0.2\", \"cj/geometry/0.1\", \"cj/packaging/0.1\", \"cj/procedures/0.1\"],\n  \"operations\": [\"compare_compositions\", \"compile_composition\", \"normalize_requirement_set\", \"plan_packaging\", \"plan_procedure\", \"project_catalog\", \"validate_product_pack\"],\n  \"readable_schemas\": [\n    {\"id\": \"urn:conjunct:schema:domain:0.1\", \"digest\": \"sha256:74dbee88c2482df155c7cc50979bb01ffea6a92c9375f56e2c70da8a593ba63f\"},\n    {\"id\": \"urn:conjunct:schema:geometry:0.1\", \"digest\": \"sha256:2ac0c00b3eecc4d45ba489b4e931a6a0242cfcdf753dece4d2c05a1973652955\"}\n  ],\n  \"algorithm_sources\": {\n    \"urn:conjunct:algorithm:cj02:canonical-json:1\": {\"path\": \"docs/specs/CJ.02-product-graph.md\", \"digest\": \"sha256:2507d3ec8de28478cc1291a5a83dd7b1d9e141a4378233a35703e3cb96e85aab\"},\n    \"urn:conjunct:algorithm:cj02:compare-compositions:1\": {\"path\": \"docs/specs/cj02/domain-operations.md\", \"digest\": \"sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82\"},\n    \"urn:conjunct:algorithm:cj02:compile-composition:1\": {\"path\": \"docs/specs/cj02/domain-operations.md\", \"digest\": \"sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82\"},\n    \"urn:conjunct:algorithm:cj02:normalize-requirement-set:1\": {\"path\": \"docs/specs/cj02/domain-operations.md\", \"digest\": \"sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82\"},\n    \"urn:conjunct:algorithm:cj02:plan-packaging:1\": {\"path\": \"docs/specs/cj02/domain-operations.md\", \"digest\": \"sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82\"},\n    \"urn:conjunct:algorithm:cj02:plan-procedure:1\": {\"path\": \"docs/specs/cj02/domain-operations.md\", \"digest\": \"sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82\"},\n    \"urn:conjunct:algorithm:cj02:project-catalog:1\": {\"path\": \"docs/specs/cj02/domain-operations.md\", \"digest\": \"sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82\"},\n    \"urn:conjunct:algorithm:cj02:validate-product-pack:1\": {\"path\": \"docs/specs/cj02/domain-operations.md\", \"digest\": \"sha256:248ee3d2d5497653562e3ee625b07f9b4e622ff19a4287f72327814fddfdbd82\"},\n    \"urn:conjunct:algorithm:cj04:geometry-assessment:1\": {\"path\": \"docs/specs/cj04/geometry-assessments.md\", \"digest\": \"sha256:c44d8be1cb1cd943d6cacf67356ec5bed4ba928d3e980009bf83a77159049630\"}\n  },\n  \"limits\": {\"request_bytes\": 131072, \"document_bytes\": 262144, \"response_bytes\": 262144, \"store_artifacts\": 1024, \"store_bytes\": 16777216, \"diagnostics\": 128},\n  \"input_depth\": 16,\n  \"binding\": {\"max_queue\": 8, \"timeout_ms\": 5000},\n  \"telemetry\": {\"version\": \"1.4.2\", \"archive_digest\": \"sha256:928f6495066506077862c0d1646609eed891a4326bee3126ba54b60af61febb1\"}\n}\n"
+  },
+  "seeds": [
+    20261007,
+    27182818,
+    31415926
+  ],
+  "successful_cases_per_seed": 100,
+  "smoke": {
+    "calls": 10,
+    "budget": null
+  },
+  "faults": [
+    "omit-child-actual",
+    "promote-empty-prefix"
+  ],
+  "cases": [
+    {
+      "id": "empty_required_prefix",
+      "required": [
+        "probe"
+      ],
+      "source_before": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "commands": [],
+      "source_after": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "expected": {
+        "state": "incomplete",
+        "recording_complete": true,
+        "source_unchanged": true,
+        "required_complete": false,
+        "commands": []
+      }
+    },
+    {
+      "id": "zero_and_empty",
+      "required": [
+        "probe"
+      ],
+      "source_before": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "commands": [
+        {
+          "id": "probe",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": [],
+          "stderr": []
+        }
+      ],
+      "source_after": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "expected": {
+        "state": "passed",
+        "recording_complete": true,
+        "source_unchanged": true,
+        "required_complete": true,
+        "commands": [
+          {
+            "id": "probe",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdout": [],
+            "stderr": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "nonzero_full_bytes",
+      "required": [
+        "probe"
+      ],
+      "source_before": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "commands": [
+        {
+          "id": "probe",
+          "status": 7,
+          "signal": null,
+          "error": null,
+          "stdout": [
+            108,
+            101,
+            102,
+            116,
+            0,
+            114,
+            105,
+            103,
+            104,
+            116
+          ],
+          "stderr": [
+            101,
+            114,
+            114,
+            111,
+            114,
+            10
+          ]
+        }
+      ],
+      "source_after": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "expected": {
+        "state": "failed",
+        "recording_complete": true,
+        "source_unchanged": true,
+        "required_complete": true,
+        "commands": [
+          {
+            "id": "probe",
+            "status": 7,
+            "signal": null,
+            "error": null,
+            "stdout": [
+              108,
+              101,
+              102,
+              116,
+              0,
+              114,
+              105,
+              103,
+              104,
+              116
+            ],
+            "stderr": [
+              101,
+              114,
+              114,
+              111,
+              114,
+              10
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "spawn_unavailable",
+      "required": [
+        "probe"
+      ],
+      "source_before": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "commands": [
+        {
+          "id": "probe",
+          "status": null,
+          "signal": null,
+          "error": "ENOENT",
+          "stdout": [],
+          "stderr": []
+        }
+      ],
+      "source_after": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "expected": {
+        "state": "incomplete",
+        "recording_complete": true,
+        "source_unchanged": true,
+        "required_complete": true,
+        "commands": [
+          {
+            "id": "probe",
+            "status": null,
+            "signal": null,
+            "error": "ENOENT",
+            "stdout": [],
+            "stderr": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "changed_source_bytes",
+      "required": [
+        "probe"
+      ],
+      "source_before": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "commands": [
+        {
+          "id": "probe",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": [],
+          "stderr": []
+        }
+      ],
+      "source_after": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            99,
+            104,
+            97,
+            110,
+            103,
+            101,
+            100,
+            10
+          ]
+        }
+      },
+      "expected": {
+        "state": "incomplete",
+        "recording_complete": true,
+        "source_unchanged": false,
+        "required_complete": true,
+        "commands": [
+          {
+            "id": "probe",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdout": [],
+            "stderr": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "changed_source_mode",
+      "required": [
+        "probe"
+      ],
+      "source_before": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "commands": [
+        {
+          "id": "probe",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": [],
+          "stderr": []
+        }
+      ],
+      "source_after": {
+        "source.txt": {
+          "mode": 493,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "expected": {
+        "state": "incomplete",
+        "recording_complete": true,
+        "source_unchanged": false,
+        "required_complete": true,
+        "commands": [
+          {
+            "id": "probe",
+            "status": 0,
+            "signal": null,
+            "error": null,
+            "stdout": [],
+            "stderr": []
+          }
+        ]
+      }
+    },
+    {
+      "id": "missing_command_actual",
+      "required": [
+        "probe"
+      ],
+      "source_before": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "commands": [
+        {
+          "id": "probe",
+          "status": 0,
+          "signal": null,
+          "error": null,
+          "stdout": [],
+          "stderr": []
+        }
+      ],
+      "source_after": {
+        "source.txt": {
+          "mode": 420,
+          "bytes": [
+            111,
+            114,
+            105,
+            103,
+            105,
+            110,
+            97,
+            108,
+            10
+          ]
+        }
+      },
+      "remove_actual": "probe",
+      "expected": {
+        "state": "incomplete",
+        "recording_complete": false,
+        "source_unchanged": true,
+        "required_complete": false,
+        "commands": []
+      }
+    }
+  ]
+}
