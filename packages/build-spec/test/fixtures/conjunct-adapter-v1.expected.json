@@ -1,0 +1,1244 @@
+{
+  "format": "frameshift/conjunct-adapter-hands/1",
+  "scope": "exact-v1-conversion-primitives",
+  "cases": [
+    {
+      "id": "length",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "clearance.left",
+        "um",
+        0,
+        5000000
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "length",
+            "unit": "m",
+            "value": {
+              "n": "0",
+              "d": "1"
+            }
+          },
+          "upper": {
+            "quantity_kind": "length",
+            "unit": "m",
+            "value": {
+              "n": "5",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "voltage",
+      "operation": "quantity",
+      "args": [
+        "power",
+        "input.voltage",
+        "mv",
+        1,
+        300000
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "voltage",
+            "unit": "V",
+            "value": {
+              "n": "1",
+              "d": "1000"
+            }
+          },
+          "upper": {
+            "quantity_kind": "voltage",
+            "unit": "V",
+            "value": {
+              "n": "300",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "current",
+      "operation": "quantity",
+      "args": [
+        "power",
+        "current.maximum",
+        "ma",
+        0,
+        100000
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "current",
+            "unit": "A",
+            "value": {
+              "n": "0",
+              "d": "1"
+            }
+          },
+          "upper": {
+            "quantity_kind": "current",
+            "unit": "A",
+            "value": {
+              "n": "100",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "power",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "power.maximum",
+        "mw",
+        1,
+        1000000
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "power",
+            "unit": "W",
+            "value": {
+              "n": "1",
+              "d": "1000"
+            }
+          },
+          "upper": {
+            "quantity_kind": "power",
+            "unit": "W",
+            "value": {
+              "n": "1000",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "mass",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "mass",
+        "g",
+        1,
+        100000
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "mass",
+            "unit": "kg",
+            "value": {
+              "n": "1",
+              "d": "1000"
+            }
+          },
+          "upper": {
+            "quantity_kind": "mass",
+            "unit": "kg",
+            "value": {
+              "n": "100",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "time",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "refresh.minimum",
+        "ms",
+        1,
+        604800000
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "duration",
+            "unit": "s",
+            "value": {
+              "n": "1",
+              "d": "1000"
+            }
+          },
+          "upper": {
+            "quantity_kind": "duration",
+            "unit": "s",
+            "value": {
+              "n": "604800",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "temperature",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "temperature.operating",
+        "mc",
+        -100000,
+        300000
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "temperature",
+            "unit": "K",
+            "value": {
+              "n": "3463",
+              "d": "20"
+            }
+          },
+          "upper": {
+            "quantity_kind": "temperature",
+            "unit": "K",
+            "value": {
+              "n": "11463",
+              "d": "20"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "rise",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "temperature.ambient_rise",
+        "mc",
+        0,
+        300000
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "temperature-difference",
+            "unit": "K",
+            "value": {
+              "n": "0",
+              "d": "1"
+            }
+          },
+          "upper": {
+            "quantity_kind": "temperature-difference",
+            "unit": "K",
+            "value": {
+              "n": "300",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "raster",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "raster.width",
+        "count",
+        1,
+        1000000
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "count",
+            "unit": "1",
+            "value": {
+              "n": "1",
+              "d": "1"
+            }
+          },
+          "upper": {
+            "quantity_kind": "count",
+            "unit": "1",
+            "value": {
+              "n": "1000000",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "bytes",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "storage.capacity",
+        "byte",
+        0,
+        1099511627776
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "count",
+            "unit": "1",
+            "value": {
+              "n": "0",
+              "d": "1"
+            }
+          },
+          "upper": {
+            "quantity_kind": "count",
+            "unit": "1",
+            "value": {
+              "n": "1099511627776",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fraction",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "active.offset.x",
+        "um",
+        125,
+        125
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "length",
+            "unit": "m",
+            "value": {
+              "n": "1",
+              "d": "8000"
+            }
+          },
+          "upper": {
+            "quantity_kind": "length",
+            "unit": "m",
+            "value": {
+              "n": "1",
+              "d": "8000"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "signal",
+      "operation": "quantity",
+      "args": [
+        "signal",
+        "logic.voltage",
+        "mv",
+        3300,
+        3300
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "voltage",
+            "unit": "V",
+            "value": {
+              "n": "33",
+              "d": "10"
+            }
+          },
+          "upper": {
+            "quantity_kind": "voltage",
+            "unit": "V",
+            "value": {
+              "n": "33",
+              "d": "10"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "mount",
+      "operation": "quantity",
+      "args": [
+        "mechanical",
+        "mount.capacity",
+        "g",
+        2500,
+        2500
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "mass",
+            "unit": "kg",
+            "value": {
+              "n": "5",
+              "d": "2"
+            }
+          },
+          "upper": {
+            "quantity_kind": "mass",
+            "unit": "kg",
+            "value": {
+              "n": "5",
+              "d": "2"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "fanout",
+      "operation": "quantity",
+      "args": [
+        "mechanical",
+        "fanout.maximum",
+        "count",
+        0,
+        0
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "type": "interval",
+          "lower": {
+            "quantity_kind": "count",
+            "unit": "1",
+            "value": {
+              "n": "0",
+              "d": "1"
+            }
+          },
+          "upper": {
+            "quantity_kind": "count",
+            "unit": "1",
+            "value": {
+              "n": "0",
+              "d": "1"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "wrong-unit",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "mass",
+        "um",
+        0,
+        1
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_unit"
+      }
+    },
+    {
+      "id": "unknown-key",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "nominal.width",
+        "um",
+        1,
+        1
+      ],
+      "expected": {
+        "ok": false,
+        "error": "unsupported_property"
+      }
+    },
+    {
+      "id": "token-property",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "power.mode",
+        "token",
+        0,
+        1
+      ],
+      "expected": {
+        "ok": false,
+        "error": "unsupported_property"
+      }
+    },
+    {
+      "id": "inverted",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "mass",
+        "g",
+        2,
+        1
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_range"
+      }
+    },
+    {
+      "id": "negative-mass",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "mass",
+        "g",
+        -1,
+        0
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_range"
+      }
+    },
+    {
+      "id": "zero-outline",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "outline.width",
+        "um",
+        0,
+        1
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_range"
+      }
+    },
+    {
+      "id": "overflow-byte",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "storage.capacity",
+        "byte",
+        0,
+        1099511627777
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_range"
+      }
+    },
+    {
+      "id": "fractional-source",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "mass",
+        "g",
+        0.5,
+        1
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "wrong-scope",
+      "operation": "quantity",
+      "args": [
+        "arbitrary",
+        "mass",
+        "g",
+        0,
+        1
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "null-bound",
+      "operation": "quantity",
+      "args": [
+        "component",
+        "mass",
+        "g",
+        null,
+        1
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "turn-0",
+      "operation": "transform",
+      "args": [
+        0,
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          10,
+          10
+        ]
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "rotation": [
+            {
+              "n": "1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "1",
+              "d": "1"
+            }
+          ],
+          "translation": [
+            {
+              "n": "3",
+              "d": "1000000"
+            },
+            {
+              "n": "-1",
+              "d": "250000"
+            },
+            {
+              "n": "-1",
+              "d": "200000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "turn-90",
+      "operation": "transform",
+      "args": [
+        90,
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          10,
+          10
+        ]
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "rotation": [
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "-1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "1",
+              "d": "1"
+            }
+          ],
+          "translation": [
+            {
+              "n": "13",
+              "d": "1000000"
+            },
+            {
+              "n": "-1",
+              "d": "250000"
+            },
+            {
+              "n": "-1",
+              "d": "200000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "turn-180",
+      "operation": "transform",
+      "args": [
+        180,
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          10,
+          10
+        ]
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "rotation": [
+            {
+              "n": "-1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "-1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "1",
+              "d": "1"
+            }
+          ],
+          "translation": [
+            {
+              "n": "23",
+              "d": "1000000"
+            },
+            {
+              "n": "-7",
+              "d": "500000"
+            },
+            {
+              "n": "-1",
+              "d": "200000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "turn-270",
+      "operation": "transform",
+      "args": [
+        270,
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          10,
+          10
+        ]
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "rotation": [
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "-1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "1",
+              "d": "1"
+            }
+          ],
+          "translation": [
+            {
+              "n": "3",
+              "d": "1000000"
+            },
+            {
+              "n": "-3",
+              "d": "125000"
+            },
+            {
+              "n": "-1",
+              "d": "200000"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "no-size-needed",
+      "operation": "transform",
+      "args": [
+        0,
+        [
+          0,
+          0,
+          0
+        ],
+        null,
+        null
+      ],
+      "expected": {
+        "ok": true,
+        "value": {
+          "rotation": [
+            {
+              "n": "1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "1",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "1",
+              "d": "1"
+            }
+          ],
+          "translation": [
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            },
+            {
+              "n": "0",
+              "d": "1"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "id": "uncertain-height",
+      "operation": "transform",
+      "args": [
+        90,
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          10,
+          11
+        ]
+      ],
+      "expected": {
+        "ok": false,
+        "error": "unknown_geometry"
+      }
+    },
+    {
+      "id": "missing-width",
+      "operation": "transform",
+      "args": [
+        270,
+        [
+          3,
+          4,
+          5
+        ],
+        null,
+        [
+          10,
+          10
+        ]
+      ],
+      "expected": {
+        "ok": false,
+        "error": "unknown_geometry"
+      }
+    },
+    {
+      "id": "wrong-turn",
+      "operation": "transform",
+      "args": [
+        45,
+        [
+          3,
+          4,
+          5
+        ],
+        [
+          20,
+          20
+        ],
+        [
+          10,
+          10
+        ]
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_range"
+      }
+    },
+    {
+      "id": "negative-position",
+      "operation": "transform",
+      "args": [
+        0,
+        [
+          -1,
+          0,
+          0
+        ],
+        null,
+        null
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_range"
+      }
+    },
+    {
+      "id": "wrong-position",
+      "operation": "transform",
+      "args": [
+        0,
+        [
+          0,
+          0
+        ],
+        null,
+        null
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_document"
+      }
+    },
+    {
+      "id": "inverted-size",
+      "operation": "transform",
+      "args": [
+        0,
+        [
+          0,
+          0,
+          0
+        ],
+        [
+          2,
+          1
+        ],
+        null
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_range"
+      }
+    },
+    {
+      "id": "id-35",
+      "operation": "local_id",
+      "args": [
+        "instance",
+        "A+B"
+      ],
+      "expected": {
+        "ok": true,
+        "value": "v1-ca717e7d17e1ef5349420083ce436753f1d8d3c38f8058c5c802f526cccaf81a"
+      }
+    },
+    {
+      "id": "id-36",
+      "operation": "local_id",
+      "args": [
+        "instance",
+        "a+b"
+      ],
+      "expected": {
+        "ok": true,
+        "value": "v1-75eedf2e8eb4abc5c1f91b2de5c07647eecec44457efa9066a2941beb59c87a8"
+      }
+    },
+    {
+      "id": "id-37",
+      "operation": "local_id",
+      "args": [
+        "port",
+        "A+B"
+      ],
+      "expected": {
+        "ok": true,
+        "value": "v1-a4af72114df25184650d5aa8dab82fec773a738182134825778ac4970d80ae7d"
+      }
+    },
+    {
+      "id": "id-38",
+      "operation": "local_id",
+      "args": [
+        "profile",
+        "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
+      ],
+      "expected": {
+        "ok": true,
+        "value": "v1-04bbccba4462dd0117b93cabaf55c7b67ba48e7532427efc0d164cdd8868afaa"
+      }
+    },
+    {
+      "id": "bad-id-39",
+      "operation": "local_id",
+      "args": [
+        "instance",
+        ""
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_identifier"
+      }
+    },
+    {
+      "id": "bad-id-40",
+      "operation": "local_id",
+      "args": [
+        "instance",
+        "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_identifier"
+      }
+    },
+    {
+      "id": "bad-id-41",
+      "operation": "local_id",
+      "args": [
+        "instance",
+        "x/y"
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_identifier"
+      }
+    },
+    {
+      "id": "bad-id-42",
+      "operation": "local_id",
+      "args": [
+        "instance",
+        null
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_identifier"
+      }
+    },
+    {
+      "id": "bad-id-43",
+      "operation": "local_id",
+      "args": [
+        "",
+        "native"
+      ],
+      "expected": {
+        "ok": false,
+        "error": "invalid_identifier"
+      }
+    }
+  ],
+  "smoke": {
+    "case_ids": [
+      "length",
+      "temperature",
+      "bytes",
+      "turn-90",
+      "id-35"
+    ],
+    "repetitions": 2,
+    "latency_budget_ns": null,
+    "memory_budget_bytes": null,
+    "controlled_resource_qualified": false,
+    "installed_consumer_qualified": false
+  }
+}

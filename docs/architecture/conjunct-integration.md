@@ -235,6 +235,58 @@ The installed adapter is passive, offline and independently configurable for
 two consumers. Existing v1 authority is retired boundary by boundary only after
 the corresponding producer and joined consumer qualification passes.
 
+The first adapter primitives are `quantity(scope, key, unit, lower, upper)`,
+`transform(rotation, position, width, height)` and `local_id(kind, native_id)`
+on the Elixir `FrameshiftBuild.ConjunctAdapter` module. The corresponding
+browser module is `packages/build-spec/js/conjunct-adapter.mjs`, exporting
+`quantity`, `transform` and asynchronous `localId`. Elixir uses `{:ok, value}` /
+`{:error, code}`; JavaScript uses `{ok:true,value}` / `{ok:false,error:code}`.
+Error codes are bounded strings; neither side echoes the refused input.
+
+Quantity scope is `component`, `power`, `signal` or `mechanical`. The existing
+v1 property registry owns the key, expected unit and positive/nonnegative
+minimum; the adapter reuses it. Unsupported keys or nonnumeric properties
+return `unsupported_property`; a mismatched unit returns `invalid_unit`.
+Malformed/noninteger arguments return `invalid_document`; an inverted or
+out-of-v1-bounds interval returns `invalid_range`. Success returns the domain
+schema's complete `{type:"interval",lower:quantity,upper:quantity}` value,
+including exact kind, unit and string rational components at both bounds.
+
+Transform position is a three-integer micrometre list; width/height are null or
+two-integer inclusive intervals. Inputs remain within v1 geometry bounds and
+rotations are exactly `0/90/180/270`. A needed absent or nonsingleton dimension
+returns `unknown_geometry`; an unused absent dimension does not invent an
+offset. Malformed and out-of-bounds inputs use `invalid_document` and
+`invalid_range`. Success returns the producer transform's nine row-major
+rationals and three metre translation rationals. Local-ID inputs use the v1
+identifier bounds; malformed IDs return `invalid_identifier` and unavailable
+cryptography returns `crypto_unavailable`. Collision detection belongs to the
+complete owning document mapper.
+
+Commit `packages/build-spec/test/fixtures/conjunct-adapter-v1.expected.json`
+before these primitives. It contains complete arguments and results, including
+all refusal fields. These primitives convert already resolved source values;
+they do not validate a full profile, emit a Conjunct artifact or CheckReport,
+qualify source truth, replace a planning stage or switch v1 authority. The
+later installed mapper must retain the complete source and mapping report.
+
+The primitive qualification retains 300 independently constructed corner
+transforms for each fixed seed `20261006`, `27182818` and `31415926` on both
+runtimes. Construct expected points by rotating the original v1 corners and
+subtracting the rotated bare-outline minimum, then applying the basis/unit
+change; do not reuse the adapter's offset table. Retain full inputs and expected
+points before invoking either adapter, and full actual transforms and points
+before comparison. Inject two actual source faults (omit the rotated-origin
+offset; conflate absolute temperature and temperature rise), execute the same
+declared corpus and retain their failing cases. A build/import failure cannot
+count as detecting either fault.
+
+The authored null budget selects five full hands repeated twice per runtime,
+after untimed complete-result preflight. Retain all ten elapsed samples, full
+paired outputs and original source/BEAM bytes. No controlled latency, memory,
+installed consumer or whole-adapter claim follows. Keep failed attempts and
+place retained qualification records under ignored `var/conjunct-adapter/`.
+
 ## Extraction ownership
 
 **CI-04 — Extract only demonstrated shared semantics.** `packages/build-spec/`
