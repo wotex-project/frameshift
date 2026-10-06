@@ -915,6 +915,16 @@ Each slice retains its own local and installed evidence gates.
 | H3-L2 — Standard scene lifecycle; after L1 | Qualify existing `Window`/`Settings` actions under the [native scene contract](../host/menu-bar-interface.md#native-scene-lifecycle). Fix only reproduced supported-API defects; do not prebuild a custom window manager, Dock policy or watchdog. | Repeated open/close/minimize/restore, popover dismissal, shared state and keyboard/VoiceOver focus return pass on the recorded Mac configuration. This slice does not depend on updater integration; broader supported-OS claims retain their matrix gate. |
 | H3-L3 — Updater boundary; after L1, with R2 SDK/package inputs | Implement the [native updater lifecycle](../host/macos.md#native-updater-lifecycle) using the pinned Sparkle controller and standard UI. Keep initial plist defaults separate from user preference changes, enforce signed-channel policy and route quit through confirmed core exit. | Actual defaults, retained choices, disabled/stopped setup, cycle cancellation/failure/staleness, signed-feed tamper and uncertain/confirmed quit pass. After L2, qualify overlapping Settings/update-dialog presentation and focus. Final installed direct/Cask/Sparkle acceptance remains R2 work. |
 
+H3-L3 now has an SDK-free `SignedUpdateChannel` gate and typed initial plist
+defaults. Five new groups pass within all 103 Swift tests/23 suites; the freshly
+packaged development metadata preserves no feed/key and passes the same gate
+with explicit in-memory fixture pins. All 102 Mac release fixture groups,
+fresh ad-hoc packaging, packaged IPC and actual core quit pass. This closes
+channel/default admission only. Implement the actual retained standard SDK
+adapter, user-choice/KVO/cycle state and signed-feed/UI/quit joins; qualify its
+explicit Swift loader preparation before linking the shipping app. Production
+and installed acceptance retain R2's independent gates.
+
 Run these coherent native-shell slices alongside RT1–RT6; portable adapter,
 production credentials and unavailable Intel/older-OS hosts do not block the
 defined local fixtures. Record actual tests in the verification map before

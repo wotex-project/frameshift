@@ -43,6 +43,14 @@ exact target previews, live direct push interoperability, Vision metadata,
 Developer ID signing, hardened runtime, and notarization remain
 tracked product gates.
 
+`SignedUpdateChannel` admits typed initial updater defaults and separately pinned
+HTTPS/public-key identity without linking Sparkle or changing preferences.
+Development metadata contains no production feed or key. Actual SDK/controller,
+user-choice/cycle/UI and installed update joins remain open under the
+[updater contract](../../docs/host/macos.md#native-updater-lifecycle).
+`FRAMESHIFT_PACKAGED_APP_FIXTURE=/absolute/path/to/development/Frameshift.app`
+adds that explicitly supplied plist to the channel test's default-metadata check.
+
 The shell forwards sanitized core records to Apple unified logging. Read them
 in Console.app or from Terminal with:
 

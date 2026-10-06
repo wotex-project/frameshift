@@ -339,6 +339,52 @@ Intel/older-system execution and production signing remain separate R2 gates.
 The Cask and direct channels continue to consume the same DMG; this review does
 not introduce a Homebrew subprocess updater.
 
+#### Signed channel admission and initial defaults
+
+Before constructing a running updater, compare the app's `SUFeedURL` and
+`SUPublicEDKey` with separately supplied release pins. The pin source and
+distribution eligibility belong to the qualified release/runtime integration;
+neither a plist boolean nor this parser establishes signing, notarization or
+installation evidence. An absent pin, development profile or invalid channel
+leaves updates explicitly unavailable and starts no SDK. Do not manufacture a
+production key or use a sample channel as a shipping fallback.
+
+Admit a bounded HTTPS feed string of at most 2,048 UTF-8 bytes, with a lowercase
+ASCII DNS host, no credentials, query, fragment, control characters or backslash,
+and unchanged Foundation URL serialization. Reject an empty/invalid DNS label,
+trailing dot, explicit default port and invalid port. Require a canonical base64
+encoding of exactly 32 public-key bytes. The app metadata must match both pins
+exactly; a valid alternative channel/key still refuses.
+
+Require actual CFBoolean `true` for `SURequireSignedFeed` and
+`SUVerifyUpdateBeforeExtraction`, actual CFBoolean `false` for
+`SUAllowsAutomaticUpdates`, `SUAutomaticallyUpdate`, `SUSendProfileInfo` and the
+initial `SUEnableAutomaticChecks`, and a nonboolean finite numeric zero for
+`SUSignedFeedFailureExpirationInterval`. These are initial bundle defaults,
+not values to write into user defaults on every launch. Preserve the user's
+subsequent automatic-check choice independently of automatic download/install.
+The native adapter must return the admitted feed through Sparkle's documented
+delegate hook so a stored URL override cannot change the channel. Do not add
+feed parameters or delete stored preferences.
+
+The pure shell gate must remain SDK-free and perform no network, preference,
+Keychain or signature operation. Acceptance checks actual packaged/default
+metadata, scalar types, exact pins, URL/key bounds and malformed values. Actual
+controller startup, preference/KVO/cycle behavior, signed-feed tamper, UI/quit
+and installed update remain separate joins.
+
+`SignedUpdateChannel` now implements this SDK-free gate. Five groups pass within
+all 103 Swift tests in 23 suites on macOS 27.0.1 arm64 / Xcode 27. Real XML/binary
+metadata, actual source and freshly packaged defaults, exact independent pins,
+boolean/numeric types, canonical base64, DNS/port/URL refusal and the actual
+2,048/2,049-byte boundary pass without modifying the input. Foundation permits
+empty and overflowing ports to appear as absent; comparing the original
+canonical authority closes that observed ambiguity. All 102 Mac release fixture
+groups pass without exclusions, with fresh ad-hoc closure/seals, packaged IPC
+and actual core quit. No production feed/key or running updater is configured;
+SDK adapter, user-choice/cycle/UI/quit joins and runtime signed-feed tamper remain
+H3-L3 work, alongside separate packaging/installed release gates.
+
 ## Discovery and pairing
 
 The Swift layer uses Bonjour/Network framework to browse privacy-minimal WoT

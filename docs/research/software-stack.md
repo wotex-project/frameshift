@@ -228,6 +228,26 @@ recommended default-configuration pattern for Frameshift. The
 also documents relaunch paths which skip postponement. Frameshift's existing
 AppKit quit guard must continue to require actual owned-core exit.
 
+**Pinned updater API observation:** 2026-10-06. Sparkle 2.10.0's
+[`SPUUpdater.h`](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUUpdater.h)
+and [`SPUUpdaterDelegate.h`](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUUpdaterDelegate.h)
+were retrieved with `gh`. The automatic-check setter persists the user preference
+and is KVO compliant; an explicit `SUEnableAutomaticChecks` plist default suppresses
+the second-launch permission prompt. Feed selection uses the delegate before a
+stored override and the plist. Completion can report no update, cancellation or
+failure, while `canCheckForUpdates` and `sessionInProgress` describe different
+conditions. These source facts support the smallest main-actor SDK adapter;
+they are not proof of a running or installed updater.
+
+The SDK-free channel gate now checks independently supplied exact URL/key pins
+and typed signed-feed/extraction/manual/default policy. Five groups pass against
+real XML/binary metadata and the freshly packaged development plist; all 103
+Swift tests and 102 release fixture groups pass on the recorded Mac with no
+release-fixture exclusions. A Foundation experiment reproduced empty/overflow
+ports as a nil parsed port, so the gate also compares the original canonical
+authority. The actual SDK/preference/cycle/signed-feed join remains independent.
+See [channel admission](../host/macos.md#signed-channel-admission-and-initial-defaults).
+
 Repository inspection found an unretained startup warm-up in
 `FrameshiftMenuApp.swift` and an unretained search debounce in `ShellModel.swift`.
 Existing search revisions and single-flight preview checks already reject stale

@@ -48,5 +48,19 @@
 	<true/>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>Find Frameshift frames on your local network for pairing and artwork delivery.</string>
+	<key>SURequireSignedFeed</key>
+	<true/>
+	<key>SUVerifyUpdateBeforeExtraction</key>
+	<true/>
+	<key>SUSignedFeedFailureExpirationInterval</key>
+	<integer>0</integer>
+	<key>SUEnableAutomaticChecks</key>
+	<false/>
+	<key>SUAllowsAutomaticUpdates</key>
+	<false/>
+	<key>SUAutomaticallyUpdate</key>
+	<false/>
+	<key>SUSendProfileInfo</key>
+	<false/>
 </dict>
 </plist>
