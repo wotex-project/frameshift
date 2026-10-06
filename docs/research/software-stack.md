@@ -1414,6 +1414,23 @@ Frameworks path. This compiler observation does not establish a self-contained
 running app; packaging must admit the actual cache and eliminate the unwanted
 external search path under a bounded rule.
 
+**Swift updater preparation observation:** 2026-10-06 on the recorded Mac/Xcode
+cohort. A separately rebuilt actual SwiftPM consumer emits `/usr/lib/swift`, the
+selected `usr/lib/swift-6.2/macosx` and the supplied owned Frameworks path. The
+versioned directory differs from a guess based on the Swift 6.4 compiler.
+Removing the first two paths in a private stage preserves every import and
+native minimum, permits the unchanged strict closure and nested seals, and
+still executes the real stopped standard controller. The explicit native
+producer matches the independent Apple-tool result for all 94 files/12 native
+roles/nine aliases with original SDK/cache/ZIP/manifest/workspace identities
+unchanged. Four new groups pass within all 89 tool tests, including both CPU/
+universal fixtures and altered-profile/import/context/mutation/cancellation
+refusal. Launching the same fixture through its physical path resolves an
+observed AppKit sandbox-extension warning from `/tmp` aliases; no private API
+is called. This supports the
+[bounded incoming profile](../host/macos.md#swift-updater-shell-preparation-profile),
+not Intel/older-OS execution, shipping Frameshift lifecycle or installed update.
+
 **Observation:** 2026-10-06. SwiftPM's
 [`Workspace+BinaryArtifacts.swift`](https://github.com/swiftlang/swift-package-manager/blob/647baecc198c1d45394ec49932caf5d31e7a77dd/Sources/Workspace/Workspace%2BBinaryArtifacts.swift)
 uses package identity and target name beneath the artifact directory and stores

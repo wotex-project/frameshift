@@ -234,7 +234,7 @@ final class DevelopmentBundlePreparerTests: XCTestCase {
 }
 
 @MainActor
-private final class PreparationFixture {
+final class PreparationFixture {
   let base: NativeBundleFixture
   let parent: String
   let app: String

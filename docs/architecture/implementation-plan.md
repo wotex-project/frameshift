@@ -921,9 +921,9 @@ packaged development metadata preserves no feed/key and passes the same gate
 with explicit in-memory fixture pins. All 102 Mac release fixture groups,
 fresh ad-hoc packaging, packaged IPC and actual core quit pass. This closes
 channel/default admission only. Implement the actual retained standard SDK
-adapter, user-choice/KVO/cycle state and signed-feed/UI/quit joins; qualify its
-explicit Swift loader preparation before linking the shipping app. Production
-and installed acceptance retain R2's independent gates.
+adapter, user-choice/KVO/cycle state and signed-feed/UI/quit joins; use its
+qualified explicit Swift loader preparation when joining the shipping app.
+Production and installed acceptance retain R2's independent gates.
 
 Run these coherent native-shell slices alongside RT1–RT6; portable adapter,
 production credentials and unavailable Intel/older-OS hosts do not block the
@@ -1226,9 +1226,15 @@ ad-hoc sealing, with complete custody checkpoints around each owned Apple child.
 Seven new groups pass within all 85 tool tests with actual SDK/resource inputs.
 Real both-CPU/universal fixtures match every retained observation byte, and a
 private copy of the 1,419-file/24-native full host retains original custody.
-Public closure inspection remains strict. The separately observed Swift updater
-shell still needs an explicit loader profile; CPU merge, DMG construction,
-producer/library cutover and fresh full-host acceptance remain RT3 work.
+Public closure inspection remains strict. The explicit Swift updater preparation
+profile now removes its observed system/selected Swift search paths before
+that unchanged final admission. Four new groups pass within all 89 tool tests
+with actual inputs, both-CPU/universal fixtures and native stopped-controller
+execution. A separately built actual SwiftPM consumer preserves original SDK/
+ZIP/manifest/workspace custody and matches every final 94-file/12-native/nine-
+alias byte and success line. CPU derivation/merge, DMG construction, actual app
+SDK/source-bound producer/library cutover and full-host acceptance remain RT3
+and H3-L3 work.
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

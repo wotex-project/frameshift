@@ -16,7 +16,13 @@ import Foundation
 /// all-architecture signatures must pass before an observation is returned.
 /// This is an ad-hoc build-time producer, with publication authority none.
 /// It does not publish, replace an accepted app, qualify installed execution,
-/// remove a failed stage or make an SDK-bearing Swift executable admissible.
+/// remove a failed stage or qualify installed updater behavior.
+/// `prepareSwiftUpdater(_:architecture:)` explicitly selects the separately
+/// qualified `swift-updater-shell-preparation-v1` producer: its main executable
+/// imports only pinned Sparkle through its own Frameworks path and has exactly
+/// the observed Swift system/optional selected `swift-6.2` search paths. Those
+/// two paths are removed before the unchanged strict final inspection. The
+/// caller still owns original archive/cache/source admission and receipt joins.
 ///
 /// The job has a five-minute processing budget, at most 512 children, and a
 /// 15-second/64-KiB-per-pipe limit per child. Software budgets cannot interrupt
@@ -38,6 +44,14 @@ public actor DevelopmentBundlePreparer {
     try await prepare(input, architecture: architecture, observe: nil)
   }
 
+  /// Prepares the explicit observed Swift updater profile; never an automatic fallback.
+  public func prepareSwiftUpdater(_ input: String, architecture: NativeBundleArchitecture)
+    async throws
+    -> NativeBundleObservation
+  {
+    try await prepare(input, architecture: architecture, swiftUpdater: true, observe: nil)
+  }
+
   /// Retains the exact last child without changing the refused job's outcome.
   public func retainUntilExitAfterRefusal() async -> OwnedChildStatus {
     guard let child else { return .notStarted }
@@ -52,7 +66,7 @@ public actor DevelopmentBundlePreparer {
 
   func prepare(
     _ input: String, architecture: NativeBundleArchitecture,
-    seconds: Double = 300, childSeconds: Double = 15,
+    seconds: Double = 300, childSeconds: Double = 15, swiftUpdater: Bool = false,
     observe: (@Sendable (DevelopmentPreparationPhase) throws -> Void)?
   ) async throws -> NativeBundleObservation {
     guard !attempted else { throw ReleaseToolError.childAlreadyStarted }
@@ -84,7 +98,8 @@ public actor DevelopmentBundlePreparer {
       throw ReleaseToolError.invalidCommand
     }
     let initial = try NativeBundleInspector.inspectWithCustody(
-      stage.root, architecture: architecture, preparationToolchainLibrary: library)
+      stage.root, architecture: architecture, preparationToolchainLibrary: library,
+      preparationSwiftUpdater: swiftUpdater)
     var checkpoint = initial.custody
     let infoPath = "Contents/Info.plist"
     let initialInfo = try NativePropertyList.read(
@@ -95,7 +110,12 @@ public actor DevelopmentBundlePreparer {
 
     for native in initial.observation.natives {
       let removable = Array(
-        Set(native.slices.flatMap(\.rpaths).filter { $0.hasPrefix(library) })
+        Set(
+          native.slices.flatMap(\.rpaths).filter {
+            $0.hasPrefix(library)
+              || (swiftUpdater && native.path == "Contents/MacOS/Frameshift"
+                && $0 == "/usr/lib/swift")
+          })
       ).sorted()
       guard !removable.isEmpty else { continue }
       let seals = DevelopmentTransition.seals(forNative: native.path)
@@ -128,7 +148,8 @@ public actor DevelopmentBundlePreparer {
       stage.root, architecture: architecture)
     guard prepared.custody == checkpoint else { throw ReleaseToolError.inputChanged }
     try DevelopmentTransition.checkNative(
-      initial.observation.natives, prepared.observation.natives, removing: library)
+      initial.observation.natives, prepared.observation.natives, removing: library,
+      removingSwiftSearch: swiftUpdater)
     try observe?(.metadataPrepared)
     try check()
 
@@ -318,7 +339,7 @@ private enum DevelopmentTransition {
   }
   static func checkNative(
     _ before: [NativeBundleObservation.Native], _ after: [NativeBundleObservation.Native],
-    removing library: String?
+    removing library: String?, removingSwiftSearch: Bool = false
   ) throws {
     guard before.count == after.count else { throw ReleaseToolError.inputChanged }
     for (old, new) in zip(before, after) {
@@ -326,7 +347,11 @@ private enum DevelopmentTransition {
         throw ReleaseToolError.inputChanged
       }
       for (left, right) in zip(old.slices, new.slices) {
-        let rpaths = left.rpaths.filter { !(library.map($0.hasPrefix) ?? false) }
+        let rpaths = left.rpaths.filter {
+          !(library.map($0.hasPrefix) ?? false)
+            && !(removingSwiftSearch && old.path == "Contents/MacOS/Frameshift"
+              && $0 == "/usr/lib/swift")
+        }
         guard left.arch == right.arch, left.filetype == right.filetype,
           left.minimum == right.minimum, left.dependencies == right.dependencies,
           rpaths == right.rpaths

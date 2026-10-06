@@ -15,7 +15,8 @@ The two generation-resource live-cohort groups require
 the exact pinned JSON files. Without it they are explicitly skipped; synthetic
 refusal fixtures do not establish a passing real cohort.
 
-Six framework groups, four compiler-capture groups and one development-preparation\ngroup require
+Six framework groups, four compiler capture groups, one development preparation
+group and three Swift updater preparation groups require
 `FRAMESHIFT_SPARKLE_ARCHIVE=/absolute/path/to/the/pinned/archive.zip`. The synthetic
 archive-refusal group remains runnable without that input.
 
@@ -108,7 +109,13 @@ failed stage, publishes or replaces accepted output. The five-minute job admits
 at most 512 children with 15-second/64-KiB-per-pipe limits. Success prints the
 existing development-bundle line; usage/refusal exits are 64/1. Retained producer
 libraries and the full-host packaging script still require cutover qualification.
-The Swift-linked updater shell requires a separate loader profile.
+The explicit observed Swift updater profile uses
+`prepare-swift-updater-bundle PRIVATE_APP CPU` or
+`DevelopmentBundlePreparer.prepareSwiftUpdater(_:architecture:)`. It accepts
+only the main shell's Swift system/optional selected `swift-6.2/macosx` search
+paths and the owned framework path, removes the first two and retains unchanged
+strict final inspection. Legacy preparation never falls back to this profile.
+Actual source/cache/CPU/package and shipping controller joins remain separate.
 
 Inspect the exact private generation SDK descriptors with:
 

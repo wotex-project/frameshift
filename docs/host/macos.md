@@ -915,6 +915,65 @@ records with strict seals and unchanged original identities. This is local
 producer/static evidence; fresh host lifecycle and packaging/library cutover,
 Swift updater loader profile, CPU merge, DMG and installed release remain open.
 
+#### Swift updater shell preparation profile
+
+Select `swift-updater-shell-preparation-v1` explicitly through
+`DevelopmentBundlePreparer.prepareSwiftUpdater(_:architecture:)` and the
+`prepare-swift-updater-bundle` tool command. It is a distinct native producer
+operation; a retained producer receipt cannot be relabeled as its execution.
+The archive/cache/source admission remains required before using the SDK, and
+the completed native observation retains the strict existing closure profile.
+
+Admit only the main `Contents/MacOS/Frameshift` executable with the fixed pinned
+framework shape/aliases, exact Sparkle import and a recorded absolute
+`/usr/lib/swift/libswiftCore.dylib` import in every required slice. Its only
+`@rpath` dependency must be `@rpath/Sparkle.framework/Versions/B/Sparkle`, resolving
+to the inspected owned framework with matching CPU. For this observed toolchain,
+accept only these ordered incoming search paths: `/usr/lib/swift`, optionally
+the selected Xcode compiler's `usr/lib/swift-6.2/macosx`, then exactly one own
+`@loader_path/../Frameworks` or `@executable_path/../Frameworks` path. Another
+runtime-directory revision requires new evidence/profile qualification.
+
+Remove the first two paths in the private stage after signature removal, leaving
+only the owned Frameworks path. Preserve every import, native deployment header,
+CPU/type, common SDK byte except the fixed regenerated seals, and alias; sign and verify with the same command,
+custody and budget rules above. Other native files retain the original rule
+that removable selected paths combined with any `@rpath` import refuse. Do not
+infer inherited or external run-path resolution, rewrite imported names or
+relax public inspection. A missing SDK, another imported/search path, noncanonical
+runtime path or ambiguous role refuses before mutation. Already prepared/replayed
+output is admitted read-only by its receiver, not prepared again under a fresh
+producer claim.
+
+Acceptance requires actual Swift and SwiftPM-produced shells linked to the
+pinned SDK, both CPU/universal metadata, preserved original inputs, exact final
+strict closure/seals, malformed/import/path/profile refusal and an arm64 stopped
+standard-controller execution after preparation. Local execution does not prove
+Intel/older-OS symbols or dynamically constructed system loads; production and
+installed update retain their separate matrix gates.
+
+Four `SwiftUpdaterPreparationTests` groups pass within all 89 release-tool
+tests on macOS 27.0.1 arm64 / Xcode 27, with actual SDK/resource inputs and no
+exclusions. Actual direct Swift fixtures exercise both observed input profiles
+for arm64, Intel and universal metadata, exact final strict closure/seals and
+stopped-controller execution on the native CPU. Three groups require the pinned
+archive; the missing-framework group also runs without it. Six foreign/changed/
+noncanonical/runtime/import/context variations, legacy-profile refusal, late
+mutation/cancellation and descriptor cleanup preserve refusal and stage custody.
+
+The separately built actual SwiftPM consumer emits
+`usr/lib/swift-6.2/macosx` despite the Swift 6.4 compiler version; the profile uses
+that observed path rather than guessing from the compiler version. Its native
+command result matches all 94 file/12 native/nine alias observation bytes and
+the independent Apple-tool producer's success line. The full original SDK/cache,
+ZIP, manifest and workspace identities remain unchanged; the stopped standard
+controller executes after preparation. A prepared result refuses a fresh claim
+under this incoming profile. The fixture's physical launch path also resolves
+the observed AppKit sandbox-extension warning from `/tmp` aliases; this is a
+local experiment, not an installed/older-OS rule or use of a private API.
+Actual Frameshift SDK/controller, source-bound packaging/CPU derivation and
+installed/production joins remain independent work.
+
 ### Native release development signatures
 
 `NativeSignatureVerifier.verifyDevelopmentBundle(_:architecture:)` is the Swift

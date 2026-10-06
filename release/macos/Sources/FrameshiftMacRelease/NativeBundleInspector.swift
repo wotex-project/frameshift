@@ -136,7 +136,7 @@ public enum NativeBundleInspector {
   static func inspectWithCustody(
     _ input: String, architecture: NativeBundleArchitecture,
     observe: ((BundleInspectionPhase) throws -> Void)? = nil,
-    preparationToolchainLibrary: String? = nil
+    preparationToolchainLibrary: String? = nil, preparationSwiftUpdater: Bool = false
   ) throws -> (observation: NativeBundleObservation, custody: BundleSnapshot) {
     guard !input.isEmpty, !input.utf8.contains(0) else { throw ReleaseToolError.unsafeInput }
     let root = URL(fileURLWithPath: input).standardizedFileURL.path
@@ -200,14 +200,22 @@ public enum NativeBundleInspector {
     }
     let byPath = Dictionary(uniqueKeysWithValues: natives.map { ($0.path, $0) })
     let directories = Set(before.directories.map(\.value.path))
+    if preparationSwiftUpdater {
+      guard let library = preparationToolchainLibrary, framework,
+        let shell = byPath["Contents/MacOS/Frameshift"],
+        shell.slices.allSatisfy({ swiftUpdaterPaths($0, library: library) })
+      else { throw ReleaseToolError.invalidBundle }
+    }
     for file in natives {
+      let swiftShell = preparationSwiftUpdater && file.path == "Contents/MacOS/Frameshift"
       if let library = preparationToolchainLibrary,
         file.slices.contains(where: { $0.rpaths.contains(where: { $0.hasPrefix(library) }) })
       {
         guard
-          !file.slices.contains(where: {
-            $0.dependencies.contains(where: { $0.hasPrefix("@rpath/") })
-          })
+          swiftShell
+            || !file.slices.contains(where: {
+              $0.dependencies.contains(where: { $0.hasPrefix("@rpath/") })
+            })
         else { throw ReleaseToolError.invalidBundle }
       }
       for slice in file.slices {
@@ -225,10 +233,11 @@ public enum NativeBundleInspector {
         for path in slice.dependencies where !applePath(path) {
           let resolved: String
           if path.hasPrefix("@rpath/") {
+            let ownPaths = swiftShell ? Array(slice.rpaths.suffix(1)) : slice.rpaths
             guard framework, file.path == "Contents/MacOS/Frameshift", slice.filetype == 2,
-              path == BundleSparkle.importPath, slice.rpaths.count == 1,
+              path == BundleSparkle.importPath, ownPaths.count == 1,
               ["@loader_path/../Frameworks", "@executable_path/../Frameworks"].contains(
-                slice.rpaths[0])
+                ownPaths[0])
             else { throw ReleaseToolError.invalidBundle }
             resolved = BundleSparkle.root + "/Versions/B/Sparkle"
           } else {
@@ -269,6 +278,17 @@ public enum NativeBundleInspector {
   // Private producer checkpoints, never a public inspection-policy bypass.
   static func preparationSnapshot(_ root: String) throws -> BundleSnapshot {
     try BundleInventory(root: root, budget: BundleBudget()).scan()
+  }
+
+  private static func swiftUpdaterPaths(_ slice: MachOSlice, library: String) -> Bool {
+    guard slice.filetype == 2,
+      slice.dependencies.contains("/usr/lib/swift/libswiftCore.dylib"),
+      slice.dependencies.filter({ $0.hasPrefix("@rpath/") }) == [BundleSparkle.importPath],
+      let own = slice.rpaths.last,
+      ["@loader_path/../Frameworks", "@executable_path/../Frameworks"].contains(own)
+    else { return false }
+    return slice.rpaths == ["/usr/lib/swift", own]
+      || slice.rpaths == ["/usr/lib/swift", library + "swift-6.2/macosx", own]
   }
 
   private static func versionNumber(_ value: String) throws -> UInt32 {
