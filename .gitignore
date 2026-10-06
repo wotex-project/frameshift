@@ -36,6 +36,12 @@
 /release/macos/.build/
 /release/macos/.swiftpm/
 
+# Portable release tools
+/release/portable/_build/
+/release/portable/erl_crash.dump
+/release/portable/worker/.zig-cache/
+/release/portable/worker/zig-out/
+
 # macOS and editor state
 .DS_Store
 *.xcuserstate

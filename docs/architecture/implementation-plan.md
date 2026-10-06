@@ -1148,8 +1148,8 @@ pinned SDK resource/archive/cache comparison, guarded compiler consumption,
 private preparation/CPU derivation, universal staging and native DMG
 construction/readback implemented locally.
 Closure/resource wrappers and development SDK packaging are qualified; remaining
-source-bound portable receipt/library joins and the portable descriptor adapter
-remain unimplemented/unqualified. Use this order for
+source-bound portable receipt/library joins remain unimplemented/unqualified.
+The portable descriptor owner is qualified locally on Mac and Ubuntu. Use this order for
 affected release tooling. Do not extend Mac-native
 policy in new `.mjs` modules. Preserve current work and passing regression
 fixtures; the language port does not replace the R2 native updater or product
@@ -1167,10 +1167,16 @@ UI/lifecycle deliverables.
 RT1's separate Swift package, workspace owner and `mac-release` lane now exist.
 Its twelve descriptor/hash, twelve owned-child and nine typed-plist fixtures
 pass with actual pinned archive/Info.plist CLI admission on macOS 27.0.1 arm64 /
-Xcode 27. These qualify only the Swift foundations; the portable owner/adapter
-still require implementation and Mac/Ubuntu qualification. Native admission
-ports can proceed through RT2 while that independent work continues. No
-existing release wrapper has switched. See the
+Xcode 27. The separate portable Mix owner and isolated Zig descriptor worker now
+pass thirteen actual read/hash, protection, mutation, framing, cancellation and
+deadline groups on macOS 27.0.1 arm64 and Ubuntu 24.04.5 arm64 under pinned
+Elixir 1.20.4 / OTP 29.1. The Ubuntu clean runtime uses the OrbStack kernel;
+this is native VM worker execution, not native amd64 or physical durability.
+The worker holds descriptors through Elixir consumption and acceptance requires
+closing checks plus actual exit. CI and the `release-portable` lane exercise
+the same boundary on both OS families. Portable policy/consumer migration remains
+RT4/RT5 work. Native wrapper cutovers have their RT2/RT3 evidence below;
+portable consumers have not switched. See the
 [foundation contract](../host/macos.md#native-release-input-foundation).
 
 RT2's bounded `MachOInspector` now reads supported thin/fat loader metadata
@@ -1321,7 +1327,7 @@ and same-byte changes, actual copy/create/attach/detach deadlines, live-mount
 cancellation and independent one-shot recovery. Failed work stays retained;
 direct exit never substitutes for mount restoration. These native observations
 have no publication authority and do not replace portable replay records.
-Next qualify the portable descriptor adapter, then source-bound record consumers
+Next implement canonical manifest/trust verification and source-bound record consumers
 and their explicit native producer cutover. Installed image acceptance remains R2.
 
 Deliver each coherent port with its own review, proportionate checks and logical

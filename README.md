@@ -168,6 +168,10 @@ The independent [Mac release tool package](release/macos/README.md) has a
 tooling and does not link or ship with the application. Existing release
 wrappers remain in place until their ports pass parity.
 
+The independent [portable release tool](release/portable/README.md) has a
+`./scripts/check release-portable` lane for Elixir policy and its isolated Zig
+descriptor worker. It is build tooling with no application runtime dependency.
+
 The [isolated Linux codec](codec/README.md) has bounded static-PNG and JPEG profiles.
 `./scripts/check codec` runs its native format/static/debug/release gate;
 `./scripts/check linux-codec` builds the pinned Linux arm64/amd64 fixtures and

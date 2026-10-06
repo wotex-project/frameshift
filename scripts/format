@@ -26,6 +26,16 @@ repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
 )
 
 (
+  cd "$repository_root/release/portable/worker"
+  mise exec -- zig fmt build.zig src
+)
+
+(
+  cd "$repository_root/release/portable"
+  mise exec -- mix format
+)
+
+(
   cd "$repository_root/release/macos"
   swift format format --in-place --recursive Sources Tests Package.swift
 )

@@ -415,12 +415,40 @@ A path check followed by ordinary `File.open` is not equivalent under
 replacement races, particularly a file replaced by a FIFO. The first portable
 migration slice must qualify a descriptor adapter on Mac and Ubuntu. A small
 isolated release-only POSIX worker using the already pinned Zig toolchain is
-the candidate if OTP alone cannot meet that contract; specify its finite
-operations, child lifetime and bounded exchange before implementing it. It
+the selected adapter; its finite operations, child lifetime and bounded exchange
+are defined in the portable custody contract. It
 must contain no release policy, run no application NIF and add no shipped
-runtime. This adapter's implementation/qualification remains open.
+runtime. Its local Mac/Ubuntu qualification is recorded below; portable policy
+consumer cutover remains open.
 
 #### Recommendation and rejection checks
+
+**Descriptor adapter qualification:** observed 2026-10-06 with Zig 0.16.0,
+Elixir 1.20.4 and OTP 29.1. The isolated release-only worker now retains a
+no-follow/nonblocking descriptor through Elixir consumption and checks the
+complete named/opened identity before acceptance. The exact
+[OTP port contract](https://github.com/erlang/otp/blob/OTP-29.1/erts/preloaded/src/erlang.erl#L7816-L7832),
+read with `gh`, defines actual external `exit_status` and stdio transport.
+The owner waits for that observation; an EOF or lost port alone grants no
+acceptance. Thirteen groups pass on macOS 27.0.1 arm64 and booted Ubuntu 24.04.5
+arm64 with the OrbStack kernel, including exact byte/hash parity, 16 MiB/next-byte
+bounds, unsafe leaves/protection, consumer-time mutation, malformed exchange,
+late consumption, exceptions and caller death. The Ubuntu test process uses
+the installed pinned runtime's clean boot and no host application processes;
+its native worker is separately cross-built and privately copied for execution.
+
+An initial Ubuntu run loses custody after terminal refusal when the owner writes
+an unnecessary abort into the closing pipe. Awaiting exit without that write
+passes the complete corrected suite. Another fixture assumed a 1 ms read must
+time out; Ubuntu completed it within budget. The corrected deadline fixture
+confirms consumption started, then deliberately exceeds its session budget.
+macOS also strips a requested sticky bit on a regular file to actual 0600;
+protection fixtures now use preserved setuid mode and check actual inode policy.
+Glibc's inline variadic fortify wrappers fail Zig C-header translation under
+ReleaseSafe; the import disables those C wrappers only, calls libc functions
+with explicit admitted bounds and retains Zig safety checks. These are exact
+source/runtime fixture observations, not native amd64, physical durability,
+portable policy cutover or production release qualification.
 
 Adopt Swift for native Mac tooling, Elixir for shared portable release policy
 including pure Cask/appcast rendering and signing, and POSIX shell for entry

@@ -90,6 +90,8 @@ jobs:
         run: ./scripts/check docs
       - name: Check release manifest verifier
         run: ./scripts/check release
+      - name: Check portable release input custody
+        run: ./scripts/check release-portable
 
   macos-shell:
     name: Swift macOS shell
@@ -112,6 +114,8 @@ jobs:
         run: ./scripts/check macos
       - name: Check native Mac release tools
         run: ./scripts/check mac-release
+      - name: Check portable release input custody
+        run: ./scripts/check release-portable
       - name: Check native codec on macOS
         run: ./scripts/check codec
 

@@ -4,6 +4,7 @@
     {"name": "core", "root": "apps/core", "modules": ["Frameshift", "FrameshiftCore"], "depends_on": ["decisions"]},
     {"name": "macos", "root": "apps/macos", "modules": [], "depends_on": []},
     {"name": "mac-release", "root": "release/macos", "modules": [], "depends_on": []},
+    {"name": "release-portable", "root": "release/portable", "modules": ["FrameshiftRelease"], "depends_on": []},
     {"name": "decisions", "root": "packages/decision-kernel", "modules": ["frameshift_decisions", "frameshift_physical", "FrameshiftDecisions"], "depends_on": [], "pure_imports": ["gleam/int", "gleam/list", "gleam/option", "gleam/order", "gleam/result", "gleam/string"]},
     {"name": "guide", "root": "apps/guide", "modules": [], "depends_on": ["decisions"]},
     {"name": "renderer", "root": "renderer", "modules": [], "depends_on": []},

@@ -325,6 +325,21 @@ check_mac_release() {
   )
 }
 
+check_release_portable() {
+  (
+    cd "$repository_root/release/portable/worker"
+    mise exec -- zig fmt --check build.zig src
+    mise exec -- zig build test
+    mise exec -- zig build -Doptimize=ReleaseSafe
+  )
+  (
+    cd "$repository_root/release/portable"
+    mise exec -- mix format --check-formatted
+    mise exec -- mix compile --warnings-as-errors
+    mise exec -- mix test --warnings-as-errors
+  )
+}
+
 check_macos() {
   mise exec -- node --test "$repository_root"/release/macos/*.test.mjs
   (
@@ -448,6 +463,7 @@ case "${1:-all}" in
     "$repository_root/scripts/check-build-spec"
     check_core
     check_release
+    check_release_portable
     check_guide
     check_docs
     check_mac_release
@@ -473,12 +489,13 @@ case "${1:-all}" in
   release) check_release ;;
   macos) check_macos ;;
   mac-release) check_mac_release ;;
+  release-portable) check_release_portable ;;
   container) check_container ;;
   linux-ipc) check_linux_ipc ;;
   linux-discovery) check_linux_discovery ;;
   keychain-pairing) "$repository_root/scripts/check-keychain-pairing" ;;
   *)
-    echo "usage: scripts/check [all|policy|platform|platform-browser|platform-observability|renderer|codec|linux-codec|linux-release|linux-deb|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|mac-release|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
+    echo "usage: scripts/check [all|policy|platform|platform-browser|platform-observability|renderer|codec|linux-codec|linux-release|linux-deb|kernel|build-spec|conjunct|guide|guide-browser|docs|docs-browser|core|release|macos|mac-release|release-portable|container|linux-ipc|linux-discovery|keychain-pairing]" >&2
     exit 64
     ;;
 esac

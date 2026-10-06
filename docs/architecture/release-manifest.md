@@ -32,9 +32,9 @@ directory.
 
 Elixir owns portable release policy: canonical manifests and channel material,
 Ed25519/key identities, frozen source inputs, source/receipt joins, archive
-profiles and publication reconciliation. The planned tool-only Mix project
-is `release/portable/`, with the `FrameshiftRelease` namespace and
-`frameshift-release` executable; these are targets, not existing exports. Keep
+profiles and publication reconciliation. The tool-only Mix project
+is `release/portable/`, with the `FrameshiftRelease` namespace; its descriptor
+owner now exists, while the `frameshift-release` executable remains planned. Keep
 it independent of host application processes and dependencies and declare its
 workspace owner when introduced. Mac-native operations are
 delegated to the [Swift tooling owner](../host/macos.md#mac-release-tooling-implementation)
@@ -61,6 +61,59 @@ path-check/read sequence, application NIF or hidden Node subprocess may stand
 in for this requirement. The selected adapter's operations, byte/time bounds,
 process exit, secret handling and retained failure state require an explicit
 contract and adversarial fixtures before portable callers cut over.
+
+### Portable descriptor custody
+
+The release-only `release/portable/` Mix owner uses one isolated Zig POSIX
+worker per admitted file. The worker contains descriptor I/O, identity checks
+and SHA-256 only; Elixir owns release schemas, trust, signatures and acceptance.
+It is neither an application NIF nor a service, and is not shipped in the host.
+Build with the pinned Zig toolchain and the target's libc interface. Qualify
+native macOS and Ubuntu execution before switching portable consumers.
+
+`FrameshiftRelease.Input.with_input/3` admits a bounded file, runs the supplied
+consumer and returns its result only after closing custody and actual worker
+exit zero. `read/2` uses that same scope; `hash/2` returns byte length and SHA-256
+without buffering the archive. Require `lstat`, `open(O_RDONLY | O_NOFOLLOW |
+O_NONBLOCK | O_CLOEXEC)`, matching `fstat`, regular-file/size admission, bounded
+`pread`, explicit EOF and pre/post descriptor and named identity. Compare device,
+inode, size, mode, UID, GID, link count and nanosecond mtime/ctime; exclude atime.
+Private inputs require current UID and exactly 0400/0600; trust inputs permit
+current UID/root and no group/world writes. These predicates are independent.
+Keep the descriptor open through Elixir consumption, then recheck before closing.
+
+Use only length-prefixed binary stdin/stdout, with no paths, secrets or file
+bytes in arguments, environment or diagnostics. One request contains version,
+read/hash operation, protection flags, minimum/maximum size, monotonic budget
+and one UTF-8 path of at most 4,096 bytes without NUL. Read payloads are at most
+16 MiB; hash input is at most 8 GiB and uses 64 KiB blocks. The whole session
+budget is 1–900,000 ms. Nonblocking polled pipe reads/writes share that deadline;
+check it between regular-file syscalls. A stalled filesystem syscall has no
+hard thread-termination guarantee and cannot be reported as confirmed exit.
+Requests and responses have fixed version/reserved fields and exact sizes;
+malformed, duplicate, truncated, extra or out-of-order messages refuse.
+
+After bounded admission the worker sends provisional bytes/facts, keeps the
+descriptor and waits for exactly one finish or abort. Finish checks custody
+again and emits a terminal success; abort, EOF, deadline or any fault refuses
+without returning accepted bytes. A dedicated monitored Elixir owner holds the
+port, bounds responses and observes the actual exit status. Consumer exceptions,
+caller death and timeout request abort and discard late output. The owner stays
+until actual exit, even beyond the caller budget; no numeric PID lookup, replay,
+late promotion or mutable-file cleanup is permitted. The API does not claim
+descendant/device effects stopped. Fixed error atoms expose no private input.
+Lost port custody returns explicit unknown custody, never stopped/accepted work.
+Consumers must defer acceptance, publication and other external effects until
+the enclosing call returns `{:ok, result}`.
+
+Qualify both operating systems with actual read/hash parity, private/trust
+modes, FIFO/symlink/device/directory refusal, limits, replacement, same-byte
+rewrite, truncation/growth, permissions, consumer-time mutation, malformed and
+truncated exchange, stopped caller, deadline and actual exit observations.
+Until those checks pass, existing Node consumers retain their contracts and
+this adapter grants no release or publication authority.
+
+### Producer identity and cutover
 
 Producer implementation observations can legitimately change when ported.
 Declare the new source/tool profile and independently pin its receipt; do not

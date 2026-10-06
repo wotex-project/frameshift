@@ -67,8 +67,11 @@ package and portable manifests, receipts, archive policy and channel
 rendering/signing to one Elixir tool owner. POSIX shell remains the entry-point
 layer; release tools are not shipped app dependencies. The separate
 [Swift package](macos/README.md) now provides descriptor/hash admission and the
-pinned archive CLI, with its own `mac-release` check lane. Remaining native
-ports, the portable owner and its descriptor adapter are planned.
+pinned archive CLI, with its own `mac-release` check lane. The separate
+[portable Mix owner](portable/README.md) now provides retained descriptor
+read/hash custody through its isolated Zig worker and `release-portable` lane.
+Portable release policy and remaining source-bound native consumer joins remain
+planned.
 
 Follow [RT1–RT6](../docs/architecture/implementation-plan.md#release-tooling-migration)
 and the [compatibility contract](../docs/architecture/release-manifest.md#release-tooling-ownership-and-migration).
