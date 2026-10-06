@@ -1145,10 +1145,11 @@ The guide links only to real verified artifacts. See
 **State:** Swift descriptor/hash, owned-process and typed-plist foundations
 and bounded Mach-O/whole-bundle observation, strict development signatures and
 pinned SDK resource/archive/cache comparison, guarded compiler consumption,
-private preparation/CPU derivation and universal staging implemented locally.
+private preparation/CPU derivation, universal staging and native DMG
+construction/readback implemented locally.
 Closure/resource wrappers and development SDK packaging are qualified; remaining
-source-bound portable receipt/library joins, native DMG construction/readback
-and the portable descriptor adapter remain unimplemented/unqualified. Use this order for
+source-bound portable receipt/library joins and the portable descriptor adapter
+remain unimplemented/unqualified. Use this order for
 affected release tooling. Do not extend Mac-native
 policy in new `.mjs` modules. Preserve current work and passing regression
 fixtures; the language port does not replace the R2 native updater or product
@@ -1298,7 +1299,7 @@ match a separate capture byte for byte. Actual compiler failure and consumer-tim
 manifest/state/ZIP/cache/alias changes refuse, preserving source custody and
 retained work. Build-time `gh` setup is separate and never repairs retained
 evidence. This closes the local SDK development consumer join; source-bound
-producer/library joins, portable universal receipt joins, DMG ports and installed qualification
+producer/library joins, portable universal/image receipt joins and installed qualification
 remain open.
 
 RT3 now has a native private universal-stage producer using the existing closure
@@ -1312,8 +1313,16 @@ tool tests pass with actual SDK/resource inputs, without exclusions, alongside
 strict format and release build. The portable
 record/replay wrapper remains unchanged until RT4 joins explicit producer
 identity; do not relabel retained output or count that wrapper as a native port.
-Next complete DMG creation/mounted readback and the portable descriptor adapter,
-then source-bound record consumers and their native producer cutover.
+Native `DevelopmentDiskImageProducer` now creates compressed HFS+ images,
+explicitly verifies them, reads the exact sealed app through an owned read-only
+mount and confirms detach before successful cleanup. Nine groups include the
+actual full 1,504-file SDK app/CLI, universal payload, namespace/link/text/mode
+and same-byte changes, actual copy/create/attach/detach deadlines, live-mount
+cancellation and independent one-shot recovery. Failed work stays retained;
+direct exit never substitutes for mount restoration. These native observations
+have no publication authority and do not replace portable replay records.
+Next qualify the portable descriptor adapter, then source-bound record consumers
+and their explicit native producer cutover. Installed image acceptance remains R2.
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

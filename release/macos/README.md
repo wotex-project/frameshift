@@ -217,6 +217,32 @@ not write or relabel a portable receipt, implement replay, replace accepted
 output, qualify native Intel execution or establish installed release. The
 legacy record wrapper remains separate until its portable consumer is joined.
 
+Create and read back a local development image with:
+
+```sh
+swift run frameshift-mac-release create-development-image APP arm64 EMPTY_PRIVATE_WORKSPACE
+```
+
+`DevelopmentDiskImageProducer` requires a disjoint sealed app and an empty
+current-user mode-0700 `.dmg.` workspace. It copies the exact app with the fixed
+development text and `/Applications` link, creates compressed HFS+ UDIF, verifies
+the image without caching and attaches it read-only without repeated verification,
+browsing, opening or automatic filesystem checking. The mounted app's complete
+observation and every CPU/nested seal must equal the source. No mounted code runs.
+Source, payload, image and namespace custody bracket all children under one
+five-minute job. Image hashing streams at most 1 GiB; source observation is at
+most 1 MiB. Success confirms original mountpoint restoration before removing
+only successful work and emits `native-development-dmg-v1` native facts with
+publication authority `none`.
+
+Refusal retains private work and child/mount custody. After actual direct-child
+exit, `detachAfterRefusal()` permits one bounded independent recovery attempt
+against only the owned read-only mount. It never forces, retries a failed detach,
+cleans work or promotes bytes. The CLI waits for its actual child, attempts that
+recovery, waits for any recovery child and returns fixed refusal exit 1. Usage
+exits 64. Unknown device effects remain distinct from direct exit. Portable
+receipt/replay wrappers and installed release qualification remain separate.
+
 Child-bearing CLI commands borrow the same `OwnedCommand` objects used by the
 library. On failure they print their fixed refusal, then retain those owners
 until each direct child is known not-started or reaped. This read-only wait

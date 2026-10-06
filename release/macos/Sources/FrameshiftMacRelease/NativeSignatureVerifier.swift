@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 import Security
 
@@ -74,6 +75,35 @@ public enum NativeSignatureVerifier {
         let value = UInt32(exactly: number.int64Value),
         value & SecCodeSignatureFlags.adhoc.rawValue != 0
       else { throw ReleaseToolError.invalidSignature }
+    }
+  }
+}
+
+/// Shared sealed source custody for the concrete native merge and image producers.
+struct DevelopmentBundleSource: Sendable {
+  let root: String
+  let namedRoot: String
+  let observation: NativeBundleObservation
+  let custody: BundleSnapshot
+
+  init(root: String, namedRoot: String, architecture: NativeBundleArchitecture) throws {
+    self.root = root
+    self.namedRoot = namedRoot
+    guard try SparkleInventory.named(namedRoot).mode & mode_t(S_IFMT) == mode_t(S_IFDIR) else {
+      throw ReleaseToolError.unsafeInput
+    }
+    let original = try NativeBundleInspector.inspectWithCustody(root, architecture: architecture)
+    observation = original.observation
+    custody = original.custody
+    _ = try NativeSignatureVerifier.verifyDevelopmentBundle(root, architecture: architecture)
+    try check()
+  }
+
+  func check() throws {
+    guard try SparkleInventory.named(namedRoot) == custody.directories.last?.identity,
+      try NativeBundleInspector.preparationSnapshot(root) == custody
+    else {
+      throw ReleaseToolError.inputChanged
     }
   }
 }

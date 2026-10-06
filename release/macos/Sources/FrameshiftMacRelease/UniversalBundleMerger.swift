@@ -68,8 +68,8 @@ public actor UniversalBundleMerger {
       }
     }
     let sources = try [
-      UniversalSource(root: roots[0], namedRoot: arm, architecture: .arm64),
-      UniversalSource(root: roots[1], namedRoot: intel, architecture: .intel),
+      DevelopmentBundleSource(root: roots[0], namedRoot: arm, architecture: .arm64),
+      DevelopmentBundleSource(root: roots[1], namedRoot: intel, architecture: .intel),
     ]
     let estimate = try Self.pair(sources[0].observation, sources[1].observation)
     try Self.comparePlists(sources.map(\.root))
@@ -280,7 +280,9 @@ public actor UniversalBundleMerger {
     guard values[0] == values[1] else { throw ReleaseToolError.invalidPropertyList }
   }
 
-  private static func checkMerged(_ result: NativeBundleObservation, sources: [UniversalSource])
+  private static func checkMerged(
+    _ result: NativeBundleObservation, sources: [DevelopmentBundleSource]
+  )
     throws
   {
     let arm = sources[0].observation
@@ -305,32 +307,4 @@ public actor UniversalBundleMerger {
 
 enum UniversalMergePhase: Sendable {
   case admitted, copied, mergeWritten, roleReplaced, preparing, preparationCheckpoint, verified
-}
-
-private struct UniversalSource: Sendable {
-  let root: String
-  let namedRoot: String
-  let observation: NativeBundleObservation
-  let custody: BundleSnapshot
-
-  init(root: String, namedRoot: String, architecture: NativeBundleArchitecture) throws {
-    self.root = root
-    self.namedRoot = namedRoot
-    guard try SparkleInventory.named(namedRoot).mode & mode_t(S_IFMT) == mode_t(S_IFDIR) else {
-      throw ReleaseToolError.unsafeInput
-    }
-    let original = try NativeBundleInspector.inspectWithCustody(root, architecture: architecture)
-    observation = original.observation
-    custody = original.custody
-    _ = try NativeSignatureVerifier.verifyDevelopmentBundle(root, architecture: architecture)
-    try check()
-  }
-
-  func check() throws {
-    guard try SparkleInventory.named(namedRoot) == custody.directories.last?.identity,
-      try NativeBundleInspector.preparationSnapshot(root) == custody
-    else {
-      throw ReleaseToolError.inputChanged
-    }
-  }
 }

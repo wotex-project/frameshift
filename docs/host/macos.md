@@ -1886,6 +1886,53 @@ claim merely because a universal fixture was successfully joined.
 
 ### Development disk-image custody
 
+The native `DevelopmentDiskImageProducer.create(app:architecture:workspace:)`
+boundary owns image construction and mounted readback only. Require an empty
+physical current-user mode-0700 `.dmg.` workspace, disjoint from a non-alias
+source app; hold its original supplied root identity and complete sealed source
+custody across every child. Create only the fixed architecture-specific image,
+private payload/mount work and fixed development reading/link bytes. Use the
+existing native closure/signature/descriptor readers, not a second image or
+source admission policy. Require twice the source bytes plus 256 MiB available,
+one five-minute job and bounded fixed Apple children. The 1 GiB image limit
+applies to streaming digest admission; no whole-image buffer is allowed.
+Bound the embedded source observation to 1 MiB before creating any child.
+
+Keep the existing fixed `hdiutil` create/verify/attach/detach commands for this
+producer. Attachment is local-file-only, read-only, non-browsing, with no
+automatic opening or filesystem check, at its exclusive pre-created mountpoint.
+After the explicit `verify -nocache` and closing image custody check, use
+`attach -noverify`; repeating implicit checksum verification during attachment
+must not write cache metadata into the admitted image. Complete digest and
+mounted-content checks remain mandatory.
+Validate the bounded returned plist's exact one mountpoint and actual read-only
+filesystem before inspecting content. Permit only the app, fixed reading text,
+exact `/Applications` link and named filesystem metadata directories. The
+mounted complete app observation must equal the source and every seal must pass.
+Hold image bytes/identity and private namespace custody through readback and
+detach; verify restoration of the original mountpoint device/inode before
+removing only successful work. Never execute code from the mounted image.
+
+Mark attachment attempted before launching its actual child. On refusal retain
+the workspace, image, mountpoint and exact child. After that child is reaped,
+allow an explicit one-shot `detachAfterRefusal()` for this owned mountpoint,
+independent of the canceled caller. It must not force ejection, retry a failed
+detach, delete work or promote the image. Success means the original mountpoint
+is restored; a failed/unknown detach keeps mount custody explicit. A one-shot CLI
+waits for its actual child, attempts this bounded owned recovery and reports
+refusal, retaining all work even if recovery succeeds. Descendants and image
+effects are distinct from direct-child exit.
+
+Only a successful detached creation returns bounded native image size/digest
+and the exact source bundle observation, with publication authority `none` and
+producer `native-development-dmg-v1`. It writes no portable receipt or accepted
+output. The wrapper/record replay below stays with its existing owner until RT4
+joins this native profile. Qualify actual small CPU/universal and full-app image
+creation/readback, source/image/namespace changes, payload/mounted content and
+permission/link refusals, creation/attach/detach failures, cancellation/deadline
+and explicit retained-mount recovery. Installed/production qualification remains
+separate.
+
 `scripts/package-macos-dmg APP arm64|x86_64|universal OUTPUT` creates only a
 private development candidate from an already admitted, ad-hoc-signed app.
 It performs no source build, signing-identity selection, notarization, upload

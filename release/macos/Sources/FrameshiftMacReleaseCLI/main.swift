@@ -7,6 +7,7 @@ let compileCommand = arguments.first == "compile-updater-inputs"
 let captureCommand = arguments.first == "capture-swiftpm-inputs" || compileCommand
 let stagingCommand = arguments.first == "stage-sparkle-framework"
 let mergeCommand = arguments.first == "merge-development-bundles"
+let imageCommand = arguments.first == "create-development-image"
 let frameworkCommand = arguments.first == "verify-sparkle-framework"
 let resourceCommand = arguments.first == "verify-generation-resources"
 let signatureCommand = arguments.first == "verify-development-bundle"
@@ -19,6 +20,8 @@ let bundleCommand = arguments.first == "check-bundle" || signatureCommand
 guard
   (frameworkCommand && arguments.count == 3)
     || (mergeCommand && arguments.count == 4)
+    || (imageCommand && arguments.count == 4
+      && NativeBundleArchitecture(rawValue: arguments[2]) != nil)
     || (stagingCommand && arguments.count == 4
       && ["arm64", "x86_64"].contains(arguments[3]))
     || ((bundleCommand || preparationCommand) && arguments.count == 3
@@ -34,7 +37,7 @@ guard
 else {
   FileHandle.standardError.write(
     Data(
-      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle|prepare-swiftbuild-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP arm64|x86_64\n       frameshift-mac-release merge-development-bundles ARM_APP INTEL_APP EMPTY_PRIVATE_APP\n       frameshift-mac-release [capture-swiftpm-inputs|compile-updater-inputs] REPOSITORY\n"
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle|prepare-swiftbuild-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP arm64|x86_64\n       frameshift-mac-release merge-development-bundles ARM_APP INTEL_APP EMPTY_PRIVATE_APP\n       frameshift-mac-release create-development-image APP arm64|x86_64|universal EMPTY_PRIVATE_WORKSPACE\n       frameshift-mac-release [capture-swiftpm-inputs|compile-updater-inputs] REPOSITORY\n"
         .utf8)
   )
   exit(64)
@@ -45,8 +48,16 @@ let compilerChild = OwnedCommand()
 let preparer = DevelopmentBundlePreparer()
 let stager = SparkleFrameworkStager()
 let merger = UniversalBundleMerger()
+let imageProducer = DevelopmentDiskImageProducer()
 do {
-  if mergeCommand {
+  if imageCommand {
+    var bytes = try await imageProducer.create(
+      app: arguments[1],
+      architecture: NativeBundleArchitecture(rawValue: arguments[2])!, workspace: arguments[3]
+    ).observationBytes()
+    bytes.append(10)
+    FileHandle.standardOutput.write(bytes)
+  } else if mergeCommand {
     var bytes = try await merger.merge(arm: arguments[1], intel: arguments[2], stage: arguments[3])
       .observationBytes()
     bytes.append(10)
@@ -124,6 +135,14 @@ do {
     FileHandle.standardOutput.write(bytes)
   }
 } catch {
+  if imageCommand {
+    FileHandle.standardError.write(
+      Data("development image refused; private work and effect custody retained\n".utf8))
+    _ = await imageProducer.retainUntilExitAfterRefusal()
+    _ = try? await imageProducer.detachAfterRefusal()
+    _ = await imageProducer.retainUntilExitAfterRefusal()
+    exit(1)
+  }
   if mergeCommand {
     FileHandle.standardError.write(
       Data("universal development stage refused; private work retained\n".utf8))

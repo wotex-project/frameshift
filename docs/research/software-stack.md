@@ -1608,6 +1608,34 @@ source-byte and metadata custody cannot be inferred from `lipo` success alone.
 Actual compiled and pinned SDK fixtures exercise that boundary; native Intel,
 older systems, full source-bound cohorts and installed release remain distinct.
 
+**Disk-image command boundary:** observed 2026-10-06 from installed primary
+`/usr/bin/hdiutil` and `/usr/sbin/diskutil` help on macOS 27.0.1. `hdiutil` marks
+attach/detach deprecated and recommends `diskutil image attach` / `diskutil eject`.
+The new attach help exposes read-only, non-browse, explicit mountpoint and plist
+options, but does not expose the existing `noautoopen` / `noautofsck` controls.
+Equivalent suppression of those effects has not been established. Keep the
+existing fixed hdiutil profile for the native port and qualify actual local
+create/verify/read-only attach/detach first; do not silently select or fall back
+to a different image command by OS/vendor. A diskutil cutover needs its own
+supported-system/effect/recovery evidence and explicit producer profile. The
+installed help is command-interface evidence, not successful mount/readback or
+older-system behavior.
+
+**Attachment experiment:** 2026-10-06 on the same Mac. A small actual universal
+image passes `verify -nocache`, but default attachment changes only its recorded
+ctime and is correctly refused by full image custody. With explicit container
+verification retained and `attach -noverify`, the complete image identity stays
+unchanged through mounted byte/seal readback and detach. Cache metadata is the
+inferred cause from the verification option and installed help; the experiment
+does not identify a specific extended attribute. The native profile suppresses
+the repeated verification effect and still requires exact digest/custody and
+mounted-content/seal checks. Nine groups cover actual universal and full SDK app
+creation/readback, read-only refusal, source/payload/image same-byte mutation,
+link/text/mode and namespace refusal, copy/create/attach/detach deadlines,
+live-mount cancellation and independent one-shot recovery. The full-app CLI also
+refuses nonempty replay without changing the completed image. No installed
+release or other system is qualified by this local observation.
+
 The universal merger now compares complete fixed alias inventories and admits
 differences in only the four actual SDK `CodeResources` paths. They encode
 per-CPU nested seals and are regenerated after actual native merging; every
