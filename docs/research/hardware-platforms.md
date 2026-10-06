@@ -1,6 +1,6 @@
 # Hardware Platform Research
 
-**Research date:** 2026-09-22
+**Research date:** 2026-10-06; controller source inspection supplements the candidate survey
 
 **Hard constraints:** the reference object is a thin picture frame, not a
 computer enclosure, and Raspberry Pi hardware is excluded. No visible
@@ -91,6 +91,74 @@ The panel-only refresh claim corresponds to less than 0.003 Wh at 0.5 W for
 battery conversion, retries, and temperature effects. Battery life must be
 calculated from measurements of the entire frame over a real wake/update/sleep
 cycle. No months-of-life claim is allowed before that test.
+
+### Integrated ESP32-S3 controller: exact source findings
+
+The integrated **ESP32-S3-ePaper-13.3E6, SKU 34349** is a separate controller
+candidate from the 65×30.5 mm HAT driver. Its [manufacturer page](https://docs.waveshare.com/ESP32-S3-ePaper-13.3E6)
+contradicts itself: the introduction specifies WROOM-2-N32R16V, 32 MB flash and
+16 MB PSRAM; the onboard-resources list specifies WROOM-1-N16R8, 16 MB flash and
+8 MB PSRAM. The [schematic](https://files.waveshare.com/wiki/ESP32-S3-ePaper-13.3E6/ESP32-S3-ePaper-Driver-Board.pdf),
+page 1, labels U2 WROOM-2-N32R16V. That supports the first description for the
+drawn design, but does not identify a received board. Photograph its markings,
+record board revision, probe flash/PSRAM, and measure the complete connector,
+cable, power and backing envelope before admitting a configuration.
+
+The following findings come from the vendor repository at commit
+[`f8e9456bd1ca520f638786142fc17a74154f4e05`](https://github.com/waveshareteam/ESP32-S3-ePaper-13.3E6/tree/f8e9456bd1ca520f638786142fc17a74154f4e05),
+retrieved with `gh` on 2026-10-06. They are code inspection, not measured
+interoperability. The reviewed ESP-IDF example is `04_E-Paper_Example` under
+`example/ESP-IDF-5.5.1`.
+
+| Boundary | Inspected behavior | Frameshift consequence |
+| --- | --- | --- |
+| Native raster | [Header](https://github.com/waveshareteam/ESP32-S3-ePaper-13.3E6/blob/f8e9456bd1ca520f638786142fc17a74154f4e05/example/ESP-IDF-5.5.1/04_E-Paper_Example/components/epaper_port/epaper_port.h) declares 1200×1600 and pigment codes black 0, white 1, yellow 2, red 3, blue 5, green 6 | Landscape 1600×1200 is an orientation of the panel, not this native memory layout. Palette position is not the hardware code: code 4 is absent. Preview RGB values need their own measured conversion revision. |
+| Pixel packing | [GUI writer](https://github.com/waveshareteam/ESP32-S3-ePaper-13.3E6/blob/f8e9456bd1ca520f638786142fc17a74154f4e05/example/ESP-IDF-5.5.1/04_E-Paper_Example/components/epaper_src/GUI_Paint.c), `Paint_SetPixel`, writes even X in the high nibble, odd X in the low nibble | One native row is 1200/2 = 600 bytes; 1600 rows occupy 960,000 bytes. No header or compressed image enters the panel stream. |
+| Controller routing | [Display driver](https://github.com/waveshareteam/ESP32-S3-ePaper-13.3E6/blob/f8e9456bd1ca520f638786142fc17a74154f4e05/example/ESP-IDF-5.5.1/04_E-Paper_Example/components/epaper_port/epaper_port.c), `EPD_Display`, sends the first 300 bytes of each row to M and the next 300 to S | Each controller receives 480,000 bytes. Splitting the artifact into two contiguous halves would produce different bytes. Confirm physical axes/controller placement with a labelled chart and logic trace. The sample's resolution-register values alone do not resolve that mapping. |
+| Electrical interface | Driver defines SPI3, mode 0, 10 MHz, CLK 9, MOSI 46, CS M 10, CS S 3, DC 11, reset 2, BUSY 12, power 1 | Freeze this pin map only for the inspected design. GPIO3 and GPIO46 are strapping pins; verify ROM recovery with the connected panel. GPIO46 is output-capable on ESP32-S3, as documented by its [GPIO reference](https://docs.espressif.com/projects/esp-idf/en/v5.5.5/esp32s3/api-reference/peripherals/gpio.html). |
+| Completion and failure | `EPD_ReadBusyH` waits indefinitely for HIGH. `EPD_SendData_Buffer` logs a SPI error and returns `void`; its caller can continue to refresh. The power-off BUSY wait is commented out | Do not adopt these routines unchanged. Every transfer must propagate failure; bounded BUSY and power sequencing must return an explicit result. A log message cannot advance physically displayed/current state. |
+| Firmware recovery | [Partition table](https://github.com/waveshareteam/ESP32-S3-ePaper-13.3E6/blob/f8e9456bd1ca520f638786142fc17a74154f4e05/example/ESP-IDF-5.5.1/04_E-Paper_Example/partitions.csv) has one 15 MB factory app and SPIFFS, with no OTA data or two OTA app slots | It does not implement firmware rollback or two protected artwork slots. Freeze a different partition budget after actual module capacity and linked firmware size are known. |
+
+The inspected driver blob is `84db910f4c46c9da1169683af2b1d289c8e19aa3`, SHA-256
+`0e9b9fe9ab7f45e3a4dba6b32cf1f5343c90781807b96967738bf2e9e13614ba`;
+the GUI blob is `a0f9ffa70e2dcc7069d89aa54274b73561fec76b`, SHA-256
+`a19a9a31d9e500af9a776eec98610d02e8fb19df91329448492c68648c590eb2`.
+The repository root is Apache-2.0; these copied driver/GUI files include separate
+permission notices. Preserve and review file-level licenses before adoption.
+No vendor firmware has been incorporated or qualified by this inspection.
+
+**Build direction:** C with ESP-IDF is the evidenced candidate for this board,
+because the manufacturer supplies an actual S3 SPI/PSRAM implementation and
+[requires IDF 5.5.0 or newer](https://docs.waveshare.com/ESP32-S3-ePaper-13.3E6/ESP-IDF).
+Investigate the maintained 5.5 patch line before changing SDK families.
+[v5.5.5](https://github.com/espressif/esp-idf/releases/tag/v5.5.5), published
+2026-07-17, resolves a JPEG decoder vulnerability and changes PSRAM allocation
+options; its tag resolves to commit `b774170ff46c393eeb5e495ea37936038d3f4f4f`.
+Ordinary source archives omit submodules. A firmware build must pin recursive
+inputs, upstream tool/Python versions and licenses, SDK configuration and
+outputs in an isolated environment. This is a proposed build cohort, not a
+successful build, target-specific changelog qualification or received-device test.
+The receiver should accept host-produced packed stills without a JPEG decoder
+or the board's unrelated audio stack.
+
+[IDF 5.5.5 OTA requirements](https://docs.espressif.com/projects/esp-idf/en/v5.5.5/esp32s3/api-reference/system/ota.html)
+support two OTA apps and redundant OTA metadata, but rollback requires explicit
+configuration and first-boot health confirmation. Signed OTA without hardware
+secure boot is a distinct security tier. Burning secure-boot/anti-rollback
+eFuses can change recovery permanently; retain ROM/service access and qualify
+the exact key, partition and recovery policy before that action. The
+[SPI DMA contract](https://docs.espressif.com/projects/esp-idf/en/v5.5.5/esp32s3/api-reference/peripherals/spi_master.html)
+requires appropriate buffer capability and alignment; available PSRAM alone
+does not establish DMA behavior or bounded memory during TLS and refresh.
+
+**Next implementable slice:** the capability-selected indexed4 host artifact
+and preview contract in the [content pipeline](../architecture/content-pipeline.md#closed-indexed4-software-profile).
+Use synthetic palette fixtures and an independently enumerated vendor row
+oracle. That can establish deterministic software packing without selecting a
+controller or claiming measured pigment color. MCU build, mTLS/key custody,
+bounded panel adapter, interrupted refresh, signed rollback, whole-board power
+and exact installed geometry remain distinct M1 acceptance work under
+[H-001–H-009 and P-001–P-004](../hardware/validation-plan.md).
 
 ### Large-format future
 

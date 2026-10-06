@@ -71,10 +71,22 @@ backs off before a later wake. Reboot alone does not force a refresh.
 
 ## Artifact profile
 
-The Mac sends an exact 1600×1200 indexed/panel-packed still profile negotiated
-by capability. Palette entries, bit packing, row order, split-controller layout,
-and conversion-profile revision are mandatory. A PNG preview is not necessarily
-the panel wire artifact.
+The Mac sends an exact indexed/panel-packed still profile negotiated by
+capability. The inspected 13.3-inch E6 driver uses **1200×1600 native portrait**;
+1600×1200 landscape requires an explicit orientation transform and a separately
+qualified profile. Palette entries, hardware wire codes, bit packing, row order,
+split-controller layout and conversion-profile revision are mandatory. A PNG
+preview is not necessarily the panel wire artifact.
+
+The [pinned controller-source inspection](../research/hardware-platforms.md#integrated-esp32-s3-controller-exact-source-findings)
+defines a source-based 960,000-byte, high-nibble-first row-major candidate layout.
+Each controller consumes its 300-byte slice from every 600-byte row. It also
+identifies unbounded BUSY waits, swallowed transfer errors and missing OTA slots
+in the sample. The physical adapter must propagate transfer failure, bound
+completion and power sequencing, and refuse a displayed/current acknowledgement
+until exact hardware completion is established. The host's
+[closed indexed4 software profile](../architecture/content-pipeline.md#closed-indexed4-software-profile)
+can be tested independently; it does not qualify pigments or received hardware.
 
 Host rendering performs crop, color conversion, palette mapping, and dithering.
 The frame validates and transfers bytes; it does not reinterpret the artwork.

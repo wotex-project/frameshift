@@ -462,6 +462,60 @@ Preview shows palette and dither at 1:1 pixels plus the expected full-refresh
 flash warning. It is an approximation until compared with a photographed test
 chart under controlled light.
 
+### Closed indexed4 software profile
+
+The first additional host packing contract is generic, capability-selected
+`indexed4-msb-row-major-v1`. It requires restricted-palette color, 2–16 ordered
+entries with unique `wireCode` integers in 0–15 and RGB preview triples in 0–255,
+and a nonempty `color.profileRevision`. The artifact profile must declare
+`channelOrder: palette-index`, `bitDepth: 4`, `compression: none`,
+`rowAlignment: 1`, `byteOrder: not-applicable`, this exact `packing` value,
+nonempty `paletteRevision`, and `colorProfileRevision` matching
+`color.profileRevision`. Unknown layouts refuse even when dimensions fit.
+
+Dimensions use the renderer's existing ceilings; width must be even. Rows run
+top to bottom, pixels left to right in the advertised native coordinate space.
+For palette indices A/B, the byte is `(wireCode[A] << 4) | wireCode[B]`.
+The exact byte count is `width × height / 2` and must fit declared capacity.
+There is no header, row padding, implicit rotation or controller-half reordering.
+The frame adapter owns any per-controller row slicing. This closed profile
+does not enable other bit depths, packing orders or calibrated color transforms.
+
+The Zig worker owns quantization and final packing so its executable digest pins
+the complete byte-producing algorithm. Extend FSR1 with **0.2**, output code 3,
+and ordered four-byte palette entries RGB plus hardware code. Existing 0.1
+RGB24/indexed8 requests and responses retain their bytes. A 0.2 request accepts
+only this indexed4 output; duplicate/out-of-range codes, odd width, malformed
+palette or lengths refuse before raster allocation. Its response remains the
+20-byte header with version 0.2 and exact packed payload. The algorithm identity
+is `frameshift-raster-indexed4-v0.2` and the qualification protocol identity is
+`fsr1-indexed4-v0.2`; older RGB bindings cannot qualify this profile.
+
+Composition recipes freeze ordered preview RGB, wire codes, packing, palette
+and color revisions, crop/geometry, dither and renderer revision before cache
+lookup. The initial target compiler uses centered crop, bilinear resize, white
+alpha background and no dither. Low-level versioned ordered/error-diffusion
+jobs remain available; native dither controls need their own workflow slice.
+A code/revision change under the same profile ID changes the recipe and
+qualification identity. The final digest hashes packed bytes, never preview
+RGB or pre-packing indices.
+
+Target preview compiles the same profile and crop, then quantizes at the existing
+bounded preview dimensions and expands the resulting palette indices to RGB24.
+It remains an approximation; it does not predict full-resolution diffusion or
+measured optical color. Its response keeps the existing identities and byte
+bounds and never changes durable recipes, artifacts or delivery state.
+
+Acceptance must join shared BEAM/JavaScript selection, actual Zig wire bytes,
+durable recipe/cache/outbox identity and the bounded preview consumer. Include
+noncontiguous hardware codes, palette order/ties, both row/controller boundaries,
+exact 1200×1600 size, malformed/odd/stale profiles, changed palette/revision,
+worker output length/version refusal and native-machine byte parity. Source
+inspection from the [Paper controller research](../research/hardware-platforms.md#integrated-esp32-s3-controller-exact-source-findings)
+supports that layout only. Synthetic RGB triples are test-purpose data; exact
+panel charts, orientation, power sequencing and physical completion remain
+hardware qualification gates.
+
 ## Pixel renderer
 
 Low resolution is the medium. The recipe may apply composition-aware crop,

@@ -60,6 +60,24 @@ requirements have passed. The native product stays independent of the platform
 and optional transactions. Update the [verification ledger](verification.md)
 with evidence for each actual implementation slice.
 
+## Paper software profile and controller evidence
+
+The [2026-10-06 pinned controller inspection](../research/hardware-platforms.md#integrated-esp32-s3-controller-exact-source-findings)
+supports M1-04's next software slice: implement the generic closed indexed4
+contract in the [content pipeline](content-pipeline.md#closed-indexed4-software-profile),
+shared capability selection, executable-owned wire-code packing, immutable
+recipe/cache identity and bounded native target preview. Join the real renderer
+and outbox with synthetic fixtures and independently enumerated split-row bytes;
+then record actual validation in the verification map. No measured palette or
+controller is selected by those software tests.
+
+M1-01/M1-02 still need received module/revision and flash capacity, complete
+power/mechanical parts, a pinned isolated C/ESP-IDF build, mTLS/key custody,
+recoverable app/asset partitions and a bounded physical adapter. The reviewed
+sample's indefinite BUSY wait, swallowed SPI failure and factory-only partition
+table cannot serve those contracts unchanged. Implement software refusal and
+recovery tests while preserving the exact H/P physical acceptance gates.
+
 ## Composition specification delivery
 
 The [consolidated research](../research/conjunct-adoption.md) supports the
