@@ -1,6 +1,6 @@
 # Development/tagged candidate closure; production release gates remain independent.
 FROM rust@sha256:b1b3c9c0d921d7fa0a6d1f9ec7e4eab87f8c8ec97644c3d791450f131dec813f AS rust_tools
-FROM hexpm/elixir@sha256:5b77ba2dec41d6d1716b354bbca92cd9359ed02b273f92eeabd0c92f9c9bdeee AS build
+FROM hexpm/elixir@sha256:52ec0f335b9084bcfc0ce3a29b4c0288dc2fc2a07658ff809dc7d07589212cde AS build
 ARG TARGETARCH
 ARG FIXTURE_ERL_FLAGS
 ARG EXPECTED_VERSION=0.1.0-dev
@@ -17,7 +17,7 @@ COPY packages /src/packages
 COPY protocol /src/protocol
 COPY codec /src/codec
 COPY linux /src/release/linux
-RUN test "$(. /etc/os-release; echo "$ID:$VERSION_ID")" = ubuntu:24.04 && test "$(dpkg --print-architecture)" = "$TARGETARCH" && test "$(cat /usr/local/lib/erlang/releases/29/OTP_VERSION)" = 29.1 && test "$(elixir --short-version)" = 1.20.4 && test "$(gleam --version)" = 'gleam 1.18.1' && test "$(rustc --version | cut -d ' ' -f2)" = 1.97.1
+RUN test "$(. /etc/os-release; echo "$ID:$VERSION_ID")" = ubuntu:24.04 && test "$(dpkg --print-architecture)" = "$TARGETARCH" && test "$(cat /usr/local/lib/erlang/releases/29/OTP_VERSION)" = 29.1.1 && test "$(elixir --short-version)" = 1.20.4 && test "$(gleam --version)" = 'gleam 1.18.1' && test "$(rustc --version | cut -d ' ' -f2)" = 1.97.1
 WORKDIR /src/apps/core
 RUN mix deps.compile && mix compile --warnings-as-errors && mix release --overwrite
 WORKDIR /src/codec

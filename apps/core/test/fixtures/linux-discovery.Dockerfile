@@ -1,5 +1,5 @@
 # Software discovery fixture, not an Ubuntu application/release image.
-FROM elixir@sha256:3898ffe18d695e770239e4b342dc6b83136f52da0a37df2298083c03068cfd4e
+FROM hexpm/elixir@sha256:4a42b164d952ef56c135c1626f2174ab1a2780cd6fafd65b04d6e1590dfbd516
 
 # Retain archive signatures while disabling expiry only for this dated snapshot.
 RUN printf '%s\n' 'deb [check-valid-until=no signed-by=/usr/share/keyrings/debian-archive-keyring.gpg] http://snapshot.debian.org/archive/debian/20260930T000000Z trixie main' > /etc/apt/sources.list \

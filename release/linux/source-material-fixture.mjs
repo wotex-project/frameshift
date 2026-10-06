@@ -50,7 +50,7 @@ export async function linuxMaterialFixture(t) {
   for (const architecture of ['arm64', 'amd64']) {
     const candidate = join(repository, 'var', architecture); mkdirSync(candidate, { mode: 0o700 });
     const inputRecord = { schemaVersion: 1, kind: 'tagged-closure-candidate', product: source.product, version: source.version, ubuntu: '24.04', architecture, sourceCommit: commit, workingTreeChanged: false,
-      publicationAuthority: 'none', tag, sourceInputsSha256: hash(encode(source)), resolvedMaterialAssertion: 'captured-only', toolchains: { otp: '29.1', elixir: '1.20.4', gleam: '1.18.1', gleamArchiveSha256: gleamHashes[architecture], zig: '0.16.0', rust: '1.97.1', hex: '2.5.1' }, images, inputs: [...selected, ...material] };
+      publicationAuthority: 'none', tag, sourceInputsSha256: hash(encode(source)), resolvedMaterialAssertion: 'captured-only', toolchains: { otp: '29.1.1', elixir: '1.20.4', gleam: '1.18.1', gleamArchiveSha256: gleamHashes[architecture], zig: '0.16.0', rust: '1.97.1', hex: '2.5.1' }, images, inputs: [...selected, ...material] };
     put(candidate, 'runtime/root/usr/share/doc/frameshift/build-inputs.json', encode(inputRecord)); put(candidate, 'runtime/root/usr/share/doc/frameshift/source-inputs.json', encode(source));
     const coreRoot = 'runtime/root/usr/lib/frameshift/core';
     put(candidate, `${coreRoot}/releases/start_erl.data`, '17.1 0.1.0\n');

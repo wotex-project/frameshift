@@ -1,6 +1,6 @@
 # Portable locked BEAM code joined to freshly compiled Linux native closure.
 ARG CODEC_IMAGE=frameshift-codec-arm64:fixture
-FROM elixir@sha256:3898ffe18d695e770239e4b342dc6b83136f52da0a37df2298083c03068cfd4e AS runtime
+FROM hexpm/elixir@sha256:4a42b164d952ef56c135c1626f2174ab1a2780cd6fafd65b04d6e1590dfbd516 AS runtime
 FROM ${CODEC_IMAGE} AS native
 USER 0
 COPY --from=runtime /usr/local/lib/erlang/usr/include /otp-include

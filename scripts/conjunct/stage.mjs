@@ -58,7 +58,7 @@ try {
   assert.equal(typescript, 'Version 6.0.3');
   assert.equal(process.versions.node, '26.9.0');
   const beam = run('elixir', ['-e', 'IO.puts(System.version()); IO.puts(File.read!(Path.join([:code.root_dir(), "releases", :erlang.system_info(:otp_release), "OTP_VERSION"])))'], repository, { capture: true });
-  assert.equal(beam, '1.20.4\n29.1', 'select the Frameshift pinned BEAM runtime');
+  assert.equal(beam, '1.20.4\n29.1.1', 'select the Frameshift pinned BEAM runtime');
   env.CARGO_TARGET_DIR = join(cache, 'cargo');
   run('cargo', ['build', '--locked', '--release', '--manifest-path', join(source, 'Cargo.toml'), '-p', 'conjunct-port']);
   run('cargo', ['build', '--locked', '--release', '--manifest-path', join(source, 'Cargo.toml'), '-p', 'conjunct-abi', '--target', 'wasm32-unknown-unknown']);

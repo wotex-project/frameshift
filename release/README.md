@@ -562,7 +562,7 @@ CORE_SHA256 DEPENDENCY_JOIN JOIN_SHA256 OUTPUT` replays an existing core source
 receipt from its original single-receipt directory, then derives the selected
 five supported lexer/parser files from private copies of its admitted grammars.
 The independently pinned Mac/Ubuntu join supplies the captured output hashes.
-OTP 29.1/ERTS 17.1/parsetools 2.8 generator modules and default templates are
+OTP 29.1.1/ERTS 17.1/parsetools 2.8 generator modules and default templates are
 observed by byte hash; differing raw outputs, tools, identities or custody refuse.
 No generated actions are compiled or executed. Completed replay verifies proof
 files and tool observations without generation or output rewrites. An empty

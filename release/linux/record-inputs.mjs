@@ -24,7 +24,7 @@ const record = {
   workingTreeChanged: releaseGit(repository, ['status', '--porcelain']).length > 0,
   publicationAuthority: 'none',
   ...(source ? { tag, sourceInputsSha256: sha256(sourceBytes), resolvedMaterialAssertion: 'captured-only' } : {}),
-  toolchains: { otp: '29.1', elixir: '1.20.4', gleam: '1.18.1', gleamArchiveSha256: gleamHash, zig: '0.16.0', rust: '1.97.1', hex: '2.5.1' },
+  toolchains: { otp: '29.1.1', elixir: '1.20.4', gleam: '1.18.1', gleamArchiveSha256: gleamHash, zig: '0.16.0', rust: '1.97.1', hex: '2.5.1' },
   images,
   inputs: entries,
 };

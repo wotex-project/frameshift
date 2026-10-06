@@ -8,7 +8,7 @@ export const gleamHashes = {
   amd64: '4955a38c2e8c99457458e2471472ccd5ee3c45bd7637a315ce33bccf0dd75d9e',
 };
 export const images = {
-  build: 'sha256:5b77ba2dec41d6d1716b354bbca92cd9359ed02b273f92eeabd0c92f9c9bdeee',
+  build: 'sha256:52ec0f335b9084bcfc0ce3a29b4c0288dc2fc2a07658ff809dc7d07589212cde',
   rust: 'sha256:b1b3c9c0d921d7fa0a6d1f9ec7e4eab87f8c8ec97644c3d791450f131dec813f',
   runtime: 'sha256:534baea6a22c03a63003dbc8dbe78fe34bc0d7e595d9a9dc9834884ff530eb55',
 };
