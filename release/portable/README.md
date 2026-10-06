@@ -14,6 +14,12 @@ against independently supplied tag/commit/digest under private descriptor
 custody. `FrameshiftRelease.RecordJSON` preserves ordered compact bytes for
 both schemas. This does not run the live Git/Mix collector or prove a clean
 matching source checkout; receipt joins retain that separate gate.
+`FrameshiftRelease.Command.run/4` owns one explicitly selected developer tool
+through a separate native command worker, with literal arguments, closed stdin,
+independent stdout/stderr bounds and actual direct-child exit. Refusal retains
+the child after a single TERM request; it may outlast the acceptance budget.
+This primitive does not yet replace the live source queries. The remaining
+release migration belongs to M2 in the implementation plan.
 The escript CLI exposes distinct local and signature-only observations:
 
 ```sh
@@ -36,6 +42,9 @@ mise exec -- mix run -e 'case FrameshiftRelease.Input.read("mix.exs", maximum: 6
 
 The check builds the worker with pinned Zig, checks formatting, compiles Elixir
 with warnings as errors and exercises actual input/mutation/process fixtures.
+It also builds `frameshift-release-command` and tests real command pressure,
+deadline, caller-death, exit and malformed exchange behavior. Select another
+qualified command worker explicitly through the API's `:worker` option.
 The API requires an explicit read maximum; `hash/2` streams up to 8 GiB by
 default. `with_stream/3` supplies the admitted length and lazy sequential chunks
 of at most 64 KiB, with an explicit maximum up to 8 GiB. Enumerate every chunk

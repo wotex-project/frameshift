@@ -323,7 +323,8 @@ Preserve the producer's literal Git path ordering, SHA-1 object identities and
 SHA-256 bytes; no Unicode/checkout/newline normalization. Require stable tag and
 independently supplied commit, matching version/product, authority `none`, the
 three required source inputs, safe unique nonconflicting paths, regular Git modes
-and the exact ordered dependency-lock projection. Byte counts remain nonnegative
+and the exact ordered dependency-lock projection. Admit at most 65,536 files;
+each path is at most 4,096 UTF-8 bytes. Byte counts remain nonnegative
 safe JSON integers. Reject extra/duplicate fields, noncanonical encoding, boolean
 numeric substitutions and authentic-digest wrong identities.
 
@@ -338,6 +339,68 @@ source/receipt consumers switch. Record hashes must come from an independent
 retained source, never from the record being admitted. Qualify exact records from
 the real existing Git/Mix collector, Unicode/mode/lock projection, tamper and
 consumer-time custody refusal on Mac and Ubuntu before callers use this port.
+
+### Portable source command custody
+
+The live source port requires a release-only bounded command owner before
+replacing any Git/Mix query. `System.cmd/3` alone supplies neither an absolute
+deadline nor a byte ceiling; closing its port does not prove the external
+process stopped. `FrameshiftRelease.Command.run/4` is the specified owner of one
+explicit absolute executable, argument array, working directory and finite job.
+The executable is a separately qualified developer tool, never selected by a
+release record. Source callers own the fixed Git query/version-reader semantics,
+literal-object and environment policy. No shell interpolation, application
+dependency, background service, registry, hidden Node or shipped worker belongs
+to this boundary.
+
+Use a separate small `frameshift-release-command` executable in the existing
+release-only Zig worker build. It owns the directly spawned POSIX child and both
+nonblocking output pipes, observes `waitpid` for that exact unreaped child and
+retains ownership through actual exit. Child stdin is `/dev/null`; there is no
+interactive prompt or arbitrary stdin producer. Limit arguments to 256, each
+UTF-8 string to 8,192 bytes without NUL and their aggregate to 256 KiB. Executable
+and working-directory names are absolute. Each output pipe has an independent
+explicit maximum of 1 byte–16 MiB; the shared monotonic job is 1–900,000 ms. Drain both
+pipes fairly in bounded turns so a flooded pipe cannot hide timeout or stderr.
+
+Transmit the bounded launch description and typed results through length-framed
+worker stdin/stdout, with no command/path/output in worker argv or diagnostics.
+The `release-command-v1` launch body is version `1` (u8), reserved zero (u8),
+argument count (u16), job milliseconds (u32), stdout maximum (u32), stderr maximum
+(u32), executable length (u16), cwd length (u16), those two UTF-8 strings, then
+each argument's length (u16) and UTF-8 bytes. The exact body is at most 288 KiB;
+all frames start with a big-endian u32 body length. An abort body is exactly
+one zero byte. Success is version `1`, status `0`, kind `1`, reserved zero
+(all u8), stdout length (u64) and exactly those bytes. Refusal is exactly version
+`1`, status `1`, category (u8), reserved zero: category `1` launch/protocol,
+`2` child failure, `3` deadline, `4` output limit, `5` caller cancellation,
+`6` incomplete output or `7` unknown child custody. Successful worker exit is
+zero; a known refusal exits 65. EOF/claimed frames alone grant no acceptance.
+Only complete bounded stdout from child exit zero, both output EOFs, intact
+framing and worker exit zero before the deadline may be accepted. Discard stderr
+after its independent bound/custody check. Refusal emits only fixed categories;
+no source path, child output, environment value or operating-system exception
+may enter CLI failure output. Malformed/truncated/extra frames, exec failure,
+nonzero/signalled child, output overflow or missing EOF refuse.
+
+Deadline, caller loss or overflow sends at most one TERM to the directly
+owned unreaped child, then discards late output and continues observing actual
+exit. No numeric PID lookup, signal escalation, retry or group signal follows.
+The owner and worker remain retained after refusal until direct exit is known;
+a one-shot tool may therefore exceed its acceptance budget. A stalled syscall
+or child ignoring TERM has no hard termination guarantee. Direct exit does not
+prove descendants or their effects stopped. Missing output EOF after direct
+exit is a separate output-custody refusal, never a complete command result.
+Lost worker/child custody remains explicit unknown and cannot permit acceptance,
+record replacement or a fresh automatic retry.
+
+Before the source caller switches, qualify the same actual worker/API on Mac
+and Ubuntu with exact argv/working-directory/stdout behavior, simultaneous pipe
+pressure, finite output/deadline, ignored TERM followed by actual exit, caller
+death, exec failure, child signal/nonzero status and malformed framing. Then
+join real Git/tag/tree/index/hidden-content/mode and non-starting Mix-version
+fixtures. The frozen source record wire remains unchanged; no command primitive
+alone proves a clean source, native build, retained producer or publication.
 
 ## Locked core dependency source bytes
 

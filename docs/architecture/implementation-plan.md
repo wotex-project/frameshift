@@ -1352,9 +1352,12 @@ Git identities and lock projection. Ubuntu uses the public producer corpus and
 native descriptor/JSON admission. Independently pinned authentic-digest wrong
 schemas and callback-time mutation refuse. This verifies the declared record;
 live Git/tag/index/worktree/version verification and producer/replay joins still
-remain. Next implement the bounded live source command join and source-bound
-record consumers
-and their explicit native producer cutover. Installed image acceptance remains R2.
+remain. The bounded command primitive now passes nine real-child/protocol groups
+on both recorded OS configurations; all 41 portable groups pass. Literal argv,
+independent output bounds, actual exit and retained deadline/caller-death refusal
+are qualified at that software tier. It does not yet join live source queries.
+Keep the remaining source-bound record/native producer cutover in the broader
+release migration; the active milestone governs subsequent work. Installed image acceptance remains R2.
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

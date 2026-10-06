@@ -330,6 +330,7 @@ check_release_portable() {
     cd "$repository_root/release/portable/worker"
     mise exec -- zig fmt --check build.zig src
     mise exec -- zig build test
+    mise exec -- zig build test-command
     mise exec -- zig build -Doptimize=ReleaseSafe
   )
   (

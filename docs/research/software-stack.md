@@ -551,6 +551,62 @@ join before collector or receipt consumers switch. A valid unsigned declaration
 does not become fresh build/source, installed or publication evidence merely
 because its schema and transport digest agree.
 
+**Live source command boundary:** reviewed 2026-10-06 before implementation.
+The installed pinned Elixir 1.20.4
+[`System.cmd/3` source](https://github.com/elixir-lang/elixir/blob/v1.20.4/lib/elixir/lib/system.ex#L1000-L1077)
+documents array arguments and explicit environment removal but exposes no
+deadline option. Its byte receiver repeatedly collects data until exit status,
+without a built-in byte limit. The pinned
+[`Port` orphan-process guidance](https://github.com/elixir-lang/elixir/blob/v1.20.4/lib/elixir/lib/port.ex#L145-L186)
+states that closing channels does not automatically terminate the program.
+A task timeout or `Port.close/1` therefore cannot qualify bounded child custody.
+The existing Linux discovery adapter uses GNU `timeout`; that host-specific
+dependency is not available as the portable Mac release foundation.
+
+The qualified native `OwnedCommand` already distinguishes a TERM request from
+reaped direct exit and retains one-shot callers after refusal. The installed
+Mac `waitpid(2)` reference defines nonblocking `WNOHANG` observation and the
+distinction between normal, signalled and stopped status. Those API facts support
+the specified small release-only POSIX command worker; they do not establish an
+unimplemented portable worker. Repeated `gh` requests for the pinned remote
+source encountered transport failures; the inspected installed 1.20.4 source
+is the exact evidence for the Elixir behavior here.
+
+Implement that one bounded primitive using the existing pinned Zig/libc build,
+with direct child ownership, fair independent stdout/stderr bounds, one absolute
+deadline, one TERM and actual-exit retention. Keep Git query/version semantics
+in the Elixir source owner and preserve independent tool selection. Reject the
+design if a normal timeout loses exit custody, stderr flooding bypasses the
+budget, callback/caller loss allows late acceptance, or a successful direct exit
+is described as stopped descendants. Qualify real children on Mac and Ubuntu
+before the live source verifier calls it; no bare shell/Node fallback or new
+application service is justified.
+
+Observed 2026-10-06: nine actual command groups and all 41 portable groups pass
+on macOS 27.0.1 arm64 and Ubuntu 24.04.5 arm64 / OrbStack with Elixir 1.20.4,
+OTP 29.1 and Zig 0.16.0. Both execution OSes run the native worker against real
+children; Ubuntu uses the private pinned clean runtime without changing the
+installed host. Literal/Unicode/empty argv, physical working-directory identity,
+explicit environment/removal and closed stdin pass. Simultaneous 320 KiB pipe
+pressure drains completely; either pipe exceeding its independent bound refuses.
+Exec/working-directory failure, child nonzero/signal, missing descendant-held
+pipe EOF, malformed launch and extra/truncated/oversized/false-exit output refuse.
+An actual TERM-ignoring child remains owned after deadline and exits later;
+caller death requests one observed TERM and retains child/worker actual exit.
+These tests establish direct-child custody, not descendant termination.
+
+The installed `execve(2)` reference states that caught handlers reset on exec,
+ignored dispositions persist, and blocked signals persist. The worker therefore
+clears the child's signal mask and establishes a caught TERM handler before
+exec, preserving ordinary child TERM behavior. Darwin SDK signal-handler cast
+macros failed Zig C translation; a real C-callable handler avoids that translation
+problem without inventing a numeric handler pointer. Actual signalled-exit and
+TERM cases qualify this choice on both OSes. Initial tests also corrected a
+stderr fixture redirect that discarded its intended flood and accepted macOS's
+physical `/private/var` working-directory identity instead of comparing an alias
+spelling. The primitive remains independent of Git/version policy; source caller
+cutover is unfinished M2 work under the active M1 delivery plan.
+
 Adopt Swift for native Mac tooling, Elixir for shared portable release policy
 including pure Cask/appcast rendering and signing, and POSIX shell for entry
 points. Directory names do not determine ownership: portable logic currently
