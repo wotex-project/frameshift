@@ -1,0 +1,13 @@
+#!/bin/sh
+set -eu
+repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
+mkdir -p "$repository_root/var/conjunct-adapter"
+run_directory=$(mktemp -d "$repository_root/var/conjunct-adapter/run.XXXXXX")
+printf '%s\n' incomplete > "$run_directory/initial-state.txt"
+cd "$repository_root/packages/build-spec"
+mise exec -- node --check js/conjunct-adapter.mjs
+mise exec -- node --check checks/conjunct-adapter.mjs
+mise exec -- mix format --check-formatted
+mise exec -- env MIX_ENV=test mix compile --warnings-as-errors
+mise exec -- node checks/conjunct-adapter.mjs "$repository_root" "$run_directory"
+printf '%s\n' "$run_directory" > "$repository_root/var/conjunct-adapter/current"

@@ -131,6 +131,12 @@ complete expectations before implementing that adapter, then qualify every
 mandatory planning stage through its actual producer owner. This contract
 amendment does not establish installed consumer or physical acceptance.
 
+The first exact unit/pose/local-ID primitives now pass both-runtime retained
+qualification and the complete existing package gate. Continue C with the
+installed producer join, complete source/target inventories and all thirteen
+mandatory planning-stage mappings; the primitives do not close C or enable D's
+physical acceptance.
+
 Host, protocol, receiver and simulator work below remains a separate product
 lane. Conjunct proof-of-concept completion does not claim these installed-product
 requirements have passed. The native product stays independent of the platform

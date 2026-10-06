@@ -216,14 +216,22 @@ It does not complete S2's positive/violated/unknown corpus, S3 migration or S4;
 generic producer flow/route/group/support/raster assessments remain required.
 
 The [exact v1 adapter requirements](conjunct-integration.md#exact-v1-adapter-requirements)
-now specify unit/count concepts, all rotated origins, native-ID lineage and
-required loss/refusal cases. These are planned acceptance requirements; no new
-adapter, installed-package or migration test result is asserted here.
+specify unit/count concepts, all rotated origins, native-ID lineage and required
+loss/refusal cases. On 2026-10-06, `scripts/check-conjunct-adapter` qualified the
+first Elixir/JavaScript conversion primitives: 44 full authored hands, 900
+independent corner transforms, two executed source faults and their reduced
+counterexamples, and ten null-budget smoke calls per runtime. Complete records
+are retained under ignored `var/conjunct-adapter/`; the final revised harness
+passed at `run.s7sJba`. The full package gate passed 183 Gleam tests per target,
+28 Elixir and 40 browser/data tests, all existing parity/oracle checks and an
+isolated release. Policy passed its 19 workspace fixtures. This is primitive
+conversion evidence; complete profile migration, installed producer resolution
+and the mandatory frame-check join remain open.
 
 ### Physical compiler evidence
 
 Run `scripts/check build-spec` for the shared package. The current gate passes
-183 Gleam tests per target, 26 Elixir and 38 browser/data tests, all listed
+183 Gleam tests per target, 28 Elixir and 40 browser/data tests, all listed
 parity/oracle fixtures and an isolated OTP release without test modules. These
 are bounded software claims under declared inputs. Full BuildSpec admission,
 qualified contracts and physical evidence remain required.

@@ -33,6 +33,13 @@ producer delivery and product fixtures while both sides are developed.
   bounded codes; they never echo untrusted input.
 - `FrameshiftBuild.profile_identity/1` validates bytes then hashes the versioned
   payload with OTP SHA-256.
+- `FrameshiftBuild.ConjunctAdapter.quantity/5`, `transform/4` and `local_id/2`
+  convert resolved v1 values, rotated-outline origins and native IDs under the
+  [exact product mapping](../../docs/architecture/conjunct-integration.md#exact-v1-adapter-requirements).
+  Browser equivalents are `quantity`, `transform` and `localId` in
+  `js/conjunct-adapter.mjs`. Results contain exact canonical rational values or
+  bounded refusals. These primitives do not emit a Conjunct artifact/report,
+  validate whole profiles, promote evidence or replace a planning stage.
 - `FrameshiftBuild.inspect_profile/1` derives the same identity, public metadata
   and each fact/port's source citations. Applications resolve these citations;
   the shared library performs no source lookup or evidence promotion.
@@ -153,6 +160,15 @@ adapters, 256 profile and 256 assembly canonical-byte/hash parity fixtures and a
 release. The [sourced baseline data](../../data/physical/README.md) additionally
 passes source-reference integrity and both-target hash checks. Synthetic test
 fixtures are never manufacturer evidence.
+
+`scripts/check-conjunct-adapter` retains complete selected source/BEAM/compiled-JavaScript
+bytes, inputs, expected/actual results and commands under ignored
+`var/conjunct-adapter/`. The 2026-10-06 primitive qualification passes 44 authored
+hands and 900 independent corner transforms on each runtime, two executed source
+faults with actual reduced counterexamples per runtime, and ten correctness
+smoke samples per runtime under null latency/memory budgets. The complete
+package gate includes this campaign. Whole-profile migration, installed producer
+resolution and all mandatory frame checks remain separate qualification work.
 Graph traversal additionally agrees across targets on all 512 directed graphs
 on three vertices and with an independent transitive-closure oracle.
 Geometry agrees on 2,048 placements across all four rotations with an independent
