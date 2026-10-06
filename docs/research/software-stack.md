@@ -271,8 +271,7 @@ contract, with a local regression for any necessary platform workaround.
 ### Release tooling language boundary
 
 **Review date:** 2026-10-06. **Evidence:** repository and upstream source/API
-inspection; this review implements no language port and runs no replacement
-tool. The decision is recorded in [D-003](../decisions/README.md#d-003--language-boundary).
+inspection and the local replacement qualification recorded below. The decision is recorded in [D-003](../decisions/README.md#d-003--language-boundary).
 
 The requirement is maintainable release tooling that preserves exact archive
 identity, independent trust, bounded input admission, retained failure custody
@@ -283,13 +282,23 @@ and isolated native workers. Build-time tools are separate from that runtime.
 
 Inspection of `release/macos/` found 51 `.mjs` files, including 17 test files,
 seven fixture files and substantial closure, SDK, packaging and receipt logic.
-`scripts/check-macos-closure` invokes Node; `release/macos/closure.mjs` parses
-Mach-O metadata, `prepare.mjs` transforms only private packaging stages,
+The closure/resource wrappers now invoke the qualified Swift release tool.
+Retained `release/macos/closure.mjs` still parses Mach-O for library consumers;
+`prepare.mjs` transforms only private packaging stages,
 `dmg.mjs` drives Apple tools, and `channels.mjs` renders/signs channel material.
 Shared `release/files.mjs`, `manifest.mjs`, `ustar.mjs` and material consumers
 also serve portable or Ubuntu paths. These are developer/CI tools; their
 existence does not mean the application ships a Node runtime. The count is a
 dated source observation, not a code-quality or release-acceptance measurement.
+
+The native wrappers build the separate tool and execute its completed binary.
+The exact installed SwiftPM help documents that `--package-path` changes the
+working directory; qualifying caller-relative paths requires making them absolute
+first. A concurrent test reproduced a SwiftPM lock message despite `--quiet`
+when `swift run` mixed setup and admission output. Separating the build from
+execution preserves the existing result/error interface. Neither wrapper invokes
+Node, fetches/resolves SDK inputs or initializes the generation SDK. Existing
+Node library callers and portable receipt owners retain their own cutover gates.
 
 Reuse of Node's filesystem, crypto and test APIs explains the present shape as
 an inference from these imports and callers. No Apple requirement or recorded

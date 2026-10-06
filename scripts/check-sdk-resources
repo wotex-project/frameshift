@@ -1,4 +1,19 @@
 #!/bin/sh
 set -eu
+if [ "$#" -ne 1 ] || [ -z "$1" ]; then
+  printf '%s\n' 'usage: check-sdk-resources RESOURCE_ROOT' >&2
+  exit 64
+fi
+resource_root="$1"
+case "$resource_root" in
+  /*) ;;
+  *) resource_root="$(pwd -P)/$resource_root" ;;
+esac
 repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-exec mise exec -- node "$repository_root/release/macos/sdk-resources-cli.mjs" "$@"
+if ! /usr/bin/swift build --quiet --disable-automatic-resolution --disable-netrc --disable-keychain \
+  --package-path "$repository_root/release/macos" --configuration release \
+  --product frameshift-mac-release >/dev/null 2>&1; then
+  printf '%s\n' 'generation SDK resources: unavailable, unsafe or changed custody' >&2
+  exit 1
+fi
+exec "$repository_root/release/macos/.build/release/frameshift-mac-release" verify-generation-resources "$resource_root"

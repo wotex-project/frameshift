@@ -13,10 +13,14 @@ function fixture(t, actual = false) {
   for (const name of ['configs.json', 'models.json']) { if (actual) copyFileSync(join(live, name), join(root, name)); else writeFileSync(join(root, name), '{}\n'); chmodSync(join(root, name), 0o600); } return root;
 }
 test('actual pinned resource bytes pass private unchanged CLI replay without SDK or model IO', { skip: !live && 'FRAMESHIFT_SDK_RESOURCES_FIXTURE is required for exact upstream resource bytes' }, async t => {
-  const root = fixture(t, true), before = ['configs.json', 'models.json'].map(name => custody(lstatSync(join(root, name), { bigint: true }))), result = await checkSDKResources(root);
+  const root = fixture(t, true), before = ['', 'configs.json', 'models.json'].map(name => custody(lstatSync(join(root, name), { bigint: true }))), result = await checkSDKResources(root);
   assert.equal(result.publicationAuthority, 'none'); assert.equal(result.resources.length, 2); assert.equal(JSON.stringify(result).includes(root), false);
   const cli = JSON.parse(execFileSync('mise', ['exec', '--', 'node', join(owner, 'release/macos/sdk-resources-cli.mjs'), root], { cwd: owner, encoding: 'utf8', timeout: 5000 })); assert.deepEqual(cli, result);
-  assert.deepEqual(['configs.json', 'models.json'].map(name => custody(lstatSync(join(root, name), { bigint: true }))), before);
+  if (process.platform === 'darwin') {
+    const env = { ...process.env, PATH: '/usr/bin:/bin:/usr/sbin:/sbin', NODE_OPTIONS: '--frameshift-wrapper-must-not-start-node' }, expected = Buffer.from(JSON.stringify(result) + '\n');
+    for (const input of [root, '.']) assert.deepEqual(execFileSync(join(owner, 'scripts/check-sdk-resources'), [input], { cwd: root, env, timeout: 180000, maxBuffer: 64 * 1024 }), expected);
+  }
+  assert.deepEqual(['', 'configs.json', 'models.json'].map(name => custody(lstatSync(join(root, name), { bigint: true }))), before);
 });
 test('missing, changed and oversized inputs refuse without repairing bytes', async t => {
   const root = fixture(t), path = join(root, 'configs.json'); await assert.rejects(() => checkSDKResources(root)); assert.equal(readFileSync(path, 'utf8'), '{}\n');
@@ -37,4 +41,9 @@ test('actual resources refuse file or namespace mutation during descriptor reads
 test('fixed CLI usage/refusal contains no supplied private path or SDK details', () => {
   const run = args => spawnSync('mise', ['exec', '--', 'node', join(owner, 'release/macos/sdk-resources-cli.mjs'), ...args], { cwd: owner, encoding: 'utf8', timeout: 5000 }); assert.equal(run([]).status, 64);
   const result = run(['private-sdk-resource-root']); assert.equal(result.status, 1); assert.equal(result.stdout, ''); assert.equal(result.stderr, 'generation SDK resources: unavailable, unsafe or changed custody\n');
+  if (process.platform === 'darwin') {
+    const wrapper = args => spawnSync(join(owner, 'scripts/check-sdk-resources'), args, { cwd: owner, env: { ...process.env, PATH: '/usr/bin:/bin:/usr/sbin:/sbin', NODE_OPTIONS: '--frameshift-wrapper-must-not-start-node' }, encoding: 'utf8', timeout: 180000, maxBuffer: 64 * 1024 });
+    for (const args of [[], [''], ['root', 'extra']]) { const usage = wrapper(args); assert.equal(usage.status, 64); assert.equal(usage.stdout, ''); assert.equal(usage.stderr, 'usage: check-sdk-resources RESOURCE_ROOT\n'); }
+    const refused = wrapper(['private-sdk-resource-root']); assert.equal(refused.status, 1); assert.equal(refused.stdout, ''); assert.equal(refused.stderr, result.stderr);
+  }
 });

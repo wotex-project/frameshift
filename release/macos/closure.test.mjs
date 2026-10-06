@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { chmodSync, copyFileSync, linkSync, mkdirSync, readFileSync, renameSync, rmSync, symlinkSync, truncateSync, writeFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 import test from 'node:test';
 import { auditMacBundle, inspectMachO, versionNumber } from './closure.mjs';
 import { prepareDevelopmentBundle } from './prepare.mjs';
@@ -70,6 +70,13 @@ test('actual arm64, Intel and universal binaries satisfy only their static CPU a
     const { root } = fixture(t, architecture), report = await auditMacBundle(root, architecture);
     assert.equal(report.natives.length, 7); assert.equal(report.nativeMinimum, '14.0.0'); assert.equal(report.publicationAuthority, 'none');
     assert.ok(report.files.every(file => /^[0-9a-f]{64}$/.test(file.sha256)));
+    const script = resolve(new URL('../../scripts/check-macos-closure', import.meta.url).pathname);
+    const env = { ...process.env, PATH: '/usr/bin:/bin:/usr/sbin:/sbin', NODE_OPTIONS: '--frameshift-wrapper-must-not-start-node' };
+    const expected = Buffer.from(JSON.stringify(report) + '\n');
+    for (const app of [root, '.']) {
+      const wrapped = spawnSync(script, [app, architecture], { cwd: root, env, timeout: 180000, maxBuffer: 16 * 1024 * 1024 });
+      assert.equal(wrapped.error, undefined); assert.equal(wrapped.status, 0); assert.equal(wrapped.stderr.length, 0); assert.deepEqual(wrapped.stdout, expected);
+    }
     if (architecture !== 'universal') {
       await assert.rejects(auditMacBundle(root, 'universal'), /CPU/);
       await assert.rejects(auditMacBundle(root, architecture === 'arm64' ? 'x86_64' : 'arm64'), /CPU/);
@@ -138,4 +145,10 @@ test('closure CLI uses fixed usage and failure output without disclosing input p
   assert.equal(usage.status, 64);
   const bad = spawnSync(process.execPath, [cli, join(temporary(t), 'private-missing-path'), 'arm64'], { encoding: 'utf8', timeout: 2000 });
   assert.equal(bad.status, 1); assert.equal(bad.stderr, 'Mac bundle closure refused\n'); assert.equal(bad.stdout, '');
+  if (process.platform === 'darwin') {
+    const script = resolve(new URL('../../scripts/check-macos-closure', import.meta.url).pathname), env = { ...process.env, PATH: '/usr/bin:/bin:/usr/sbin:/sbin', NODE_OPTIONS: '--frameshift-wrapper-must-not-start-node' };
+    const wrapper = args => spawnSync(script, args, { env, encoding: 'utf8', timeout: 180000, maxBuffer: 16 * 1024 * 1024 });
+    for (const args of [[], ['app'], ['app', 'wrong'], ['app', 'arm64', 'extra']]) { const refused = wrapper(args); assert.equal(refused.status, 64); assert.equal(refused.stdout, ''); assert.equal(refused.stderr, usage.stderr); }
+    const refused = wrapper(['private-missing-app', 'arm64']); assert.equal(refused.status, 1); assert.equal(refused.stdout, ''); assert.equal(refused.stderr, bad.stderr);
+  }
 });

@@ -700,6 +700,29 @@ The implemented `frameshift-mac-release check-bundle APP CPU` command uses the
 existing closure usage/refusal exits 64/1 and fixed refusal text. Only after
 whole-profile parity may `scripts/check-macos-closure` dispatch to it. SDK
 resource/cache/archive and signature admission retain their additional gates.
+`scripts/check-macos-closure` now dispatches to the qualified native inspector.
+Preserve its exact argument count, CPU selector, usage/refusal text and exits.
+Resolve relative app paths from the caller's physical working directory before
+SwiftPM changes its own directory. Build the separate release-tool product with
+Apple's selected toolchain and automatic resolution/netrc/Keychain use disabled,
+then execute the completed release binary directly. SwiftPM's concurrent lock
+messages must not enter native observations or fixed admission errors. A failed
+tool build returns the existing refusal with no observation; the `mac-release`
+check lane exposes compiler diagnostics separately. This is developer tool
+setup outside the inspector's job budget, with no shipped SwiftPM/Node runtime.
+Retained Node library consumers still require their individual native joins.
+
+The two selected wrappers pass all fifteen existing closure/resource test groups
+on macOS 27.0.1 arm64 / Xcode 27 with actual resource input and no exclusions.
+Actual arm64/Intel/universal compiler-role inputs preserve exact observation
+bytes and 64/1 messages through absolute and caller-relative invocation with
+Node unavailable. Concurrent setup/admission remains quiet. The retained full
+native host's 1,419 files and 24 native records reproduce all schema-two bytes
+on both path forms with every original identity unchanged. This qualifies the
+inspection entry point; retained packaging/receipt library callers, actual
+SDK-bearing host/around-compiler integration, native Intel/older OS and installed
+release retain their separate acceptance gates.
+
 The observation is bounded to 16 MiB including the command's final LF. String
 escaping preserves exact Unicode bytes and traversal uses UTF-16 lexical order,
 matching the retained format. Typed property-list admission deliberately refuses

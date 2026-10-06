@@ -77,7 +77,7 @@ roles/CPUs/minima/imports and exact pinned Sparkle aliases, then repeats the
 whole inventory to confirm custody. Output preserves the existing schema-two
 observation bytes and is bounded to 16 MiB including LF. Usage exits 64; bundle
 refusals exit 1 with fixed text and no observation. SDK resource/archive/cache
-equality and production-wrapper cutover remain separate RT2 gates.
+equality and remaining native producer/library cutover retain separate RT2 gates.
 
 Join strict static signatures to that observation with:
 
@@ -104,9 +104,9 @@ custody and the two single-link 0600 pinned files. It preflights both names/file
 before protected hashes and repeats complete descriptor/namespace custody.
 The fixed schema-one observation preserves existing bytes, includes no private
 path and is bounded to 64 KiB including LF; usage/admission exits are 64/1.
-No SDK/model/network operation or repair occurs. The existing wrapper remains on
-its current implementation until its qualified cutover; exact weight bytes and
-shipping-worker qualification are independent.
+No SDK/model/network operation or repair occurs. `scripts/check-sdk-resources` uses
+`PinnedGenerationResources` through the separate release-built tool; exact weight
+bytes and shipping-worker qualification are independent.
 
 Compare the actual compiler framework with its separately pinned original ZIP:
 
@@ -123,6 +123,13 @@ exits are 64/1 with fixed text. Failures retain scratch and any owned monitor;
 only completed verified scratch is removed. Cancellation after child success
 still refuses. This does not resolve/repair the compiler workspace, derive CPU
 code, re-sign, execute the SDK or establish upstream build/license/release trust.
+
+The existing `scripts/check-macos-closure` and `scripts/check-sdk-resources`
+wrappers now build this development tool and execute its completed binary.
+They preserve caller-relative input, record bytes and fixed 64/1 messages;
+a failed build emits no observation. Concurrent SwiftPM diagnostics stay outside
+admission output. Use `scripts/check mac-release` for compiler diagnostics.
+Remaining Node library/producer integrations still require their own cutover.
 
 Capture the original SDK inputs recorded by the actual root-package compiler:
 

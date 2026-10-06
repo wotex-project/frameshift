@@ -1089,7 +1089,8 @@ The guide links only to real verified artifacts. See
 **State:** Swift descriptor/hash, owned-process and typed-plist foundations
 and bounded Mach-O/whole-bundle observation, strict development signatures and
 pinned SDK resource/archive/cache comparison and compiler workspace capture
-implemented locally; wrapper/native producer integration, native packaging
+implemented locally, with closure/resource wrapper cutover qualified; remaining
+native producer/library integration, native packaging
 ports and the portable descriptor adapter remain unimplemented/unqualified. The
 pinned compiler capture is at its validated checkpoint. Use this order for
 affected release tooling. Do not extend Mac-native
@@ -1130,9 +1131,9 @@ roles, CPU/import/minimum rules and exact pinned SDK aliases to a second complet
 custody scan. Six groups pass within the 49-test package lane, including the
 actual 8,192-entry boundary and same-byte/tree mutation refusals. Five real
 compiled/SDK/fresh-app closures match the retained schema-two JSON bytes exactly,
-including Unicode/escaping and traversal order. The command is available for
-inspection; production wrappers retain their current implementation until
-individual wrapper/native producer integration completes RT2.
+including Unicode/escaping and traversal order. The closure wrapper now invokes
+this native inspector; remaining native producer/library integration retains
+its RT2 gate.
 See the [closure contract](../host/macos.md#native-closure-admission).
 
 `NativeSignatureVerifier` now brackets strict all-architecture/nested Security
@@ -1183,6 +1184,19 @@ ports are ready for qualified individual wrapper/native producer integration;
 the shared aggregate, around-compiler join and RT3 packaging/updater work still
 need that acceptance. See the
 [capture contract](../host/macos.md#dependency-source-receipt-archive-handoff).
+
+The closure/resource POSIX entry points now build the separate native tool and
+execute its completed binary, preserving caller-relative paths and fixed output
+while keeping SwiftPM setup/lock diagnostics separate. All fifteen existing
+closure/resource groups pass with actual resource input, concurrent calls,
+absolute/relative byte parity and Node unavailable. The retained full host's
+1,419 files/24 native records match every schema-two byte and identity. Native
+resource checks bracket the actual offline SDK child with unchanged custody,
+313 catalog entries, two resolved/not-downloaded models, zero observed network
+attempts and an empty model root. Continue the retained native producer/library
+and around-compiler joins, with one-shot CLI failure/child lifetime qualified
+before child-bearing consumer cutover; then RT3 and H3-L3 updater integration.
+The portable descriptor/input adapter and Elixir owners remain independent work.
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

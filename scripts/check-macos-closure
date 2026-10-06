@@ -1,4 +1,26 @@
 #!/bin/sh
 set -eu
+if [ "$#" -ne 2 ]; then
+  printf '%s\n' 'usage: scripts/check-macos-closure APP arm64|x86_64|universal' >&2
+  exit 64
+fi
+case "$2" in
+  arm64|x86_64|universal) ;;
+  *)
+    printf '%s\n' 'usage: scripts/check-macos-closure APP arm64|x86_64|universal' >&2
+    exit 64
+    ;;
+esac
+app="$1"
+case "$app" in
+  /*) ;;
+  *) app="$(pwd -P)/$app" ;;
+esac
 repository_root=$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)
-exec mise exec -- node "$repository_root/release/macos/closure-cli.mjs" "$@"
+if ! /usr/bin/swift build --quiet --disable-automatic-resolution --disable-netrc --disable-keychain \
+  --package-path "$repository_root/release/macos" --configuration release \
+  --product frameshift-mac-release >/dev/null 2>&1; then
+  printf '%s\n' 'Mac bundle closure refused' >&2
+  exit 1
+fi
+exec "$repository_root/release/macos/.build/release/frameshift-mac-release" check-bundle "$app" "$2"

@@ -189,8 +189,32 @@ command reproduces the retained result bytes exactly and preserves resource
 custody around the actual offline SDK child: 313 catalog entries, both selected
 models resolved without download, zero observed URLSession attempts and an empty
 private model root. Fixed CLI 64/1 refusals pass. Without the explicit fixture
-input, the two live-resource groups are reported as exclusions. The production
-wrapper and full-weight/shipping-worker qualification remain separate gates.
+input, the two live-resource groups are reported as exclusions. Full-weight and
+shipping-worker qualification remains separate.
+
+`scripts/check-sdk-resources` now invokes the qualified native resource checker.
+Preserve the one nonempty argument, exact schema-one bytes, usage/admission exits
+64/1 and fixed messages. Resolve relative input from the caller's physical
+working directory before building the separate Mac release-tool product, with
+Apple's selected toolchain and automatic resolution/netrc/Keychain use disabled.
+Execute the completed binary directly; SwiftPM build/lock diagnostics do not
+enter the resource result or fixed errors. Build failure refuses without any
+observation. Use the `mac-release` lane for compiler diagnostics. Tool setup is
+outside the resource admission budget and is not an installed application
+runtime. Qualify absolute/relative invocation with Node absent from the path,
+concurrent wrapper calls and actual before/after-SDK resource custody. Retained
+Node resource functions serve comparison fixtures until their remaining library
+consumers are migrated; full weights and the shipping worker keep their own gates.
+
+The selected closure/resource wrappers pass all fifteen existing test groups
+with actual resource input and no exclusions. Native resource admission matches
+all retained bytes through absolute/caller-relative paths with Node unavailable,
+including fixed 64/1 usage/refusal and concurrent calls. The actual offline SDK
+child is bracketed by the native wrapper with complete unchanged resource/root
+custody: 313 catalog entries, both selected models resolved/not downloaded, zero
+observed URLSession attempts and an empty private model root. This qualifies the
+resource entry point; full model/decoder identity, shipping worker root/network/
+generation/cancellation and installed acceptance remain separate.
 
 ### Composition recipe
 
