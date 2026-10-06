@@ -148,6 +148,23 @@ only completed verified scratch is removed. Cancellation after child success
 still refuses. This does not resolve/repair the compiler workspace, derive CPU
 code, re-sign, execute the SDK or establish upstream build/license/release trust.
 
+Derive a single CPU into an unpublished private app with no Frameworks directory:
+
+```sh
+swift run frameshift-mac-release stage-sparkle-framework /absolute/path/to/archive.zip /private/stage/.package.Example/Frameshift.app arm64
+```
+
+`SparkleFrameworkStager` reuses exact original ZIP admission, copies the fixed
+SDK tree with owned `ditto`, then derives only five binaries with owned `lipo`.
+Its private work stays inside Frameworks; common bytes, modes, aliases and
+unrelated app identities remain exact. It returns the existing schema-one
+source/derived observation below 64 KiB including LF. It does not access or
+repair the compiler cache, sign the app or publish a result. The one-writer
+stage has a two-minute job budget and fifteen-second/64-KiB child bounds;
+refusal retains all failed work and the exact last child until its exit is
+known. Only fully checked scratch/work is removed. CPU assembly and actual
+source-bound packaging/library cutover still require separate qualification.
+
 Child-bearing CLI commands borrow the same `OwnedCommand` objects used by the
 library. On failure they print their fixed refusal, then retain those owners
 until each direct child is known not-started or reaped. This read-only wait

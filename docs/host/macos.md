@@ -1131,6 +1131,45 @@ pre/post derived inventories must be available to the source-bound producer;
 final seals and app closure remain separate checks. These local inputs do not
 establish upstream build derivation, license clearance or production authority.
 
+The native producer is `SparkleFrameworkStager.stage(archive:app:architecture:)`
+with `frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP CPU`.
+It reuses original ZIP admission before any SDK copy, then brackets all seven
+fixed children (unzip, ditto and five lipo calls) with original/private-stage
+custody. Frameworks must be absent, including dangling links. Its exclusive
+0700 `.sparkle-work` directory stays inside the new Frameworks directory;
+outputs never change the retained `.package.*` parent's namespace. Admit each
+single-link, protected, bounded native output and compare the exact selected
+Mach-O facts before replacing only its corresponding copied role. Complete
+checkpoints preserve common files and aliases, and detect same-byte rewrites,
+namespace changes or foreign mutations. The stage is caller-owned with one
+writer; this custody check does not identify a competing writer to the exact
+file currently being written by its owned Apple child.
+
+Return the existing ordered schema-one derivation JSON (`archive`, requested
+`architecture`, complete `source`/`derived` trees and selected `native` facts),
+below 64 KiB including LF, with publication authority none. This is a native
+observation for the existing producer join, not a portable receipt encoder.
+The job has a two-minute monotonic budget; each owned child has a fifteen-second
+and separate 64-KiB pipe bound. Refusals use fixed 64/1 usage/admission exits and
+retain the failed app, scratch, work and exact last child until its direct exit
+is known. No late bytes become success. Only completed, custody-confirmed
+scratch/work is removed. Compiler cache admission, source-bound producer joins,
+CPU assembly and final app seals remain independent requirements.
+
+Six `SparkleFrameworkStagerTests` groups pass within all 95 release-tool tests
+with actual SDK/resource inputs and zero exclusions on macOS 27.0.1 arm64 /
+Xcode 27. Both CPU derivation CLI records match every existing JSON byte;
+original archive/cache/manifest/workspace identities stay unchanged. Actual
+SwiftPM consumer, native arm64 derivation and Swift preparation join at 94 files,
+12 single-CPU native roles and nine aliases, with strict nested/all-CPU seals
+and native stopped-controller execution. Unsafe/existing stages, universal CPU,
+wrong archive, late common/native/alias/namespace/parent/archive mutation,
+intermediate same-byte output mutation, cancellation and actual extraction
+deadline refuse with retained work and child custody. Four live groups are
+explicitly excluded without the pinned archive. This separate consumer fixture
+does not establish Frameshift's shipping SDK/controller or a source-bound
+packaging profile; no packaging/library consumer has switched yet.
+
 Acceptance compares the actual pinned archive and cached framework, checks
 same-size archive/cache changes, missing/extra/retargeted aliases and unsafe
 custody, derives both CPU profiles, and verifies requested slices and preserved

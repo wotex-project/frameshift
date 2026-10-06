@@ -1485,6 +1485,33 @@ pass. This closes the local archive/cache/derivation experiment. Frozen
 source/compiler joins, final app sealing, universal SDK assembly, runtime client,
 upstream build derivation, license review and installed update remain separate.
 
+**Native CPU derivation source review:** 2026-10-06. Apple cctools commit
+`e0d56624eca2a76c2ace4c21850df9e666de4ca5`
+[`misc/lipo.c`, `thin_flag` branch](https://github.com/apple-oss-distributions/cctools/blob/e0d56624eca2a76c2ace4c21850df9e666de4ca5/misc/lipo.c#L586-L630)
+requires one fat input, chooses the requested CPU/subtype and writes the selected
+slice bytes. The branch unlinks its output path before opening and truncating
+it; an admitted original or shared compiler cache cannot be used as that path.
+The native stager therefore supplies an absent leaf inside its exclusive private
+work directory, checks the produced regular file/mode/native facts and only then
+replaces the corresponding copied role. Source inspection motivates this
+boundary; actual installed Apple `lipo` fixtures must still establish both CPU
+results and closing original/app custody. This source pin is not a claim that
+the installed Xcode binary was built from that open-source revision.
+
+**Native derivation observation:** 2026-10-06, macOS 27.0.1 arm64 / Xcode 27.
+`SparkleFrameworkStager` shares original/archive closing custody with the cache
+reader; no second extraction policy was introduced. Six groups pass within all
+95 release-tool tests with actual pinned SDK/resource inputs. Both CPU CLI
+records match every retained source/derived JSON byte. A separately built actual
+SwiftPM consumer joined to the derived arm64 framework passes Swift preparation,
+strict all-CPU/nested seals and stopped-controller execution (94 files, 12 native
+roles, nine aliases), preserving the original archive, compiler cache, manifest
+and workspace identities. Late and same-byte changes, unsafe stage/CPU/archive,
+intermediate output mutation, cancellation and a real owned extraction deadline
+refuse with work and direct-child custody retained. These are local native
+producer/consumer facts; shipping app/controller and source-bound package joins,
+CPU assembly, Intel execution and installed/production qualification remain open.
+
 The universal merger now compares complete fixed alias inventories and admits
 differences in only the four actual SDK `CodeResources` paths. They encode
 per-CPU nested seals and are regenerated after actual native merging; every

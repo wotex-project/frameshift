@@ -4,6 +4,7 @@ import FrameshiftMacRelease
 
 let arguments = Array(CommandLine.arguments.dropFirst())
 let captureCommand = arguments.first == "capture-swiftpm-inputs"
+let stagingCommand = arguments.first == "stage-sparkle-framework"
 let frameworkCommand = arguments.first == "verify-sparkle-framework"
 let resourceCommand = arguments.first == "verify-generation-resources"
 let signatureCommand = arguments.first == "verify-development-bundle"
@@ -12,6 +13,8 @@ let preparationCommand = arguments.first == "prepare-development-bundle" || swif
 let bundleCommand = arguments.first == "check-bundle" || signatureCommand
 guard
   (frameworkCommand && arguments.count == 3)
+    || (stagingCommand && arguments.count == 4
+      && ["arm64", "x86_64"].contains(arguments[3]))
     || ((bundleCommand || preparationCommand) && arguments.count == 3
       && NativeBundleArchitecture(rawValue: arguments[2]) != nil)
     || (arguments.count == 2
@@ -24,7 +27,7 @@ guard
 else {
   FileHandle.standardError.write(
     Data(
-      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release capture-swiftpm-inputs REPOSITORY\n"
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho|verify-generation-resources] INPUT\n       frameshift-mac-release [check-bundle|verify-development-bundle|prepare-development-bundle|prepare-swift-updater-bundle] APP arm64|x86_64|universal\n       frameshift-mac-release verify-sparkle-framework ARCHIVE FRAMEWORK\n       frameshift-mac-release stage-sparkle-framework ARCHIVE PRIVATE_APP arm64|x86_64\n       frameshift-mac-release capture-swiftpm-inputs REPOSITORY\n"
         .utf8)
   )
   exit(64)
@@ -32,8 +35,16 @@ else {
 let manifestChild = OwnedCommand()
 let materialChild = OwnedCommand()
 let preparer = DevelopmentBundlePreparer()
+let stager = SparkleFrameworkStager()
 do {
-  if preparationCommand {
+  if stagingCommand {
+    var bytes = try await stager.stage(
+      archive: arguments[1], app: arguments[2],
+      architecture: NativeBundleArchitecture(rawValue: arguments[3])!
+    ).observationBytes()
+    bytes.append(10)
+    FileHandle.standardOutput.write(bytes)
+  } else if preparationCommand {
     let architecture = NativeBundleArchitecture(rawValue: arguments[2])!
     let result =
       swiftPreparationCommand
@@ -88,6 +99,12 @@ do {
     FileHandle.standardOutput.write(bytes)
   }
 } catch {
+  if stagingCommand {
+    FileHandle.standardError.write(
+      Data("pinned updater material unavailable, unsafe or changed\n".utf8))
+    _ = await stager.retainUntilExitAfterRefusal()
+    exit(1)
+  }
   if preparationCommand {
     FileHandle.standardError.write(Data("development bundle preparation refused\n".utf8))
     _ = await preparer.retainUntilExitAfterRefusal()

@@ -1232,7 +1232,14 @@ that unchanged final admission. Four new groups pass within all 89 tool tests
 with actual inputs, both-CPU/universal fixtures and native stopped-controller
 execution. A separately built actual SwiftPM consumer preserves original SDK/
 ZIP/manifest/workspace custody and matches every final 94-file/12-native/nine-
-alias byte and success line. CPU derivation/merge, DMG construction, actual app
+alias byte and success line. Native single-CPU derivation now reuses the pinned
+archive gate through `SparkleFrameworkStager`, with seven fixed owned children
+and complete private-stage custody. Six groups pass within all 95 tool tests
+with actual inputs and no exclusions. Both CPU CLI records match every existing
+source/derived byte; original SDK/ZIP/manifest/state identities stay unchanged.
+The actual SwiftPM consumer, derived arm64 SDK and Swift preparation join passes
+strict nested seals and stopped-controller execution at 94 files/12 single-CPU
+native roles/nine aliases. CPU merge, DMG construction, actual app
 SDK/source-bound producer/library cutover and full-host acceptance remain RT3
 and H3-L3 work.
 

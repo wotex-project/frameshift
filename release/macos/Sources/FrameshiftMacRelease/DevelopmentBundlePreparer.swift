@@ -235,7 +235,7 @@ enum DevelopmentPreparationPhase: Sendable {
   case inventoried, pathsPrepared, metadataPrepared, sealed, verified
 }
 
-private final class DevelopmentStage {
+final class DevelopmentStage {
   let root: String
   let parent: String
   let descriptor: Int32
@@ -275,7 +275,7 @@ private final class DevelopmentStage {
   }
 }
 
-private enum DevelopmentTransition {
+enum DevelopmentTransition {
   static func main(forContainer container: String) -> String {
     switch container {
     case "": "Contents/MacOS/Frameshift"

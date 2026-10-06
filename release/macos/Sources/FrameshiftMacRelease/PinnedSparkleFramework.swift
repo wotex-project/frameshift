@@ -15,7 +15,19 @@ public struct PinnedSparkleFrameworkObservation: Sendable {
   /// Existing schema-one ordered native observation JSON, without LF, below 64 KiB.
   public func observationBytes() throws -> Data {
     var output = NativeObservationWriter()
-    try output.raw(#"{"schemaVersion":1,"publicationAuthority":"none","archive":{"version":"#)
+    try output.raw(#"{"schemaVersion":1,"publicationAuthority":"none","archive":"#)
+    try Self.writeArchive(to: &output)
+    try output.raw(#","framework":"#)
+    try writeContent(to: &output)
+    try output.raw(#","native":"#)
+    try Self.writeNative(native, to: &output)
+    try output.raw("}")
+    guard output.bytes.count < 64 * 1024 else { throw ReleaseToolError.inputLimit }
+    return output.bytes
+  }
+
+  static func writeArchive(to output: inout NativeObservationWriter) throws {
+    try output.raw(#"{"version":"#)
     try output.string(PinnedSparkleArchive.version)
     try output.raw(#","commit":"#)
     try output.string(PinnedSparkleArchive.commit)
@@ -23,7 +35,11 @@ public struct PinnedSparkleFrameworkObservation: Sendable {
     try output.string(PinnedSparkleArchive.sha256)
     try output.raw(#","url":"#)
     try output.string(PinnedSparkleArchive.url)
-    try output.raw(#"},"framework":{"files":["#)
+    try output.raw("}")
+  }
+
+  func writeContent(to output: inout NativeObservationWriter) throws {
+    try output.raw(#"{"files":["#)
     for (index, file) in files.enumerated() {
       if index > 0 { try output.raw(",") }
       try output.raw(#"{"path":"#)
@@ -48,7 +64,11 @@ public struct PinnedSparkleFrameworkObservation: Sendable {
       try output.string(link.target)
       try output.raw("}")
     }
-    try output.raw(#"]},"native":["#)
+    try output.raw("]}")
+  }
+
+  static func writeNative(_ native: [Native], to output: inout NativeObservationWriter) throws {
+    try output.raw("[")
     for (index, member) in native.enumerated() {
       if index > 0 { try output.raw(",") }
       try output.raw(#"{"path":"#)
@@ -68,9 +88,7 @@ public struct PinnedSparkleFrameworkObservation: Sendable {
       }
       try output.raw("]}")
     }
-    try output.raw("]}")
-    guard output.bytes.count < 64 * 1024 else { throw ReleaseToolError.inputLimit }
-    return output.bytes
+    try output.raw("]")
   }
 }
 
@@ -105,12 +123,29 @@ public enum PinnedSparkleFramework {
     limits: ChildLimits? = nil, seconds: Double = 120,
     observe: (@Sendable (SparkleAdmissionPhase) throws -> Void)? = nil
   ) async throws -> PinnedSparkleFrameworkObservation {
-    guard !archive.isEmpty, !framework.isEmpty, !archive.utf8.contains(0),
-      !framework.utf8.contains(0)
+    try await withOriginal(
+      archive: archive, framework: framework, work: work, child: child,
+      limits: limits, seconds: seconds, observe: observe
+    ) { _, original, _ in original }
+  }
+
+  /// Shares exact original admission with the private derivation producer.
+  /// The consumer runs before closing original/copy/cache custody; it cannot
+  /// mutate the extracted original or replace admission with a version claim.
+  static func withOriginal<Result: Sendable>(
+    archive: String, framework: String?, work: String?, child: OwnedCommand,
+    limits: ChildLimits? = nil, seconds: Double = 120,
+    observe: (@Sendable (SparkleAdmissionPhase) throws -> Void)? = nil,
+    consume:
+      @Sendable (String, PinnedSparkleFrameworkObservation, ContinuousClock.Instant)
+      async throws -> Result
+  ) async throws -> Result {
+    guard !archive.isEmpty, !archive.utf8.contains(0),
+      framework.map({ !$0.isEmpty && !$0.utf8.contains(0) }) ?? true
     else { throw ReleaseToolError.unsafeInput }
     let budget = try SparkleBudget(seconds: seconds)
     let source = URL(fileURLWithPath: archive).standardizedFileURL.path
-    let cache = URL(fileURLWithPath: framework).standardizedFileURL.path
+    let cache = framework.map { URL(fileURLWithPath: $0).standardizedFileURL.path }
     let archiveIdentity = try SparkleInventory.named(source)
     let archivePolicy = try FileReadPolicy(
       minimum: PinnedSparkleArchive.bytes, maximum: PinnedSparkleArchive.bytes,
@@ -175,12 +210,26 @@ public enum PinnedSparkleFramework {
       else { throw ReleaseToolError.invalidMachO }
       native.append(.init(path: role.path, slices: slices))
     }
-    let before = try SparkleInventory(root: cache, budget: budget).scan()
-    guard before.files == expected.files, before.directories == expected.directories,
-      before.links == expected.links
-    else { throw ReleaseToolError.digestMismatch }
+    var before: SparkleSnapshot?
+    if let cache {
+      let actual = try SparkleInventory(root: cache, budget: budget).scan()
+      guard actual.files == expected.files, actual.directories == expected.directories,
+        actual.links == expected.links
+      else { throw ReleaseToolError.digestMismatch }
+      before = actual
+    }
     try observe?(.cacheChecked)
-    guard try SparkleInventory(root: cache, budget: budget).scan() == before,
+    let observation = PinnedSparkleFrameworkObservation(
+      files: expected.files, directories: expected.directories, links: expected.links,
+      native: native)
+    _ = try observation.observationBytes()
+    let result = try await consume(extracted, observation, budget.deadline)
+    if let cache, let before {
+      guard try SparkleInventory(root: cache, budget: budget).scan() == before else {
+        throw ReleaseToolError.inputChanged
+      }
+    }
+    guard
       try SparkleInventory(root: extracted, budget: budget).scan() == expected,
       try SparkleInventory.named(source) == archiveIdentity,
       try AdmittedFile.read(
@@ -202,13 +251,8 @@ public enum PinnedSparkleFramework {
       throw ReleaseToolError.inputChanged
     }
     try budget.check()
-    let observation = PinnedSparkleFrameworkObservation(
-      files: expected.files, directories: expected.directories, links: expected.links,
-      native: native)
-    _ = try observation.observationBytes()
-    try budget.check()
     try FileManager.default.removeItem(atPath: scratch)
-    return observation
+    return result
   }
 
   /// Capture joins bracket the material gate with the same bounded complete inventory.
@@ -251,7 +295,7 @@ public enum PinnedSparkleFramework {
 
 enum SparkleAdmissionPhase: Sendable { case archiveCopied, extracted, cacheChecked }
 
-private struct SparkleBudget {
+struct SparkleBudget {
   let deadline: ContinuousClock.Instant
   init(seconds: Double = 120) throws {
     guard seconds.isFinite, seconds > 0, seconds <= 120 else {
@@ -259,25 +303,27 @@ private struct SparkleBudget {
     }
     deadline = ContinuousClock.now.advanced(by: .nanoseconds(Int64(seconds * 1_000_000_000)))
   }
+  init(deadline: ContinuousClock.Instant) { self.deadline = deadline }
   func check() throws {
     guard !Task.isCancelled else { throw ReleaseToolError.admissionCancelled }
     guard ContinuousClock.now < deadline else { throw ReleaseToolError.deadline }
   }
-  func fileSeconds() throws -> Double {
+  func fileSeconds() throws -> Double { min(60, try remainingSeconds()) }
+  func remainingSeconds() throws -> Double {
     try check()
     let value = ContinuousClock.now.duration(to: deadline).components
-    return min(60, Double(value.seconds) + Double(value.attoseconds) / 1e18)
+    return Double(value.seconds) + Double(value.attoseconds) / 1e18
   }
 }
 
-private struct SparkleSnapshot: Equatable {
+struct SparkleSnapshot: Equatable {
   var files: [NativeBundleObservation.File] = []
   var directories: [NativeBundleObservation.Directory] = []
   var links: [NativeBundleObservation.Link] = []
   var custody: [String: FileIdentity] = [:]
 }
 
-private final class SparkleInventory {
+final class SparkleInventory {
   static let aliases = Dictionary(
     uniqueKeysWithValues: BundleSparkle.links.map {
       (String($0.key.dropFirst(BundleSparkle.root.count + 1)), $0.value)
