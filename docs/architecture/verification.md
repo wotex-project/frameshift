@@ -230,8 +230,25 @@ and the mandatory frame-check join remain open.
 
 The [retained v1 input boundary](conjunct-v1-inputs.md) specifies complete
 five-domain custody, missing-pin refusal and exact context reconstruction.
-Its 32 authored full-result hands, three-seed campaign, executed source faults
-and null-budget smoke checks are required next; no execution result is claimed.
+On 2026-10-06 its Elixir and JavaScript adapters passed all 32 authored full-result
+hands, 900 independently expected schedules, two actual source faults and
+smaller retained witnesses, and ten null-budget smoke calls per runtime.
+Each fault's two executed reduction trials remove actual input bytes while
+preserving the semantic mismatch. Complete source, runtime, original/expected/
+actual, compiled BEAM and failure records remain under ignored
+`var/conjunct-v1-inputs/`; the complete package gate's final campaign is
+`run.TmG2EX`. The earlier fresh Elixir observer omitted a required Gleam runtime
+path and failed before comparison; that attempt remains retained as a harness
+failure, not a detected implementation fault.
+The policy gate also refused an opaque dynamic import in the observation
+helper; the final retained callers use literal imports and that check passes.
+
+The full package gate passed 183 Gleam tests per target, 29 Elixir and 43
+JavaScript tests, both adapter campaigns, all prior independent parity/oracle
+checks and the isolated package release. Strict Credo and policy checks passed.
+These results establish complete retained v1 input custody. Conjunct successor
+artifacts, thirteen-stage migration, installed producer resolution and physical
+acceptance remain open.
 
 ### Physical compiler evidence
 

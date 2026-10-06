@@ -31,6 +31,7 @@ check_policy() {
     "$repository_root/scripts/check-core-release" \
     "$repository_root/scripts/check-build-spec" \
     "$repository_root/scripts/check-conjunct-adapter" \
+    "$repository_root/scripts/check-conjunct-v1-inputs" \
     "$repository_root/scripts/check-kernel-parity" \
     "$repository_root/scripts/check-keychain-pairing" \
     "$repository_root/scripts/check-packaged-app" \

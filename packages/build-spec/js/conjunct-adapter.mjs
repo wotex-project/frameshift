@@ -4,6 +4,8 @@ import {
 } from '../build/dev/javascript/frameshift_build/frameshift_build/compiler/properties.mjs';
 import {Result$isOk, Result$Ok$0} from '../build/dev/javascript/prelude.mjs';
 
+export {v1Inputs} from './v1-inputs.mjs';
+
 const scopes = new Map([
   ['component', Scope$Component()], ['power', Scope$PowerPort()],
   ['signal', Scope$SignalPort()], ['mechanical', Scope$MechanicalPort()],

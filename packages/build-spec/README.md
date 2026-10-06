@@ -40,6 +40,11 @@ producer delivery and product fixtures while both sides are developed.
   `js/conjunct-adapter.mjs`. Results contain exact canonical rational values or
   bounded refusals. These primitives do not emit a Conjunct artifact/report,
   validate whole profiles, promote evidence or replace a planning stage.
+- `FrameshiftBuild.ConjunctAdapter.v1_inputs/5` and browser `v1Inputs` retain
+  all five original v1 identity domains through the existing codecs. The
+  [input contract](../../docs/architecture/conjunct-v1-inputs.md) requires a
+  complete pinned closure and exact compilation-context replay. Results keep
+  full original bytes and IDs; they do not create Conjunct successors.
 - `FrameshiftBuild.inspect_profile/1` derives the same identity, public metadata
   and each fact/port's source citations. Applications resolve these citations;
   the shared library performs no source lookup or evidence promotion.

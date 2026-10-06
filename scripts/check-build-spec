@@ -26,13 +26,15 @@ mise exec -- node --check js/context.mjs
 mise exec -- node --check js/layout.mjs
 mise exec -- node --check js/preview.mjs
 mise exec -- node --check js/conjunct-adapter.mjs
+mise exec -- node --check js/v1-inputs.mjs
 mise exec -- node --check js/identity.mjs
 mise exec -- node --check test/identity_parity.mjs
 mise exec -- node --check checks/catalog.mjs
 mise exec -- node checks/catalog.mjs
-mise exec -- node --test test/profile.test.mjs test/catalog.test.mjs test/build.test.mjs test/resolution.test.mjs test/facts.test.mjs test/mapping.test.mjs test/context.test.mjs test/layout.test.mjs test/preview.test.mjs test/conjunct-adapter.test.mjs
+mise exec -- node --test test/profile.test.mjs test/catalog.test.mjs test/build.test.mjs test/resolution.test.mjs test/facts.test.mjs test/mapping.test.mjs test/context.test.mjs test/layout.test.mjs test/preview.test.mjs test/conjunct-adapter.test.mjs test/conjunct-v1-inputs.test.mjs
 
 "$repository_root/scripts/check-conjunct-adapter"
+"$repository_root/scripts/check-conjunct-v1-inputs"
 
 mise exec -- gleam run --target erlang --module profile_parity --no-print-progress > "$parity_directory/erlang.jsonl"
 mise exec -- gleam run --target javascript --module profile_parity --no-print-progress > "$parity_directory/javascript.jsonl"

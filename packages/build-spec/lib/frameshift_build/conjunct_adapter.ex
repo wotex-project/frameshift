@@ -5,6 +5,10 @@ defmodule FrameshiftBuild.ConjunctAdapter do
   These primitives do not validate whole profiles, create artifacts or grant
   physical acceptance. The owning mapper retains the resolved original inputs,
   source evidence, native IDs and complete migration report.
+
+  `v1_inputs/5` prepares that mapper's complete retained original closure through
+  the existing v1 codecs. It verifies all five identity domains, refuses missing
+  profiles and checks exact compilation-context bytes without emitting successors.
   """
 
   @scopes %{
@@ -29,6 +33,12 @@ defmodule FrameshiftBuild.ConjunctAdapter do
     180 => [-1, 0, 0, 0, -1, 0, 0, 0, 1],
     270 => [0, -1, 0, 1, 0, 0, 0, 0, 1]
   }
+
+  @doc "Retains a complete exact v1 closure for a later explicit successor mapping."
+  @spec v1_inputs(term(), term(), term(), term(), term()) :: {:ok, map()} | {:error, binary()}
+  defdelegate v1_inputs(assembly, profiles, mappings, layouts, context),
+    to: FrameshiftBuild.ConjunctInputs,
+    as: :import
 
   @doc "Converts one registered v1 numeric property to a canonical inclusive interval."
   @spec quantity(term(), term(), term(), term(), term()) :: {:ok, map()} | {:error, binary()}
