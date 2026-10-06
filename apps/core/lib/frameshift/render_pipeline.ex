@@ -8,6 +8,11 @@ defmodule Frameshift.RenderPipeline do
   identity before invoking `Frameshift.Renderer` and stores the resulting bytes
   with profile and renderer revision metadata.
 
+  Indexed4 recipes additionally freeze ordered hardware codes and the packing,
+  palette and color revisions. The Zig executable produces final packed bytes;
+  neither palette positions nor preview RGB bytes become the artifact digest.
+  Missing or inconsistent indexed4 attributes refuse before recipe registration.
+
   ## Qualified work
 
   `render_qualified_stored_master/7` additionally checks the active frame/profile/
@@ -28,6 +33,7 @@ defmodule Frameshift.RenderPipeline do
   alias Frameshift.Qualification.Contract
   alias Frameshift.Renderer
   alias Frameshift.Renderer.Protocol, as: RendererProtocol
+  alias Frameshift.RenderProfile
 
   @required_attributes ~w(profile_id renderer_revision media_type)a
 
@@ -66,7 +72,7 @@ defmodule Frameshift.RenderPipeline do
       ) do
     measure_render(fn ->
       with {:ok, binding} <- active_binding(library, frame_id),
-           :ok <- validate_binding(library, renderer, binding, frame_id, mode, attributes) do
+           :ok <- validate_binding(library, renderer, binding, frame_id, mode, job, attributes) do
         do_render_stored_master(
           library,
           renderer,
@@ -110,6 +116,7 @@ defmodule Frameshift.RenderPipeline do
          frame_id
        ) do
     with :ok <- validate_attributes(attributes),
+         :ok <- validate_wire_attributes(job, attributes),
          :ok <- validate_master_digest(master_digest),
          {:ok, master} <- Library.get_master(library, master_digest),
          :ok <- validate_master(master, job),
@@ -144,7 +151,7 @@ defmodule Frameshift.RenderPipeline do
     end
   end
 
-  defp validate_binding(library, renderer, binding, frame_id, mode, attributes) do
+  defp validate_binding(library, renderer, binding, frame_id, mode, job, attributes) do
     manifest = binding["manifest"]
 
     with :ok <- Contract.validate(manifest),
@@ -159,7 +166,26 @@ defmodule Frameshift.RenderPipeline do
          true <- manifest["profileId"] == attributes.profile_id,
          true <- manifest["rendererAlgorithmRevision"] == attributes.renderer_revision,
          true <- profile["mediaType"] == attributes.media_type,
-         true <- Renderer.build_digest(renderer) == manifest["rendererBuildDigest"] do
+         true <- Renderer.build_digest(renderer) == manifest["rendererBuildDigest"],
+         :ok <- validate_bound_job(job, attributes, frame["capabilities"]) do
+      :ok
+    else
+      _ -> {:error, :qualification_runtime_mismatch}
+    end
+  end
+
+  defp validate_bound_job(job, attributes, capabilities) do
+    master = %{"width" => Map.get(job, :source_width), "height" => Map.get(job, :source_height)}
+
+    with {:ok, compiled} <- RenderProfile.compile(master, capabilities, attributes.profile_id),
+         true <- Enum.all?(compiled.attributes, fn {key, value} -> attributes[key] == value end),
+         true <-
+           Enum.all?(
+             [:output_format, :target_width, :target_height, :palette, :wire_codes],
+             fn key ->
+               Map.get(job, key) == Map.get(compiled.job, key)
+             end
+           ) do
       :ok
     else
       _ -> {:error, :qualification_runtime_mismatch}
@@ -182,6 +208,19 @@ defmodule Frameshift.RenderPipeline do
   end
 
   defp validate_attributes(_), do: {:error, :invalid_attributes}
+
+  defp validate_wire_attributes(%{output_format: :indexed4_msb}, attributes) do
+    if attributes[:packing] == "indexed4-msb-row-major-v1" and
+         attributes.renderer_revision == "frameshift-raster-indexed4-v0.2" and
+         Enum.all?([:palette_revision, :color_profile_revision], fn key ->
+           is_binary(attributes[key]) and byte_size(attributes[key]) in 1..128 and
+             String.valid?(attributes[key])
+         end),
+       do: :ok,
+       else: {:error, :invalid_attributes}
+  end
+
+  defp validate_wire_attributes(_, _), do: :ok
 
   defp validate_master_digest(digest) do
     if Digest.valid_sha256?(digest), do: :ok, else: {:error, :invalid_master_digest}
@@ -227,6 +266,18 @@ defmodule Frameshift.RenderPipeline do
       "targetHeight" => job.target_height,
       "targetWidth" => job.target_width
     }
+
+    parameters =
+      if job.output_format == :indexed4_msb do
+        Map.merge(parameters, %{
+          "wireCodes" => job.wire_codes,
+          "packing" => attributes.packing,
+          "paletteRevision" => attributes.palette_revision,
+          "colorProfileRevision" => attributes.color_profile_revision
+        })
+      else
+        parameters
+      end
 
     recipe =
       if binding,

@@ -15,7 +15,7 @@ trap 'rm -rf "$parity_directory"' 0 HUP INT TERM
 
 for target in erlang javascript; do
   awk -F '|' '
-    $1 != "case" || $2 != NR - 1 || NF != 7 { exit 1 }
+    $1 != "case" || $2 != NR - 1 || NF != 8 { exit 1 }
     END { if (NR != 256) exit 1 }
   ' "$parity_directory/$target.txt" || {
     echo "Invalid $target decision corpus" >&2

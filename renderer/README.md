@@ -10,9 +10,11 @@ URLs, provider configuration, or frame identity.
 The current generic-profile renderer uses integer arithmetic for crop,
 nearest/bilinear resize, alpha composition, palette selection, ordered dither,
 and Floyd–Steinberg error diffusion. RGB operations are byte-space transforms;
-they do not claim measured colorimetric accuracy. Hardware palette codes,
-packing, transfer functions, and sharpening remain gated on an exact qualified
-display profile.
+they do not claim measured colorimetric accuracy. Measured color transforms,
+transfer functions and sharpening remain gated on an exact qualified display
+profile. The closed indexed4 software path maps explicit hardware codes and
+packs native rows; it does not establish measured pigment color or physical
+controller qualification.
 
 ## Wire request v0.1
 
@@ -48,11 +50,33 @@ up to 768 palette bytes in addition to four bytes per source pixel, the host
 import boundary admits at most 16,777,011 source pixels. Target output remains
 bounded independently. All integers are big-endian.
 
-## Wire response v0.1
+## Wire request v0.2: indexed4
+
+Output code **3** is `indexed4_msb` and requires protocol **0.2**. The header
+remains 52 bytes, but each palette entry is **four bytes: R, G, B, wire code**.
+There must be 2–16 entries with unique codes in 0–15, and the target width must
+be even. The existing geometry, crop, alpha, resize and dither contracts apply.
+Palette distance ties select the first entry. Each adjacent pixel pair becomes
+`(code[left] << 4) | code[right]`; rows have no padding and output is exactly
+`width × height / 2` bytes. The worker owns both quantization and final packing.
+0.2 accepts only code 3; substituting a format/version, duplicate or oversized
+code, malformed palette/length, or odd target width returns a typed refusal.
+0.1 RGB24/indexed8 byte layouts are unchanged.
+
+The [host contract](../docs/architecture/content-pipeline.md#closed-indexed4-software-profile)
+requires explicit advertised packing and palette/color revisions. Vendor names
+do not select this output. The 1200×1600 fixture enumerates every native byte
+against the source-based Paper controller row slicing; it is a software oracle,
+not optical, electrical or physical completion evidence.
+
+## Wire response
 
 The response also starts with a four-byte big-endian body length. Its 20-byte
-body header contains `FSO1`, protocol `0.1`, a stable status byte, output format,
+body header contains `FSO1`, protocol version, a stable status byte, output format,
 width, height, and payload length, followed by the payload only on success.
+The version is 0.1 for RGB24/indexed8, 0.2 for indexed4. A 0.2 error retains
+that version with zero output/dimensions/payload. Unrecognized versions refuse;
+error responses for short or unsupported requests use 0.1.
 
 | Status | Meaning |
 | ---: | --- |

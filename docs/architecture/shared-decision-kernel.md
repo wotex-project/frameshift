@@ -68,7 +68,7 @@ be reported as `unchanged` without weakening the digest check.
 Every decision has canonical fixtures covering valid, invalid, boundary, and
 uncertain cases. Run those fixtures on both targets and compare results. The
 test harness additionally emits 256 deterministic generated cases from a
-documented bounded integer sequence. It serializes each dwell, RGB24 profile,
+documented bounded integer sequence. It serializes each dwell, RGB24 and indexed4 profile,
 direct-confirmation, pull-confirmation and physical-grid result (including
 worst-case intervals) into one stable text record.
 The check compares the complete Erlang and JavaScript records byte for byte
@@ -82,8 +82,12 @@ versioned with the guide and cannot be treated as physical display evidence.
 The Mix wrapper copies every module originating in the production `src/` tree
 and its standard library, excludes test modules, and removes stale BEAM outputs.
 
-The kernel selects only the currently implemented uncompressed,
-tightly packed RGB24 profile in continuous sRGB. It rejects dimensions above
+The kernel selects uncompressed tightly packed RGB24 in continuous sRGB, or the
+[closed indexed4 layout](content-pipeline.md#closed-indexed4-software-profile)
+with explicit restricted-palette codes and revisions. Indexed4 requires even
+rows, 2–16 unique four-bit hardware codes, bounded preview RGB and exact declared
+packing/color revision. Host compilation additionally checks supported native
+geometry. The kernel rejects dimensions above
 16,777,216 pixels, inconsistent byte capacity, incompatible packing/color,
 and unsupported explicit IDs. With no requested ID, it chooses the compatible
 profile with the smallest ASCII profile ID, independent of advertisement order.

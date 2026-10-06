@@ -63,13 +63,16 @@ with evidence for each actual implementation slice.
 ## Paper software profile and controller evidence
 
 The [2026-10-06 pinned controller inspection](../research/hardware-platforms.md#integrated-esp32-s3-controller-exact-source-findings)
-supports M1-04's next software slice: implement the generic closed indexed4
-contract in the [content pipeline](content-pipeline.md#closed-indexed4-software-profile),
-shared capability selection, executable-owned wire-code packing, immutable
-recipe/cache identity and bounded native target preview. Join the real renderer
-and outbox with synthetic fixtures and independently enumerated split-row bytes;
-then record actual validation in the verification map. No measured palette or
-controller is selected by those software tests.
+now supports M1-04's implemented closed indexed4 software slice in the
+[content pipeline](content-pipeline.md#closed-indexed4-software-profile): shared
+capability selection, executable-owned wire-code packing, immutable recipe/cache
+identity, qualified-job checks and bounded native target preview. Actual Zig
+fixtures check all 960,000 native bytes against independently enumerated
+controller rows on macOS and Ubuntu arm64. Real worker/core tests join synthetic
+palette selection, outbox bytes, malformed-pigment refusal, changed recipe
+identity and older-binding refusal. No measured palette or controller is selected
+by those software tests. Native dither/composition controls, exact received-device
+profile, installed connection and physical completion retain their own gates.
 
 M1-01/M1-02 still need received module/revision and flash capacity, complete
 power/mechanical parts, a pinned isolated C/ESP-IDF build, mTLS/key custody,

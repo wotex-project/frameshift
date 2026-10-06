@@ -1,0 +1,125 @@
+{
+  "protocolMajor": 0,
+  "protocolMinor": 1,
+  "deviceId": "sim-photo-00000001",
+  "hardwareRevision": "synthetic-indexed4-v1",
+  "firmwareVersion": "simulator-0.1",
+  "stillOnly": true,
+  "transferModes": [
+    "push",
+    "pull"
+  ],
+  "displayClass": "restricted-palette-reflective",
+  "geometry": {
+    "width": 1200,
+    "height": 1600,
+    "activeWidthMm": 476.6,
+    "activeHeightMm": 268.1,
+    "orientation": "identity",
+    "safeInset": {
+      "top": 0,
+      "right": 0,
+      "bottom": 0,
+      "left": 0
+    },
+    "pixelAspectRatio": {
+      "horizontal": 1,
+      "vertical": 1
+    }
+  },
+  "color": {
+    "kind": "restricted-palette",
+    "profileRevision": "synthetic-preview-v1",
+    "palette": [
+      {
+        "wireCode": 0,
+        "previewSrgb": [
+          0,
+          0,
+          0
+        ]
+      },
+      {
+        "wireCode": 1,
+        "previewSrgb": [
+          255,
+          255,
+          255
+        ]
+      },
+      {
+        "wireCode": 2,
+        "previewSrgb": [
+          255,
+          255,
+          0
+        ]
+      },
+      {
+        "wireCode": 3,
+        "previewSrgb": [
+          255,
+          0,
+          0
+        ]
+      },
+      {
+        "wireCode": 5,
+        "previewSrgb": [
+          0,
+          0,
+          255
+        ]
+      },
+      {
+        "wireCode": 6,
+        "previewSrgb": [
+          0,
+          255,
+          0
+        ]
+      }
+    ]
+  },
+  "refresh": {
+    "kind": "global-bistable",
+    "typicalRefreshMs": 10,
+    "maximumRefreshMs": 1000,
+    "minimumDwellMs": 1000,
+    "flashDuringRefresh": true
+  },
+  "power": {
+    "class": "bistable-sleeping",
+    "source": "external",
+    "nextScheduledWake": null,
+    "remoteWake": false
+  },
+  "storage": {
+    "maximumAssetBytes": 960000,
+    "totalBytes": 1920000,
+    "availableBytes": 1920000,
+    "maximumAssetCount": 2,
+    "digestAlgorithms": [
+      "sha-256"
+    ],
+    "artifactProfiles": [
+      {
+        "id": "urn:frameshift:test:indexed4-msb-v1",
+        "mediaType": "application/vnd.frameshift.indexed4",
+        "width": 1200,
+        "height": 1600,
+        "maximumAssetBytes": 960000,
+        "rowAlignment": 1,
+        "byteOrder": "not-applicable",
+        "channelOrder": "palette-index",
+        "bitDepth": 4,
+        "compression": "none",
+        "packing": "indexed4-msb-row-major-v1",
+        "paletteRevision": "synthetic-codes-v1",
+        "colorProfileRevision": "synthetic-preview-v1"
+      }
+    ],
+    "maximumPlaylistLength": 2
+  },
+  "evidenceScope": "test-purpose"
+}

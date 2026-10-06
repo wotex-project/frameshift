@@ -6,6 +6,7 @@ pub const max_pixels: usize = 16_777_216;
 pub const OutputFormat = enum(u8) {
     rgb24 = 1,
     indexed8 = 2,
+    indexed4_msb = 3,
 };
 
 pub const ResizeFilter = enum(u8) {
@@ -39,6 +40,7 @@ pub const Request = struct {
     resize_filter: ResizeFilter,
     dither_mode: DitherMode,
     palette: []const Color,
+    wire_codes: []const u8 = &.{},
     rgba: []const u8,
 };
 
@@ -58,7 +60,16 @@ pub fn render(allocator: std.mem.Allocator, request: Request) Error![]u8 {
     if (request.output_format == .rgb24) return rgb;
     defer allocator.free(rgb);
 
-    return quantize(allocator, rgb, request);
+    const indices = try quantize(allocator, rgb, request);
+    if (request.output_format == .indexed8) return indices;
+    defer allocator.free(indices);
+
+    const wire_bytes = allocator.alloc(u8, indices.len / 2) catch return error.AllocationFailed;
+    for (wire_bytes, 0..) |*byte, offset| {
+        byte.* = (request.wire_codes[indices[offset * 2]] << 4) |
+            request.wire_codes[indices[offset * 2 + 1]];
+    }
+    return wire_bytes;
 }
 
 fn validate(request: Request) Error!void {
@@ -99,6 +110,18 @@ fn validate(request: Request) Error!void {
         .indexed8 => {
             if (request.palette.len == 0 or request.palette.len > 256)
                 return error.InvalidPalette;
+        },
+        .indexed4_msb => {
+            if (request.target_width % 2 != 0 or request.palette.len < 2 or
+                request.palette.len > 16 or request.wire_codes.len != request.palette.len)
+                return error.InvalidPalette;
+            var seen: u16 = 0;
+            for (request.wire_codes) |code| {
+                if (code > 15) return error.InvalidPalette;
+                const mask = @as(u16, 1) << @as(u4, @intCast(code));
+                if (seen & mask != 0) return error.InvalidPalette;
+                seen |= mask;
+            }
         },
     }
 }
@@ -431,4 +454,108 @@ test "invalid lengths, palettes, and dimensions are rejected before rendering" {
         .rgba = &.{ 0, 0, 0 },
     };
     try std.testing.expectError(error.InvalidSourceLength, render(std.testing.allocator, request));
+}
+
+const pigment_fixture = [_]Color{
+    .{ .r = 0, .g = 0, .b = 0 },
+    .{ .r = 255, .g = 255, .b = 255 },
+    .{ .r = 255, .g = 255, .b = 0 },
+    .{ .r = 255, .g = 0, .b = 0 },
+    .{ .r = 0, .g = 0, .b = 255 },
+    .{ .r = 0, .g = 255, .b = 0 },
+};
+const pigment_codes = [_]u8{ 0, 1, 2, 3, 5, 6 };
+
+fn indexed4Fixture(source: []const u8, width: u32, height: u32) Request {
+    return .{
+        .source_width = width,
+        .source_height = height,
+        .crop_x = 0,
+        .crop_y = 0,
+        .crop_width = width,
+        .crop_height = height,
+        .target_width = width,
+        .target_height = height,
+        .background = .{ .r = 255, .g = 255, .b = 255 },
+        .output_format = .indexed4_msb,
+        .resize_filter = .nearest,
+        .dither_mode = .none,
+        .palette = &pigment_fixture,
+        .wire_codes = &pigment_codes,
+        .rgba = source,
+    };
+}
+
+test "indexed4 uses explicit hardware codes and first palette entry on color ties" {
+    const source = [_]u8{ 0, 0, 255, 255, 0, 255, 0, 255 };
+    var request = indexed4Fixture(&source, 2, 1);
+    const output = try render(std.testing.allocator, request);
+    defer std.testing.allocator.free(output);
+    try std.testing.expectEqualSlices(u8, &.{0x56}, output);
+    request.palette = &.{ pigment_fixture[4], pigment_fixture[4] };
+    request.wire_codes = &.{ 15, 0 };
+    const ties = try render(std.testing.allocator, request);
+    defer std.testing.allocator.free(ties);
+    try std.testing.expectEqualSlices(u8, &.{0xff}, ties);
+}
+
+test "indexed4 refuses ambiguous codes and odd widths before allocating" {
+    const source = [_]u8{ 0, 0, 0, 255, 255, 255, 255, 255 };
+    var request = indexed4Fixture(&source, 2, 1);
+    request.wire_codes = &.{ 0, 1, 2, 3, 4, 16 };
+    try std.testing.expectError(error.InvalidPalette, render(std.testing.failing_allocator, request));
+    request.wire_codes = &.{ 0, 1, 2, 3, 5, 5 };
+    try std.testing.expectError(error.InvalidPalette, render(std.testing.failing_allocator, request));
+    request.wire_codes = &.{0};
+    try std.testing.expectError(error.InvalidPalette, render(std.testing.failing_allocator, request));
+    request.wire_codes = &pigment_codes;
+    request.target_width = 3;
+    try std.testing.expectError(error.InvalidPalette, render(std.testing.failing_allocator, request));
+}
+
+test "all indexed4 dither modes preserve quantized indices through explicit packing" {
+    const source = [_]u8{ 128, 128, 128, 255, 220, 220, 220, 255 } ** 8;
+    var packed_job = indexed4Fixture(&source, 4, 4);
+    for ([_]DitherMode{ .none, .ordered_2x2, .floyd_steinberg }) |mode| {
+        packed_job.dither_mode = mode;
+        var index_job = packed_job;
+        index_job.output_format = .indexed8;
+        const indices = try render(std.testing.allocator, index_job);
+        defer std.testing.allocator.free(indices);
+        const wire_bytes = try render(std.testing.allocator, packed_job);
+        defer std.testing.allocator.free(wire_bytes);
+        for (wire_bytes, 0..) |byte, offset| {
+            try std.testing.expectEqual(pigment_codes[indices[offset * 2]], byte >> 4);
+            try std.testing.expectEqual(pigment_codes[indices[offset * 2 + 1]], byte & 15);
+        }
+    }
+}
+
+test "native 1200 by 1600 indexed4 raster matches independently enumerated controller rows" {
+    const allocator = std.testing.allocator;
+    const source = try allocator.alloc(u8, 1200 * 1600 * 4);
+    defer allocator.free(source);
+    for (0..1600) |y| {
+        for (0..1200) |x| {
+            const color = pigment_fixture[(x / 100 + y) % 6];
+            const offset = (y * 1200 + x) * 4;
+            @memcpy(source[offset..][0..4], &[_]u8{ color.r, color.g, color.b, 255 });
+        }
+    }
+    const wire_bytes = try render(allocator, indexed4Fixture(source, 1200, 1600));
+    defer allocator.free(wire_bytes);
+    try std.testing.expectEqual(@as(usize, 960_000), wire_bytes.len);
+    // Independently enumerate the sample driver's M/S row-strided stream.
+    // Check every byte, including row seams and both controller edges.
+    for (0..2) |controller| {
+        for (0..1600) |row| {
+            for (0..300) |column| {
+                const x = controller * 600 + column * 2;
+                const high = pigment_codes[(x / 100 + row) % 6];
+                const low = pigment_codes[((x + 1) / 100 + row) % 6];
+                try std.testing.expectEqual(high * 16 + low, wire_bytes[row * 600 + controller * 300 + column]);
+            }
+        }
+    }
+    try std.testing.expect(wire_bytes[300] != wire_bytes[480_000]);
 }

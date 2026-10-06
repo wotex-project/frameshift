@@ -1,4 +1,5 @@
 // Pure, cross-target decisions used by the host and installation guide.
+import gleam/list
 import gleam/order
 import gleam/string
 
@@ -30,6 +31,19 @@ pub type RasterCandidate {
   )
 }
 
+pub type PaletteEntry {
+  PaletteEntry(wire_code: Int, red: Int, green: Int, blue: Int)
+}
+
+pub type Indexed4Candidate {
+  Indexed4Candidate(
+    raster: RasterCandidate,
+    packing: String,
+    palette_revision: String,
+    color_profile_revision: String,
+  )
+}
+
 pub fn select_dwell(
   minimum_ms: Int,
   requested_ms: Int,
@@ -52,60 +66,44 @@ pub fn select_rgb24_profile(
   color_spaces: List(String),
   transfer_function: String,
 ) -> Result(String, Refusal) {
-  case duplicate_profile_ids(candidates, []), candidates, requested_id {
-    True, _, _ -> Error(UnsupportedProfile)
-    _, [], _ -> Error(UnsupportedProfile)
-    _, _, "" ->
-      select_default_profile(
-        candidates,
-        "",
-        color_kind,
-        color_spaces,
-        transfer_function,
-      )
-
-    _, _, _ ->
-      select_requested_profile(
-        candidates,
-        requested_id,
-        color_kind,
-        color_spaces,
-        transfer_function,
-      )
-  }
+  candidates
+  |> list.map(fn(candidate) {
+    #(
+      candidate.id,
+      compatible_rgb24(candidate, color_kind, color_spaces, transfer_function),
+    )
+  })
+  |> select_profile_ids(requested_id, [], "")
 }
 
-fn duplicate_profile_ids(
-  candidates: List(RasterCandidate),
-  seen: List(String),
-) -> Bool {
-  case candidates {
-    [] -> False
-    [candidate, ..rest] ->
-      case contains_id(seen, candidate.id) {
-        True -> True
-        False -> duplicate_profile_ids(rest, [candidate.id, ..seen])
-      }
-  }
-}
-
-fn contains_id(ids: List(String), id: String) -> Bool {
-  case ids {
-    [] -> False
-    [first, ..rest] ->
-      case first == id {
-        True -> True
-        False -> contains_id(rest, id)
-      }
-  }
-}
-
-fn select_default_profile(
-  candidates: List(RasterCandidate),
-  best_id: String,
+pub fn select_indexed4_profile(
+  candidates: List(Indexed4Candidate),
+  requested_id: String,
   color_kind: String,
-  color_spaces: List(String),
-  transfer_function: String,
+  color_revision: String,
+  palette: List(PaletteEntry),
+) -> Result(String, Refusal) {
+  let color_valid =
+    color_kind == "restricted-palette"
+    && color_revision != ""
+    && list.length(palette) >= 2
+    && list.length(palette) <= 16
+    && valid_palette(palette, [])
+  candidates
+  |> list.map(fn(candidate) {
+    #(
+      candidate.raster.id,
+      color_valid && compatible_indexed4(candidate, color_revision),
+    )
+  })
+  |> select_profile_ids(requested_id, [], "")
+}
+
+fn select_profile_ids(
+  candidates: List(#(String, Bool)),
+  requested_id: String,
+  seen: List(String),
+  best_id: String,
 ) -> Result(String, Refusal) {
   case candidates {
     [] ->
@@ -113,62 +111,77 @@ fn select_default_profile(
         "" -> Error(UnsupportedProfile)
         _ -> Ok(best_id)
       }
-
-    [candidate, ..rest] -> {
-      let better =
-        compatible_rgb24(candidate, color_kind, color_spaces, transfer_function)
-        && {
-          best_id == "" || string.compare(candidate.id, best_id) == order.Lt
+    [#(id, compatible), ..rest] ->
+      case contains_id(seen, id) {
+        True -> Error(UnsupportedProfile)
+        False -> {
+          let better =
+            compatible
+            && id != ""
+            && { requested_id == "" || id == requested_id }
+            && { best_id == "" || string.compare(id, best_id) == order.Lt }
+          let next_best = case better {
+            True -> id
+            False -> best_id
+          }
+          select_profile_ids(rest, requested_id, [id, ..seen], next_best)
         }
-
-      let next_best = case better {
-        True -> candidate.id
-        False -> best_id
       }
-      select_default_profile(
-        rest,
-        next_best,
-        color_kind,
-        color_spaces,
-        transfer_function,
-      )
-    }
   }
 }
 
-fn select_requested_profile(
-  candidates: List(RasterCandidate),
-  requested_id: String,
-  color_kind: String,
-  color_spaces: List(String),
-  transfer_function: String,
-) -> Result(String, Refusal) {
-  case candidates {
-    [] -> Error(UnsupportedProfile)
-    [candidate, ..rest] ->
-      case candidate.id == requested_id {
-        True ->
-          case
-            compatible_rgb24(
-              candidate,
-              color_kind,
-              color_spaces,
-              transfer_function,
-            )
-          {
-            True -> Ok(candidate.id)
-            False -> Error(UnsupportedProfile)
-          }
+fn contains_id(ids: List(String), id: String) -> Bool {
+  case ids {
+    [] -> False
+    [first, ..rest] -> first == id || contains_id(rest, id)
+  }
+}
 
-        False ->
-          select_requested_profile(
-            rest,
-            requested_id,
-            color_kind,
-            color_spaces,
-            transfer_function,
-          )
-      }
+fn valid_palette(entries: List(PaletteEntry), seen: List(Int)) -> Bool {
+  case entries {
+    [] -> True
+    [entry, ..rest] ->
+      entry.wire_code >= 0
+      && entry.wire_code <= 15
+      && !list.contains(seen, entry.wire_code)
+      && byte(entry.red)
+      && byte(entry.green)
+      && byte(entry.blue)
+      && valid_palette(rest, [entry.wire_code, ..seen])
+  }
+}
+
+fn byte(value: Int) -> Bool {
+  value >= 0 && value <= 255
+}
+
+fn compatible_indexed4(
+  candidate: Indexed4Candidate,
+  color_revision: String,
+) -> Bool {
+  let raster = candidate.raster
+  let dimensions_valid =
+    raster.width > 0
+    && raster.width <= 32_768
+    && raster.height > 0
+    && raster.height <= 32_768
+  case dimensions_valid {
+    False -> False
+    True -> {
+      let pixels = raster.width * raster.height
+      raster.width % 2 == 0
+      && pixels <= 16_777_216
+      && raster.maximum_asset_bytes >= pixels / 2
+      && raster.maximum_asset_bytes <= 1_073_741_824
+      && raster.channel_order == "palette-index"
+      && raster.bit_depth == 4
+      && raster.compression == "none"
+      && raster.row_alignment == 1
+      && raster.byte_order == "not-applicable"
+      && candidate.packing == "indexed4-msb-row-major-v1"
+      && candidate.palette_revision != ""
+      && candidate.color_profile_revision == color_revision
+    }
   }
 }
 

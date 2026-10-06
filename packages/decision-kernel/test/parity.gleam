@@ -27,6 +27,8 @@ fn record(index: Int) -> String {
   <> "|"
   <> profile_record(index)
   <> "|"
+  <> indexed4_record(index)
+  <> "|"
   <> direct_record(index)
   <> "|"
   <> pull_record(index)
@@ -144,6 +146,61 @@ fn profile_record(index: Int) -> String {
     )
   {
     Ok(value) -> "ok:" <> value
+    Error(reason) -> "error:" <> refusal_name(reason)
+  }
+}
+
+fn indexed4_record(index: Int) -> String {
+  let width = 2 + index * 2
+  let candidate =
+    decisions.Indexed4Candidate(
+      decisions.RasterCandidate(
+        "paper",
+        width,
+        3,
+        case divisible(index, 7) {
+          True -> width
+          False -> width * 3 / 2
+        },
+        "palette-index",
+        4,
+        "none",
+        1,
+        "not-applicable",
+      ),
+      case divisible(index, 11) {
+        True -> "unknown"
+        False -> "indexed4-msb-row-major-v1"
+      },
+      "test-palette-v1",
+      "test-color-v1",
+    )
+  let palette = [
+    decisions.PaletteEntry(5, 0, 0, 255),
+    decisions.PaletteEntry(
+      case divisible(index, 13) {
+        True -> 5
+        False -> 6
+      },
+      0,
+      255,
+      0,
+    ),
+  ]
+  let candidates = case divisible(index, 17) {
+    True -> [candidate, candidate]
+    False -> [candidate]
+  }
+  case
+    decisions.select_indexed4_profile(
+      candidates,
+      "",
+      "restricted-palette",
+      "test-color-v1",
+      palette,
+    )
+  {
+    Ok(id) -> "ok:" <> id
     Error(reason) -> "error:" <> refusal_name(reason)
   }
 }

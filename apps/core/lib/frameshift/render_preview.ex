@@ -7,6 +7,9 @@ defmodule Frameshift.RenderPreview do
   A source preview keeps the full source crop. A target preview checks the exact
   paired capability digest and currently selected profile before reusing
   `Frameshift.RenderProfile`'s crop, alpha background and resize contract.
+  A supported indexed4 target reuses its ordered RGB palette through indexed8
+  quantization, then expands those indices into the same RGB24 response. This
+  avoids odd preview-width packing and keeps hardware codes out of preview pixels.
 
   ## Bounds and identity
 
@@ -47,7 +50,8 @@ defmodule Frameshift.RenderPreview do
          {:ok, rendered} <-
            Renderer.render_qualified(renderer, Map.put(job, :rgba, decoded.rgba), build_digest,
              deadline_ms: @deadline_ms
-           ) do
+           ),
+         {:ok, pixels} <- preview_pixels(rendered, job) do
       {:ok,
        Map.merge(identity, %{
          "masterDigest" => master_digest,
@@ -55,8 +59,8 @@ defmodule Frameshift.RenderPreview do
          "format" => "rgb24",
          "width" => rendered.width,
          "height" => rendered.height,
-         "rgb" => Base.encode64(rendered.bytes),
-         "digest" => Digest.sha256(rendered.bytes),
+         "rgb" => Base.encode64(pixels),
+         "digest" => Digest.sha256(pixels),
          "rendererBuildDigest" => build_digest
        })}
     else
@@ -112,6 +116,11 @@ defmodule Frameshift.RenderPreview do
       job = compilation.job
       {width, height} = preview_dimensions(job.target_width, job.target_height)
 
+      job =
+        if job.output_format == :indexed4_msb,
+          do: job |> Map.put(:output_format, :indexed8) |> Map.delete(:wire_codes),
+          else: job
+
       {:ok, %{job | target_width: width, target_height: height},
        %{
          "kind" => "target",
@@ -129,6 +138,26 @@ defmodule Frameshift.RenderPreview do
   end
 
   defp preview_job(_, _, _), do: {:error, :invalid_preview}
+
+  defp preview_pixels(rendered, job) do
+    if rendered.width == job.target_width and rendered.height == job.target_height and
+         rendered.format == job.output_format,
+       do: expand_pixels(rendered, job),
+       else: {:error, :invalid_preview}
+  end
+
+  defp expand_pixels(%{format: :rgb24, bytes: pixels}, _), do: {:ok, pixels}
+
+  defp expand_pixels(%{format: :indexed8, bytes: indices}, %{palette: palette}) do
+    if Enum.all?(:binary.bin_to_list(indices), &(&1 < length(palette))) do
+      colors = List.to_tuple(palette)
+      {:ok, for(<<index <- indices>>, into: <<>>, do: palette_pixel(elem(colors, index)))}
+    else
+      {:error, :invalid_preview}
+    end
+  end
+
+  defp palette_pixel({red, green, blue}), do: <<red, green, blue>>
 
   defp selected_profile(library, frame) do
     case Library.active_qualification(library, frame["frame_id"]) do

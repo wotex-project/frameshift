@@ -73,8 +73,25 @@
           "type": "string",
           "minLength": 1,
           "maxLength": 128
+        },
+        "packing": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 128
         }
       },
+      "allOf": [
+        {
+          "if": {
+            "required": ["channelOrder", "bitDepth"],
+            "properties": {
+              "channelOrder": { "const": "palette-index" },
+              "bitDepth": { "const": 4 }
+            }
+          },
+          "then": { "required": ["packing", "paletteRevision", "colorProfileRevision"] }
+        }
+      ],
       "additionalProperties": true
     },
     "lastError": {

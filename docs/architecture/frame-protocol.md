@@ -316,6 +316,14 @@ never silently redefined.
 
 Upload does not change desired or current state.
 
+The closed [indexed4 artifact contract](content-pipeline.md#closed-indexed4-software-profile)
+uses explicit `packing`, `paletteRevision` and `colorProfileRevision` fields.
+Palette array positions and hardware `wireCode` values are distinct. Its exact
+length is native width × height / 2, with even rows and both nibbles belonging to
+the advertised code set. Reject wrong length, undeclared codes, unknown packing
+and stale profile identity before publication or activation. Controller row
+slicing belongs to the physical adapter; it cannot alter the artifact digest.
+
 ## 10. Desired and current state
 
 Reading the selected `state` Property Form includes at least:

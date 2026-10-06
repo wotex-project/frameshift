@@ -6,6 +6,10 @@ defmodule Frameshift.Qualification.Contract do
   to match the local executable contract and selects the connector revision by
   exact push/pull mode. Unknown modes, malformed inputs and unsupported revisions
   return `:unsupported_qualification_contract`.
+  RGB24 uses the original FSR1/algorithm pair; closed indexed4 uses its distinct
+  0.2 pair. A protocol revision cannot be combined with the other algorithm.
+  `Frameshift.RenderPipeline` also compares byte-affecting job fields and profile
+  attributes with the actual capability snapshot before accepting qualified work.
 
   ## Qualification scope
 
@@ -16,8 +20,10 @@ defmodule Frameshift.Qualification.Contract do
   qualified before this allowlist changes; data cannot advertise new host code.
   """
 
-  @renderer_protocol "fsr1"
-  @renderer_algorithm "frameshift-raster-v0.1"
+  @renderers [
+    {"fsr1", "frameshift-raster-v0.1"},
+    {"fsr1-indexed4-v0.2", "frameshift-raster-indexed4-v0.2"}
+  ]
   @connectors %{
     "push" => "wotex-http-v0.1",
     "pull" => "frameshift-outbox-v0.1"
@@ -26,8 +32,7 @@ defmodule Frameshift.Qualification.Contract do
   @doc "Checks a candidate against executable local software revisions."
   @spec validate(map()) :: :ok | {:error, :unsupported_qualification_contract}
   def validate(document) when is_map(document) do
-    if document["rendererProtocolRevision"] == @renderer_protocol and
-         document["rendererAlgorithmRevision"] == @renderer_algorithm and
+    if {document["rendererProtocolRevision"], document["rendererAlgorithmRevision"]} in @renderers and
          document["connectorRevision"] == @connectors[document["transferMode"]],
        do: :ok,
        else: {:error, :unsupported_qualification_contract}

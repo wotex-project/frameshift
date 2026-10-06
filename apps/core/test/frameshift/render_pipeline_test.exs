@@ -1029,6 +1029,306 @@ defmodule Frameshift.RenderPipelineTest do
     assert outcomes == ["unknown", "unknown"]
   end
 
+  test "indexed4 queue stores packed wire bytes and simulator refuses wrong length or absent pigment",
+       c do
+    master = indexed_master(c.library)
+
+    {:ok, frame} =
+      Library.register_paired_frame(
+        c.library,
+        indexed_td(),
+        "keychain:synthetic-indexed4",
+        "sha256:" <> String.duplicate("d", 64)
+      )
+
+    assert {:ok, _} =
+             LocalAPI.execute_with_renderer(c.library, c.renderer, %{
+               "kind" => "queue",
+               "targetID" => @frame_id,
+               "itemID" => master["digest"]
+             })
+
+    assert {:ok, manifest} = Library.outbox_manifest(c.library, @frame_id)
+    assert manifest["desiredAsset"] == Digest.sha256(<<0x56>>)
+
+    assert {:ok, %{"bytes" => <<0x56>>}} =
+             Library.read_object(c.library, manifest["desiredAsset"])
+
+    {:ok, simulator} =
+      Simulator.start_link(
+        data_dir: Path.join(c.library_dir, "indexed4-receiver"),
+        capabilities: frame["capabilities"],
+        name: nil
+      )
+
+    on_exit(fn -> stop_if_alive(simulator) end)
+
+    assert {:error, :invalid_dimensions} =
+             Simulator.put_asset(simulator, Digest.sha256(<<>>), @profile_id, <<>>)
+
+    assert {:error, :asset_too_large} =
+             Simulator.put_asset(
+               simulator,
+               Digest.sha256(<<0x56, 0x56>>),
+               @profile_id,
+               <<0x56, 0x56>>
+             )
+
+    assert {:error, :invalid_asset} =
+             Simulator.put_asset(simulator, Digest.sha256(<<0x54>>), @profile_id, <<0x54>>)
+
+    assert {:ok, ack} = Simulator.pull_outbox(simulator, manifest, <<0x56>>)
+    assert ack["refresh"] == "displayed"
+    assert :ok = Library.acknowledge_outbox(c.library, @frame_id, ack)
+  end
+
+  test "indexed4 recipes change for codes and profile revisions and cache only exact work", c do
+    master = indexed_master(c.library)
+    cap = Jason.decode!(indexed_td())["frameshift:capabilities"]
+    assert {:ok, compiled} = Frameshift.RenderProfile.compile(master, cap)
+
+    assert {:ok, first} =
+             RenderPipeline.render_stored_master(
+               c.library,
+               c.renderer,
+               master["digest"],
+               compiled.job,
+               compiled.attributes
+             )
+
+    assert {:ok, %{cache: :hit} = same} =
+             RenderPipeline.render_stored_master(
+               c.library,
+               c.renderer,
+               master["digest"],
+               compiled.job,
+               compiled.attributes
+             )
+
+    assert same["recipe_hash"] == first["recipe_hash"]
+
+    assert {:ok, changed} =
+             RenderPipeline.render_stored_master(
+               c.library,
+               c.renderer,
+               master["digest"],
+               %{compiled.job | wire_codes: [6, 5]},
+               compiled.attributes
+             )
+
+    assert changed["recipe_hash"] != first["recipe_hash"]
+    assert changed["digest"] == Digest.sha256(<<0x65>>)
+
+    assert {:ok, revision} =
+             RenderPipeline.render_stored_master(
+               c.library,
+               c.renderer,
+               master["digest"],
+               compiled.job,
+               %{compiled.attributes | palette_revision: "synthetic-palette-v2"}
+             )
+
+    assert revision["recipe_hash"] != first["recipe_hash"]
+    assert revision["digest"] == first["digest"]
+
+    assert {:error, :invalid_attributes} =
+             RenderPipeline.render_stored_master(
+               c.library,
+               c.renderer,
+               master["digest"],
+               compiled.job,
+               Map.delete(compiled.attributes, :packing)
+             )
+  end
+
+  test "indexed4 target preview expands palette RGB without adding recipes or delivery", c do
+    master = indexed_master(c.library)
+
+    {:ok, frame} =
+      Library.register_paired_frame(
+        c.library,
+        indexed_td(598, 800),
+        "keychain:synthetic-preview",
+        "sha256:" <> String.duplicate("d", 64)
+      )
+
+    before = LocalAPI.snapshot(c.library)
+    [target] = before["targets"]
+
+    identity =
+      Map.take(target, ~w(profileID capabilityDigest)) |> Map.put("targetID", target["id"])
+
+    assert {:ok, preview} =
+             RenderPreview.render(c.library, c.renderer, master["digest"], identity)
+
+    # An odd preview width must not become a packed-wire geometry requirement.
+    assert preview["width"] == 191
+    assert preview["height"] == 256
+    assert preview["aspectWidth"] == 598
+    assert preview["aspectHeight"] == 800
+    assert preview["profileID"] == @profile_id
+    pixels = Base.decode64!(preview["rgb"])
+    assert byte_size(pixels) == 191 * 256 * 3
+
+    assert Enum.all?(
+             for(<<r, g, b <- pixels>>, do: {r, g, b}),
+             &(&1 in [{0, 0, 255}, {0, 255, 0}])
+           )
+
+    assert preview["digest"] == Digest.sha256(pixels)
+    assert LocalAPI.snapshot(c.library) == before
+    assert :empty = Library.outbox_manifest(c.library, @frame_id)
+    {:ok, reader} = Exqlite.start_link(database: Path.join(c.library_dir, "metadata.sqlite"))
+
+    assert %Exqlite.Result{rows: [[0, 0]]} =
+             Exqlite.query!(
+               reader,
+               "SELECT (SELECT COUNT(*) FROM recipes), (SELECT COUNT(*) FROM artifacts)"
+             )
+
+    GenServer.stop(reader)
+
+    assert {:error, :preview_profile_changed} =
+             RenderPreview.render(
+               c.library,
+               c.renderer,
+               master["digest"],
+               Map.put(identity, "capabilityDigest", Digest.sha256("stale"))
+             )
+
+    assert frame["frame_id"] == @frame_id
+  end
+
+  test "indexed4 uses its qualified algorithm and old RGB bindings cannot claim it", c do
+    master = indexed_master(c.library)
+
+    {:ok, frame} =
+      Library.register_paired_frame(
+        c.library,
+        indexed_td(),
+        "keychain:synthetic-qualified-indexed4",
+        "sha256:" <> String.duplicate("d", 64)
+      )
+
+    old = qualification_manifest(frame, Renderer.build_digest(c.renderer))
+    assert {:ok, old_digest} = Library.register_qualification(c.library, old)
+
+    evidence = %{
+      "schemaVersion" => 1,
+      "scope" => "software_reference",
+      "outcome" => "passed",
+      "suiteDigest" => Digest.sha256("synthetic-indexed4-fixture")
+    }
+
+    :ok = Library.admit_qualification(c.library, old_digest, evidence)
+    :ok = Library.activate_qualification(c.library, @frame_id, old_digest)
+
+    assert {:error, :queue_failed} =
+             LocalAPI.execute_with_renderer(c.library, c.renderer, %{
+               "kind" => "queue",
+               "targetID" => @frame_id,
+               "itemID" => master["digest"]
+             })
+
+    assert :empty = Library.outbox_manifest(c.library, @frame_id)
+
+    manifest =
+      old
+      |> Map.put("rendererProtocolRevision", "fsr1-indexed4-v0.2")
+      |> Map.put("rendererAlgorithmRevision", "frameshift-raster-indexed4-v0.2")
+
+    assert {:ok, digest} = Library.register_qualification(c.library, manifest)
+    :ok = Library.admit_qualification(c.library, digest, evidence)
+    :ok = Library.activate_qualification(c.library, @frame_id, digest)
+
+    assert {:ok, _} =
+             LocalAPI.execute_with_renderer(c.library, c.renderer, %{
+               "kind" => "queue",
+               "targetID" => @frame_id,
+               "itemID" => master["digest"]
+             })
+
+    {:ok, compiled} = Frameshift.RenderProfile.compile(master, frame["capabilities"])
+
+    assert {:error, :qualification_runtime_mismatch} =
+             RenderPipeline.render_qualified_stored_master(
+               c.library,
+               c.renderer,
+               @frame_id,
+               "pull",
+               master["digest"],
+               %{compiled.job | wire_codes: [6, 5]},
+               compiled.attributes
+             )
+
+    assert {:error, :qualification_runtime_mismatch} =
+             RenderPipeline.render_qualified_stored_master(
+               c.library,
+               c.renderer,
+               @frame_id,
+               "pull",
+               master["digest"],
+               compiled.job,
+               %{compiled.attributes | palette_revision: "stale"}
+             )
+
+    assert {:ok, %{"desiredAsset" => wire_digest}} = Library.outbox_manifest(c.library, @frame_id)
+    assert wire_digest == Digest.sha256(<<0x56>>)
+  end
+
+  defp indexed_master(library) do
+    rgba = <<0, 0, 255, 255, 0, 255, 0, 255>>
+    {:ok, package} = MasterPackage.encode(@original, rgba, 2, 1)
+    {:ok, master} = Library.import_master(library, package, master_attributes())
+    master
+  end
+
+  defp indexed_td(width \\ 2, height \\ 1) do
+    td = Jason.decode!(thing_description())
+    cap = td["frameshift:capabilities"]
+    [profile] = cap["storage"]["artifactProfiles"]
+
+    profile =
+      Map.merge(profile, %{
+        "width" => width,
+        "height" => height,
+        "maximumAssetBytes" => div(width * height, 2),
+        "channelOrder" => "palette-index",
+        "bitDepth" => 4,
+        "mediaType" => "application/vnd.frameshift.indexed4",
+        "packing" => "indexed4-msb-row-major-v1",
+        "paletteRevision" => "synthetic-palette-v1",
+        "colorProfileRevision" => "synthetic-color-v1"
+      })
+
+    cap =
+      cap
+      |> Map.put("displayClass", "restricted-palette-reflective")
+      |> Map.put("color", %{
+        "kind" => "restricted-palette",
+        "profileRevision" => "synthetic-color-v1",
+        "palette" => [
+          %{"wireCode" => 5, "previewSrgb" => [0, 0, 255]},
+          %{"wireCode" => 6, "previewSrgb" => [0, 255, 0]}
+        ]
+      })
+      |> put_in(["geometry", "width"], width)
+      |> put_in(["geometry", "height"], height)
+      |> put_in(["storage", "maximumAssetBytes"], div(width * height, 2))
+      |> put_in(["storage", "totalBytes"], width * height)
+      |> put_in(["storage", "availableBytes"], width * height)
+      |> put_in(["storage", "artifactProfiles"], [profile])
+
+    td
+    |> Map.put("frameshift:capabilities", cap)
+    |> put_in(["actions", "installAsset", "input", "contentMediaType"], profile["mediaType"])
+    |> put_in(
+      ["actions", "installAsset", "forms", Access.at(0), "contentType"],
+      profile["mediaType"]
+    )
+    |> Jason.encode!()
+  end
+
   defp render_job do
     %{
       source_width: 2,

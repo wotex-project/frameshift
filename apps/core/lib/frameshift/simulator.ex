@@ -6,6 +6,9 @@ defmodule Frameshift.Simulator do
   verifies immutable artifacts within declared storage/profile limits and retains
   separate desired, current and previous-known-good assets. State exposes a strong
   revision ETag; desired/playlist changes require the corresponding precondition.
+  Closed indexed4 assets additionally require exact even-row length and declared
+  pigment codes in both nibbles. Invalid packing, lengths or codes refuse before
+  content publication, desired-state changes or simulated display completion.
 
   ## Exercising receiver behavior
 
@@ -413,6 +416,7 @@ defmodule Frameshift.Simulator do
          true <- Digest.sha256(candidate) == digest,
          {:ok, profile} <- find_profile(state, profile_id),
          :ok <- validate_asset_size(profile, candidate),
+         :ok <- validate_packed_codes(state.capabilities, profile, candidate),
          :ok <- ensure_storage(state, digest, byte_size(candidate)),
          {:ok, _, byte_count, placement} <- ContentStore.put(state.data_dir, candidate) do
       commit_asset(state, digest, profile_id, byte_count, placement)
@@ -451,7 +455,48 @@ defmodule Frameshift.Simulator do
     profile["width"] * profile["height"] * channels * bytes_per_channel
   end
 
+  defp exact_size(%{"channelOrder" => "palette-index", "bitDepth" => 4} = profile),
+    do: div(profile["width"] * profile["height"], 2)
+
   defp exact_size(_), do: nil
+
+  defp validate_packed_codes(
+         capabilities,
+         %{"channelOrder" => "palette-index", "bitDepth" => 4} = profile,
+         bytes
+       ) do
+    with {:ok, codes} <- packed_codes(capabilities["color"], profile) do
+      if packed_bytes_valid?(bytes, codes), do: :ok, else: {:error, :invalid_asset}
+    end
+  end
+
+  defp validate_packed_codes(_, _, _), do: :ok
+
+  defp packed_codes(
+         %{"kind" => "restricted-palette", "palette" => palette, "profileRevision" => revision},
+         %{
+           "packing" => "indexed4-msb-row-major-v1",
+           "compression" => "none",
+           "rowAlignment" => 1,
+           "byteOrder" => "not-applicable",
+           "colorProfileRevision" => revision,
+           "width" => width
+         }
+       ) do
+    codes = Enum.map(palette, & &1["wireCode"])
+
+    if rem(width, 2) == 0 and length(codes) in 2..16 and
+         length(Enum.uniq(codes)) == length(codes) and Enum.all?(codes, &(&1 in 0..15)),
+       do: {:ok, codes},
+       else: {:error, :unsupported_profile}
+  end
+
+  defp packed_codes(_, _), do: {:error, :unsupported_profile}
+
+  defp packed_bytes_valid?(<<>>, _), do: true
+
+  defp packed_bytes_valid?(<<left::4, right::4, rest::binary>>, codes),
+    do: left in codes and right in codes and packed_bytes_valid?(rest, codes)
 
   defp ensure_storage(state, digest, byte_count) do
     storage = state.capabilities["storage"]

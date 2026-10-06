@@ -170,6 +170,7 @@ defmodule FrameshiftCore.MixProject do
           {"../../docs/architecture/verification.md", title: "Verification map"},
           {"../../docs/research/software-stack.md", title: "Software stack research"},
           {"../../docs/research/embedded-persistence.md", title: "Embedded persistence"},
+          {"../../docs/research/hardware-platforms.md", title: "Hardware platform research"},
           {"../../docs/host/linux.md", title: "Linux host"},
           {"../../docs/host/macos.md", title: "macOS host"},
           {"../../docs/host/guide-handoff.md", title: "Guide handoff"},

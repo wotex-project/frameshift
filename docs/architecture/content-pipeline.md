@@ -472,6 +472,8 @@ and a nonempty `color.profileRevision`. The artifact profile must declare
 `rowAlignment: 1`, `byteOrder: not-applicable`, this exact `packing` value,
 nonempty `paletteRevision`, and `colorProfileRevision` matching
 `color.profileRevision`. Unknown layouts refuse even when dimensions fit.
+The initial compiler requires matching native geometry, identity orientation,
+square pixels and zero safe insets; other geometry refuses until implemented.
 
 Dimensions use the renderer's existing ceilings; width must be even. Rows run
 top to bottom, pixels left to right in the advertised native coordinate space.
@@ -555,8 +557,8 @@ The authenticated local `preview` read accepts an active `itemID` and either no
 target (source preview) or the selected `targetID`, `profileID` and exact
 `capabilityDigest`. The core reads and verifies the registered master package;
 it accepts no caller pixels, paths or replacement capability documents. Target
-preview uses the same admitted RGB24 profile selection, centered crop, alpha
-background and resize job as Send, including the active binding's profile when
+preview uses the same admitted RGB24 or closed indexed4 profile selection,
+centered crop, alpha background and resize job as Send, including the active binding's profile when
 present. Unsupported palette/packing/color profiles refuse explicitly.
 
 The Zig worker renders a transient RGB24 preview with each dimension at most

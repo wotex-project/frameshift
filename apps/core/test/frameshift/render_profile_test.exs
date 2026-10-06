@@ -63,6 +63,115 @@ defmodule Frameshift.RenderProfileTest do
     assert {:error, :unsupported_profile} = RenderProfile.compile(master, capabilities)
   end
 
+  test "indexed4 selects by structure and freezes explicit noncontiguous codes" do
+    capabilities = indexed_capabilities()
+    master = %{"width" => 6, "height" => 1}
+    assert {:ok, c} = RenderProfile.compile(master, capabilities)
+    assert c.job.output_format == :indexed4_msb
+    assert c.job.wire_codes == [5, 6]
+    assert c.job.palette == [{0, 0, 255}, {0, 255, 0}]
+    assert c.attributes.packing == "indexed4-msb-row-major-v1"
+    assert c.attributes.renderer_revision == "frameshift-raster-indexed4-v0.2"
+    assert c.attributes.palette_revision == "synthetic-palette-v1"
+  end
+
+  test "indexed4 refuses unsupported packing, color, native geometry and code ambiguity" do
+    master = %{"width" => 6, "height" => 1}
+    original = indexed_capabilities()
+    [profile] = original["storage"]["artifactProfiles"]
+
+    for invalid <- [
+          Map.put(profile, "packing", "indexed4-lsb"),
+          Map.delete(profile, "packing"),
+          Map.delete(profile, "paletteRevision"),
+          Map.put(profile, "colorProfileRevision", "stale"),
+          Map.put(profile, "maximumAssetBytes", 2),
+          Map.put(profile, "width", 5),
+          Map.put(profile, "rowAlignment", 4),
+          Map.put(profile, "byteOrder", "big-endian"),
+          Map.put(profile, "compression", "zstd")
+        ] do
+      cap = put_in(original, ["storage", "artifactProfiles"], [invalid])
+      assert {:error, :unsupported_profile} = RenderProfile.compile(master, cap)
+    end
+
+    for {field, invalid} <- [
+          {"orientation", "rotate-90"},
+          {"width", 12},
+          {"safeInset", %{"top" => 1, "right" => 0, "bottom" => 0, "left" => 0}},
+          {"pixelAspectRatio", %{"horizontal" => 2, "vertical" => 1}}
+        ] do
+      assert {:error, :unsupported_profile} =
+               RenderProfile.compile(master, put_in(original, ["geometry", field], invalid))
+    end
+
+    for entries <- [
+          [],
+          [%{"wireCode" => 0, "previewSrgb" => [0, 0, 0]}],
+          [
+            %{"wireCode" => 5, "previewSrgb" => [0, 0, 255]},
+            %{"wireCode" => 5, "previewSrgb" => [0, 255, 0]}
+          ],
+          [
+            %{"wireCode" => 16, "previewSrgb" => [0, 0, 255]},
+            %{"wireCode" => 6, "previewSrgb" => [0, 255, 0]}
+          ],
+          [
+            %{"wireCode" => 5, "previewSrgb" => [0, 0, 256]},
+            %{"wireCode" => 6, "previewSrgb" => [0, 255, 0]}
+          ],
+          [nil, nil]
+        ] do
+      assert {:error, :unsupported_profile} =
+               RenderProfile.compile(master, put_in(original, ["color", "palette"], entries))
+    end
+
+    assert {:error, :unsupported_profile} =
+             RenderProfile.compile(
+               master,
+               put_in(original, ["storage", "artifactProfiles"], [profile, profile])
+             )
+  end
+
+  defp indexed_capabilities do
+    %{
+      "geometry" => %{
+        "width" => 6,
+        "height" => 1,
+        "orientation" => "identity",
+        "safeInset" => %{"top" => 0, "right" => 0, "bottom" => 0, "left" => 0},
+        "pixelAspectRatio" => %{"horizontal" => 1, "vertical" => 1}
+      },
+      "color" => %{
+        "kind" => "restricted-palette",
+        "profileRevision" => "synthetic-color-v1",
+        "palette" => [
+          %{"wireCode" => 5, "previewSrgb" => [0, 0, 255]},
+          %{"wireCode" => 6, "previewSrgb" => [0, 255, 0]}
+        ]
+      },
+      "storage" => %{
+        "artifactProfiles" => [
+          %{
+            "id" => "urn:unrelated-vendor:opaque",
+            "mediaType" => "application/vnd.vendor.indexed4",
+            "width" => 6,
+            "height" => 1,
+            "maximumAssetBytes" => 3,
+            "rowAlignment" => 1,
+            "byteOrder" => "not-applicable",
+            "compression" => "none",
+            "channelOrder" => "palette-index",
+            "bitDepth" => 4,
+            "packing" => "indexed4-msb-row-major-v1",
+            "paletteRevision" => "synthetic-palette-v1",
+            "colorProfileRevision" => "synthetic-color-v1"
+          }
+        ]
+      }
+    }
+  end
+
   defp capabilities(profiles) do
     %{
       "color" => %{

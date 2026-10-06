@@ -17,6 +17,7 @@
     { "schema": "playlist", "document": "invalid/playlist-transition.json", "valid": false },
     { "schema": "outbox-ack", "document": "invalid/outbox-ack-secret.json", "valid": false },
     { "schema": "pairing-bootstrap", "document": "invalid/pairing-bootstrap-routing.json", "valid": false },
-    { "schema": "pairing-request", "document": "invalid/pairing-request-certificate.json", "valid": false }
+    { "schema": "pairing-request", "document": "invalid/pairing-request-certificate.json", "valid": false },
+    { "schema": "capabilities", "document": "valid/capabilities-paper-indexed4.json", "valid": true }
   ]
 }

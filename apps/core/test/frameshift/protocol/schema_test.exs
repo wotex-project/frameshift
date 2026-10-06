@@ -33,6 +33,28 @@ defmodule Frameshift.Protocol.SchemaTest do
     assert {:error, :unknown_schema} = Schema.validate("not-a-schema", %{})
   end
 
+  test "indexed4 requires explicit packing and palette/color identities but preserves unknown layouts" do
+    capabilities = decode_fixture("valid/capabilities-paper-indexed4.json")
+    [profile] = capabilities["storage"]["artifactProfiles"]
+
+    for field <- ~w(packing paletteRevision colorProfileRevision) do
+      changed =
+        put_in(capabilities, ["storage", "artifactProfiles"], [Map.delete(profile, field)])
+
+      assert {:error, _} = Schema.validate("capabilities", changed)
+    end
+
+    unknown =
+      put_in(capabilities, ["storage", "artifactProfiles"], [
+        Map.put(profile, "packing", "future-indexed-layout")
+      ])
+
+    assert :ok = Schema.validate("capabilities", unknown)
+
+    assert {:error, :unsupported_profile} =
+             Frameshift.RenderProfile.compile(%{"width" => 1200, "height" => 1600}, unknown)
+  end
+
   defp decode_fixture(relative_path) do
     @fixtures_dir
     |> Path.join(relative_path)

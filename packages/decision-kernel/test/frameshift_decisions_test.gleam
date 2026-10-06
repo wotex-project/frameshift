@@ -248,3 +248,149 @@ pub fn pull_confirmation_test() {
     )
     == Error(decisions.CurrentAssetMismatch)
 }
+
+fn indexed4_profile(id: String) {
+  decisions.Indexed4Candidate(
+    raster: decisions.RasterCandidate(
+      id,
+      8,
+      4,
+      16,
+      "palette-index",
+      4,
+      "none",
+      1,
+      "not-applicable",
+    ),
+    packing: "indexed4-msb-row-major-v1",
+    palette_revision: "test-palette-v1",
+    color_profile_revision: "test-color-v1",
+  )
+}
+
+pub fn indexed4_selection_and_refusal_test() {
+  let palette = [
+    decisions.PaletteEntry(5, 0, 0, 255),
+    decisions.PaletteEntry(6, 0, 255, 0),
+  ]
+  let first = indexed4_profile("a")
+  let later = indexed4_profile("z")
+  assert decisions.select_indexed4_profile(
+      [later, first],
+      "",
+      "restricted-palette",
+      "test-color-v1",
+      palette,
+    )
+    == Ok("a")
+  assert decisions.select_indexed4_profile(
+      [first, later],
+      "z",
+      "restricted-palette",
+      "test-color-v1",
+      palette,
+    )
+    == Ok("z")
+  assert decisions.select_indexed4_profile(
+      [first, first],
+      "a",
+      "restricted-palette",
+      "test-color-v1",
+      palette,
+    )
+    == Error(decisions.UnsupportedProfile)
+  let small =
+    decisions.Indexed4Candidate(
+      ..first,
+      raster: decisions.RasterCandidate(..first.raster, maximum_asset_bytes: 15),
+    )
+  let odd =
+    decisions.Indexed4Candidate(
+      ..first,
+      raster: decisions.RasterCandidate(..first.raster, width: 7),
+    )
+  let unknown = decisions.Indexed4Candidate(..first, packing: "indexed4-lsb")
+  let stale =
+    decisions.Indexed4Candidate(..first, color_profile_revision: "stale")
+  let unversioned = decisions.Indexed4Candidate(..first, palette_revision: "")
+  assert decisions.select_indexed4_profile(
+      [small, odd, unknown, stale, unversioned],
+      "",
+      "restricted-palette",
+      "test-color-v1",
+      palette,
+    )
+    == Error(decisions.UnsupportedProfile)
+  assert decisions.select_indexed4_profile(
+      [first],
+      "",
+      "continuous",
+      "test-color-v1",
+      palette,
+    )
+    == Error(decisions.UnsupportedProfile)
+  assert decisions.select_indexed4_profile(
+      [first],
+      "",
+      "restricted-palette",
+      "",
+      palette,
+    )
+    == Error(decisions.UnsupportedProfile)
+  assert decisions.select_indexed4_profile(
+      [first],
+      "missing",
+      "restricted-palette",
+      "test-color-v1",
+      palette,
+    )
+    == Error(decisions.UnsupportedProfile)
+}
+
+pub fn indexed4_palette_contract_test() {
+  let first = indexed4_profile("a")
+  let duplicate = [
+    decisions.PaletteEntry(5, 0, 0, 255),
+    decisions.PaletteEntry(5, 0, 255, 0),
+  ]
+  let large_code = [
+    decisions.PaletteEntry(16, 0, 0, 255),
+    decisions.PaletteEntry(6, 0, 255, 0),
+  ]
+  let bad_rgb = [
+    decisions.PaletteEntry(5, -1, 0, 255),
+    decisions.PaletteEntry(6, 0, 255, 0),
+  ]
+  assert decisions.select_indexed4_profile(
+      [first],
+      "",
+      "restricted-palette",
+      "test-color-v1",
+      duplicate,
+    )
+    == Error(decisions.UnsupportedProfile)
+  assert decisions.select_indexed4_profile(
+      [first],
+      "",
+      "restricted-palette",
+      "test-color-v1",
+      large_code,
+    )
+    == Error(decisions.UnsupportedProfile)
+  assert decisions.select_indexed4_profile(
+      [first],
+      "",
+      "restricted-palette",
+      "test-color-v1",
+      bad_rgb,
+    )
+    == Error(decisions.UnsupportedProfile)
+  assert decisions.select_indexed4_profile(
+      [first],
+      "",
+      "restricted-palette",
+      "test-color-v1",
+      [],
+    )
+    == Error(decisions.UnsupportedProfile)
+}
