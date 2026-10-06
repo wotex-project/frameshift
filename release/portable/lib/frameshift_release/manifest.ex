@@ -27,6 +27,8 @@ defmodule FrameshiftRelease.Manifest do
 
   @keys ["schemaVersion", "product", "version", "artifacts"]
   @artifact_keys ["platform", "architecture", "format", "file", "url", "bytes", "sha256"]
+  alias FrameshiftRelease.RecordJSON
+
   @tuples [
     {"macos", "universal", "dmg"},
     {"ubuntu", "amd64", "deb"},
@@ -38,18 +40,7 @@ defmodule FrameshiftRelease.Manifest do
   @doc "Returns validated string-keyed maps from original compact signed bytes."
   @spec parse(binary()) :: {:ok, map()} | {:error, :invalid_manifest}
   def parse(bytes) when is_binary(bytes) and byte_size(bytes) in 2..65536 do
-    callbacks = %{
-      object_start: fn _ -> {MapSet.new(), []} end,
-      object_push: fn key, value, {seen, pairs} ->
-        if MapSet.member?(seen, key), do: throw(:invalid_manifest)
-        {MapSet.put(seen, key), [{key, value} | pairs]}
-      end,
-      object_finish: fn {_, pairs}, outer -> {{:object, Enum.reverse(pairs)}, outer} end,
-      float: fn _ -> throw(:invalid_manifest) end
-    }
-
-    {ordered, _, _} = :json.decode(bytes, :ok, callbacks)
-    ensure!(json(ordered) <> "\n" == bytes)
+    {:ok, ordered} = RecordJSON.decode(bytes, 65536)
     manifest = object!(ordered, @keys)
     ensure!(manifest["schemaVersion"] === 1 and manifest["product"] == "io.frameshift.app")
     version = manifest["version"]
@@ -80,21 +71,12 @@ defmodule FrameshiftRelease.Manifest do
       end)
 
     fields = Map.put(manifest, "artifacts", artifacts)
-    bytes = json({:object, Enum.map(@keys, &{&1, Map.fetch!(fields, &1)})}) <> "\n"
+    bytes = RecordJSON.encode({:object, Enum.map(@keys, &{&1, Map.fetch!(fields, &1)})})
     with {:ok, _} <- parse(bytes), do: {:ok, bytes}
   rescue
     _ -> {:error, :invalid_manifest}
   catch
     _ -> {:error, :invalid_manifest}
-  end
-
-  defp json(value) do
-    encoder = fn
-      {:object, pairs}, recurse -> :json.encode_key_value_list(pairs, recurse)
-      other, recurse -> :json.encode_value(other, recurse)
-    end
-
-    IO.iodata_to_binary(:json.encode(value, encoder))
   end
 
   defp object!({:object, pairs}, keys) do

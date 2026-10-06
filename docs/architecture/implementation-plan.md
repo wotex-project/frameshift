@@ -1345,7 +1345,15 @@ malformed exchange refusing. Actual Git comparison runs on Mac; Ubuntu hashes
 against its public observation. Deadline handling retains actual child-exit
 custody without a write into the worker's closing pipe. This enables source and
 archive consumers without raising the 16 MiB metadata read limit.
-Next implement source-bound record consumers
+The portable frozen-record receiver now also passes three real-producer/schema/
+custody groups on the same Mac/Ubuntu configurations; all 32 portable groups
+pass. Actual Git/Mix collector bytes preserve Unicode paths, executable mode,
+Git identities and lock projection. Ubuntu uses the public producer corpus and
+native descriptor/JSON admission. Independently pinned authentic-digest wrong
+schemas and callback-time mutation refuse. This verifies the declared record;
+live Git/tag/index/worktree/version verification and producer/replay joins still
+remain. Next implement the bounded live source command join and source-bound
+record consumers
 and their explicit native producer cutover. Installed image acceptance remains R2.
 
 Deliver each coherent port with its own review, proportionate checks and logical

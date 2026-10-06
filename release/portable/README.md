@@ -9,6 +9,11 @@ background service or publication authority is added.
 `FrameshiftRelease.Manifest`, `FrameshiftRelease.Trust` and
 `FrameshiftRelease.Verifier` now join exact compact manifests, independently
 pinned public SPKI, whole-message signatures and streamed local archive facts.
+`FrameshiftRelease.SourceRecord` admits the existing frozen-source declaration
+against independently supplied tag/commit/digest under private descriptor
+custody. `FrameshiftRelease.RecordJSON` preserves ordered compact bytes for
+both schemas. This does not run the live Git/Mix collector or prove a clean
+matching source checkout; receipt joins retain that separate gate.
 The escript CLI exposes distinct local and signature-only observations:
 
 ```sh

@@ -311,6 +311,34 @@ hidden content/mode change, symlink and conflicting output refusal, and post-bui
 verification that preserves the previous record. Those fixtures do not create a
 Frameshift release or qualify a signing key, runner, installer or remote tag.
 
+### Portable frozen-record admission
+
+`FrameshiftRelease.SourceRecord` first ports the retained record boundary,
+before the source collector or live Git/Mix verification switches. Parse the
+original bounded compact UTF-8 JSON with one LF, ordered unique keys and integer
+types. The fixed producer field order is `schemaVersion`, `kind`, `product`,
+`tag`, `version`, `commit`, `tree`, `publicationAuthority`, `toolchainInput`,
+`dependencyLocks`, `files`; each file has `path`, `mode`, `blob`, `bytes`, `sha256`.
+Preserve the producer's literal Git path ordering, SHA-1 object identities and
+SHA-256 bytes; no Unicode/checkout/newline normalization. Require stable tag and
+independently supplied commit, matching version/product, authority `none`, the
+three required source inputs, safe unique nonconflicting paths, regular Git modes
+and the exact ordered dependency-lock projection. Byte counts remain nonnegative
+safe JSON integers. Reject extra/duplicate fields, noncanonical encoding, boolean
+numeric substitutions and authentic-digest wrong identities.
+
+`with_record/6` additionally joins the independently supplied record SHA-256
+under retained descriptor custody, current-owner unaliased 0600 file and private
+0700 parent ownership/identity. Run its consumer inside that scope; any mutation,
+exception or failed closing check refuses acceptance. This boundary checks the
+record and parent identity, not a complete candidate-directory namespace, live
+Git objects/tag/index/worktree, actual Mix version, dependency provenance or a
+fresh producer execution. Those requirements remain above and must join before
+source/receipt consumers switch. Record hashes must come from an independent
+retained source, never from the record being admitted. Qualify exact records from
+the real existing Git/Mix collector, Unicode/mode/lock projection, tamper and
+consumer-time custody refusal on Mac and Ubuntu before callers use this port.
+
 ## Locked core dependency source bytes
 
 `scripts/check-core-material TAG COMMIT SOURCE_RECORD HEX_CACHE OUTPUT` verifies

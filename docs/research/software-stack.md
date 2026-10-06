@@ -521,6 +521,36 @@ extraction, frozen-source producer or retained record joins. Those consumers
 must preserve raw committed blob identity, recheck complete source and producer
 profiles, and retain partial outputs before their commands can switch.
 
+**Frozen-record receiver qualification:** observed 2026-10-06. Inspection of the
+actual collector in `release/inputs.mjs` and `release/source.mjs` establishes its
+fixed top-level/file field order, literal Git tree path order, 40-hex object
+identities, regular Git modes, exact lock-path projection and stable tag/commit
+coordinates. Its UTF-8 bytes, mode and blob comparisons are independent of a
+clean-looking status; a record digest alone cannot establish current source.
+The portable receiver therefore separates declaration/schema admission from
+live source verification. It does not synthesize a producer profile or infer
+the expected digest from the record it is checking.
+
+Three new groups and all **32** portable groups pass on the recorded Mac and
+native Ubuntu configurations. The Mac fixture runs the existing actual Git/Mix
+collector in a fresh private repository with a stable test-only tag, Unicode
+`Ω/draw🖼.md`, an executable and a dependency lock. Its original complete record
+parses identically, with private callback custody and unchanged accepted inode/
+times. Ubuntu repeats native admission against that public recorded producer
+corpus, without Git, Node or a host application process. Wrong coordinates,
+numeric/field/encoding substitutions, duplicate/conflicting/missing paths,
+lock projection and authentic-digest wrong schemas refuse. Unsafe file/parent
+modes, aliases/FIFO, same-byte mutation and callback exceptions also refuse.
+The existing 334-case manifest comparison still passes after sharing the exact
+ordered JSON primitive between these two real owners. No record is rewritten.
+
+This qualifies `FrameshiftRelease.SourceRecord` parsing and independently pinned
+retained-file consumption only. Literal Git objects, complete live inventory,
+tag/index/status and non-starting Mix version still need the bounded command
+join before collector or receipt consumers switch. A valid unsigned declaration
+does not become fresh build/source, installed or publication evidence merely
+because its schema and transport digest agree.
+
 Adopt Swift for native Mac tooling, Elixir for shared portable release policy
 including pure Cask/appcast rendering and signing, and POSIX shell for entry
 points. Directory names do not determine ownership: portable logic currently
