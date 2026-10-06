@@ -1,6 +1,6 @@
 # Final-Product Completion Plan
 
-**Status:** required product work, ordered by dependency and evidence
+**Status:** M1 macOS-to-frame delivery active; broader product work retained for M2
 
 This plan decomposes the complete product definition. Builders can start with
 Paper, Photo, Pixel, the Mac app or a protocol implementation. The seams below
@@ -8,7 +8,77 @@ keep those choices interoperable. Track code/tests separately from external
 permissions, signing and physical measurements. Those gates constrain relevant
 activation and claims; they do not excuse unfinished implementable software.
 
+## Active milestone — macOS to a physical frame
+
+**M1 goal:** a usable installed Mac application and one complete exact frame
+configuration, with every software, electronic and mechanical part present so
+the whole path can be assembled and tested on real hardware. Import a still,
+retain it in the Library, preview its target rendering, pair the frame, transfer
+and activate the artifact, and observe actual display completion. Cached still
+playlists and last-valid-artwork recovery must work without the Mac or network.
+Powered Photo/Pixel frames need continuous power and restore retained artwork
+after power returns; only bistable Paper can keep its image visible unpowered.
+
+This is the current delivery priority. Conjunct, Refpath and ExMaude integration
+is M2 and cannot gate the independent Mac-to-frame path. Preserve their contracts,
+v1 identities and existing tests, but do not build another generic composition,
+operator or formal engine to fill missing producer exports. The detailed lanes
+below retain their dependency order and recorded evidence within the assigned
+milestone; their unfinished tasks are not all active M1 work.
+
+Paper, Photo and Pixel remain independent choices. The first joined acceptance
+can use any one exact configuration; it does not require one class before another
+or claim the other classes are complete. Further configurations need their own
+complete parts, firmware, rendering and physical evidence.
+
+| Priority / slice | Required deliverable and existing owner | Current gap / acceptance |
+| --- | --- | --- |
+| M1-01 — Exact frame and all parts; first | Select an exact panel/controller pair under the [frame owners](../README.md#reference-frames) and [BOM policy](../hardware/bom.md). Record MCU/module, driver, flash, power supply/conversion/protection, connectors, cables, carrier, mat, backing, mount and service access; include pin maps, voltage/current limits, installed dimensions, dated sources and unresolved facts. | All three controllers remain unselected and the BOM contains candidates. Recheck the exact configuration before purchase; received revisions must pass H-001/H-002. A panel listing or simulator baseline does not close this slice. |
+| M1-02 — Frame agent and physical adapter; after the exact controller contract | Implement reproducibly built/flashed controller firmware against the [frame protocol](frame-protocol.md), [timing contract](display-timing.md) and chosen frame owner. Supply identity custody, bounded authenticated interactions, inactive asset slots, verification/atomic activation, desired/current state, local still playlists and recoverable signed firmware update. Implement the actual panel initialization, packing, power/scan timing and completion signal. | The networked receiver is a simulator; no MCU firmware implementation is present. Select firmware language/toolchain from the exact controller evidence. Actual adapter completion must precede a displayed acknowledgement; restart and failed update must preserve verified recovery state. |
+| M1-03 — Installed Mac connection; alongside firmware | Join discovery, physical commissioning, Keychain identity, pinned mutual TLS, advertised Forms and push or sleeping pull through the [Mac host](../host/macos.md) and [protocol](frame-protocol.md). Include reconnect, identity recovery and bounded read-only reconciliation. | Core/transport fixtures exist. The installed app must pair and reconnect to the received device with its actual keys; wrong peer, unauthorized caller and replayed bootstrap refuse. Enable only the binding/mode the configuration advertises. |
+| M1-04 — Exact render and wire profile; alongside connection | Finish the selected profile in the [content pipeline](content-pipeline.md) and [qualification contract](qualified-generations.md): dimensions, color/palette, orientation, packing, resource bounds, target preview and renderer/profile/connector identity. | RGB24 and closed indexed4 software profiles have byte fixtures. The exact panel wire bytes and display adapter must agree; wrong profile/digest/length never activates. Golden artifacts and the measured panel chart qualify only this revision. |
+| M1-05 — Usable installed native workflow | Complete import, durable Library, target selection/preview, send, display-state observation, cached playlists and necessary settings under the [native interface](../host/menu-bar-interface.md). Exercise sleep/wake, relaunch, keyboard/VoiceOver and retained draft/focus/state. | Many Library, playlist and lifecycle slices exist. Join the installed UI to the real frame and fix reproduced gaps. The complete path must work without AI, a browser workbench, account or cloud. |
+| M1-06 — Failure, update and recovery | Join existing host refusal/recovery behavior to the device: interrupted transfer/activation, host/network loss, device restart, corrupt/full storage, unknown outcome, credential recovery and signed firmware rollback. Preserve source masters and previous-known-good assets. | Simulator and core tests support development. Run the applicable [H-003–H-006/H-009 tests](../hardware/validation-plan.md#shared-tests) on the exact device; a transferred-byte receipt is not display evidence. |
+| M1-07 — Assembly and joined hardware acceptance | Maintain one exact build packet using the [validation record layout](../hardware/validation-plan.md#build-record-layout), with BOM, wiring, flashing/recovery instructions, assembly/service steps and applicable electrical/thermal/optical/depth measurements. Run the installed Mac-to-panel path on the assembled frame. | No complete received configuration is qualified. Record actual app/core/renderer/firmware/profile revisions, measurements and pass/fail results; keep readiness, bench results and reference/release qualification distinct. |
+
+**Ready for hardware testing** means the selected parts and connection drawings,
+build/flash/recovery commands, exact firmware/profile artifacts, installed Mac
+build and bounded test procedure are present. Missing parts, a simulated adapter
+or an unimplemented recovery path leave that gate open. **M1 complete** additionally
+requires the real joined workflow and applicable fault/physical tests at the
+recorded evidence tier. Preparation alone cannot mark a physical test passed.
+
+Use the existing local Mac package and development signing path for controlled
+bench tests. Preserve its source, signature and archive checks. Implement a
+packaging/tooling fix in M1 only when it removes a concrete blocker in this path;
+general RT4–RT6 migration, additional receipt layers, public channel automation
+and distribution-matrix expansion are M2. Production signing, notarization,
+independent security review and reference-hardware evidence remain required for
+their release claims; M1 bench completion grants no public release authority.
+
+## Next milestone — broader product and producer integration
+
+M2 retains the complete product requirements and resumes each dependent slice
+after its producer and evidence prerequisites are met:
+
+- Conjunct composition/instructions, S1–S4 and their authenticated S5 storage;
+  generic comparison, generated parts lists, migration and broader frame coverage.
+- Refpath operator/adaptation and ExMaude formal integration, S6. Require exact
+  qualified producer exports/distribution and consumer tests. ExMaude release
+  availability is an unresolved prerequisite to recheck, not an assumed release.
+- Live AI/provider generation, full model management and advanced host features
+  beyond the M1 workflow; preserve implemented features and privacy/refusal tests.
+- Ubuntu/Pi/Nerves targets, additional transport profiles and broader OS/CPU,
+  device, accessibility and operational qualification matrices.
+- Remaining release-tooling ports, production direct/Cask/Sparkle distribution,
+  hosted release/site automation and public publication/readback.
+
+Transactional shop/service implementation remains on hold independently of M2.
+Do not treat finishing M1 or starting M2 as authorization to resume it.
+
 ## Composition and product dependency gates
+
+**Milestone:** M2. These gates do not precede M1's independent native artwork path.
 
 Frameshift is a modular reference product and integration proof of concept for
 Conjunct. The [platform contract](build-platform.md) defines BP-01–BP-11;
@@ -118,6 +188,8 @@ The native Mbed TLS experiment establishes library behavior only. No IDF build,
 MCU firmware, Keychain-to-device join or received configuration is completed by it.
 
 ## Composition specification delivery
+
+**Milestone:** M2; retained specification sequence, not the active hardware queue.
 
 The [consolidated research](../research/conjunct-adoption.md) supports the
 following specification and consumer sequence. These are required next
@@ -341,15 +413,16 @@ block implementable refusal on physical or signing evidence.
 
 ### Independent software delivery order
 
-Deliver S1 first, then inspect and exercise the exact S2/S3 mappings before
+For active work, deliver M1-01–M1-07 above. Within M2, deliver S1 first, then
+inspect and exercise the exact S2/S3 mappings before
 activating any S4 profile. A reproducible refusal for missing producer semantics
 is an implementation result, not completion of that profile. Preserve the
 retained v1 compiler and corpus while the successor gate remains closed.
 
-Alongside these composition slices, implement the native focused library and
-playlist interfaces against the existing host commands, then settings and
-accessibility, provider generation, bounded diagnostic logging and Linux
-packaging. Their contracts are owned by [the menu interface](../host/menu-bar-interface.md),
+M1 uses the existing native Library, playlist, settings, accessibility and bounded
+diagnostic owners, finishing the gaps needed for the real frame path. Provider
+generation and Linux packaging are M2. Their contracts are owned by
+[the menu interface](../host/menu-bar-interface.md),
 [the content pipeline](content-pipeline.md), [diagnostics](diagnostics.md)
 and [the Linux host](../host/linux.md). Session and permission groundwork can
 also proceed independently; it does not authorize composition write endpoints.
@@ -369,10 +442,9 @@ machine-observation correction and paginated Recently Removed recovery. Their
 shared read-only source/pin/frame facets preserve selection and drafts. Software
 evidence is in the
 [verification ledger](verification.md); they do not complete H3's installed
-accessibility matrix or H2's measured palette/packing profiles. Continue the
-remaining retention/model-download settings
-and H4 contracts
-alongside release-version documentation and publication work. S2's explicit
+accessibility matrix or H2's measured palette/packing profiles. Finish necessary
+retention and installed UI behavior in M1; model-download/H4 work and public
+publication are M2. S2's explicit
 producer refusal still gates its dependent composition authority, rather than
 these independent host surfaces.
 
@@ -1413,8 +1485,8 @@ remain. The bounded command primitive now passes nine real-child/protocol groups
 on both recorded OS configurations; all 41 portable groups pass. Literal argv,
 independent output bounds, actual exit and retained deadline/caller-death refusal
 are qualified at that software tier. It does not yet join live source queries.
-Keep the remaining source-bound record/native producer cutover in the broader
-release migration; the active milestone governs subsequent work. Installed image acceptance remains R2.
+Keep the remaining source-bound record/native producer cutover in M2; the active
+M1 queue above governs subsequent work. Installed image acceptance remains R2.
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

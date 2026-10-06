@@ -26,10 +26,13 @@ Refpath owns optional operator generations and effects. The retained v1
 BuildSpec compiler is for replay, regression and migration until qualified
 Conjunct exports and consumer tests replace each generic boundary.
 
-The [implementation plan](architecture/implementation-plan.md) orders the
-contract foundation, host boundaries, Conjunct frame profile and workbench,
-generality/operator integration and deferred optional services. The
-[verification map](architecture/verification.md) records what has actually
+The active [M1 tracker](architecture/implementation-plan.md#active-milestone--macos-to-a-physical-frame)
+prioritizes a complete installed macOS-to-frame path, exact parts/wiring,
+controller firmware, physical adapter and real hardware testing. Conjunct
+composition, Refpath operators, ExMaude integration and broader platforms,
+AI and distribution work are retained for
+[M2](architecture/implementation-plan.md#next-milestone--broader-product-and-producer-integration).
+The [verification map](architecture/verification.md) records what has actually
 passed. Missing producer exports leave the dependent profile unavailable;
 they do not stop independent native, host or frame-profile work.
 

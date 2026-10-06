@@ -29,6 +29,19 @@ Recheck availability, exact revision, interface, dimensions, license, price,
 and safety documentation immediately before purchase. Builders may choose any
 frame path.
 
+## Active milestone parts packet
+
+The [M1 tracker](../architecture/implementation-plan.md#active-milestone--macos-to-a-physical-frame)
+requires one complete exact build packet before hardware testing: panel,
+controller/driver, memory, power/protection, connectors/cables, carrier, mat,
+backing, mount and service access, with wiring/pin maps and reproducible
+flashing/recovery instructions. Maintain it with the chosen frame owner and
+its [build record](validation-plan.md#build-record-layout). This is a manually
+reviewed assembly record for that exact configuration; it does not depend on
+Conjunct's future generic composition/list generation. The candidate tables
+below remain research inputs until their individual source and received-part
+gates pass; this milestone does not select or qualify a controller.
+
 ## Shared lab items
 
 - Current-limited bench supply and inline power/current logger.

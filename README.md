@@ -77,6 +77,13 @@ Visual assembly instructions in the companion guide are a separate renderer.
 
 ## Repository and build order
 
+The active [M1 milestone](docs/architecture/implementation-plan.md#active-milestone--macos-to-a-physical-frame)
+is the installed Mac-to-frame path, including an exact complete parts/wiring
+packet, controller firmware, display adapter and real hardware tests. Conjunct,
+Refpath and ExMaude integration, AI expansion, additional host platforms and
+general release/publication work remain in M2. Existing implementations and
+full product requirements are preserved.
+
 | Area | Owner and role |
 | --- | --- |
 | `apps/core`, `apps/macos`, `renderer`, `protocol`, `firmware` | Frameshift's independent still-artwork host and frame product |
@@ -85,8 +92,8 @@ Visual assembly instructions in the companion guide are a separate renderer.
 | `apps/build-platform` | Frameshift product UI, catalog/evidence storage and authorized Conjunct consumer |
 | Refpath | Later adaptive/operator generations and effects; not required for independent composition or native artwork |
 
-Qualify Conjunct's existing Rust kernel, Elixir port/browser WASM bindings and
-guide with exact Frameshift profile/consumer fixtures. Preserve v1 identities
+In M2, qualify Conjunct's existing Rust kernel, Elixir port/browser WASM bindings
+and guide with exact Frameshift profile/consumer fixtures. Preserve v1 identities
 through an explicit migration, then connect the workbench to qualified producer
 exports. The host authorization and native
 artwork lanes can progress independently. Transactional services remain on
