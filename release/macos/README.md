@@ -68,9 +68,24 @@ roles/CPUs/minima/imports and exact pinned Sparkle aliases, then repeats the
 whole inventory to confirm custody. Output preserves the existing schema-two
 observation bytes and is bounded to 16 MiB including LF. Usage exits 64; bundle
 refusals exit 1 with fixed text and no observation. SDK resource/archive/cache
-equality, signatures and production-wrapper cutover remain separate RT2 gates.
+equality and production-wrapper cutover remain separate RT2 gates.
 
-See the [closure contract](../../docs/host/macos.md#native-closure-admission),
+Join strict static signatures to that observation with:
+
+```sh
+swift run frameshift-mac-release verify-development-bundle /absolute/path/to/Frameshift.app arm64
+```
+
+`NativeSignatureVerifier` explicitly validates every native member and fixed
+Sparkle container with strict all-architecture/nested Security API checks. It
+requires an ad-hoc outer app and repeats complete closure/custody admission.
+Success emits the unchanged observation; usage/admission exits are 64/1 with
+fixed text. It performs no signing, repair, candidate execution or network
+trust evaluation. Unsealed SDK bytes still need exact archive/resource admission;
+static seals do not establish Developer ID, notarization or installed behavior.
+
+See the [signature contract](../../docs/host/macos.md#native-release-development-signatures),
+[closure contract](../../docs/host/macos.md#native-closure-admission),
 [loader metadata contract](../../docs/host/macos.md#native-release-loader-metadata),
 [plist contract](../../docs/host/macos.md#native-release-property-lists),
 [child contract](../../docs/host/macos.md#native-release-child-custody) and

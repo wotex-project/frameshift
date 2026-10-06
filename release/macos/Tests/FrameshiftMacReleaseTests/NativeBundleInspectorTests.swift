@@ -153,7 +153,7 @@ final class NativeBundleInspectorTests: XCTestCase {
 }
 
 @MainActor
-private final class NativeBundleFixture {
+final class NativeBundleFixture {
   let root: String
   let app: String
   let executable: String
@@ -218,7 +218,7 @@ private final class NativeBundleFixture {
   }
   func plist(minimum: String) -> Data {
     Data(
-      "<plist version=\"1.0\"><dict><key>CFBundleExecutable</key><string>Frameshift</string><key>LSMinimumSystemVersion</key><string>\(minimum)</string></dict></plist>"
+      "<plist version=\"1.0\"><dict><key>CFBundleExecutable</key><string>Frameshift</string><key>CFBundleIdentifier</key><string>io.frameshift.native-fixture</string><key>CFBundlePackageType</key><string>APPL</string><key>CFBundleShortVersionString</key><string>0.1.0</string><key>CFBundleVersion</key><string>0.1.0</string><key>LSMinimumSystemVersion</key><string>\(minimum)</string></dict></plist>"
         .utf8)
   }
   func writePlist(minimum: String) throws {

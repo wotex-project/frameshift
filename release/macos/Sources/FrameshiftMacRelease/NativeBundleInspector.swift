@@ -130,6 +130,13 @@ public enum NativeBundleInspector {
     _ input: String, architecture: NativeBundleArchitecture,
     observe: ((BundleInspectionPhase) throws -> Void)?
   ) throws -> NativeBundleObservation {
+    try inspectWithCustody(input, architecture: architecture, observe: observe).observation
+  }
+
+  static func inspectWithCustody(
+    _ input: String, architecture: NativeBundleArchitecture,
+    observe: ((BundleInspectionPhase) throws -> Void)? = nil
+  ) throws -> (observation: NativeBundleObservation, custody: BundleSnapshot) {
     guard !input.isEmpty, !input.utf8.contains(0) else { throw ReleaseToolError.unsafeInput }
     let root = URL(fileURLWithPath: input).standardizedFileURL.path
     let budget = BundleBudget()
@@ -233,11 +240,12 @@ public enum NativeBundleInspector {
     let after = try BundleInventory(root: root, budget: budget).scan()
     guard before == after else { throw ReleaseToolError.inputChanged }
     try budget.check()
-    return NativeBundleObservation(
+    let observation = NativeBundleObservation(
       architecture: architecture, declaredMinimum: declared,
       nativeMinimum: "\(minimum >> 16).\((minimum >> 8) & 255).\(minimum & 255)",
       directories: before.directories.map(\.value), files: before.files.map(\.value),
       links: framework ? before.links.map(\.value) : nil, natives: natives)
+    return (observation, before)
   }
 
   private static func versionNumber(_ value: String) throws -> UInt32 {
@@ -325,8 +333,13 @@ public enum NativeBundleInspector {
 
 enum BundleInspectionPhase { case inventoried, checked }
 
-private enum BundleSparkle {
+enum BundleSparkle {
   static let root = "Contents/Frameworks/Sparkle.framework"
+  static let containers = [
+    root + "/Versions/B/XPCServices/Downloader.xpc",
+    root + "/Versions/B/XPCServices/Installer.xpc",
+    root + "/Versions/B/Updater.app", root,
+  ]
   static let importPath = "@rpath/Sparkle.framework/Versions/B/Sparkle"
   static let links = Dictionary(
     uniqueKeysWithValues: [("Versions/Current", "B")]
@@ -355,7 +368,7 @@ private struct BundleBudget {
   }
 }
 
-private struct BundleSnapshot: Equatable {
+struct BundleSnapshot: Equatable {
   struct Member<Value: Equatable>: Equatable {
     let value: Value
     let identity: FileIdentity

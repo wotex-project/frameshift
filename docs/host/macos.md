@@ -754,6 +754,51 @@ import, restart and offline maintenance checks on the observed Mac. Those
 checks do not qualify macOS 14, Intel execution, universal OTP/NIF packaging,
 Developer ID, hardened runtime, notarization or installed DMG/update behavior.
 
+### Native release development signatures
+
+`NativeSignatureVerifier.verifyDevelopmentBundle(_:architecture:)` is the Swift
+replacement for development signature admission. Admit the complete closure
+first, then create fresh `SecStaticCode` references for every inventoried native
+file, the four fixed Sparkle containers where present, and the outer app. Request
+`kSecCSCheckAllArchitectures`, `kSecCSStrictValidate` and
+`kSecCSCheckNestedCode`, with `kSecCSRestrictSymlinks` and
+`kSecCSRestrictSidebandData`; do not skip executable or resource validation.
+Explicit leaf checks cover OTP/NIF/renderer code outside Apple's standard nested
+bundle locations. The outer app must carry `kSecCodeSignatureAdhoc` according to
+validated typed signing information. This is the existing development profile,
+not a Developer ID, certificate trust, notarization or Gatekeeper decision.
+
+Repeat complete closure admission after signature checks and require the exact
+native observation plus directory/link/file descriptor identities to match the
+first admission, including nanosecond change times. A same-byte rewrite or added
+empty directory still refuses. Read-only inspection never repairs, re-signs or
+executes candidate code. Use a two-minute monotonic job budget checked between
+admission/API operations; it cannot preempt a blocked Security/filesystem call.
+Do not enable network certificate evaluation or substitute signing information
+for a successful validity check.
+
+The implemented `frameshift-mac-release verify-development-bundle APP CPU` command
+returns the unchanged schema-two observation plus LF only on complete success.
+Usage exits 64; admission exits 1 with fixed development-signature refusal text.
+Acceptance requires actual signed arm64/Intel/universal inputs, unsigned or
+corrupt nonstandard native leaves, a corrupt non-native CPU slice, outer resource
+tamper and corrupt nested SDK resources hidden under a resealed outer app. Compare
+Apple `codesign` and native API results, preserve original bytes and custody, and
+join the fresh ad-hoc app before any production wrapper cutover.
+
+Five `NativeSignatureVerifierTests` groups pass within the 54-test tool lane on
+macOS 27.0.1 arm64 / Xcode 27. Actual signed arm64/Intel/universal bundles match
+`codesign`; an unsigned nonstandard NIF beneath a resealed app refuses. A corrupt
+Intel slice passes the default native-CPU Security check and refuses both the
+all-architecture adapter and Apple tool. Resource tamper, resource-fork sideband
+data, same-byte rewrite and added empty directories refuse without repair.
+The release-built command also matches exact observation bytes for five real
+compiled/SDK/fresh-app closures. Altered sealed updater/framework plists beneath
+an outer-only reseal refuse in both verifiers. The SDK's unsealed `PkgInfo` passes
+both signature verifiers, so full SDK byte/archive comparison remains required.
+These are local static fixtures; production trust and installed evidence remain
+independent gates.
+
 ### Embedded Sparkle framework custody
 
 The initial updater profile pins Sparkle 2.10.0 at upstream commit

@@ -335,9 +335,22 @@ support the distinction between signature validity, trust policy and nested
 code. A native replacement must explicitly cover both universal slices,
 OTP/NIF/renderer roles and the fixed Sparkle containers. It must retain
 pre/post custody: the header warns that validity assumes the code is not
-concurrently modified. This was header/source inspection, not a compiled
-Security-framework integration test. The archived technote is used for these
+concurrently modified. Headers establish API semantics; acceptance requires the
+[native adapter's actual fixture parity](../host/macos.md#native-release-development-signatures).
+The archived technote is used for these
 semantics, not as a current notarization command guide.
+
+Rechecked through `gh` on 2026-10-06, Apple's Security source at
+`db15acbe6a7f257a859ad9a3bb86097bfe0679d9` documents the
+[all-architecture/nested/strict flags and concurrent-modification limit](https://github.com/apple-oss-distributions/Security/blob/db15acbe6a7f257a859ad9a3bb86097bfe0679d9/OSX/libsecurity_codesigning/lib/SecStaticCode.h),
+and [validity before typed signing-information inspection](https://github.com/apple-oss-distributions/Security/blob/db15acbe6a7f257a859ad9a3bb86097bfe0679d9/OSX/libsecurity_codesigning/lib/SecCode.h).
+The selected Xcode 27 SDK exposes the same boundary. Actual native fixtures
+confirm that default API validation misses a corrupt Intel slice on this arm64
+host; explicit all-architecture checks refuse it. In the pinned SDK fixture,
+outer-only resealing cannot conceal altered sealed nested plists, but `PkgInfo`
+is unsealed and passes both static verifiers. This observed distinction requires
+the separate exact SDK resource/archive join; static signatures cannot replace
+that source evidence.
 
 Native signature APIs do not replace bounded Mach-O parsing, bundle-relative
 loader admission, deployment-minimum checks or actual runtime fixtures.
