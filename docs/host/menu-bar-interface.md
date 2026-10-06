@@ -143,6 +143,38 @@ covers the compact popover at 360 and 420 points and the resizable Settings or
 focused window at its admitted minimum and representative expanded size. These
 are native layout fixtures, not a CSS breakpoint system.
 
+### Native scene lifecycle
+
+Use the existing SwiftUI `MenuBarExtra`, identified `Window` for Library, and
+`Settings` scene with `openWindow`/`openSettings`. The framework owns scene
+creation and reuse. Repeated opening brings the existing surface forward while
+preserving the shared model, draft, selection and delivery identity. Closing
+Settings or Library leaves the menu-bar agent and owned core available. Sources:
+[MenuBarExtra](https://developer.apple.com/documentation/swiftui/menubarextra),
+[OpenWindowAction](https://developer.apple.com/documentation/swiftui/openwindowaction),
+and [OpenSettingsAction](https://developer.apple.com/documentation/swiftui/opensettingsaction).
+
+Opening a requested surface must not repeatedly steal focus from another owned
+dialog. Returning to the popover preserves its task context and keyboard focus.
+Use documented scene/window APIs; add AppKit interoperability only for a
+reproduced limitation of the supported configuration, with the reason and a
+regression recorded beside the owner. A custom Settings controller, global
+window-class scan, Dock promotion policy or presentation watchdog is not a
+prerequisite. Keep the existing menu-bar-agent posture.
+
+Quiescence is visible: new artwork/mutation actions are disabled while the
+owned-core stop remains unconfirmed. Expected read/presentation cancellation
+does not open an error alert. Preserve authoritative command outcomes and the
+explicit Retry Quit/Keep Open controls from the
+[host lifecycle contract](macos.md#shell-task-ownership-and-quiescence).
+
+Acceptance opens each scene repeatedly, closes/reopens and minimizes/restores
+it, dismisses the popover during an outstanding read, and presents an update
+dialog while Settings is already open. Verify one intended scene instance,
+unchanged shared context, no focus stealing and keyboard/VoiceOver focus return
+on the claimed Mac matrix. Model fixtures establish state/cancellation behavior;
+source inspection alone does not establish native focus behavior.
+
 ### Target row
 
 The first row selects a paired frame or an explicitly configured offline render
@@ -366,3 +398,6 @@ Settings contains:
    popovers plus admitted minimum and expanded window sizes with VoiceOver,
    Full Keyboard Access, increased text size, Increase Contrast and Reduce
    Transparency.
+9. Reopen the same Settings/Library scene and return from an update dialog without
+   duplicate windows, repeated activation or loss of context. During deferred
+   or uncertain quit, observe disabled mutations and the explicit retry controls.

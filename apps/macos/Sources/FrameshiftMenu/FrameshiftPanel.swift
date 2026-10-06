@@ -14,17 +14,25 @@ struct FrameshiftPanel: View {
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
       header
+      ShellLifecycleStatus(model: model)
       targetPicker
+        .disabled(model.isQuiescing)
       if model.guideHandoff != nil {
         guideHandoff
+          .disabled(model.isQuiescing)
       } else {
         instructionEditor
+          .disabled(model.isQuiescing)
         actionRow
+          .disabled(model.isQuiescing)
       }
       status
       loopControls
+        .disabled(model.isQuiescing)
       searchField
+        .disabled(model.isQuiescing)
       library
+        .disabled(model.isQuiescing)
     }
     .padding(16)
     .frame(width: 420, height: 560)
@@ -37,6 +45,9 @@ struct FrameshiftPanel: View {
         set: { if !$0 { model.dismissError() } }
       )
     ) {
+      if model.startupFailed, !model.isQuiescing {
+        Button("Retry connection") { model.start() }
+      }
       Button("OK") { model.dismissError() }
     } message: {
       Text(model.errorMessage ?? "Unknown error")
@@ -133,7 +144,7 @@ struct FrameshiftPanel: View {
             .accessibilityIdentifier("direct-delivery-pending")
           Spacer()
           Button("Check frame") { Task { await model.reconcileDelivery() } }
-            .disabled(model.isBusy)
+            .disabled(model.actionsUnavailable)
         }
       }
     }
@@ -186,7 +197,7 @@ struct FrameshiftPanel: View {
             }
           }
         }
-        .disabled(model.isBusy)
+        .disabled(model.actionsUnavailable)
       }
     }
     .padding(12)
@@ -257,7 +268,7 @@ struct FrameshiftPanel: View {
         Label("Save instruction", systemImage: "checkmark")
       }
       .buttonStyle(FlatActionButtonStyle())
-      .disabled(model.isBusy)
+      .disabled(model.actionsUnavailable)
 
       Spacer()
 
@@ -320,7 +331,7 @@ struct FrameshiftPanel: View {
             Label("Loop pins", systemImage: "arrow.triangle.2.circlepath")
           }
           .buttonStyle(FlatActionButtonStyle())
-          .disabled(model.isBusy)
+          .disabled(model.actionsUnavailable)
           .help("Cycle the current pinned artwork on \(target.name)")
           .accessibilityIdentifier("loop-pinned-menu")
 
@@ -365,7 +376,7 @@ struct FrameshiftPanel: View {
             Spacer()
 
             Button("Queue loop") { queueCustomInterval(for: target) }
-              .disabled(customDwellMs(for: target) == nil || model.isBusy)
+              .disabled(customDwellMs(for: target) == nil || model.actionsUnavailable)
               .accessibilityIdentifier("queue-custom-loop")
 
             Button("Cancel") { panelState.customIntervalShown = false }
@@ -377,7 +388,7 @@ struct FrameshiftPanel: View {
             Task { await model.resumePlaylist() }
           }
           .disabled(
-            model.isBusy || target.hasQueuedDelivery == true
+            model.actionsUnavailable || target.hasQueuedDelivery == true
               || target.playlist?.requiresRevalidation == true
               || target.directDelivery?.status == .pending)
         }
@@ -394,7 +405,7 @@ struct FrameshiftPanel: View {
   }
 
   private func queueCustomInterval(for target: FrameTarget) {
-    guard let dwellMs = customDwellMs(for: target), !model.isBusy else { return }
+    guard let dwellMs = customDwellMs(for: target), !model.actionsUnavailable else { return }
     panelState.customIntervalShown = false
     Task { await model.loopPinned(dwellMs: dwellMs) }
   }

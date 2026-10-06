@@ -12,7 +12,8 @@ struct LibraryMetadataEditor: View {
         model.analyzeSelectedArtwork()
       }
       .disabled(
-        model.isAnalysisBusy || model.similarity.isBusy || model.isMetadataLoading || model.isBusy
+        model.isAnalysisBusy || model.similarity.isBusy || model.isMetadataLoading
+          || model.actionsUnavailable
       )
       .help("Refresh Apple Vision observations. Your title and labels are preserved.")
       .accessibilityIdentifier("library-analyze-artwork")
@@ -84,7 +85,8 @@ struct LibraryMetadataEditor: View {
         HStack {
           Button("Save metadata", systemImage: "checkmark") { Task { await model.saveMetadata() } }
             .disabled(
-              model.isBusy || model.isMetadataLoading || !draft.hasChanges || !draft.isValid
+              model.actionsUnavailable || model.isMetadataLoading || !draft.hasChanges
+                || !draft.isValid
                 || model.metadataIsStale)
           Button(
             draft.hasChanges ? "Discard draft and reload" : "Reload metadata",
@@ -93,7 +95,7 @@ struct LibraryMetadataEditor: View {
             newLabel = ""
             Task { await model.loadSelectedMetadata(discardDraft: true) }
           }
-          .disabled(model.isBusy || model.isMetadataLoading)
+          .disabled(model.actionsUnavailable || model.isMetadataLoading)
           if draft.hasChanges { Text("Unsaved changes").font(.caption).foregroundStyle(.secondary) }
         }
       } else if model.isMetadataLoading {

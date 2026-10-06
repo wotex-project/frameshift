@@ -15,7 +15,7 @@ struct VisualSimilarityView: View {
         Button("Find similar artwork", systemImage: "photo.on.rectangle.angled") {
           model.findSimilarArtwork()
         }
-        .disabled(model.isAnalysisBusy || model.similarity.isBusy || model.isBusy)
+        .disabled(model.isAnalysisBusy || model.similarity.isBusy || model.actionsUnavailable)
         .accessibilityIdentifier("library-find-similar")
         if model.similarity.isBusy {
           ProgressView().controlSize(.small)

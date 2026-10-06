@@ -189,6 +189,85 @@ and [Service Management](https://developer.apple.com/documentation/servicemanage
 The Swift layer must not duplicate library, recipe, scheduling, or frame state.
 It submits commands and subscribes to snapshots from the Elixir core.
 
+### Native shell lifecycle practices
+
+**Review date:** 2026-10-06. **Evidence:** official Swift/Apple/Sparkle
+documentation and repository source/test inspection. No upstream suite,
+installed updater or new Frameshift lifecycle fixture was run by this review.
+
+The authoritative guidance is [Swift concurrency](https://docs.swift.org/latest/documentation/the-swift-programming-language/concurrency/),
+Apple's [view task lifecycle](https://developer.apple.com/documentation/swiftui/view/task(name:priority:file:line:_:)),
+[identity-driven tasks](https://developer.apple.com/documentation/swiftui/view/task(id:name:priority:file:line:_:)),
+[OpenWindowAction](https://developer.apple.com/documentation/swiftui/openwindowaction),
+and [OpenSettingsAction](https://developer.apple.com/documentation/swiftui/opensettingsaction).
+Structured child tasks share their parent's cancellation; unstructured tasks
+require their own lifetime management. Cancellation is cooperative. SwiftUI
+can cancel view tasks when their view disappears or identity changes. Opening
+an identified `Window` brings that window forward; the framework already owns
+the scene's presentation. These facts support explicit ownership and stale-result
+checks, not a second window manager or a blanket prohibition on finite tasks.
+
+[CodexBar](https://github.com/steipete/CodexBar/tree/6a26b2e9b1b60471970deb6fe663f9e5f284e2ce),
+at commit `6a26b2e9b1b60471970deb6fe663f9e5f284e2ce`, is [MIT-licensed](https://github.com/steipete/CodexBar/blob/6a26b2e9b1b60471970deb6fe663f9e5f284e2ce/LICENSE)
+prior art. Its [shutdown implementation](https://github.com/steipete/CodexBar/blob/6a26b2e9b1b60471970deb6fe663f9e5f284e2ce/Sources/CodexBar/StatusItemController%2BShutdown.swift)
+shows idempotent cleanup of retained tasks, observations and menus. Its
+[updater adapter](https://github.com/steipete/CodexBar/blob/6a26b2e9b1b60471970deb6fe663f9e5f284e2ce/Sources/CodexBar/CodexbarApp.swift#L149)
+and stopped-controller fixtures illustrate a small UI boundary. Its custom
+Dock activation, AppKit Settings replacement, status-item management and
+window-class heuristics solve that application's needs; none establishes a
+Frameshift requirement. Source copying is not approved by this review.
+
+The [Sparkle standard controller](https://sparkle-project.org/documentation/api-reference/Classes/SPUStandardUpdaterController.html)
+already supplies update UI and must remain owned on the main actor with its
+weakly referenced delegates kept alive. The [customization guidance](https://sparkle-project.org/documentation/customization/)
+places initial preference defaults in `Info.plist` and reserves runtime setters
+for user changes. Checking permission and automatic download/install are
+separate settings. CodexBar's launch-time setters are therefore not the
+recommended default-configuration pattern for Frameshift. The
+[updater delegate contract](https://sparkle-project.org/documentation/api-reference/Protocols/SPUUpdaterDelegate.html)
+also documents relaunch paths which skip postponement. Frameshift's existing
+AppKit quit guard must continue to require actual owned-core exit.
+
+Repository inspection found an unretained startup warm-up in
+`FrameshiftMenuApp.swift` and an unretained search debounce in `ShellModel.swift`.
+Existing search revisions and single-flight preview checks already reject stale
+results; retain those protections while qualifying cancellation and quiescence.
+Use the existing model/client boundary for delayed-response fixtures. Native
+scene reuse and focus need actual supported-Mac checks before any workaround.
+The [host contract](../host/macos.md#shell-task-ownership-and-quiescence),
+[presentation contract](../host/menu-bar-interface.md#native-scene-lifecycle),
+and [H3-L1–H3-L3 delivery order](../architecture/implementation-plan.md#native-shell-lifecycle-follow-through)
+assign the implementable work without changing the Swift/Elixir boundary.
+
+#### External release wrapper and function library
+
+CodexBar's [release wrapper](https://github.com/steipete/CodexBar/blob/6a26b2e9b1b60471970deb6fe663f9e5f284e2ce/Scripts/mac-release)
+delegates to `agent-scripts`, inspected at [MIT-licensed](https://github.com/steipete/agent-scripts/blob/79150cfac4a6ba4df13cf30176bf2db85170ae6c/LICENSE) commit
+`79150cfac4a6ba4df13cf30176bf2db85170ae6c`. Its
+[entry point](https://github.com/steipete/agent-scripts/blob/79150cfac4a6ba4df13cf30176bf2db85170ae6c/skills/release-mac-app/scripts/mac-release)
+sources an approximately 1,868-line
+[Bash function library](https://github.com/steipete/agent-scripts/blob/79150cfac4a6ba4df13cf30176bf2db85170ae6c/skills/release-mac-app/scripts/lib/mac_release.sh).
+This is shared personal automation with configurable app/repository identity,
+artifact names, package hooks and credential modes, rather than a Swift library.
+The [repository manifest](https://github.com/steipete/CodexBar/blob/6a26b2e9b1b60471970deb6fe663f9e5f284e2ce/.mac-release.env)
+binds it to the maintainer's signing identity, 1Password items and local key paths.
+
+Reusable concepts include a bounded signing canary, separate packaging/signing
+authority and preservation of partially published state. The implementation
+sources executable shell configuration, expands values with `eval`, uses
+1Password/tmux and Python/Node/Expect helpers, and manages the account's keychain
+search list. Its full release command force-updates tags by default, clears
+Sparkle caches, commits the appcast and verifies downloaded artifacts after
+publication. Its publication/provider tests explicitly use synthetic tools;
+they do not qualify another maintainer's credentials or installed update path.
+
+Frameshift retains [D-003](../decisions/README.md#d-003--language-boundary) and
+its existing immutable publication/recovery contract. Keep entry points thin
+and their library owner explicit; do not introduce this toolkit, its personal
+credential setup, cache cleanup or Git mutations as dependencies. Borrowed
+practices must be supported by official APIs and the affected Frameshift
+contract, with a local regression for any necessary platform workaround.
+
 ### Release tooling language boundary
 
 **Review date:** 2026-10-06. **Evidence:** repository and upstream source/API

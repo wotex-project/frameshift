@@ -19,6 +19,12 @@ hardware behavior but cannot enter the Frameshift stack.
 | [STM32 HUB75 driver](https://github.com/kostaman/HUB75) | Two chained 64×64 HUB75E panels on an STM32 are useful timing and mapping feasibility evidence. | GPL-3.0 C++/HAL research oracle only; not approved for copying or adoption. |
 | [MicroZig](https://github.com/ZigEmbeddedGroup/microzig) | Active Zig embedded toolbox with some STM32 support. | Its API is explicitly in development; exact chip, DMA, network, TLS, flashing, and recovery support must be proven. |
 | [MediaGenerationKit](https://github.com/drawthingsai/media-generation-kit) | Native local/cloud still-image generation behind one Swift API. | LGPL-3.0 obligations and model licenses must be reviewed. |
+| [CodexBar](https://github.com/steipete/CodexBar/tree/6a26b2e9b1b60471970deb6fe663f9e5f284e2ce) | Idempotent native cleanup, explicit task ownership and a small updater UI boundary. | MIT; source/test inspection on 2026-10-06, not copied or qualified here. Official Swift/Apple/Sparkle guidance owns requirements; custom window/Dock behavior is not adopted. |
+| [agent-scripts Mac release helper](https://github.com/steipete/agent-scripts/tree/79150cfac4a6ba4df13cf30176bf2db85170ae6c/skills/release-mac-app) | Thin entry point with an explicit function-library owner, scoped credential commands and retained partial-publication state. | MIT; shared personal Bash automation with credential, runtime, keychain and Git assumptions. Research only; not a Frameshift dependency. |
+
+The [2026-10-06 native lifecycle and wrapper review](software-stack.md#native-shell-lifecycle-practices)
+records exact source revisions, official guidance, implementation gaps and the
+bounded H3 follow-through. The earlier hardware survey's date is unchanged.
 
 ## Patterns adopted
 

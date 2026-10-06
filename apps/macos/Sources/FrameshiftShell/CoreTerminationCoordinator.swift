@@ -10,14 +10,22 @@ import AppKit
 ///
 /// Concurrent requests share the current wait. This handshake does not prevent
 /// forced OS termination or establish installed updater behavior.
+/// The supplied callback quiesces the shared model and advertisements once,
+/// before waiting; it must preserve admitted command and process custody.
 @MainActor
 public final class CoreTerminationCoordinator {
   private var quitTask: Task<Void, Never>?
   private var terminationConfirmed = false
+  private let quiesce: @MainActor () -> Void
+  private var quiesced = false
 
-  public init() {}
+  public init(quiesce: @escaping @MainActor () -> Void = {}) { self.quiesce = quiesce }
 
   public func requestTermination(_ application: NSApplication) -> NSApplication.TerminateReply {
+    if !quiesced {
+      quiesced = true
+      quiesce()
+    }
     if terminationConfirmed { return .terminateNow }
     if quitTask != nil { return .terminateLater }
     quitTask = Task.detached { [weak self] in

@@ -153,6 +153,7 @@ public final class VisualSimilarityModel {
   public private(set) var result: VisualSimilarityResult?
   public private(set) var message: String?
   public private(set) var isBusy = false
+  public private(set) var isQuiescing = false
   private let client: any CoreClient
   private var task: Task<Void, Never>?
   private var revision = 0
@@ -169,7 +170,7 @@ public final class VisualSimilarityModel {
   }
 
   public func start(itemID: String, filters: LibraryFilters) {
-    guard task == nil else { return }
+    guard !isQuiescing, task == nil else { return }
     revision += 1
     let scope = revision
     isBusy = true
@@ -235,5 +236,11 @@ public final class VisualSimilarityModel {
     result = nil
     message = nil
     task?.cancel()
+  }
+
+  public func quiesce() {
+    guard !isQuiescing else { return }
+    isQuiescing = true
+    invalidate()
   }
 }

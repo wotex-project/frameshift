@@ -10,6 +10,10 @@ public final class ShellModel {
   public let storageSettings: StorageSettingsModel
   public let similarity: VisualSimilarityModel
   public private(set) var isBusy = false
+  public private(set) var isQuiescing = false
+  public private(set) var isStarting = false
+  public private(set) var startupFailed = false
+  public private(set) var commandOutcome: ShellCommandOutcome?
   public private(set) var errorMessage: String?
   public var draftInstruction: String
   public private(set) var searchQuery = ""
@@ -33,6 +37,9 @@ public final class ShellModel {
   public private(set) var analysisMessage: String?
 
   private let client: any CoreClient
+  private var startupTask: Task<Void, Never>?
+  private var searchTask: Task<Void, Never>?
+  private var previewTask: Task<Void, Never>?
   private var searchRevision = 0
   private var playlistDrafts: [String: PlaylistDraft] = [:]
   private var previewRevision = 0
@@ -59,16 +66,63 @@ public final class ShellModel {
     draftInstruction = initialSnapshot.instruction
   }
 
-  public func refresh() async {
-    if await perform({ try await client.snapshot() }) {
-      similarity.invalidate()
-      automaticAnalysisStopped = false
-      startAnalysis(discoverPending: true)
+  public var actionsUnavailable: Bool { isBusy || isQuiescing }
+
+  /// Starts one shared, retained connection attempt; failure is visible and retry is explicit.
+  public func start() {
+    guard startupTask == nil, !actionsUnavailable else { return }
+    if startupFailed { errorMessage = nil }
+    isStarting = true
+    startupFailed = false
+    startupTask = Task {
+      defer {
+        startupTask = nil
+        isStarting = false
+      }
+      let connected = await refresh()
+      guard !isQuiescing, !Task.isCancelled else { return }
+      startupFailed = !connected
+      if !connected { errorMessage = "The local core could not start. Retry the connection." }
     }
   }
 
+  /// Pauses the shared session permanently for this quit attempt, including uncertain exit.
+  /// Already admitted commands retain their identity and completed/unknown response.
+  public func quiesce() {
+    guard !isQuiescing else { return }
+    isQuiescing = true
+    startupTask?.cancel()
+    searchTask?.cancel()
+    previewTask?.cancel()
+    metadataLoad?.task.cancel()
+    searchRevision += 1
+    previewRevision += 1
+    metadataRevision += 1
+    recoveryRevision += 1
+    isPreviewLoading = false
+    isMetadataLoading = false
+    isRecoveryLoading = false
+    automaticAnalysisStopped = true
+    analysisQueue.removeAll()
+    analysisTask?.cancel()
+    storageSettings.quiesce()
+    similarity.quiesce()
+  }
+
+  @discardableResult
+  public func refresh() async -> Bool {
+    if await perform({ try await client.snapshot() }) {
+      startupFailed = false
+      similarity.invalidate()
+      automaticAnalysisStopped = false
+      startAnalysis(discoverPending: true)
+      return true
+    }
+    return false
+  }
+
   public func analyzeSelectedArtwork() {
-    guard !similarity.isBusy, let itemID = selectedItem?.id else { return }
+    guard !isQuiescing, !similarity.isBusy, let itemID = selectedItem?.id else { return }
     automaticAnalysisStopped = false
     enqueueAnalysis(itemID, force: true)
   }
@@ -85,7 +139,7 @@ public final class ShellModel {
       analysisMessage = "Artwork saved. Refresh after local comparison to resume labeling."
       return
     }
-    guard validLibraryDigest(itemID), !automaticAnalysisStopped else { return }
+    guard !isQuiescing, validLibraryDigest(itemID), !automaticAnalysisStopped else { return }
     if analysisTask == nil {
       analysisRemaining = 16
       analysisAttempted.removeAll()
@@ -102,7 +156,9 @@ public final class ShellModel {
   }
 
   private func startAnalysis(discoverPending: Bool) {
-    guard analysisTask == nil, !automaticAnalysisStopped, !similarity.isBusy else { return }
+    guard !isQuiescing, analysisTask == nil, !automaticAnalysisStopped, !similarity.isBusy else {
+      return
+    }
     analysisRemaining = 16
     analysisAttempted.removeAll()
     analysisOverflow = false
@@ -138,11 +194,12 @@ public final class ShellModel {
           }
         }
       } catch {
+        guard !isQuiescing, !Task.isCancelled else { return }
         analysisMessage = "Local labeling is unavailable. Refresh or analyze an artwork to retry."
         return
       }
     }
-    while !Task.isCancelled, analysisRemaining > 0, !analysisQueue.isEmpty {
+    while !isQuiescing, !Task.isCancelled, analysisRemaining > 0, !analysisQueue.isEmpty {
       let job = analysisQueue.removeFirst()
       analysisRemaining -= 1
       analysisAttempted.insert(job.itemID)
@@ -151,16 +208,18 @@ public final class ShellModel {
         // current metadata/search after the commit; never apply that snapshot.
         _ = try await client.analyzeArtwork(itemID: job.itemID, force: job.force)
         saved += 1
-        if selectedItem?.id == job.itemID {
+        if !isQuiescing, !Task.isCancelled, selectedItem?.id == job.itemID {
           metadataRevision += 1
+          metadataLoad?.task.cancel()
           metadataLoad = nil
           await loadSelectedMetadata()
         }
         await refreshSearch()
       } catch CoreClientError.commandOutcomeUnknown {
         analysisQueue.removeAll()
-        if selectedItem?.id == job.itemID {
+        if !isQuiescing, !Task.isCancelled, selectedItem?.id == job.itemID {
           metadataRevision += 1
+          metadataLoad?.task.cancel()
           metadataLoad = nil
           await loadSelectedMetadata()
         }
@@ -209,12 +268,13 @@ public final class ShellModel {
   }
 
   private func invalidateMetadata() {
+    metadataLoad?.task.cancel()
     metadataRevision += 1
     metadataLoad = nil
     selectedMetadata = nil
     metadataMessage = nil
-    isMetadataLoading = selectedItem != nil
-    Task { await loadSelectedMetadata() }
+    isMetadataLoading = !isQuiescing && selectedItem != nil
+    _ = beginMetadataLoad()
   }
 
   public var metadataDraft: MetadataDraft? {
@@ -228,11 +288,22 @@ public final class ShellModel {
   }
 
   public func loadSelectedMetadata(discardDraft: Bool = false) async {
-    guard let itemID = selectedItem?.id else { return }
+    guard !isQuiescing, !Task.isCancelled, let load = beginMetadataLoad() else { return }
+    await load.task.value
+    if discardDraft, !isQuiescing, !Task.isCancelled, load.revision == metadataRevision,
+      selectedItem?.id == load.itemID, let metadata = selectedMetadata
+    {
+      metadataDrafts[load.itemID] = MetadataDraft(metadata: metadata)
+    }
+  }
+
+  private func beginMetadataLoad() -> (itemID: String, revision: Int, task: Task<Void, Never>)? {
+    guard !isQuiescing, let itemID = selectedItem?.id else { return nil }
     let load: (itemID: String, revision: Int, task: Task<Void, Never>)
     if let active = metadataLoad, active.itemID == itemID {
       load = active
     } else {
+      metadataLoad?.task.cancel()
       metadataRevision += 1
       let revision = metadataRevision
       isMetadataLoading = true
@@ -240,12 +311,7 @@ public final class ShellModel {
       load = (itemID, revision, task)
       metadataLoad = load
     }
-    await load.task.value
-    if discardDraft, load.revision == metadataRevision, selectedItem?.id == itemID,
-      let metadata = selectedMetadata
-    {
-      metadataDrafts[itemID] = MetadataDraft(metadata: metadata)
-    }
+    return load
   }
 
   private func fetchMetadata(itemID: String, revision: Int) async {
@@ -256,8 +322,11 @@ public final class ShellModel {
       }
     }
     do {
+      try Task.checkCancellation()
       let metadata = try await client.metadata(itemID: itemID)
-      guard revision == metadataRevision, selectedItem?.id == itemID else { return }
+      guard !isQuiescing, !Task.isCancelled, revision == metadataRevision,
+        selectedItem?.id == itemID
+      else { return }
       try metadata.validate(itemID: itemID)
       selectedMetadata = metadata
       if metadataDrafts[itemID]?.hasChanges != true {
@@ -265,7 +334,7 @@ public final class ShellModel {
       }
       metadataMessage = nil
     } catch {
-      guard revision == metadataRevision else { return }
+      guard !isQuiescing, !Task.isCancelled, revision == metadataRevision else { return }
       metadataMessage = "Metadata is unavailable. Refresh or retry this artwork."
     }
   }
@@ -341,6 +410,7 @@ public final class ShellModel {
   }
 
   public func loadRecovery(reset: Bool = false) async {
+    guard !isQuiescing, !Task.isCancelled else { return }
     if reset { recoveryRevision += 1 }
     guard reset || (!isRecoveryLoading && recoveryCursor != nil) else { return }
     let revision = recoveryRevision
@@ -349,13 +419,13 @@ public final class ShellModel {
     defer { if revision == recoveryRevision { isRecoveryLoading = false } }
     do {
       let page = try await client.recovery(afterID: cursor)
-      guard revision == recoveryRevision else { return }
+      guard !isQuiescing, !Task.isCancelled, revision == recoveryRevision else { return }
       try page.validate(afterID: cursor)
       if reset { removedItems = page.items } else { removedItems.append(contentsOf: page.items) }
       recoveryCursor = page.nextCursor
       recoveryMessage = nil
     } catch {
-      guard revision == recoveryRevision else { return }
+      guard !isQuiescing, !Task.isCancelled, revision == recoveryRevision else { return }
       recoveryMessage = "Recently Removed is unavailable. Refresh to retry."
     }
   }
@@ -382,8 +452,8 @@ public final class ShellModel {
     previewRevision += 1
     selectedPreview = nil
     previewMessage = nil
-    isPreviewLoading = selectedItem != nil
-    Task { await loadSelectedPreview() }
+    isPreviewLoading = !isQuiescing && selectedItem != nil
+    _ = beginPreviewLoad()
   }
 
   public func retryPreview() async {
@@ -392,23 +462,40 @@ public final class ShellModel {
   }
 
   public func loadSelectedPreview() async {
+    guard !isQuiescing, !Task.isCancelled, let task = beginPreviewLoad() else { return }
+    await task.value
+  }
+
+  private func beginPreviewLoad() -> Task<Void, Never>? {
+    guard !isQuiescing, selectedPreview == nil, previewScope != nil else { return nil }
+    if let previewTask { return previewTask }
+    let task = Task { await fetchSelectedPreview() }
+    previewTask = task
+    return task
+  }
+
+  private func fetchSelectedPreview() async {
     guard !previewWorkerActive, selectedPreview == nil else { return }
     previewWorkerActive = true
     defer {
       previewWorkerActive = false
+      previewTask = nil
       isPreviewLoading = false
     }
     while let scope = previewScope {
+      guard !isQuiescing, !Task.isCancelled else { return }
       let revision = previewRevision
       let target = snapshot.selectedTarget
       isPreviewLoading = true
       do {
         let preview = try await client.preview(masterID: scope.masterID, target: target)
+        guard !isQuiescing, !Task.isCancelled else { return }
         guard revision == previewRevision else { continue }
         try preview.validate(masterID: scope.masterID, target: target)
         selectedPreview = preview
         previewMessage = nil
       } catch {
+        guard !isQuiescing, !Task.isCancelled else { return }
         guard revision == previewRevision else { continue }
         switch error {
         case CoreClientError.previewBusy:
@@ -432,6 +519,8 @@ public final class ShellModel {
   }
 
   public func setSearchQuery(_ query: String) {
+    guard !isQuiescing else { return }
+    searchTask?.cancel()
     similarity.invalidate()
     searchQuery = query
     searchRevision += 1
@@ -449,9 +538,10 @@ public final class ShellModel {
       return
     }
 
-    Task {
-      try? await Task.sleep(for: .milliseconds(150))
-      guard revision == searchRevision else { return }
+    searchTask = Task {
+      defer { if revision == searchRevision { searchTask = nil } }
+      do { try await Task.sleep(for: .milliseconds(150)) } catch { return }
+      guard !isQuiescing, !Task.isCancelled, revision == searchRevision else { return }
       await loadSearch(query, revision: revision)
     }
   }
@@ -487,6 +577,8 @@ public final class ShellModel {
   }
 
   private func refreshSearch() async {
+    guard !isQuiescing, !Task.isCancelled else { return }
+    searchTask?.cancel()
     guard !searchQuery.isEmpty || libraryFilters.isActive else { return }
     guard searchQuery.utf8.count <= 256 else { return }
     searchRevision += 1
@@ -494,14 +586,15 @@ public final class ShellModel {
   }
 
   private func loadSearch(_ query: String, revision: Int) async {
+    guard !isQuiescing, !Task.isCancelled else { return }
     do {
       let result = try await client.snapshot(query: query, filters: libraryFilters)
-      guard revision == searchRevision else { return }
+      guard !isQuiescing, !Task.isCancelled, revision == searchRevision else { return }
       searchItems = result.items
       updateSelection(from: result.items)
       searchError = nil
     } catch {
-      guard revision == searchRevision else { return }
+      guard !isQuiescing, !Task.isCancelled, revision == searchRevision else { return }
       searchItems = []
       searchError =
         libraryFilters.isActive
@@ -515,7 +608,7 @@ public final class ShellModel {
   }
 
   public func receiveGuideURL(_ url: URL) {
-    guard let handoff = GuideHandoff.parse(url) else { return }
+    guard !isQuiescing, let handoff = GuideHandoff.parse(url) else { return }
     guideHandoff = handoff
   }
 
@@ -544,7 +637,7 @@ public final class ShellModel {
   }
 
   public func findSimilarArtwork() {
-    guard !isAnalysisBusy, let itemID = selectedItem?.id else { return }
+    guard !isQuiescing, !isAnalysisBusy, let itemID = selectedItem?.id else { return }
     similarity.start(itemID: itemID, filters: libraryFilters)
   }
 
@@ -689,8 +782,9 @@ public final class ShellModel {
 
   @discardableResult
   private func send(_ command: CoreCommand) async -> Bool {
-    guard !isBusy else { return false }
+    guard !actionsUnavailable else { return false }
     isBusy = true
+    commandOutcome = .inFlight(command.id)
     defer { isBusy = false }
     var succeeded = false
 
@@ -702,26 +796,39 @@ public final class ShellModel {
         similarity.invalidate()
       }
       errorMessage = nil
+      commandOutcome = .completed(command.id)
       succeeded = true
     } catch CoreClientError.commandOutcomeUnknown {
-      do {
-        apply(try await client.snapshot())
+      commandOutcome = .unconfirmed(command.id)
+      if isQuiescing {
         errorMessage =
-          "The core restarted before it could confirm the command. Current state was refreshed; review it before trying again."
-      } catch {
-        errorMessage =
-          "The core restarted before it could confirm the command. Reconnect and review current state before trying again."
+          "The core did not confirm the command. New work is paused; review current state after restarting Frameshift."
+      } else {
+        do {
+          apply(try await client.snapshot())
+          errorMessage =
+            "The core restarted before it could confirm the command. Current state was refreshed; review it before trying again."
+        } catch {
+          errorMessage =
+            "The core restarted before it could confirm the command. Reconnect and review current state before trying again."
+        }
       }
     } catch CoreClientError.commandIDConflict {
       errorMessage = "The command identity was rejected. Refresh and try the operation again."
     } catch CoreClientError.deliveryOutcomeUnknown {
-      do {
-        apply(try await client.snapshot())
+      commandOutcome = .unconfirmed(command.id)
+      if isQuiescing {
         errorMessage =
-          "The frame did not confirm display. Its pending delivery is saved; check the frame before sending again."
-      } catch {
-        errorMessage =
-          "The frame did not confirm display. Reconnect and check its delivery state before sending again."
+          "The frame did not confirm display. New work is paused; review its saved pending delivery after restarting Frameshift."
+      } else {
+        do {
+          apply(try await client.snapshot())
+          errorMessage =
+            "The frame did not confirm display. Its pending delivery is saved; check the frame before sending again."
+        } catch {
+          errorMessage =
+            "The frame did not confirm display. Reconnect and check its delivery state before sending again."
+        }
       }
     } catch CoreClientError.credentialBrokerUnavailable {
       errorMessage =
@@ -766,24 +873,29 @@ public final class ShellModel {
     } catch {
       errorMessage = "The core command could not be completed."
     }
+    if commandOutcome == .inFlight(command.id) { commandOutcome = .failed(command.id) }
     await refreshSearch()
     return succeeded
   }
 
   private func perform(_ operation: () async throws -> CoreSnapshot) async -> Bool {
-    guard !isBusy else { return false }
+    guard !actionsUnavailable, !Task.isCancelled else { return false }
     isBusy = true
     defer { isBusy = false }
 
     var succeeded = false
     do {
-      apply(try await operation())
+      let next = try await operation()
+      guard !isQuiescing, !Task.isCancelled else { return false }
+      apply(next)
       errorMessage = nil
       succeeded = true
     } catch let error as CoreClientError {
+      guard !isQuiescing, !Task.isCancelled else { return false }
       Self.logger.error("core refresh failed: \(String(describing: error), privacy: .public)")
       errorMessage = "The core command could not be completed."
     } catch {
+      guard !isQuiescing, !Task.isCancelled, !(error is CancellationError) else { return false }
       errorMessage = "The core command could not be completed."
     }
     await refreshSearch()
@@ -801,6 +913,7 @@ public final class ShellModel {
       (try? metadata.validate(itemID: metadata.itemID)) != nil
     {
       metadataRevision += 1
+      metadataLoad?.task.cancel()
       metadataLoad = nil
       isMetadataLoading = false
       selectedMetadata = metadata
@@ -810,7 +923,7 @@ public final class ShellModel {
           isPinned: item.isPinned, queuedTargetID: item.queuedTargetID, loopStatus: item.loopStatus)
       }
     } else if selectedItem != nil {
-      Task { await loadSelectedMetadata() }
+      _ = beginMetadataLoad()
     }
   }
 
@@ -820,6 +933,14 @@ public final class ShellModel {
     else { return }
     self.selectedItem = current
   }
+}
+
+/// Presentation outcome for the original command identity; no mutation is replayed from it.
+public enum ShellCommandOutcome: Equatable, Sendable {
+  case inFlight(UUID)
+  case completed(UUID)
+  case unconfirmed(UUID)
+  case failed(UUID)
 }
 
 private struct PreviewScope: Equatable {

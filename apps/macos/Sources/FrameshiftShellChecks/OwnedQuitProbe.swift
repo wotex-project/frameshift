@@ -12,7 +12,7 @@ func runOwnedQuitProbe(_ result: URL) throws {
   application.delegate = delegate
   let startup = Task { @MainActor in
     do {
-      _ = try await LocalCoreClient().snapshot()
+      guard await delegate.model.refresh() else { throw CoreClientError.coreUnavailable }
       guard let socket = ProcessInfo.processInfo.environment["FRAMESHIFT_SOCKET_PATH"] else {
         throw CocoaError(.fileReadUnknown)
       }
@@ -38,7 +38,8 @@ func runOwnedQuitProbe(_ result: URL) throws {
 @MainActor
 private final class OwnedQuitProbeDelegate: NSObject, NSApplicationDelegate {
   private let result: URL
-  private let termination = CoreTerminationCoordinator()
+  let model = ShellModel(client: LocalCoreClient())
+  private lazy var termination = CoreTerminationCoordinator { [weak self] in self?.model.quiesce() }
   private var deferred = false
 
   init(result: URL) { self.result = result }
@@ -52,6 +53,10 @@ private final class OwnedQuitProbeDelegate: NSObject, NSApplicationDelegate {
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
     let reply = termination.requestTermination(sender)
+    guard model.isQuiescing, model.storageSettings.isQuiescing, model.similarity.isQuiescing else {
+      record("refused")
+      return .terminateCancel
+    }
     if reply == .terminateLater {
       deferred = true
       record("deferred")

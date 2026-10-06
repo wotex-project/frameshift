@@ -64,7 +64,7 @@ struct PlaylistEditor: View {
         Button("Queue this set", systemImage: "arrow.triangle.2.circlepath") {
           Task { await model.queuePlaylist() }
         }
-        .disabled(!model.canQueuePlaylist || model.isBusy)
+        .disabled(!model.canQueuePlaylist || model.actionsUnavailable)
         .accessibilityIdentifier("queue-ordered-playlist")
         if let playlist = target.playlist { savedPlaylist(target, playlist: playlist) }
       }
@@ -140,7 +140,8 @@ struct PlaylistEditor: View {
           Task { await model.resumePlaylist() }
         }
         .disabled(
-          model.isBusy || target.hasQueuedDelivery == true || playlist.requiresRevalidation == true
+          model.actionsUnavailable || target.hasQueuedDelivery == true
+            || playlist.requiresRevalidation == true
             || target.directDelivery?.status == .pending
         )
         .accessibilityIdentifier("resume-saved-playlist")

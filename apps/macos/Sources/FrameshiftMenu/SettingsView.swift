@@ -16,6 +16,7 @@ struct SettingsView: View {
       VStack(alignment: .leading, spacing: 24) {
         SettingsSection("Connection") {
           settingsValue("Core connection", value: "Local Unix socket")
+          ShellLifecycleStatus(model: shell)
         }
 
         SettingsSection(
@@ -38,8 +39,10 @@ struct SettingsView: View {
         }
 
         storage
+          .disabled(shell.isQuiescing)
 
         nearbyFrames
+          .disabled(shell.isQuiescing)
         startup
       }
       .padding(24)
@@ -49,7 +52,7 @@ struct SettingsView: View {
     .frame(minWidth: 520, idealWidth: 580, minHeight: 420, idealHeight: 620)
     .onAppear {
       model.refresh()
-      discovery.start()
+      if !shell.isQuiescing { discovery.start() }
     }
     .onDisappear { discovery.stop() }
     .task { await shell.storageSettings.refresh() }

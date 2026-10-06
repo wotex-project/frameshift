@@ -47,6 +47,7 @@ public final class StorageSettingsModel {
   public private(set) var storage: LibraryStorage?
   public private(set) var draftMebibytes = ""
   public private(set) var isBusy = false
+  public private(set) var isQuiescing = false
   public private(set) var isStale = false
   public private(set) var message: String?
   private var baseRevision: String?
@@ -55,6 +56,8 @@ public final class StorageSettingsModel {
   private let client: any CoreClient
 
   public init(client: any CoreClient) { self.client = client }
+
+  public func quiesce() { isQuiescing = true }
 
   public func edit(_ value: String) { draftMebibytes = value }
 
@@ -68,15 +71,17 @@ public final class StorageSettingsModel {
 
   public var hasChanges: Bool { draftMebibytes != baseDraft }
   public var canSave: Bool {
-    !isBusy && !isStale && baseRevision != nil && draftByteLimit != nil && hasChanges
+    !isQuiescing && !isBusy && !isStale && baseRevision != nil && draftByteLimit != nil
+      && hasChanges
   }
 
   public func refresh(discardDraft: Bool = false) async {
-    guard !isBusy else { return }
+    guard !isQuiescing, !Task.isCancelled, !isBusy else { return }
     isBusy = true
     defer { isBusy = false }
     do {
       let next = try await client.storage()
+      guard !isQuiescing, !Task.isCancelled else { return }
       try next.validate()
       let preserve = baseRevision != nil && (hasChanges || requiresReview) && !discardDraft
       storage = next
@@ -87,6 +92,7 @@ public final class StorageSettingsModel {
       }
       message = isStale ? "Storage settings changed. Reload and review your limit." : nil
     } catch {
+      guard !isQuiescing, !Task.isCancelled, !(error is CancellationError) else { return }
       isStale = true
       message = "Storage accounting is unavailable. Refresh to try again."
     }

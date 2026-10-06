@@ -59,6 +59,7 @@ struct LibraryWindow: View {
     } detail: {
       ScrollView {
         VStack(alignment: .leading, spacing: 20) {
+          ShellLifecycleStatus(model: model)
           target
           if let item = model.selectedItem {
             artwork(item)
@@ -86,11 +87,12 @@ struct LibraryWindow: View {
     .frame(minWidth: 700, minHeight: 520)
     .toolbar {
       Button("Import image", systemImage: "photo.badge.plus") { chooseImage() }
-        .disabled(model.isBusy)
+        .disabled(model.actionsUnavailable)
       Button("Refresh", systemImage: "arrow.clockwise") { Task { await model.refresh() } }
-        .disabled(model.isBusy)
+        .disabled(model.actionsUnavailable)
       Button("Settings", systemImage: "gearshape") { openSettings() }
       Button("Recently Removed", systemImage: "trash") { model.isRecoveryPresented = true }
+        .disabled(model.isQuiescing)
     }
     .sheet(
       isPresented: Binding(
@@ -150,7 +152,7 @@ struct LibraryWindow: View {
           Text("\(target.medium.label) — \(target.name)").tag(target.id)
         }
       }
-      .disabled(model.isBusy)
+      .disabled(model.actionsUnavailable)
     } else {
       Label("No frame paired", systemImage: "square.on.square")
         .foregroundStyle(.secondary)
@@ -175,7 +177,8 @@ struct LibraryWindow: View {
         Button("Queue for frame", systemImage: "paperplane") { Task { await model.queue(item.id) } }
           .disabled(
             model.snapshot.selectedTarget == nil
-              || model.snapshot.selectedTarget?.directDelivery?.status == .pending || model.isBusy
+              || model.snapshot.selectedTarget?.directDelivery?.status == .pending
+              || model.actionsUnavailable
               || model.isPreviewLoading)
         Button(
           item.isPinned ? "Unpin" : "Pin", systemImage: item.isPinned ? "bookmark.fill" : "bookmark"
@@ -187,12 +190,12 @@ struct LibraryWindow: View {
         }
       }
       .buttonStyle(FlatActionButtonStyle())
-      .disabled(model.isBusy)
+      .disabled(model.actionsUnavailable)
       if model.snapshot.selectedTarget?.directDelivery?.status == .pending {
         Button("Check frame", systemImage: "clock.arrow.circlepath") {
           Task { await model.reconcileDelivery() }
         }
-        .disabled(model.isBusy)
+        .disabled(model.actionsUnavailable)
       }
     }
     .accessibilityIdentifier("focused-artwork-detail")
@@ -211,7 +214,7 @@ struct LibraryWindow: View {
         Button("Save instruction", systemImage: "checkmark") {
           Task { await model.saveInstruction() }
         }
-        .disabled(model.isBusy || !model.hasUnsavedInstruction)
+        .disabled(model.actionsUnavailable || !model.hasUnsavedInstruction)
         if model.hasUnsavedInstruction { Text("Unsaved changes").foregroundStyle(.secondary) }
       }
     }

@@ -101,6 +101,13 @@ than risking a duplicate effect. The shell then reads a fresh authoritative
 snapshot and asks the user to review it before issuing a new command ID. This
 is an explicit durable at-most-once boundary, not a false exactly-once claim.
 
+A connected command whose write, framing, response decoding or correlation
+cannot be confirmed is reported as `command_outcome_unknown`. It is not
+replayed by the transport. Known correlated domain refusals remain explicit;
+read cancellation suppresses presentation without implying a mutation rollback.
+During quiescence, reconciliation waits for an explicit later review instead
+of starting another snapshot request.
+
 The implemented v1 boundary currently uses one four-byte-big-endian-length
 prefixed JSON request and response per connection, a 64 KiB request ceiling,
 bounded JSON depth/node/string/collection admission, duplicate-member
@@ -201,6 +208,59 @@ outbox availability. It does not poll powered frames aggressively. Sleeping
 frames control their own contact interval; the host reports “waiting for next
 contact,” not “offline.”
 
+### Shell task ownership and quiescence
+
+Use structured concurrency for work whose lifetime belongs to an asynchronous
+operation, and SwiftUI `.task`/`.task(id:)` for work whose lifetime belongs only
+to a view. The shared shell session owns work that must survive closing the
+popover. Retain handles for app/model tasks that require cancellation or joining,
+including startup warm-up, search debounce and automatic labeling. Use the
+existing `ShellModel`/`CoreClient` boundary rather than another scheduler.
+Sources: [Swift concurrency](https://docs.swift.org/latest/documentation/the-swift-programming-language/concurrency/)
+and [SwiftUI task lifecycle](https://developer.apple.com/documentation/swiftui/view/task(id:name:priority:file:line:_:)).
+
+Cancellation is cooperative: check it before starting a superseded read and
+before publishing its result. Preserve the existing request revision and
+artwork/target identity checks because cancellation alone cannot exclude a late
+response. A newer search cancels the older pending debounce; cancellation of
+that delay must return instead of proceeding immediately. Expected cancellation
+does not create a failure alert. Report an actual startup failure through the
+existing connection/error presentation with an explicit retry; an ignored error
+must not imply a ready core. UI publication remains on the main actor, and
+blocking native/process work must not occupy that actor.
+
+Beginning normal or updater-triggered quit quiesces the shared model and core
+owner once. Stop new startup, debounce, refresh and automatic-labeling work;
+cancel owned presentation/read tasks and prevent their late completions from
+reopening a surface or starting more work. An already admitted mutation keeps
+its command identity and authoritative completed/unknown outcome; presentation
+cancellation neither rolls it back nor authorizes replay. Closing one view
+does not shut down the app session or cancel an admitted command merely because
+its initiating view disappeared.
+
+If core exit remains uncertain and the user keeps the app open, the model stays
+quiescing and mutation controls stay disabled. Retry Quit observes the retained
+core as specified below. Cleanup of tasks and observers is idempotent; it must
+not release process, token, credential or log custody before confirmed exit.
+
+Acceptance extends the existing shell-model and owned-core fixtures with
+delayed startup/search/preview responses, canceled debounce without a request,
+superseded results, repeated quiescence, failure/retry presentation and an
+admitted command whose reply becomes unknown. Confirm no new work or duplicate
+mutation after quiescence and retain the existing real-process/modal-loop checks.
+These local fixtures require no production update channel or signing identity.
+
+The implementation retains shared startup, debounce, preview and metadata tasks
+in `ShellModel`, with read cancellation at `LocalCoreClient` and quiescence
+joined by `CoreTerminationCoordinator`. The Settings storage and similarity
+owners also refuse new work. Seven lifetime fixtures and three command-reply
+groups pass within all 98 Swift tests on macOS 27.0.1 arm64 / Xcode 27. The
+real socket fixtures establish request receipt and unknown reply classification,
+not server-side effect completion. Fresh packaging, authenticated IPC/offline
+maintenance and the real deferred-quit fixture pass with the shared model
+quiescent before confirmed core exit. Native focus, uncertain-alert interaction
+and installed updater acceptance remain separate.
+
 ### Owned core termination
 
 Normal quit and updater-triggered quit must quiesce the shell's owned core
@@ -242,6 +302,42 @@ and unchanged original app/probe bytes. It invokes quit from an actor job to
 exercise modal-loop delivery; no OS UI input or installed updater is involved.
 An idle-core pass does not establish active native-worker shutdown, keyboard/
 VoiceOver quit interaction or the ten-second uncertain-alert interaction.
+
+### Native updater lifecycle
+
+The application owns one main-actor `SPUStandardUpdaterController` and retains
+its delegates. Use Sparkle's standard user interface behind the smallest shell
+adapter needed by Settings/menu actions and fixtures. Development or otherwise
+ineligible distribution profiles show an explicit unavailable state and perform
+no update checks. Stopped-controller fixtures must remain available without a
+live feed, production key or installation. Sources: [standard controller](https://sparkle-project.org/documentation/api-reference/Classes/SPUStandardUpdaterController.html)
+and [update settings](https://sparkle-project.org/documentation/customization/).
+
+Initial defaults belong in `Info.plist`; runtime preference setters respond to
+user choices. Preserve Sparkle's standard permission flow and stored preferences,
+and keep automatic checking distinct from automatic download/install. Do not
+reset preferences on every launch or infer installation consent from permission
+to check. Bind Check for Updates availability to the updater's published
+`canCheckForUpdates` state; canceled/failed cycles cannot retain a false ready
+state or overwrite a newer operation's presentation.
+
+The existing signed-channel contract requires `SURequireSignedFeed` and
+`SUVerifyUpdateBeforeExtraction` enabled, with
+`SUSignedFeedFailureExpirationInterval` set to `0`. Retain the independently
+pinned public key and admitted feed/artifact identity. Use documented delegate
+hooks only where Frameshift needs to enforce that contract. A relaunch
+postponement hook does not cover every installation/termination path, so normal
+and updater-triggered quit both retain the owned-core exit guard. Sources:
+[signed-feed settings](https://sparkle-project.org/documentation/customization/)
+and [updater delegate](https://sparkle-project.org/documentation/api-reference/Protocols/SPUUpdaterDelegate.html).
+
+Acceptance checks actual packaged defaults and preserved user choices, disabled
+and stopped setup, repeated checks, canceled/failed cycles, stale completion,
+and deferred/uncertain/confirmed core exit. Join valid and tampered signed-feed
+fixtures to the actual pinned SDK. Installed direct/Cask/Sparkle updates, native
+Intel/older-system execution and production signing remain separate R2 gates.
+The Cask and direct channels continue to consume the same DMG; this review does
+not introduce a Homebrew subprocess updater.
 
 ## Discovery and pairing
 

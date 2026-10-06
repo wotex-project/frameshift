@@ -26,7 +26,7 @@ struct RecentlyRemovedView: View {
               Button("Restore", systemImage: "arrow.uturn.backward") {
                 Task { await model.restoreArtwork(item.id) }
               }
-              .disabled(model.isBusy)
+              .disabled(model.actionsUnavailable)
               .accessibilityLabel("Restore \(item.title)")
             }
           }
@@ -35,7 +35,7 @@ struct RecentlyRemovedView: View {
           }
           if model.recoveryCursor != nil {
             Button("Load more removed artwork") { Task { await model.loadRecovery() } }
-              .disabled(model.isRecoveryLoading || model.isBusy)
+              .disabled(model.isRecoveryLoading || model.actionsUnavailable)
           }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -47,7 +47,7 @@ struct RecentlyRemovedView: View {
         Button("Refresh", systemImage: "arrow.clockwise") {
           Task { await model.loadRecovery(reset: true) }
         }
-        .disabled(model.isRecoveryLoading || model.isBusy)
+        .disabled(model.isRecoveryLoading || model.actionsUnavailable)
         Spacer()
         Button("Done") { model.isRecoveryPresented = false }.keyboardShortcut(.cancelAction)
       }

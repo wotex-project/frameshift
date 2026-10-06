@@ -901,6 +901,25 @@ window fixtures with keyboard/VoiceOver and macOS accessibility preferences,
 with no AI provider configured and no change to the selected still or delivery
 meaning across presentation modes.
 
+#### Native shell lifecycle follow-through
+
+The [official-guidance/source review](../research/software-stack.md#native-shell-lifecycle-practices)
+steers H3 toward the existing SwiftUI scenes, structured/cancellable work and
+Sparkle's standard UI. CodexBar is supporting prior art; its custom window
+workarounds and personal release toolkit are not dependencies or requirements.
+Each slice retains its own local and installed evidence gates.
+
+| Slice and order | Owning requirement and implementation | Required exit evidence |
+| --- | --- | --- |
+| H3-L1 — Task ownership; local implementation complete | Implement [session/model task ownership and quiescence](../host/macos.md#shell-task-ownership-and-quiescence) in the existing app/model/client owners. Retain startup/debounce work that needs cancellation, stop superseded reads, expose startup failures and preserve accepted command outcomes. Keep the confirmed-core-exit coordinator. | Seven lifecycle and three command-reply groups pass within all 98 Swift tests; fresh closure/signatures, packaged IPC/offline maintenance and actual deferred-quit/core-exit checks pass on macOS 27.0.1 arm64 / Xcode 27. Native scene/focus and installed updater gates remain below. |
+| H3-L2 — Standard scene lifecycle; after L1 | Qualify existing `Window`/`Settings` actions under the [native scene contract](../host/menu-bar-interface.md#native-scene-lifecycle). Fix only reproduced supported-API defects; do not prebuild a custom window manager, Dock policy or watchdog. | Repeated open/close/minimize/restore, popover dismissal, shared state and keyboard/VoiceOver focus return pass on the recorded Mac configuration. This slice does not depend on updater integration; broader supported-OS claims retain their matrix gate. |
+| H3-L3 — Updater boundary; after L1, with R2 SDK/package inputs | Implement the [native updater lifecycle](../host/macos.md#native-updater-lifecycle) using the pinned Sparkle controller and standard UI. Keep initial plist defaults separate from user preference changes, enforce signed-channel policy and route quit through confirmed core exit. | Actual defaults, retained choices, disabled/stopped setup, cycle cancellation/failure/staleness, signed-feed tamper and uncertain/confirmed quit pass. After L2, qualify overlapping Settings/update-dialog presentation and focus. Final installed direct/Cask/Sparkle acceptance remains R2 work. |
+
+Run these coherent native-shell slices alongside RT1–RT6; portable adapter,
+production credentials and unavailable Intel/older-OS hosts do not block the
+defined local fixtures. Record actual tests in the verification map before
+closing a slice. Documentation/source review is not implementation completion.
+
 ### H4 — AI adapters
 
 - provider contract and preflight;

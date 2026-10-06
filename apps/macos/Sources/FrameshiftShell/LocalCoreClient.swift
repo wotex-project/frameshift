@@ -125,12 +125,15 @@ public actor LocalCoreClient: CoreClient {
   )
     async throws -> WireResponse
   {
+    try Task.checkCancellation()
     try await BundledCore.shared.ensureRunning(socketPath: socketPath)
     let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
+    try Task.checkCancellation()
     let request = LibraryWireRequest(
       operation: operation, auth: auth, itemID: itemID, afterID: afterID, cohort: cohort,
       featureDigest: featureDigest, filters: filters)
     let responseData = try await send(encoder.encode(request))
+    try Task.checkCancellation()
     guard let response = try? decoder.decode(WireResponse.self, from: responseData),
       response.version == 1, response.requestID == request.requestID
     else { throw CoreClientError.protocolFailure }
@@ -139,14 +142,17 @@ public actor LocalCoreClient: CoreClient {
   }
 
   public func preview(masterID: String, target: FrameTarget?) async throws -> ArtworkPreview {
+    try Task.checkCancellation()
     try await BundledCore.shared.ensureRunning(socketPath: socketPath)
     let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
+    try Task.checkCancellation()
     let request = PreviewWireRequest(
       auth: auth, itemID: masterID, targetID: target?.id, profileID: target?.profileID,
       capabilityDigest: target?.capabilityDigest)
     let payload = try encoder.encode(request)
     guard payload.count <= Self.maximumRequestBytes else { throw CoreClientError.invalidCommand }
     let responseData = try await send(payload)
+    try Task.checkCancellation()
     guard let response = try? decoder.decode(WireResponse.self, from: responseData),
       response.version == 1, response.requestID == request.requestID
     else { throw CoreClientError.protocolFailure }
@@ -163,11 +169,14 @@ public actor LocalCoreClient: CoreClient {
   }
 
   public func outboxStatus() async throws -> OutboxServiceStatus {
+    try Task.checkCancellation()
     try await BundledCore.shared.ensureRunning(socketPath: socketPath)
     let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
+    try Task.checkCancellation()
     let request = WireRequest(auth: auth, operation: "outboxStatus", command: nil, query: nil)
     let payload = try encoder.encode(request)
     let responseData = try await send(payload)
+    try Task.checkCancellation()
     guard let response = try? decoder.decode(WireResponse.self, from: responseData),
       response.version == 1, response.requestID == request.requestID,
       response.ok, let status = response.outbox,
@@ -274,13 +283,18 @@ public actor LocalCoreClient: CoreClient {
     operation: String, command: CoreCommand? = nil, query: String? = nil,
     filters: LibraryFilters? = nil
   ) async throws -> CoreSnapshot {
+    if command == nil { try Task.checkCancellation() }
     try await BundledCore.shared.ensureRunning(socketPath: socketPath)
 
     do {
       return try await exchangeOnce(
         operation: operation, command: command, query: query, filters: filters)
     } catch CoreClientError.coreUnavailable {
-      try await BundledCore.shared.ensureRunning(socketPath: socketPath, force: true)
+      if command == nil { try Task.checkCancellation() }
+      do { try await BundledCore.shared.ensureRunning(socketPath: socketPath, force: true) } catch {
+        if command != nil { throw CoreClientError.commandOutcomeUnknown }
+        throw error
+      }
       return try await exchangeOnce(
         operation: operation, command: command, query: query, filters: filters)
     }
@@ -290,6 +304,7 @@ public actor LocalCoreClient: CoreClient {
     operation: String, command: CoreCommand?, query: String?, filters: LibraryFilters?
   ) async throws -> CoreSnapshot {
     let auth = try await BundledCore.shared.sessionToken(socketPath: socketPath)
+    if command == nil { try Task.checkCancellation() }
     let request = WireRequest(
       auth: auth, operation: operation, command: command, query: query, filters: filters)
     let payload = try encoder.encode(request)
@@ -297,16 +312,28 @@ public actor LocalCoreClient: CoreClient {
       throw CoreClientError.invalidCommand
     }
 
-    let responseData = try await send(payload)
+    let responseData = try await send(payload, mutation: command != nil)
+    if command == nil { try Task.checkCancellation() }
+
+    return try Self.decodeSnapshot(
+      responseData, requestID: request.requestID, mutation: command != nil)
+  }
+
+  /// Decodes the correlated terminal response without treating a damaged mutation reply as refusal.
+  package static func decodeSnapshot(_ responseData: Data, requestID: String, mutation: Bool)
+    throws -> CoreSnapshot
+  {
 
     let response: WireResponse
     do {
-      response = try decoder.decode(WireResponse.self, from: responseData)
+      response = try JSONDecoder().decode(WireResponse.self, from: responseData)
     } catch {
+      if mutation { throw CoreClientError.commandOutcomeUnknown }
       throw CoreClientError.protocolFailure
     }
 
-    guard response.version == 1, response.requestID == request.requestID else {
+    guard response.version == 1, response.requestID == requestID else {
+      if mutation { throw CoreClientError.commandOutcomeUnknown }
       throw CoreClientError.protocolFailure
     }
 
@@ -314,16 +341,23 @@ public actor LocalCoreClient: CoreClient {
       return snapshot
     }
 
+    if mutation,
+      response.ok || Self.clientError(for: response.error?.code) == .protocolFailure
+    {
+      throw CoreClientError.commandOutcomeUnknown
+    }
+
     throw Self.clientError(for: response.error?.code)
   }
 
-  private func send(_ payload: Data) async throws -> Data {
+  private func send(_ payload: Data, mutation: Bool = false) async throws -> Data {
     let path = socketPath
     return try await Task.detached(priority: .userInitiated) {
       try UnixSocket.exchange(
         path: path,
         payload: payload,
-        maximumResponseBytes: Self.maximumResponseBytes
+        maximumResponseBytes: Self.maximumResponseBytes,
+        mutation: mutation
       )
     }.value
   }
@@ -728,7 +762,9 @@ enum UnixSocket {
     return (try? connect(descriptor, path: path)) != nil
   }
 
-  static func exchange(path: String, payload: Data, maximumResponseBytes: Int) throws -> Data {
+  static func exchange(
+    path: String, payload: Data, maximumResponseBytes: Int, mutation: Bool = false
+  ) throws -> Data {
     let descriptor = Darwin.socket(AF_UNIX, SOCK_STREAM, 0)
     guard descriptor >= 0 else { throw CoreClientError.coreUnavailable }
     defer { Darwin.close(descriptor) }
@@ -739,15 +775,20 @@ enum UnixSocket {
     var size = UInt32(payload.count).bigEndian
     var frame = Data(bytes: &size, count: MemoryLayout<UInt32>.size)
     frame.append(payload)
-    try writeAll(descriptor, data: frame)
-
-    let prefix = try readExactly(descriptor, count: 4)
-    let responseLength = prefix.reduce(0) { ($0 << 8) | Int($1) }
-    guard responseLength > 0, responseLength <= maximumResponseBytes else {
-      throw CoreClientError.protocolFailure
+    do {
+      try writeAll(descriptor, data: frame)
+      let prefix = try readExactly(descriptor, count: 4)
+      let responseLength = prefix.reduce(0) { ($0 << 8) | Int($1) }
+      guard responseLength > 0, responseLength <= maximumResponseBytes else {
+        throw CoreClientError.protocolFailure
+      }
+      return try readExactly(descriptor, count: responseLength)
+    } catch {
+      // Once connected, a partial write or lost reply cannot prove no effect.
+      // The durable command identity is retained; this transport never replays it.
+      if mutation { throw CoreClientError.commandOutcomeUnknown }
+      throw error
     }
-
-    return try readExactly(descriptor, count: responseLength)
   }
 
   private static func configure(_ descriptor: Int32) throws {
