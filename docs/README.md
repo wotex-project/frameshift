@@ -63,6 +63,7 @@ exists, but public publication and installer workflows remain open in the
 - [Composition workbench, Conjunct boundaries and dependency gates](architecture/build-platform.md)
 - [Conjunct integration, identity migration and product ownership](architecture/conjunct-integration.md)
 - [Exact retained v1 migration inputs](architecture/conjunct-v1-inputs.md)
+- [Retained v1 source inventory](architecture/conjunct-v1-inventory.md)
 - [Required library deliveries and producer/consumer tests](architecture/producer-contracts.md)
 - [Physical BuildSpec, compatibility and formal verification](architecture/physical-build-contract.md)
 - [Build artifact layouts and storage footprint](architecture/build-artifacts.md)

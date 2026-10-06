@@ -250,6 +250,13 @@ These results establish complete retained v1 input custody. Conjunct successor
 artifacts, thirteen-stage migration, installed producer resolution and physical
 acceptance remain open.
 
+The [v1 source inventory](conjunct-v1-inventory.md) requires complete original
+node enumeration on both runtimes, independent tree reconstruction, a retained
+oversized valid closure, 300 seeded schedules, two actual omission faults and
+ten null-budget smoke calls per runtime. These checks are planned; the authored
+full-result hands precede the inventory implementation. Complete syntax coverage
+does not qualify physical migration or successor execution.
+
 ### Physical compiler evidence
 
 Run `scripts/check build-spec` for the shared package. The current gate passes

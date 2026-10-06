@@ -229,6 +229,12 @@ missing-pin refusal and exact compilation-context replay. Implement and qualify
 it before constructing successors. Its custody result cannot close S3 or the
 thirteen-stage S2 mapping.
 
+The [source inventory](conjunct-v1-inventory.md) independently enumerates every
+original JSON node before a conversion report is admitted. Implement and qualify
+its full-byte closure, source locators and node ceiling next. Its complete flag
+covers the declared syntax scope; physical meaning and all thirteen producer
+checks still require their own mapping and joined evidence.
+
 After S1–S3 fixtures are frozen, build a test-only vertical slice in the
 existing product host/browser. Load one complete synthetic Paper composition
 and its reviewed synthetic procedure/content through the public producer
