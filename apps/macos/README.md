@@ -51,6 +51,14 @@ user-choice/cycle/UI and installed update joins remain open under the
 `FRAMESHIFT_PACKAGED_APP_FIXTURE=/absolute/path/to/development/Frameshift.app`
 adds that explicitly supplied plist to the channel test's default-metadata check.
 
+`CoreTerminationCoordinator.prepareForUpdaterRelaunch(_:)` attaches a cancelable
+one-shot updater continuation to the same owned-core observation as normal quit.
+Unknown exit pauses work and permits explicit later observation; cancellation
+suppresses only the matching continuation. Queued confirmation cannot fire twice
+or lose the continuation when normal quit returns immediately. Both paths pass
+actual AppKit/core probes; SDK installation and native update-dialog acceptance
+remain separate.
+
 The shell forwards sanitized core records to Apple unified logging. Read them
 in Console.app or from Terminal with:
 

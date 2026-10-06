@@ -1485,6 +1485,23 @@ pass. This closes the local archive/cache/derivation experiment. Frozen
 source/compiler joins, final app sealing, universal SDK assembly, runtime client,
 upstream build derivation, license review and installed update remain separate.
 
+**Updater relaunch source boundary:** retrieved 2026-10-06 through `gh`, pinned
+Sparkle 2.10.0 commit `eef1a539a373c1f1a320624b1130fc5de7b2e100`.
+[`SPUInstallerDriver.m`, `installWithToolAndRelaunch:displayingUserInterface:`](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUInstallerDriver.m#L510-L564)
+marks postponement once before calling the delegate. Its retained handler
+re-enters installation through a weak installer reference and skips the hook on
+that continuation. The
+[`SPUUpdaterDelegate.h` postponement contract](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUUpdaterDelegate.h#L342-L356)
+states the hook can be absent on some termination/relaunch paths. Frameshift
+therefore retains the normal AppKit core guard independently and shares its
+actual exit observation with a cancelable updater continuation. This source
+review explains the callback/lifetime boundary; pure coordination fixtures and
+actual AppKit/core joins cannot establish SDK installation or installed updates.
+A compile check against the actual pinned framework admits the underlying
+throwing Swift `try controller.updater.start()` API, avoiding the standard
+controller wrapper's delayed developer alert. No updater was started by that
+compile-only check.
+
 **Native CPU derivation source review:** 2026-10-06. Apple cctools commit
 `e0d56624eca2a76c2ace4c21850df9e666de4ca5`
 [`misc/lipo.c`, `thin_flag` branch](https://github.com/apple-oss-distributions/cctools/blob/e0d56624eca2a76c2ace4c21850df9e666de4ca5/misc/lipo.c#L586-L630)

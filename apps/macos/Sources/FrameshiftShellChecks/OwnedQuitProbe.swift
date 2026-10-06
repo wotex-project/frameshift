@@ -3,7 +3,7 @@ import Foundation
 import FrameshiftShell
 
 @MainActor
-func runOwnedQuitProbe(_ result: URL) throws {
+func runOwnedQuitProbe(_ result: URL, updaterRelaunch: Bool = false) throws {
   try Data().write(to: result, options: .withoutOverwriting)
   try FileManager.default.setAttributes([.posixPermissions: 0o600], ofItemAtPath: result.path)
   let application = NSApplication.shared
@@ -24,6 +24,7 @@ func runOwnedQuitProbe(_ result: URL) throws {
       else { throw CocoaError(.fileReadCorruptFile) }
       delegate.record("core:\(pid)")
       delegate.record("ready")
+      if updaterRelaunch { try delegate.prepareUpdaterRelaunch() }
       // Also exercise quit nested inside an active main-actor dispatch job.
       application.terminate(nil)
     } catch {
@@ -49,6 +50,16 @@ private final class OwnedQuitProbeDelegate: NSObject, NSApplicationDelegate {
     defer { try? handle.close() }
     _ = try? handle.seekToEnd()
     try? handle.write(contentsOf: Data((phase + "\n").utf8))
+  }
+
+  func prepareUpdaterRelaunch() throws {
+    guard
+      termination.prepareForUpdaterRelaunch({ [weak self] result in
+        self?.record(result == .stopped ? "updater-confirmed" : "refused")
+      }) != nil
+    else { throw CocoaError(.fileReadUnknown) }
+    guard model.isQuiescing else { throw CocoaError(.fileReadUnknown) }
+    record("updater-deferred")
   }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {

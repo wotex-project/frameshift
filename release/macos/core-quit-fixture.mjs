@@ -16,8 +16,9 @@ const run = (command, args) => {
   if (result.error || result.status !== 0) throw new Error('quit fixture tool refused');
 };
 try {
-  if (process.platform !== 'darwin' || !['arm64', 'x64'].includes(process.arch) || process.argv.length !== 4) throw new Error('fixture profile');
-  const [source, probe] = process.argv.slice(2).map(path => resolve(path));
+  if (process.platform !== 'darwin' || !['arm64', 'x64'].includes(process.arch) || ![4, 5].includes(process.argv.length) || (process.argv.length === 5 && process.argv[4] !== '--updater-quit')) throw new Error('fixture profile');
+  const [source, probe] = process.argv.slice(2, 4).map(path => resolve(path));
+  const updaterQuit = process.argv[4] === '--updater-quit';
   const architecture = process.arch === 'x64' ? 'x86_64' : 'arm64';
   const before = await auditMacBundle(source, architecture);
   await verifyDevelopmentSignatures(source, before);
@@ -32,7 +33,7 @@ try {
   await verifyDevelopmentSignatures(app, admitted);
   const data = join(work, 'data'); await mkdir(data, { mode: 0o700 });
   const result = join(work, 'result'); log = await open(join(work, 'probe.log'), 'wx', 0o600);
-  child = spawn(executable, ['--owned-quit-probe', result], {
+  child = spawn(executable, [updaterQuit ? '--owned-updater-quit-probe' : '--owned-quit-probe', result], {
     stdio: ['ignore', log.fd, log.fd],
     env: { ...process.env, FRAMESHIFT_DATA_DIR: data, FRAMESHIFT_SOCKET_PATH: join(data, 'core.sock'),
       FRAMESHIFT_IPC_TOKEN: randomBytes(32).toString('hex'), ERL_FLAGS: '+S 4:4 +SDcpu 2 +SDio 2',
@@ -47,7 +48,9 @@ try {
     await Promise.race([completion, new Promise((_, reject) => { timer = setTimeout(() => reject(new Error('quit probe deadline')), 30_000); })]);
   } finally { clearTimeout(timer); }
   const record = (await readReleaseInput(result, { maximum: 256, protectedTrust: true })).toString('utf8');
-  const match = /^core:([1-9][0-9]*)\nready\ndeferred\nconfirmed\n$/.exec(record);
+  const match = (updaterQuit
+    ? /^core:([1-9][0-9]*)\nready\nupdater-deferred\ndeferred\nupdater-confirmed\nconfirmed\n$/
+    : /^core:([1-9][0-9]*)\nready\ndeferred\nconfirmed\n$/).exec(record);
   assert.ok(match);
   const pid = Number(match[1]); assert.ok(Number.isSafeInteger(pid) && pid > 1 && pid <= 0x7fffffff);
   assert.throws(() => process.kill(pid, 0), error => error.code === 'ESRCH');
@@ -55,7 +58,8 @@ try {
   assert.deepEqual(await auditMacBundle(source, architecture), before);
   await verifyDevelopmentSignatures(source, before);
   assert.deepEqual(await readReleaseInput(probe, { maximum: 128 * 1024 * 1024, protectedTrust: true }), probeBytes);
-  process.stdout.write('Owned core quit fixture passed: real AppKit deferred reply, observed packaged launcher exit and OTP PID removal; interactive UI and installed update remain separate\n');
+  if (updaterQuit) process.stdout.write('Shared updater/normal quit fixture passed: retained continuation waits for real owned exit before AppKit reply; SDK/installation remains separate\n');
+  else process.stdout.write('Owned core quit fixture passed: real AppKit deferred reply, observed packaged launcher exit and OTP PID removal; interactive UI and installed update remain separate\n');
   await log.close(); log = undefined;
   await rm(work, { recursive: true }); work = undefined;
 } catch {

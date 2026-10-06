@@ -375,6 +375,8 @@ check_macos() {
   probe_directory=$(swift build --package-path "$repository_root/apps/macos" --configuration release --show-bin-path)
   mise exec -- node "$repository_root/release/macos/core-quit-fixture.mjs" \
     "$app_bundle" "$probe_directory/frameshift-shell-checks"
+  mise exec -- node "$repository_root/release/macos/core-quit-fixture.mjs" \
+    "$app_bundle" "$probe_directory/frameshift-shell-checks" --updater-quit
 }
 
 check_container() {

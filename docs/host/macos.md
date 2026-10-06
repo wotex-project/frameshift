@@ -331,6 +331,31 @@ and updater-triggered quit both retain the owned-core exit guard. Sources:
 [signed-feed settings](https://sparkle-project.org/documentation/customization/)
 and [updater delegate](https://sparkle-project.org/documentation/api-reference/Protocols/SPUUpdaterDelegate.html).
 
+The existing `CoreTerminationCoordinator` owns the shared exit guard. Normal
+AppKit quit and `prepareForUpdaterRelaunch(_:)` must quiesce the same model and
+advertisements once, share one outstanding owned-core stop observation, and
+proceed only after confirmed direct exit. Keep the normal AppKit reply and
+updater completion distinct. Deliver them through the main run loop's common
+modes so a nested termination/modal loop cannot starve a main-dispatch task.
+Confirmation can be retained for this one shell/core lifetime; an uncertain
+observation must allow explicit later read-only retry without unpausing work or
+replaying a signal or installation action.
+
+Allow only one pending updater completion. A second pending request refuses
+without replacing it. Return a request UUID for cancellation; cancellation of
+that exact pending callback suppresses its installation continuation but does
+not cancel the shared core observation, discard core custody or resume artwork
+work. A stale UUID cannot cancel a newer request. Completion must consume its
+pending callback before invocation, and a stale exit-job delivery cannot clear
+a newer job. If exit is already confirmed, normal quit consumes any queued
+updater continuation before returning `.terminateNow`; its later queued delivery
+must have no second effect. Unknown/uncertain exit never invokes an installation
+continuation as confirmed. The adapter owns its uncertainty/cancellation UI and
+must retain its SDK handler for review or invalidate it when its operation ends.
+This hook can be skipped by Sparkle, so the normal termination guard is required
+independently. No installed-update or descendant-exit claim follows from this
+in-memory coordination.
+
 Acceptance checks actual packaged defaults and preserved user choices, disabled
 and stopped setup, repeated checks, canceled/failed cycles, stale completion,
 and deferred/uncertain/confirmed core exit. Join valid and tampered signed-feed
@@ -338,6 +363,21 @@ fixtures to the actual pinned SDK. Installed direct/Cask/Sparkle updates, native
 Intel/older-system execution and production signing remain separate R2 gates.
 The Cask and direct channels continue to consume the same DMG; this review does
 not introduce a Homebrew subprocess updater.
+
+The shared `CoreTerminationCoordinator` API now passes five focused groups within
+all 108 Swift tests in 24 suites on macOS 27.0.1 arm64 / Xcode 27. Pending
+replacement refusal, uncertain exit and explicit retry, matching/stale
+cancellation, canceled queued confirmation and immediate normal quit before
+queued confirmation preserve one-shot continuation and quiescence semantics.
+All 102 Mac release fixture groups pass without exclusions. The final fresh
+native package, authenticated IPC/offline maintenance and both normal/shared
+updater callback AppKit probes pass; the latter records its continuation before
+the normal quit reply, with the actual launcher exited, OTP PID absent and PID
+file removed. Original app/probe bytes and strict seals remain unchanged by the
+probe. This updater callback join uses the production core coordinator, not a
+running Sparkle installer. Actual SDK startup/preferences/cycles, signed-feed
+runtime tamper, native UI, installed updates and production qualification remain
+independent H3-L3/R2 work.
 
 #### Signed channel admission and initial defaults
 

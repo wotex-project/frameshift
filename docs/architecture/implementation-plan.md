@@ -925,6 +925,16 @@ adapter, user-choice/KVO/cycle state and signed-feed/UI/quit joins; use its
 qualified explicit Swift loader preparation when joining the shipping app.
 Production and installed acceptance retain R2's independent gates.
 
+H3-L3's shared core-exit API now accepts one cancelable updater continuation and
+normal AppKit quit against one owned observation. Five new groups pass within
+all 108 Swift tests/24 suites, including explicit uncertainty retry, stale
+cancellation/queued delivery and the cached-exit normal-quit race. All 102 Mac
+release fixture groups pass without exclusions. Final fresh native packaging,
+IPC/offline maintenance and both real AppKit/core probes pass with launcher exit,
+OTP PID removal and the shared continuation recorded before quit confirmation.
+This closes the coordinator boundary; actual SDK controller/preferences/cycles,
+runtime signed-feed tamper and native updater UI remain implementation work.
+
 Run these coherent native-shell slices alongside RT1–RT6; portable adapter,
 production credentials and unavailable Intel/older-OS hosts do not block the
 defined local fixtures. Record actual tests in the verification map before

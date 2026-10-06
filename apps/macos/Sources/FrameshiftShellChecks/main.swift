@@ -12,8 +12,12 @@ private struct CheckFailure: Error, CustomStringConvertible {
 @main
 private struct FrameshiftShellChecks {
   static func main() async throws {
-    if CommandLine.arguments.count == 3, CommandLine.arguments[1] == "--owned-quit-probe" {
-      try runOwnedQuitProbe(URL(fileURLWithPath: CommandLine.arguments[2]))
+    if CommandLine.arguments.count == 3,
+      ["--owned-quit-probe", "--owned-updater-quit-probe"].contains(CommandLine.arguments[1])
+    {
+      try runOwnedQuitProbe(
+        URL(fileURLWithPath: CommandLine.arguments[2]),
+        updaterRelaunch: CommandLine.arguments[1] == "--owned-updater-quit-probe")
       return
     }
     try await checkItemLifecycle()
