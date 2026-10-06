@@ -187,6 +187,8 @@ public final class NativeUpdater {
   }
 
   var sdk: SPUUpdater? { controller?.updater }
+  /// Fixture-only access to documented SDK probing/getters; no product UI action.
+  @_spi(Validation) public var validationSDK: SPUUpdater? { controller?.updater }
   var sdkDelegate: UpdaterDelegate? { delegate }
   var admittedFeed: String? { channel?.feedURL }
   var permitsCheck: Bool { started && !quiescing }

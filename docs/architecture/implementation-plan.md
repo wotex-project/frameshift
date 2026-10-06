@@ -920,8 +920,8 @@ defaults. Five new groups pass within all 103 Swift tests/23 suites; the freshly
 packaged development metadata preserves no feed/key and passes the same gate
 with explicit in-memory fixture pins. All 102 Mac release fixture groups,
 fresh ad-hoc packaging, packaged IPC and actual core quit pass. This closes
-channel/default admission only. The stopped SDK boundary described below still
-requires running user-choice/KVO/cycle and signed-feed/UI/quit joins; use its
+channel/default admission only. The SDK boundaries below qualify preferences,
+KVO/probing, signed-feed refusal and guarded quit; use their
 qualified explicit Swift loader preparation when joining the shipping app.
 Production and installed acceptance retain R2's independent gates.
 
@@ -932,8 +932,8 @@ cancellation/queued delivery and the cached-exit normal-quit race. All 102 Mac
 release fixture groups pass without exclusions. Final fresh native packaging,
 IPC/offline maintenance and both real AppKit/core probes pass with launcher exit,
 OTP PID removal and the shared continuation recorded before quit confirmation.
-This closes the coordinator boundary; running SDK preferences/cycles,
-runtime signed-feed tamper and native updater UI remain implementation work.
+This closes the coordinator boundary; running SDK fixture evidence follows
+below. Native updater UI retains separate acceptance.
 
 The separate `FrameshiftUpdater.NativeUpdater` now retains an actual pinned
 stopped standard controller/delegate, publishes current SDK getters and retains
@@ -944,9 +944,8 @@ choices while stopped. The default Swift Build engine's observed loader shape
 uses the explicitly qualified v2 preparation profile; an additional both-CPU/
 universal group passes within all 96 tool tests with actual inputs. Original
 v1/legacy rules and strict final admission are unchanged. Settings/menu and the
-full app/package now join that boundary below; continue running SDK permission/
-KVO/cycles and signed-feed
-tamper. This stopped boundary establishes no production or installed update.
+full app/package and running SDK fixtures now join that boundary below. Native
+permission/UI and installed update retain independent acceptance.
 
 The app now shares one updater/coordinator between Settings, menu commands and
 normal quit; shared quiescence stops model/discovery/outbox/check work. The
@@ -957,8 +956,20 @@ and v2 preparation produce a 1,504-file/29-native/nine-alias full app at its rea
 macOS 15.0.0 minimum. All 102 Mac fixture groups, six updater groups, 108 shell
 tests, stopped preference/seal fixture, packaged IPC/offline maintenance and both
 real core-quit probes pass. Three compiler groups pass within all 99 tool tests
-with actual inputs. Running SDK cycles/signed-feed tamper and native UI/focus
-remain H3-L3/L2 work; source-bound/universal and installed release stay R2/RT3.
+with actual inputs. Native UI/focus remain H3-L3/L2 work; source-bound/universal
+and installed release stay R2/RT3.
+
+Running SDK acceptance now uses separate unique sealed preference and feed
+apps. Actual startup preserves stored choices, explicit checking changes pass,
+and a paused probing cycle cannot restore adapter readiness after KVO delivery.
+The lower-level standard controller consumes exactly four local signed/changed/
+unsigned/signed feeds under an ephemeral key: only valid bodies select an
+update, both refusals report appcast validation error 1000 and later valid
+recovery succeeds. Original inputs/seals remain unchanged. This qualifies
+running preferences/KVO and probing feed cycles, not native permission/dialog
+cancellation or production HTTPS/TLS and installed update. Continue L2's actual
+Settings/menu keyboard/VoiceOver proof and overlapping SDK dialog acceptance;
+in parallel continue RT3's defined source-bound/universal/DMG producer ports.
 
 Run these coherent native-shell slices alongside RT1–RT6; portable adapter,
 production credentials and unavailable Intel/older-OS hosts do not block the

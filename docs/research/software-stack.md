@@ -1535,6 +1535,39 @@ compile and pass. This is a local compiler observation, not an SDK runtime
 failure or a claim about other compiler releases. Running cycles, production
 pins, native UI and installed update remain independent checks.
 
+**Runtime feed fixture boundary:** inspected 2026-10-06 through `gh` at the same
+Sparkle commit. [`SPUUpdater.h` probing API](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SPUUpdater.h#L135-L152)
+checks metadata without offering installation and completes through the public
+find-update/cycle delegates. [`Downloader/SPUDownloader.m`](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Downloader/SPUDownloader.m#L77-L97)
+constructs its own default `NSURLSession` configuration. A standalone Swift 6
+experiment on macOS 27.0.1 registers a custom `URLProtocol` but that default
+session still returns `NSURLErrorDomain -1003` for the reserved fixture host;
+the protocol does not receive the request. Global registration therefore cannot
+be assumed to intercept this SDK's transport. This local observation does not
+describe every configuration or older OS.
+
+Use a private loopback HTTP server for the lower-level SDK signature fixture,
+with a unique app/defaults domain, probing-only delegate and real signed/tampered/
+unsigned responses. Keep it separate from the product's admitted HTTPS adapter;
+do not install trust roots, bypass certificates, replace cryptography or swizzle
+private SDK/network methods. [`SUAppcastDriver.m`](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SUAppcastDriver.m#L97-L170)
+verifies downloaded bytes and refuses recovery when the configured failure
+expiration is zero. Actual runtime fixtures must establish the resulting
+selection/refusal and repeated-cycle behavior; source review alone does not.
+TLS, native dialog cancellation and installed update remain separate gates.
+
+**Runtime observation:** 2026-10-06, macOS 27.0.1 arm64 / Xcode 27. Separate
+unique sealed apps pass actual adapter startup/preferences/paused KVO and the
+standard controller's four signed/changed/unsigned/signed probing cycles. Only
+valid bodies select version `2.0.0`; both refusals report `SUSparkleErrorDomain`
+/ `SUAppcastParseError` (`1000`, [pinned error declaration](https://github.com/sparkle-project/Sparkle/blob/eef1a539a373c1f1a320624b1130fc5de7b2e100/Sparkle/SUErrors.h#L40)),
+with idle readiness after every completion and successful valid recovery. The
+real ephemeral signing key remains in the Node fixture process; each app gets
+only its public key. The loopback server serves exactly four feed responses and
+no archive. Strict complete CPU/nested seals and original SDK/probe bytes pass
+before/after. This qualifies the actual SDK's local signature/refusal behavior,
+not production transport, native permission/dialog/cancellation or installation.
+
 **Native CPU derivation source review:** 2026-10-06. Apple cctools commit
 `e0d56624eca2a76c2ace4c21850df9e666de4ca5`
 [`misc/lipo.c`, `thin_flag` branch](https://github.com/apple-oss-distributions/cctools/blob/e0d56624eca2a76c2ace4c21850df9e666de4ca5/misc/lipo.c#L586-L630)

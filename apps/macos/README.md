@@ -49,10 +49,13 @@ Development metadata contains no production feed or key. The separate
 `FrameshiftUpdater.NativeUpdater` target now owns the actual stopped pinned
 standard SDK controller and retains its delegate, current-state subscriptions
 and guarded relaunch handler. Six adapter groups and all 108 shell tests pass.
-A private sealed `frameshift-updater-probe` app verifies actual stored choices
-without starting the SDK; its isolated defaults domain is removed. Settings and
+A private sealed `frameshift-updater-probe` verifies stopped and running stored
+choices, explicit check preferences and paused SDK/KVO refusal. A separate
+probing-only standard controller accepts signed loopback feeds, rejects changed
+and unsigned bytes, then accepts a valid feed again. Each app owns its defaults
+domain; original inputs and strict seals remain unchanged. Settings and
 the app menu share one adapter/coordinator; development updates are explicitly
-unavailable. Running user-choice/cycle/UI and installed update joins remain open
+unavailable. Native permission/cancellation/dialog/focus and installed update remain open
 under the
 [updater contract](../../docs/host/macos.md#native-updater-lifecycle).
 `FRAMESHIFT_PACKAGED_APP_FIXTURE=/absolute/path/to/development/Frameshift.app`

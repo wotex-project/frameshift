@@ -364,6 +364,28 @@ Intel/older-system execution and production signing remain separate R2 gates.
 The Cask and direct channels continue to consume the same DMG; this review does
 not introduce a Homebrew subprocess updater.
 
+Running acceptance uses disposable, uniquely identified sealed fixture apps and
+their own defaults domains. Test actual adapter startup against independent
+fixture HTTPS/key pins, preserve stored choices, apply only explicit check
+preference changes and deny checks/readiness after quiescence. A fixture-only
+SDK accessor may exercise documented SDK getters/probing without becoming an
+application action or a production eligibility assertion.
+
+Qualify signed-feed verification through the actual standard SDK controller's
+documented `checkForUpdateInformation()` and completion/find-update delegates.
+An isolated loopback HTTP feed may supply signed, changed and unsigned bodies
+under the same exact public key and zero stale-feed tolerance, then a valid body
+again. This lower-level SDK fixture uses its own feed delegate, never the
+application adapter or channel admission; production HTTPS/pins stay enforced.
+Permit only probing checks, serve only the exact fixture route and never offer
+or transfer an update archive. Require one completed cycle per probe, valid-only
+update selection, refusal without a ready-state leak and later valid recovery.
+Remove only the fixture defaults on successful probe completion and clean the
+private app after reaped success; retain failed private app
+and process evidence. This establishes local transport/SDK behavior, not TLS,
+native user cancellation, permission/dialog/focus, installation or production
+distribution. Do not replace SDK cryptography or use private hooks/swizzling.
+
 The shared `CoreTerminationCoordinator` API now passes five focused groups within
 all 108 Swift tests in 24 suites on macOS 27.0.1 arm64 / Xcode 27. Pending
 replacement refusal, uncertain exit and explicit retry, matching/stale
@@ -375,9 +397,9 @@ updater callback AppKit probes pass; the latter records its continuation before
 the normal quit reply, with the actual launcher exited, OTP PID absent and PID
 file removed. Original app/probe bytes and strict seals remain unchanged by the
 probe. This updater callback join uses the production core coordinator, not a
-running Sparkle installer. Actual SDK startup/preferences/cycles, signed-feed
-runtime tamper, native UI, installed updates and production qualification remain
-independent H3-L3/R2 work.
+running Sparkle installer. SDK preference/probing evidence is recorded below;
+native UI, installed updates and production qualification retain independent
+H3-L3/R2 gates.
 
 #### Stopped native SDK adapter
 
@@ -410,9 +432,34 @@ privately sealed `FrameshiftUpdaterProbe` app with a unique fixture bundle ID
 seeds its own defaults domain and verifies the actual stopped controller preserves
 automatic checks/downloads, profiling, interval and stored feed override. It
 removes only that fixture domain. Strict CPU/nested seals and original SDK/probe
-bytes pass before/after. No updater is started by these fixtures. Application
-integration is qualified below; running SDK permission/KVO/cycles, signed-feed tamper and
-installed/production acceptance remain distinct work.
+bytes pass before/after. The stopped mode does not start an updater. Running
+preferences/probing are qualified below; native permission/UI and installed/
+production acceptance remain distinct work.
+
+#### Running SDK preferences and signed-feed probes
+
+`release/macos/native-updater-fixture.mjs` also builds two separate unique sealed
+apps for running acceptance on macOS 27.0.1 arm64 / Xcode 27 with Sparkle 2.10.0.
+The adapter app receives independent fixture HTTPS/key pins, starts the real
+SDK and preserves stored download/profile/interval/feed choices. The pinned
+delegate feed overrides the stored URL; the bundle's no-automatic-install rule
+overrides the stored download choice without erasing it. Explicit automatic
+checking on/off changes and a paused documented probe complete. After queued
+KVO/scheduler delivery, the SDK is idle/ready while the paused adapter remains
+unavailable for new checks. Its successful probe removes only its defaults.
+
+The second app uses the standard controller directly with a probing-only feed
+delegate and an ephemeral Ed25519 public key. A private loopback HTTP server
+serves exactly four appcasts: signed, one-byte changed, unsigned, signed again.
+Only the two valid cycles select version `2.0.0`; both bad bodies finish with
+`SUSparkleErrorDomain` / `SUAppcastParseError` (`1000`), and the SDK returns to
+idle readiness after every cycle. The private signing key exists only in the
+fixture process. No archive is served or installed. Strict complete CPU/nested
+seals and original SDK/probe bytes pass before/after. Outer cleanup follows
+reaped success; failed apps and bounded probe output are retained. This is
+running preference/KVO and local signed-feed transport evidence. Production
+HTTPS/TLS, native permission/cancellation/dialog/focus and installed update still
+require their independent acceptance.
 
 #### Signed channel admission and initial defaults
 
