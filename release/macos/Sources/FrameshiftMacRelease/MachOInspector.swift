@@ -25,10 +25,12 @@ public enum MachOInspector {
     try inspect(path, observe: nil)
   }
 
-  static func inspect(_ path: String, observe: ((FileReadPhase) throws -> Void)?) throws
+  static func inspect(
+    _ path: String, seconds: Double = 60, observe: ((FileReadPhase) throws -> Void)?
+  ) throws
     -> [MachOSlice]
   {
-    let policy = try FileReadPolicy(maximum: 128 * 1024 * 1024)
+    let policy = try FileReadPolicy(maximum: 128 * 1024 * 1024, seconds: seconds)
     return try AdmittedFile.withRegions(path, policy: policy, observe: observe) { reader in
       let first = try reader.read(offset: 0, count: 8)
       let marker = try word(first, 0, bigEndian: true)

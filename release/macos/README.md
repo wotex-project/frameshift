@@ -56,9 +56,22 @@ swift run frameshift-mac-release inspect-macho /absolute/path/to/native-file
 
 Output is a bounded JSON slice array plus LF; failures retain the fixed 64/65
 usage/admission convention. This does not resolve imports or verify code seals.
-The complete closure gate and production wrappers remain separate RT2 work.
+Observe one complete bundle without executing its native code with:
 
-See the [loader metadata contract](../../docs/host/macos.md#native-release-loader-metadata),
+```sh
+swift run frameshift-mac-release check-bundle /absolute/path/to/Frameshift.app arm64
+```
+
+The CPU argument also accepts `x86_64` and `universal`. `NativeBundleInspector`
+streams a bounded directory inventory, hashes every regular file, checks native
+roles/CPUs/minima/imports and exact pinned Sparkle aliases, then repeats the
+whole inventory to confirm custody. Output preserves the existing schema-two
+observation bytes and is bounded to 16 MiB including LF. Usage exits 64; bundle
+refusals exit 1 with fixed text and no observation. SDK resource/archive/cache
+equality, signatures and production-wrapper cutover remain separate RT2 gates.
+
+See the [closure contract](../../docs/host/macos.md#native-closure-admission),
+[loader metadata contract](../../docs/host/macos.md#native-release-loader-metadata),
 [plist contract](../../docs/host/macos.md#native-release-property-lists),
 [child contract](../../docs/host/macos.md#native-release-child-custody) and
 the [owning contract](../../docs/host/macos.md#native-release-input-foundation),

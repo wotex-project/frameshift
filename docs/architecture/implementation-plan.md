@@ -1087,7 +1087,7 @@ The guide links only to real verified artifacts. See
 **Decision:** [D-003](../decisions/README.md#d-003--language-boundary), supported by
 [the source review](../research/software-stack.md#release-tooling-language-boundary).
 **State:** Swift descriptor/hash, owned-process and typed-plist foundations
-and bounded Mach-O observation implemented; whole-closure/SDK/native packaging
+and bounded Mach-O/whole-bundle observation implemented; SDK/signature/native packaging
 ports and the portable descriptor adapter remain
 unimplemented/unqualified. The
 pinned compiler capture is at its validated checkpoint. Use this order for
@@ -1119,10 +1119,20 @@ through scoped descriptor custody. Ten groups join malformed/overflow/string/
 deployment/refusal, exact command bounds, actual descriptor reuse and compiled
 arm64/Intel/universal inputs to the 43-test Swift package gate. The release-built
 CLI matches the retained observer on 34 actual compiled/SDK/app files and 40
-CPU slices with unchanged bytes/metadata. Whole inventory, path resolution, SDK
-resource/archive/cache and strict nested-signature ports remain open. This is
+CPU slices with unchanged bytes/metadata. SDK resource/archive/cache and strict
+nested-signature ports remain open. This is
 metadata parity, not a passing full RT2 cutover or Intel execution. See the
 [loader metadata contract](../host/macos.md#native-release-loader-metadata).
+
+`NativeBundleInspector` now joins the bounded directory/file inventory, required
+roles, CPU/import/minimum rules and exact pinned SDK aliases to a second complete
+custody scan. Six groups pass within the 49-test package lane, including the
+actual 8,192-entry boundary and same-byte/tree mutation refusals. Five real
+compiled/SDK/fresh-app closures match the retained schema-two JSON bytes exactly,
+including Unicode/escaping and traversal order. The command is available for
+inspection; production wrappers retain their current implementation until SDK
+resource/archive/cache/compiler-capture and signature parity completes RT2.
+See the [closure contract](../host/macos.md#native-closure-admission).
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

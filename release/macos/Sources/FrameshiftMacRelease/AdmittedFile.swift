@@ -231,7 +231,7 @@ enum FileReadPhase: Equatable {
   case finished
 }
 
-private struct FileIdentity: Equatable {
+struct FileIdentity: Equatable {
   let device: dev_t
   let inode: ino_t
   let size: Int64

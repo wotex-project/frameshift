@@ -684,6 +684,38 @@ Every native item must contain the selected CPU, or both CPUs for `universal`.
 Specialized CPU subtypes, non-macOS platforms, objects and malformed or
 unsupported Mach-O loader metadata refuse rather than becoming compatibility claims.
 
+The Swift replacement is `NativeBundleInspector.inspect(_:architecture:)` in
+the separate release-tool package. Its directory walk must stream bounded
+`readdir` entries through an admitted no-follow directory descriptor rather
+than allocate an unbounded pathname listing. Keep each directory's identity
+checked against its descriptor and name before/after its children. Reuse leaf
+descriptor/hash/header/plist owners and repeat the complete tree inventory;
+do not treat an unchanged file list alone as unchanged source custody.
+
+Preserve schema-two observation fields, array traversal order and native load
+order. The native observation renderer must reproduce the existing JSON member
+order and string/number bytes because retained bundle observations are hashed.
+This is a fixed native observation format, not another portable receipt encoder.
+The implemented `frameshift-mac-release check-bundle APP CPU` command uses the
+existing closure usage/refusal exits 64/1 and fixed refusal text. Only after
+whole-profile parity may `scripts/check-macos-closure` dispatch to it. SDK
+resource/cache/archive and signature admission retain their additional gates.
+The observation is bounded to 16 MiB including the command's final LF. String
+escaping preserves exact Unicode bytes and traversal uses UTF-16 lexical order,
+matching the retained format. Typed property-list admission deliberately refuses
+malformed/ambiguous metadata before it can become a closure fact.
+
+Six `NativeBundleInspectorTests` groups pass within the 49-test release-tool
+lane on macOS 27.0.1 arm64 / Xcode 27. Actual compiled arm64, Intel and universal
+bundles, a universal fixture containing the pinned real SDK, and the fresh
+development app match the retained observer's schema-two bytes exactly.
+Additional Unicode/escaping, malformed SDK alias/role, missing/duplicate code,
+outside/missing/inherited imports, false minimum, mode/link/FIFO/sparse input,
+native-count, exact 8,192-entry boundary, same-byte rewrite and added-empty-tree
+refusals preserve input custody. These checks establish static observation
+parity; they do not prove SDK resource/archive equality, signatures, code
+execution on Intel/older macOS or installed update acceptance.
+
 This initial closure profile accepts Apple system imports below `/usr/lib/`
 and `/System/Library/`, and bundle-contained loader-relative imports. An
 executable-relative import is admitted only in an executable, whose launch

@@ -3,12 +3,16 @@ import Foundation
 import FrameshiftMacRelease
 
 let arguments = Array(CommandLine.arguments.dropFirst())
-guard arguments.count == 2,
-  ["verify-sparkle-archive", "verify-sparkle-plist", "inspect-macho"].contains(arguments[0])
+let bundleCommand = arguments.first == "check-bundle"
+guard
+  (bundleCommand && arguments.count == 3
+    && NativeBundleArchitecture(rawValue: arguments[2]) != nil)
+    || (arguments.count == 2
+      && ["verify-sparkle-archive", "verify-sparkle-plist", "inspect-macho"].contains(arguments[0]))
 else {
   FileHandle.standardError.write(
     Data(
-      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho] INPUT\n"
+      "usage: frameshift-mac-release [verify-sparkle-archive|verify-sparkle-plist|inspect-macho] INPUT\n       frameshift-mac-release check-bundle APP arm64|x86_64|universal\n"
         .utf8)
   )
   exit(64)
@@ -22,6 +26,13 @@ do {
     try PinnedSparkleArchive.verifyFrameworkInfo(arguments[1])
     FileHandle.standardOutput.write(
       Data("Sparkle \(PinnedSparkleArchive.version) plist identity verified\n".utf8))
+  } else if bundleCommand {
+    var bytes = try NativeBundleInspector.inspect(
+      arguments[1], architecture: NativeBundleArchitecture(rawValue: arguments[2])!
+    ).observationBytes()
+    guard bytes.count < 16 * 1024 * 1024 else { throw ReleaseToolError.inputLimit }
+    bytes.append(10)
+    FileHandle.standardOutput.write(bytes)
   } else {
     let encoder = JSONEncoder()
     encoder.outputFormatting = [.sortedKeys, .withoutEscapingSlashes]
@@ -31,6 +42,10 @@ do {
     FileHandle.standardOutput.write(bytes)
   }
 } catch {
+  if bundleCommand {
+    FileHandle.standardError.write(Data("Mac bundle closure refused\n".utf8))
+    exit(1)
+  }
   let message = (error as? ReleaseToolError)?.description ?? "Mac release admission refused"
   FileHandle.standardError.write(Data("\(message)\n".utf8))
   exit(65)
