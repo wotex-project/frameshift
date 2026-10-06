@@ -29,7 +29,7 @@ const Request = struct {
 
     fn parse(bytes: []const u8) !Request {
         if (bytes.len < 27 or bytes[0] != 1 or bytes[3] != 0 or
-            (bytes[1] != 1 and bytes[1] != 2) or bytes[2] > 3) return refusal;
+            (bytes[1] < 1 or bytes[1] > 3) or bytes[2] > 3) return refusal;
         const minimum = std.mem.readInt(u64, bytes[4..12], .big);
         const maximum = std.mem.readInt(u64, bytes[12..20], .big);
         const milliseconds = std.mem.readInt(u32, bytes[20..24], .big);
@@ -140,6 +140,37 @@ fn readBlock(fd: c_int, bytes: []u8, offset: u64, deadline: u64) !usize {
     }
 }
 
+fn stream(fd: c_int, name: [*:0]const u8, original: c.struct_stat, size: u64, deadline: u64) !void {
+    var response: [12 + 64 * 1024]u8 = undefined;
+    @memcpy(response[0..4], &[_]u8{ 1, 0, 4, 0 });
+    std.mem.writeInt(u64, response[4..12], size, .big);
+    try frame(response[0..12], deadline);
+    var offset: u64 = 0;
+    while (offset < size) {
+        var prefix: [4]u8 = undefined;
+        try input(&prefix, deadline);
+        if (std.mem.readInt(u32, &prefix, .big) != 13) return refusal;
+        var request: [13]u8 = undefined;
+        try input(&request, deadline);
+        const length: usize = @intCast(@min(64 * 1024, size - offset));
+        if (request[0] != 2 or std.mem.readInt(u64, request[1..9], .big) != offset or
+            std.mem.readInt(u32, request[9..13], .big) != length) return refusal;
+        try check(fd, name, original, deadline);
+        var received: usize = 0;
+        while (received < length) {
+            const count = try readBlock(fd, response[12 + received .. 12 + length], offset + received, deadline);
+            if (count == 0) return refusal;
+            received += count;
+        }
+        std.mem.writeInt(u64, response[4..12], offset, .big);
+        try frame(response[0 .. 12 + length], deadline);
+        offset += length;
+    }
+    var end: [1]u8 = undefined;
+    if (try readBlock(fd, &end, size, deadline) != 0) return refusal;
+    try check(fd, name, original, deadline);
+}
+
 fn run(start: u64) !void {
     var prefix: [4]u8 = undefined;
     const initial_deadline = start + 5_000_000_000;
@@ -174,22 +205,26 @@ fn run(start: u64) !void {
         try output(&prefix, deadline);
         try output(&header, deadline);
     }
-    var digest = std.crypto.hash.sha2.Sha256.init(.{});
-    var block: [64 * 1024]u8 = undefined;
-    var offset: u64 = 0;
-    while (offset < size) {
-        const count = try readBlock(fd, block[0..@intCast(@min(block.len, size - offset))], offset, deadline);
-        if (count == 0) return refusal;
-        if (request.operation == 1) try output(block[0..count], deadline) else digest.update(block[0..count]);
-        offset += count;
-    }
-    if (try readBlock(fd, block[0..1], size, deadline) != 0) return refusal;
-    try check(fd, name, original, deadline);
-    if (request.operation == 2) {
-        var response: [44]u8 = undefined;
-        @memcpy(response[0..12], &header);
-        digest.final(response[12..44]);
-        try frame(&response, deadline);
+    if (request.operation == 3) {
+        try stream(fd, name, original, size, deadline);
+    } else {
+        var digest = std.crypto.hash.sha2.Sha256.init(.{});
+        var block: [64 * 1024]u8 = undefined;
+        var offset: u64 = 0;
+        while (offset < size) {
+            const count = try readBlock(fd, block[0..@intCast(@min(block.len, size - offset))], offset, deadline);
+            if (count == 0) return refusal;
+            if (request.operation == 1) try output(block[0..count], deadline) else digest.update(block[0..count]);
+            offset += count;
+        }
+        if (try readBlock(fd, block[0..1], size, deadline) != 0) return refusal;
+        try check(fd, name, original, deadline);
+        if (request.operation == 2) {
+            var response: [44]u8 = undefined;
+            @memcpy(response[0..12], &header);
+            digest.final(response[12..44]);
+            try frame(&response, deadline);
+        }
     }
     try input(&prefix, deadline);
     if (std.mem.readInt(u32, &prefix, .big) != 1) return refusal;

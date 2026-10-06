@@ -487,6 +487,40 @@ The next rejection checks are exact retained record/schema parity, complete
 producer-profile joins and both archive policies; those must pass before
 switching the corresponding build/site consumers.
 
+**Stream extension qualification:** observed 2026-10-06 under the same pinned
+toolchains. Inspecting the installed Elixir 1.20.4
+[`Stream.resource/3` source](https://github.com/elixir-lang/elixir/blob/v1.20.4/lib/elixir/lib/stream.ex#L1575-L1595)
+shows that its cleanup callback also runs on an early halt. Cleanup alone cannot
+establish complete input consumption or worker exit. The portable owner instead
+tracks every exact offset, permits one 64 KiB pull at a time and refuses finish
+until all admitted bytes have been returned. Both descriptor identities and EOF
+still have to pass before the actual successful child exit. The worker has no
+Git or TAR policy; release consumers interpret bytes inside the held callback.
+
+Eight new groups pass on Mac and native Ubuntu, and the combined suite passes
+all **29** groups without exclusions. A 17 MiB input exceeds the metadata read
+cap while producing bounded chunks and matching SHA-256 and the Git blob
+identity. The Mac uses actual Git 2.56.0 with `--no-filters`; its installed
+[`hash-object` documentation](https://git-scm.com/docs/git-hash-object)
+defines this as hashing unchanged contents, including avoiding attribute-based
+newline conversion. Ubuntu repeats native OTP streaming/hashing against the
+public Git blob observation because its installed application runtime contains
+no Git developer command. Neither system writes a Git object in this fixture.
+Empty bounds, unsafe names, partial/escaped/cross-process enumeration, same-byte
+mutation, reducer failure, caller death, deadline, duplicate/bad pull requests
+and oversized/out-of-order/truncated/forged responses refuse acceptance.
+
+The first Ubuntu deadline run exposes a closing-pipe race: an unnecessary abort
+write can lose the port's exit-status observation. At its absolute deadline the
+owner now discards late output and awaits the worker's independent finite timer
+without that write. The repeated fixture observes actual worker exit and no
+accepted late result on both systems. Consumer failure and caller death still
+send one abort; unknown port custody remains an explicit refusal. These results
+qualify the byte primitive, not Git tag/worktree/version verification, archive
+extraction, frozen-source producer or retained record joins. Those consumers
+must preserve raw committed blob identity, recheck complete source and producer
+profiles, and retain partial outputs before their commands can switch.
+
 Adopt Swift for native Mac tooling, Elixir for shared portable release policy
 including pure Cask/appcast rendering and signing, and POSIX shell for entry
 points. Directory names do not determine ownership: portable logic currently

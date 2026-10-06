@@ -1337,6 +1337,14 @@ Ubuntu. Actual escript local and signature-only commands pass with the qualified
 native workers. The public-only SPKI defect is also closed in the retained Node
 verifier. Receipt/replay, public readback, signing and guide/site cutover remain
 separate; this slice writes and publishes nothing.
+The portable owner now also qualifies lazy descriptor-held streaming. Eight
+new groups pass on the same Mac/Ubuntu configurations; all 29 portable groups
+pass. Exact 64 KiB pulls join a 17 MiB source to SHA-256 and Git blob identity,
+with partial reads, same-byte mutation, callback/process failure, deadlines and
+malformed exchange refusing. Actual Git comparison runs on Mac; Ubuntu hashes
+against its public observation. Deadline handling retains actual child-exit
+custody without a write into the worker's closing pipe. This enables source and
+archive consumers without raising the 16 MiB metadata read limit.
 Next implement source-bound record consumers
 and their explicit native producer cutover. Installed image acceptance remains R2.
 

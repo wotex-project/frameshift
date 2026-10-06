@@ -82,9 +82,24 @@ Private inputs require current UID and exactly 0400/0600; trust inputs permit
 current UID/root and no group/world writes. These predicates are independent.
 Keep the descriptor open through Elixir consumption, then recheck before closing.
 
+`with_stream/3` supplies the consumer with the admitted length and a lazy stream
+of sequential chunks, each at most 64 KiB, under that same closing scope. Its
+explicit maximum is at most 8 GiB. Elixir owns Git blob hashing, archive parsing
+and signature policy; the worker only reads bytes. Pull one exact offset/length
+at a time and refuse duplicate, skipped, overlapping, oversized or out-of-order
+exchange. No next chunk is produced until the consumer requests it. The consumer
+must enumerate the complete stream before returning; early halt, reducer failure,
+caller death or deadline aborts without accepting a partial result. Empty input
+requires an explicit zero minimum. EOF and the full original identity must still
+match before actual exit zero, including after the final consumer returns.
+The stream is valid only inside its callback on the calling process; retaining it
+or passing it to another process grants no file/worker authority. This extension
+requires actual multi-chunk and adversarial qualification on both OS families
+before source or archive callers use it.
+
 Use only length-prefixed binary stdin/stdout, with no paths, secrets or file
 bytes in arguments, environment or diagnostics. One request contains version,
-read/hash operation, protection flags, minimum/maximum size, monotonic budget
+read/hash/stream operation, protection flags, minimum/maximum size, monotonic budget
 and one UTF-8 path of at most 4,096 bytes without NUL. Read payloads are at most
 16 MiB; hash input is at most 8 GiB and uses 64 KiB blocks. The whole session
 budget is 1–900,000 ms. Nonblocking polled pipe reads/writes share that deadline;
@@ -98,7 +113,9 @@ descriptor and waits for exactly one finish or abort. Finish checks custody
 again and emits a terminal success; abort, EOF, deadline or any fault refuses
 without returning accepted bytes. A dedicated monitored Elixir owner holds the
 port, bounds responses and observes the actual exit status. Consumer exceptions,
-caller death and timeout request abort and discard late output. The owner stays
+caller death request abort and discard late output. At timeout the owner awaits
+the worker's independent finite timer without another write into a potentially
+closing pipe; late output is discarded. The owner stays
 until actual exit, even beyond the caller budget; no numeric PID lookup, replay,
 late promotion or mutable-file cleanup is permitted. The API does not claim
 descendant/device effects stopped. Fixed error atoms expose no private input.

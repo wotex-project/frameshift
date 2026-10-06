@@ -32,7 +32,11 @@ mise exec -- mix run -e 'case FrameshiftRelease.Input.read("mix.exs", maximum: 6
 The check builds the worker with pinned Zig, checks formatting, compiles Elixir
 with warnings as errors and exercises actual input/mutation/process fixtures.
 The API requires an explicit read maximum; `hash/2` streams up to 8 GiB by
-default. `with_input/3` holds descriptor custody through the supplied consumer
+default. `with_stream/3` supplies the admitted length and lazy sequential chunks
+of at most 64 KiB, with an explicit maximum up to 8 GiB. Enumerate every chunk
+inside its callback on the calling process; partial reads refuse. This enables
+Elixir source hashing and archive parsing without raising the metadata read cap.
+`with_input/3` and `with_stream/3` hold descriptor custody through the supplied consumer
 and returns a result only after closing checks and actual worker exit zero.
 Private and trust predicates use independent options. See the
 [owning custody contract](../../docs/architecture/release-manifest.md#portable-descriptor-custody),
@@ -47,23 +51,28 @@ arguments. Paths and file bytes appear only on stdin/stdout. Stderr is unused.
 
 | Body | Exact fields |
 | --- | --- |
-| Initial request | Version `1` (u8), operation `1` read / `2` hash (u8), flags bit 0 private / bit 1 trust (u8), reserved (u8), minimum (u64), maximum (u64), whole-session milliseconds (u32), path byte length (u16), UTF-8 path bytes |
+| Initial request | Version `1` (u8), operation `1` read / `2` hash / `3` stream (u8), flags bit 0 private / bit 1 trust (u8), reserved (u8), minimum (u64), maximum (u64), whole-session milliseconds (u32), path byte length (u16), UTF-8 path bytes |
 | Provisional read | Version `1`, status `0`, operation `1`, reserved (all u8), actual length (u64), exactly that many bytes |
 | Provisional hash | Version `1`, status `0`, operation `2`, reserved (all u8), actual length (u64), 32 raw SHA-256 bytes |
+| Provisional stream | Version `1`, status `0`, operation `4`, reserved (all u8), actual length (u64) |
+| Pull request | Operation `2` (u8), exact next offset (u64), exact length `min(65536, remaining)` (u32) |
+| Stream chunk | Version `1`, status `0`, operation `4`, reserved (all u8), exact requested offset (u64), exactly the requested bytes |
 | Closing request | Exactly one byte: `1` finish / `0` abort |
 | Terminal success | Exactly four bytes: `1,0,3,0`, followed by actual exit `0` |
 | Terminal refusal | Exactly four bytes: `1,1,0,0`, followed by actual exit `65` |
 
 Initial bodies are at most 4,122 bytes; paths are nonempty, at most 4,096 bytes
-and contain no NUL. Read maximum is 16 MiB, hash maximum 8 GiB and session budget
-1–900,000 ms. A read/hash success is provisional until closing custody and exit.
+and contain no NUL. Read maximum is 16 MiB, hash/stream maximum 8 GiB and session budget
+1–900,000 ms. A read/hash/stream success is provisional until closing custody and exit.
 Malformed/extra/duplicate messages, unsafe or changed files, EOF and deadline
 refuse. The worker polls nonblocking pipes and checks its monotonic budget
 between regular-file syscalls. A stalled syscall has no hard termination claim.
 
 The monitored Elixir owner parses bounded streaming frames before accumulating
 their bodies. On terminal refusal it writes nothing further and waits for actual
-exit. Consumer failure/caller death/deadline request abort once, discard late
-output and retain the port until exit. Lost port custody returns explicit
+exit. Consumer failure/caller death request abort once. At deadline the owner
+discards late output and awaits the worker's independent finite timer without
+writing into a closing pipe. Every refusal retains the port until exit.
+Lost port custody returns explicit
 `:worker_custody_unknown`, never accepted data. No file cleanup, replay, key
 selection, release signing or remote effects belong to this worker.

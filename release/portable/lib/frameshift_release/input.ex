@@ -17,11 +17,20 @@ defmodule FrameshiftRelease.Input do
   The worker checks owner/mode, full inode identity and nanosecond modification
   and change times. Reading does not compare access time.
 
+  `with_stream/3` passes `%{bytes: size, chunks: enumerable}` to its consumer.
+  The lazy stream pulls sequential chunks of at most 64 KiB while retaining the
+  same descriptor. Supply an explicit maximum, at most 8 GiB; the consumer must
+  enumerate all chunks on the calling process before returning. Early halt,
+  escaped streams and changed files refuse. Elixir owns any blob hashing or
+  archive interpretation; the worker adds no source or archive policy.
+
   ## Failure and process ownership
 
   Fixed error atoms contain no input path, bytes or operating-system exception.
   Consumer exceptions are re-raised only after worker exit; caller death sends
-  abort from a dedicated monitored owner. Deadline, malformed output or abort
+  abort from a dedicated monitored owner. At the deadline the owner awaits the
+  worker's independent finite timer without writing into a potentially closing
+  pipe. Deadline, malformed output or abort
   never promotes late bytes. The owner drains bounded exchanges and retains its
   port until actual exit, which can exceed the budget if an OS syscall stalls.
   Direct exit does not prove unrelated descendant or device effects stopped.
@@ -52,6 +61,13 @@ defmodule FrameshiftRelease.Input do
   def hash(path, options \\ []),
     do: consume(path, Keyword.put_new(options, :maximum, @hash_limit), 2, & &1)
 
+  @doc "Consumes a complete bounded lazy byte stream under retained descriptor custody."
+  @spec with_stream(String.t(), keyword(), (map() -> result)) ::
+          {:ok, result} | {:error, atom()}
+        when result: term()
+  def with_stream(path, options, consumer) when is_function(consumer, 1),
+    do: consume(path, options, 3, consumer)
+
   defp consume(path, options, operation, consumer) do
     with {:ok, request, worker, milliseconds, maximum} <- request(path, options, operation) do
       reference = make_ref()
@@ -65,6 +81,15 @@ defmodule FrameshiftRelease.Input do
       receive do
         {^reference, {:admitted, provisional}} ->
           try do
+            provisional =
+              case provisional do
+                {:stream, size} ->
+                  %{bytes: size, chunks: stream(caller, owner, reference, monitor, size)}
+
+                value ->
+                  value
+              end
+
             result = consumer.(provisional)
             send(owner, {reference, :finish})
 
@@ -73,6 +98,10 @@ defmodule FrameshiftRelease.Input do
               error -> error
             end
           catch
+            {:stream_terminal, ^reference, error} ->
+              Process.demonitor(monitor, [:flush])
+              error
+
             kind, reason ->
               stack = __STACKTRACE__
               send(owner, {reference, :abort})
@@ -91,6 +120,35 @@ defmodule FrameshiftRelease.Input do
           {:error, :worker_custody_unknown}
       end
     end
+  end
+
+  defp stream(caller, owner, reference, monitor, size) do
+    Stream.resource(
+      fn ->
+        if self() != caller or not Process.alive?(owner), do: throw(:stream_process_refused)
+        0
+      end,
+      fn
+        ^size ->
+          {:halt, size}
+
+        offset ->
+          if self() != caller, do: throw(:stream_process_refused)
+          send(owner, {reference, {:read, offset}})
+
+          receive do
+            {^reference, {:chunk, ^offset, bytes}} ->
+              {[bytes], offset + byte_size(bytes)}
+
+            {^reference, {:error, _} = error} ->
+              throw({:stream_terminal, reference, error})
+
+            {:DOWN, ^monitor, :process, ^owner, _} ->
+              throw({:stream_terminal, reference, {:error, :worker_custody_unknown}})
+          end
+      end,
+      fn _ -> :ok end
+    )
   end
 
   defp terminal(reference, monitor) do
@@ -158,6 +216,8 @@ defmodule FrameshiftRelease.Input do
           operation: operation,
           minimum: minimum,
           maximum: maximum,
+          size: nil,
+          offset: 0,
           phase: :admitting,
           failure: nil,
           deadline: System.monotonic_time(:millisecond) + milliseconds,
@@ -187,7 +247,7 @@ defmodule FrameshiftRelease.Input do
   defp loop(state) do
     state =
       if state.deadline && System.monotonic_time(:millisecond) >= state.deadline,
-        do: abort(state, :deadline),
+        do: expire(state),
         else: state
 
     timeout =
@@ -206,6 +266,19 @@ defmodule FrameshiftRelease.Input do
       {^reference, :finish} when state.phase == :consuming and is_nil(state.failure) ->
         command(state.port, <<1::32, 1>>)
         loop(%{state | phase: :finishing})
+
+      {^reference, :finish} ->
+        loop(abort(state, :consumer_refused))
+
+      {^reference, {:read, offset}}
+      when state.operation == 3 and state.phase == :streaming and offset == state.offset and
+             is_nil(state.failure) ->
+        length = min(65536, state.size - offset)
+        command(state.port, <<13::32, 2, offset::64, length::32>>)
+        loop(%{state | phase: :stream_reading})
+
+      {^reference, {:read, _}} ->
+        loop(abort(state, :invalid_response))
 
       {^reference, :abort} ->
         loop(abort(state, :consumer_refused))
@@ -229,7 +302,7 @@ defmodule FrameshiftRelease.Input do
       {:EXIT, ^port, _} ->
         send(state.caller, {state.reference, {:error, :worker_custody_unknown}})
     after
-      timeout -> loop(abort(state, :deadline))
+      timeout -> loop(expire(state))
     end
   end
 
@@ -250,8 +323,22 @@ defmodule FrameshiftRelease.Input do
     }
   end
 
+  defp expire(state) do
+    %{
+      state
+      | failure: state.failure || :deadline,
+        deadline: nil,
+        decoder: %{prefix: <<>>, length: nil, chunks: [], received: 0}
+    }
+  end
+
   defp data(state, bytes) do
-    maximum = if state.operation == 1, do: state.maximum + 12, else: 44
+    maximum =
+      case state.operation do
+        1 -> state.maximum + 12
+        2 -> 44
+        3 -> 65548
+      end
 
     case decode(state.decoder, bytes, maximum) do
       {:partial, decoder} ->
@@ -318,6 +405,27 @@ defmodule FrameshiftRelease.Input do
     )
 
     %{state | phase: :consuming}
+  end
+
+  defp response(
+         %{phase: :admitting, operation: 3} = state,
+         <<1, 0, 4, 0, size::64>>
+       )
+       when size >= state.minimum and size <= state.maximum do
+    send(state.caller, {state.reference, {:admitted, {:stream, size}}})
+    %{state | size: size, phase: if(size == 0, do: :consuming, else: :streaming)}
+  end
+
+  defp response(
+         %{phase: :stream_reading, operation: 3} = state,
+         <<1, 0, 4, 0, offset::64, body::binary>>
+       )
+       when offset == state.offset and
+              ((state.size - offset >= 65536 and byte_size(body) == 65536) or
+                 (state.size - offset < 65536 and byte_size(body) == state.size - offset)) do
+    send(state.caller, {state.reference, {:chunk, offset, body}})
+    offset = offset + byte_size(body)
+    %{state | offset: offset, phase: if(offset == state.size, do: :consuming, else: :streaming)}
   end
 
   defp response(%{phase: :finishing} = state, <<1, 0, 3, 0>>), do: %{state | phase: :finished}
