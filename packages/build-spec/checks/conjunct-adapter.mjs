@@ -30,9 +30,17 @@ const inventory = (base, relative='') => {
   return [{path:relative,mode:stat.mode&0o7777,bytes:bytes.toString('base64'),sha256:digest(bytes)}];
 };
 const normFiles=['docs/architecture/conjunct-integration.md','packages/build-spec/test/fixtures/conjunct-adapter-v1.expected.json'];
+const exactV1Contract = document => {
+  const sections = document.match(/\n### Exact v1 adapter requirements\n[\s\S]*?(?=\n## Extraction ownership\n)/g);
+  assert.equal(sections?.length, 1, 'missing or duplicated exact v1 adapter contract');
+  return sections[0];
+};
 for (const relative of normFiles) {
   const authored=command(`norm-${normFiles.indexOf(relative)}`,'git',['show',`${norm}:${relative}`],root);
-  assert.equal(readFileSync(join(root,relative),'utf8'),authored,'authored norm changed');
+  const current=readFileSync(join(root,relative),'utf8');
+  // Other sections have independent authored fixtures; retain their full bytes below.
+  assert.equal(relative.endsWith('.md') ? exactV1Contract(current) : current,
+    relative.endsWith('.md') ? exactV1Contract(authored) : authored,'authored norm changed');
 }
 const selected={
   norm,git:command('source-git','git',['status','--porcelain=v1','--untracked-files=all'],root),

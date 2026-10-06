@@ -1,14 +1,37 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
+import { mkdirSync, mkdtempSync } from 'node:fs';
+import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { Attempt, consumerSources } from './attempt.mjs';
+import { verifyAttempt } from './readback.mjs';
 
-const stage = spawnSync(process.execPath, [fileURLToPath(new URL('./stage.mjs', import.meta.url))],
-  { encoding: 'utf8', stdio: ['ignore', 'pipe', 'inherit'], maxBuffer: 32 * 1024 * 1024 });
-if (stage.error) throw stage.error;
-assert.equal(stage.status, 0, stage.stdout);
-const result = JSON.parse(stage.stdout.trim());
-console.log(`Verified bundle: ${result.bundle} (${result.manifest_digest})`);
-const check = spawnSync(process.execPath, [fileURLToPath(new URL('./check.mjs', import.meta.url)), result.bundle, result.manifest_digest],
-  { stdio: 'inherit' });
-if (check.error) throw check.error;
-assert.equal(check.status, 0);
+const repository = resolve(fileURLToPath(new URL('../..', import.meta.url)));
+const parent = join(repository, 'var/conjunct/attempts');
+mkdirSync(parent, { recursive: true });
+const attempt = new Attempt({ root: repository, directory: join(mkdtempSync(join(parent, 'joint-')), 'record'),
+  scope: 'joint', sourcePaths: consumerSources(repository), required: ['stage', 'check', 'completed'] });
+
+function child(id, args) {
+  const actual = attempt.command({ id, program: process.execPath, args, cwd: repository, env: process.env });
+  process.stderr.write(actual.stderr ?? Buffer.alloc(0));
+  if (actual.error) throw actual.error;
+  assert.equal(actual.status, 0, actual.stdout?.toString());
+  return JSON.parse(actual.stdout.toString('utf8').trim());
+}
+
+try {
+  const stage = child('stage', [fileURLToPath(new URL('./stage.mjs', import.meta.url))]);
+  attempt.write('stage-readback-original', { directory: stage.attempt });
+  attempt.write('stage-readback-actual', verifyAttempt(stage.attempt));
+  const check = child('check', [fileURLToPath(new URL('./check.mjs', import.meta.url)), stage.bundle, stage.manifest_digest]);
+  assert.equal(check.manifest_digest, stage.manifest_digest);
+  attempt.write('check-readback-original', { directory: check.attempt });
+  attempt.write('check-readback-actual', verifyAttempt(check.attempt));
+  attempt.completion({ stage, check });
+  assert.equal(attempt.finish().state, 'passed');
+  verifyAttempt(attempt.directory);
+  console.log(`Staged Elixir/Node/browser consumers pass: ${check.output}; custody ${attempt.directory}`);
+} catch (error) {
+  attempt.failure(error);
+  throw error;
+}

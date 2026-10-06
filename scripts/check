@@ -493,7 +493,10 @@ case "${1:-all}" in
   linux-deb) check_linux_deb ;;
   kernel) check_kernel ;;
   build-spec) "$repository_root/scripts/check-build-spec" ;;
-  conjunct) mise exec -- node "$repository_root/scripts/conjunct/run.mjs" ;;
+  conjunct)
+    mise exec -- node "$repository_root/scripts/conjunct/qualify-attempt.mjs"
+    mise exec -- node "$repository_root/scripts/conjunct/run.mjs"
+    ;;
   guide) check_guide ;;
   guide-browser) check_guide_browser ;;
   docs) check_docs ;;

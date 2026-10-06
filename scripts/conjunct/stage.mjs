@@ -1,10 +1,10 @@
 import assert from 'node:assert/strict';
-import { spawnSync } from 'node:child_process';
-import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { chmodSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cohort, digest, inventory, verifyArchive, verifyBundle, verifyDiscovery } from './artifacts.mjs';
+import { Attempt, consumerSources } from './attempt.mjs';
 
 const repository = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const work = mkdtempSync(join(tmpdir(), 'frameshift-conjunct-build-'));
@@ -13,15 +13,23 @@ const bundles = join(repository, 'var/conjunct/bundles');
 mkdirSync(cache, { recursive: true });
 mkdirSync(bundles, { recursive: true });
 const bundle = mkdtempSync(join(bundles, `${cohort.revision.slice(0, 12)}-`));
+const attemptParent = join(repository, 'var/conjunct/attempts');
+mkdirSync(attemptParent, { recursive: true });
+const attemptDirectory = join(mkdtempSync(join(attemptParent, 'stage-')), 'record');
+const attempt = new Attempt({ root: repository, directory: attemptDirectory, scope: 'stage',
+  sourcePaths: consumerSources(repository), required: ['completed'] });
+attempt.write('owned-workspace-request', { work, bundle });
+let sequence = 0;
 const env = { ...process.env, CONJUNCT_SOURCE_REVISION: cohort.revision,
   CARGO_BUILD_JOBS: process.env.CARGO_BUILD_JOBS || '2', ERL_FLAGS: process.env.ERL_FLAGS || '+S 2:2' };
 
 function run(command, args, cwd = repository, options = {}) {
-  const result = spawnSync(command, args, { cwd, env, encoding: 'utf8', maxBuffer: 32 * 1024 * 1024,
-    stdio: options.capture ? 'pipe' : 'inherit', ...options });
+  const result = attempt.command({ id: `command-${sequence++}`, program: command, args, cwd, env,
+    maxBuffer: 32 * 1024 * 1024 });
+  if (!options.capture) { process.stderr.write(result.stdout ?? Buffer.alloc(0)); process.stderr.write(result.stderr ?? Buffer.alloc(0)); }
   if (result.error) throw result.error;
   assert.equal(result.status, 0, `${command} ${args.join(' ')} failed: ${result.stderr || ''}`);
-  return result.stdout?.trimEnd();
+  return result.stdout?.toString('utf8').trimEnd();
 }
 
 function extract(archive, destination, strip = false) {
@@ -39,12 +47,12 @@ function copy(source, destination) {
 try {
   const archive = join(cache, `${cohort.revision}.tar.gz`);
   if (!existsSync(archive)) {
-    const result = spawnSync('gh', ['api', `repos/${cohort.repository}/tarball/${cohort.revision}`],
-      { cwd: repository, maxBuffer: 64 * 1024 * 1024 });
+    const result = attempt.command({ id: `command-${sequence++}`, program: 'gh',
+      args: ['api', `repos/${cohort.repository}/tarball/${cohort.revision}`], cwd: repository, env, maxBuffer: 64 * 1024 * 1024 });
     assert.equal(result.status, 0, result.stderr?.toString());
     writeFileSync(archive, result.stdout);
   }
-  assert.equal(digest(readFileSync(archive)), cohort.source_archive_digest, 'producer source archive changed');
+  assert.equal(digest(attempt.retainBytes('source-archive', archive)), cohort.source_archive_digest, 'producer source archive changed');
   const source = join(work, 'source');
   extract(archive, source, true);
   for (const record of Object.values(cohort.algorithm_sources)) {
@@ -100,12 +108,22 @@ try {
   }
   const telemetryArchive = join(cache, `telemetry-${cohort.telemetry.version}.tar`);
   if (!existsSync(telemetryArchive)) {
-    const response = await fetch(`https://repo.hex.pm/tarballs/telemetry-${cohort.telemetry.version}.tar`,
-      { signal: AbortSignal.timeout(30_000) });
+    const url = `https://repo.hex.pm/tarballs/telemetry-${cohort.telemetry.version}.tar`;
+    attempt.write('telemetry-fetch-original', { url, timeout_ms: 30000 });
+    let response;
+    let downloaded;
+    try {
+      response = await fetch(url, { signal: AbortSignal.timeout(30000) });
+      downloaded = new Uint8Array(await response.arrayBuffer());
+    } catch (error) {
+      attempt.write('telemetry-fetch-actual', { error: { name: error.name, message: error.message, code: error.code ?? null } });
+      throw error;
+    }
+    attempt.write('telemetry-fetch-actual', { status: response.status, headers: [...response.headers], url: response.url, bytes: [...downloaded], error: null });
     assert(response.ok, `telemetry download failed: ${response.status}`);
-    writeFileSync(telemetryArchive, new Uint8Array(await response.arrayBuffer()));
+    writeFileSync(telemetryArchive, downloaded);
   }
-  assert.equal(digest(readFileSync(telemetryArchive)), cohort.telemetry.archive_digest);
+  assert.equal(digest(attempt.retainBytes('telemetry-archive', telemetryArchive)), cohort.telemetry.archive_digest);
   const hex = join(work, 'telemetry');
   extract(telemetryArchive, hex);
   extract(join(hex, 'contents.tar.gz'), join(bundle, 'elixir/telemetry'));
@@ -137,11 +155,14 @@ try {
     files: inventory(bundle) };
   const bytes = JSON.stringify(manifest, null, 2) + '\n';
   writeFileSync(join(bundle, 'manifest.json'), bytes);
-  verifyBundle(bundle, digest(bytes));
-  console.log(JSON.stringify({ bundle, manifest_digest: digest(bytes) }));
+  attempt.write('bundle-original', { bundle, manifest_digest: digest(bytes), bytes: [...Buffer.from(bytes)] });
+  const verified = verifyBundle(bundle, digest(bytes));
+  attempt.write('bundle-actual', { manifest: verified });
+  attempt.completion({ bundle, manifest_digest: digest(bytes), manifest: verified });
+  const result = attempt.finish();
+  assert.equal(result.state, 'passed');
+  console.log(JSON.stringify({ bundle, manifest_digest: digest(bytes), attempt: attempt.directory }));
 } catch (error) {
-  rmSync(bundle, { recursive: true, force: true });
+  attempt.failure(error);
   throw error;
-} finally {
-  rmSync(work, { recursive: true, force: true });
 }

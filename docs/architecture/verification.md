@@ -79,12 +79,6 @@ assign the next consumer evidence without promoting these source checks.
 
 ### Staged Conjunct consumers, 2026-10-04
 
-The [S1 attempt custody amendment](conjunct-integration.md#s1-retained-attempt-custody)
-now specifies retained failures and complete original/actual child records.
-Its seven hands, three hundred schedules, two loaded faults/reductions and ten
-null-budget smokes have not run. The earlier S1 result below retains its
-original scope; it does not qualify this new custody mechanism.
-
 `scripts/check conjunct` builds the exact pinned source archive and verifies
 the [S1 consumer contract](conjunct-integration.md#s1-consumer-bundle-and-acceptance).
 On macOS arm64, Rust 1.97.1, Node 26.9.0, TypeScript 6.0.3 and
@@ -108,6 +102,38 @@ This is package/data/transport integration evidence for the recorded target,
 not complete semantic conformance, frame-rule coverage, v1 migration, a joined
 guide procedure, another browser/OS or physical/operated qualification.
 No catalog identity or existing compiler authority changes.
+
+### Retained S1 attempts, 2026-10-07
+
+The [custody amendment](conjunct-integration.md#s1-retained-attempt-custody)
+and complete seven hands were committed at `c6633da` before implementation.
+`scripts/check conjunct` now requires the actual loaded attempt helper and an
+independent reader: seven complete hands, one hundred schedules for each of
+20261007, 27182818 and 31415926, both omission/empty-prefix source faults with
+strictly smaller actual reruns, and ten pure record/readback smoke calls.
+All passed in `var/conjunct/attempts/qualification-tJLu48/`; timings have a
+null budget and qualify no controlled performance.
+
+The same full lane passed the original pinned `f6609c5e4c2188626f5e1f345446fec04e78d6c9`
+source-built experiment on macOS arm64, Rust 1.97.1, Node 26.9.0,
+TypeScript 6.0.3, Elixir 1.20.4/OTP 29.1 and Chrome 154.0.8037.98.
+Independent readback passed for `stage-b98x3z`, `check-YLZ5Kz` and
+`joint-JnnJVH` under `var/conjunct/attempts/`. Each binds complete original
+requests, source bytes/modes, available command output bytes and exit facts;
+the stage additionally retains both archives before digest/extraction checks.
+The copied consumer retains the accepted bundle, full response reports and
+browser output. Chrome exited with status zero and no signal. Build and
+consumer workspaces remain available after success.
+
+The full log is `var/conjunct-retained-attempt-full6.log`. Earlier attempts
+remain separate: `full2` failed on an absent pinned TypeScript compiler;
+`full5` reached the browser and became incomplete on a local DevTools fetch
+failure (`EADDRNOTAVAIL`). Both retain their inputs, partial actuals and
+workspaces. The subsequent pass does not change their outcomes. Policy and
+all eight original artifact/refusal tests passed. This qualifies the custody
+repair and recorded source-copy experiment, while actual npm/Hex archive
+installation, thirteen-stage mappings, publication and physical qualification
+remain separate S1/S2 obligations.
 
 ### Private account and token foundation, 2026-10-05
 

@@ -1,27 +1,35 @@
 import assert from 'node:assert/strict';
-import { spawn, spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { spawn } from 'node:child_process';
+import { cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { createServer } from 'node:http';
 import { tmpdir } from 'node:os';
 import { extname, join, resolve, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { cohort, digest, inventory, verifyBundle } from './artifacts.mjs';
+import { Attempt, consumerSources } from './attempt.mjs';
 
 const repository = resolve(fileURLToPath(new URL('../..', import.meta.url)));
 const [bundleArgument, expectedDigest] = process.argv.slice(2);
-assert(bundleArgument && expectedDigest, 'usage: check.mjs BUNDLE MANIFEST_DIGEST');
-const sourceBundle = resolve(bundleArgument);
-verifyBundle(sourceBundle, expectedDigest);
+const attemptParent = join(repository, 'var/conjunct/attempts');
+mkdirSync(attemptParent, { recursive: true });
+const attempt = new Attempt({ root: repository, directory: join(mkdtempSync(join(attemptParent, 'check-')), 'record'),
+  scope: 'check', sourcePaths: consumerSources(repository), required: ['completed'] });
 const work = mkdtempSync(join(tmpdir(), 'frameshift-conjunct-consumer-'));
+const sourceBundle = bundleArgument ? resolve(bundleArgument) : null;
+attempt.write('owned-workspace-request', { work, sourceBundle, expectedDigest: expectedDigest ?? null });
 const bundle = join(work, 'bundle');
-cpSync(sourceBundle, bundle, { recursive: true });
-const manifest = verifyBundle(bundle, expectedDigest);
+let manifest;
+let childSequence = 0;
 const tsc = join(repository, 'apps/build-platform/assets/node_modules/typescript/bin/tsc');
 
 function run(command, args, options = {}) {
-  const result = spawnSync(command, args, { cwd: work, stdio: 'inherit', ...options });
+  const result = attempt.command({ id: `command-${childSequence++}`, program: command, args,
+    cwd: options.cwd ?? work, env: options.env ?? process.env });
+  process.stderr.write(result.stdout ?? Buffer.alloc(0));
+  process.stderr.write(result.stderr ?? Buffer.alloc(0));
   if (result.error) throw result.error;
   assert.equal(result.status, 0, `${command} failed`);
+  return result;
 }
 
 async function browser() {
@@ -42,6 +50,7 @@ async function browser() {
   });
   let chrome;
   let socket;
+  let closed;
   const pending = new Map();
   let sequence = 0;
   const requests = [];
@@ -59,8 +68,28 @@ async function browser() {
     await new Promise(resolve_ => server.listen(0, '127.0.0.1', resolve_));
     const origin = `http://127.0.0.1:${server.address().port}`;
     const url = `${origin}/index.html`;
-    chrome = spawn(chromePath, ['--headless=new', '--no-first-run', '--disable-gpu',
-      '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'], { stdio: 'ignore' });
+    const args = ['--headless=new', '--no-first-run', '--disable-gpu',
+      '--remote-debugging-port=0', `--user-data-dir=${profile}`, 'about:blank'];
+    const maxBuffer = 32 * 1024 * 1024;
+    attempt.beginChild({ id: 'browser', program: chromePath, args, cwd: work, env: process.env, maxBuffer });
+    chrome = spawn(chromePath, args, { cwd: work, env: process.env, stdio: ['ignore', 'pipe', 'pipe'] });
+    const output = { stdout: [], stderr: [] };
+    let outputSize = 0;
+    let childError = null;
+    for (const stream of ['stdout', 'stderr']) chrome[stream].on('data', chunk => {
+      output[stream].push(chunk);
+      outputSize += chunk.length;
+      if (outputSize > maxBuffer && !childError) {
+        childError = Object.assign(new Error('browser output ceiling exceeded'), { code: 'ENOBUFS' });
+        chrome.kill('SIGKILL');
+      }
+    });
+    chrome.on('error', error => { childError = error; });
+    closed = new Promise(resolve_ => chrome.once('close', (status, signal) => {
+      attempt.endChild('browser', { status, signal, error: childError,
+        stdout: Buffer.concat(output.stdout), stderr: Buffer.concat(output.stderr) });
+      resolve_();
+    }));
     const active = join(profile, 'DevToolsActivePort');
     await wait(() => existsSync(active), 'Chrome DevTools');
     const port = Number(readFileSync(active, 'utf8').split('\n')[0]);
@@ -101,26 +130,36 @@ async function browser() {
     // After loading local artifacts, an actual browser network disconnect
     // establishes that data and kernel work do not call a host service.
     await command('Network.emulateNetworkConditions', { offline: true, latency: 0, downloadThroughput: 0, uploadThroughput: 0 });
+    const expected = JSON.parse(readFileSync(join(work, 'node-report.json'), 'utf8'));
+    attempt.write('browser-report-original', { expected, origin });
     const report = await evaluate('globalThis.runConjunct()');
-    assert.deepEqual(report, JSON.parse(readFileSync(join(work, 'node-report.json'), 'utf8')));
+    attempt.write('browser-report-actual', { report, exceptions, requests });
+    assert.deepEqual(report, expected);
     assert.equal(exceptions.length, 0, JSON.stringify(exceptions));
     assert(requests.every(request => request.startsWith(origin + '/')), 'browser requested an external resource');
     writeFileSync(join(work, 'browser-report.json'), JSON.stringify(report));
     const version = await command('Browser.getVersion');
     return { browser: version.product, offline: true, external_requests: 0 };
   } finally {
-    socket?.close();
     for (const item of pending.values()) clearTimeout(item.timer);
     if (chrome) {
-      const exited = new Promise(resolve_ => chrome.once('exit', resolve_));
-      chrome.kill('SIGTERM');
-      await Promise.race([exited, delay(3000).then(() => chrome.kill('SIGKILL'))]);
+      if (socket?.readyState === WebSocket.OPEN) socket.send(JSON.stringify({ id: ++sequence, method: 'Browser.close' }));
+      else if (chrome.exitCode === null && chrome.signalCode === null) chrome.kill('SIGTERM');
+      const timer = setTimeout(() => chrome.kill('SIGKILL'), 3000);
+      try { await closed; } finally { clearTimeout(timer); }
     }
+    socket?.close();
     await new Promise(resolve_ => server.close(resolve_));
   }
 }
 
 try {
+  assert(bundleArgument && expectedDigest, 'usage: check.mjs BUNDLE MANIFEST_DIGEST');
+  attempt.write('bundle-original', { sourceBundle, expectedDigest });
+  const accepted = verifyBundle(sourceBundle, expectedDigest);
+  cpSync(sourceBundle, bundle, { recursive: true });
+  manifest = verifyBundle(bundle, expectedDigest);
+  attempt.write('bundle-actual', { accepted, copied: manifest });
   mkdirSync(join(work, 'node_modules/@conjunct'), { recursive: true });
   for (const name of ['kernel', 'data', 'guide']) cpSync(join(bundle, 'js', name), join(work, 'node_modules/@conjunct', name), { recursive: true });
   for (const name of ['consumer.mjs', 'node.mjs', 'worker.mjs', 'browser.mjs', 'types.ts', 'elixir.exs', 'fixtures']) {
@@ -153,8 +192,7 @@ end
     MIX_HOME: join(work, 'mix-home'), HEX_HOME: join(work, 'hex-home') };
   // Rebar is a build tool supplied by the pinned Mix installation, not a
   // package fetched by the isolated consumer. Runtime packages are all staged.
-  const rebar = spawnSync('mix', ['local.rebar', '--if-missing'], { cwd: repository, encoding: 'utf8' });
-  assert.equal(rebar.status, 0, rebar.stderr);
+  run('mix', ['local.rebar', '--if-missing'], { cwd: repository });
   const rebarPath = process.env.MIX_REBAR3 || join(process.env.MIX_HOME || join(process.env.HOME, '.mix'), 'elixir/1-20-otp-29/rebar3');
   assert(existsSync(rebarPath), 'pinned Mix rebar3 unavailable');
   offline.MIX_REBAR3 = rebarPath;
@@ -163,8 +201,10 @@ end
   run('mix', ['deps.get', '--offline'], { env: offline });
   run('mix', ['compile', '--warnings-as-errors'], { env: offline });
   run('mix', ['run', 'elixir.exs', bundle, manifest.target, join(work, 'elixir-report.json')], { env: offline });
-  assert.deepEqual(JSON.parse(readFileSync(join(work, 'elixir-report.json'), 'utf8')),
-    JSON.parse(readFileSync(join(work, 'node-report.json'), 'utf8')), 'port/WASM original responses differ');
+  attempt.write('responses-original', { expectation: 'identical complete port/WASM response bytes' });
+  const responses = { elixir: [...readFileSync(join(work, 'elixir-report.json'))], node: [...readFileSync(join(work, 'node-report.json'))] };
+  attempt.write('responses-actual', responses);
+  assert.deepEqual(JSON.parse(Buffer.from(responses.elixir)), JSON.parse(Buffer.from(responses.node)), 'port/WASM original responses differ');
   const browserResult = await browser();
   const evidence = mkdtempSync(join(sourceBundle, '..', `${sourceBundle.split(sep).at(-1)}-consumer-`));
   for (const name of ['elixir-report.json', 'node-report.json', 'browser-report.json', 'frame-profile-probe.json',
@@ -176,7 +216,11 @@ end
     checker_files: inventory(fileURLToPath(new URL('.', import.meta.url))),
     responses_digest: digest(readFileSync(join(work, 'elixir-report.json'))) };
   writeFileSync(output, JSON.stringify(report, null, 2) + '\n');
-  console.log(`Staged Elixir/Node/browser consumers pass: ${output}`);
-} finally {
-  rmSync(work, { recursive: true, force: true });
+  attempt.completion({ report, output, work, bundle: sourceBundle, manifest_digest: expectedDigest });
+  const result = attempt.finish();
+  assert.equal(result.state, 'passed');
+  console.log(JSON.stringify({ output, attempt: attempt.directory, manifest_digest: expectedDigest }));
+} catch (error) {
+  attempt.failure(error);
+  throw error;
 }
