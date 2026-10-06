@@ -209,6 +209,24 @@ SPKI cannot be assigned to two device IDs. Explicit certificate rotation and
 TD refresh need separately authenticated, versioned operations that preserve
 pending delivery and content references.
 
+Firmware must obtain the actual peer certificate from the completed TLS session;
+its absence always refuses pairing and protected operations. Before first
+pairing, certificate-chain trust may be unavailable: an explicitly profiled
+bootstrap handshake can admit that uncertainty only while requiring the client
+certificate, TLS proof of private-key possession and the physical/secret/request
+checks above. Optional chain verification is not authorization. After pairing,
+every protected request checks the exact durable admitted fingerprint; another
+CA-valid certificate is insufficient. Missing peer export, malformed certificate,
+failed private-key proof or an unavailable authority store fails closed. Keep
+certificate bytes, per-session identity and handshake/body/task lifetimes bounded;
+no application header or payload can substitute for TLS identity.
+
+The [pinned ESP-IDF/Mbed TLS inspection and native handshake matrix](../research/hardware-platforms.md#tls-commissioning-pinned-source-and-native-handshake-findings)
+identify candidate-specific configuration traps. Firmware acceptance must join
+its actual SDK peer/session export to these request checks, including anonymous
+and wrong-peer refusal, authority restart and lost-response recovery. Native
+library handshakes alone do not complete that join or qualify device key storage.
+
 A temporary USB setup connection is permitted and does not violate a cable-free
 installed frame. BLE or temporary access-point commissioning MAY be added by a
 hardware profile, but cannot weaken certificate pinning or physical pair mode.
@@ -318,8 +336,9 @@ Upload does not change desired or current state.
 
 Artifact metadata must retain the canonical digest of its exact artifact
 profile, color and geometry snapshot. Use the same RFC 8785/SHA-256 projection
-as [render qualification](qualified-generations.md); exclude changing capacity
-and health. A profile ID alone is insufficient. Cache eligibility, desired
+as [render qualification](qualified-generations.md); retain profile fields and
+limits, but exclude surrounding storage availability and health. A profile ID
+alone is insufficient. Cache eligibility, desired
 acceptance, retry, playlist advancement and the already-displayed outbox path
 must compare that frozen digest with the advertised snapshot before claiming
 compatibility or completion. Missing or changed identity refuses.

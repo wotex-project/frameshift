@@ -97,6 +97,26 @@ sample's indefinite BUSY wait, swallowed SPI failure and factory-only partition
 table cannot serve those contracts unchanged. Implement software refusal and
 recovery tests while preserving the exact H/P physical acceptance gates.
 
+The [pinned TLS source and seven native handshake cases](../research/hardware-platforms.md#tls-commissioning-pinned-source-and-native-handshake-findings)
+define the next firmware software sequence:
+
+1. Freeze IDF 5.5.5's recursive inputs, isolated upstream tools, licenses,
+   configuration and output identities. Enable and test TLS 1.3 and retained
+   peer certificates; do not inherit the HTTPS defaults as a commissioning
+   profile. Record actual linked memory/flash requirements before partition fit.
+2. Join the supported TLS socket/context exports to bounded per-session peer
+   identity and the durable commissioning owner. An optional handshake may
+   accept an anonymous client, so every route needs explicit certificate and
+   authority checks. Test missing/wrong peer, malformed proof, exhausted/expired
+   physical window, replay, lost response and restart with the actual SDK wrapper
+   and Mac identity before normal protocol operations are admitted.
+3. Implement inactive asset verification/journaling, protected artwork and signed
+   rollback alongside the bounded adapter. Keep MCU flash, panel completion,
+   module capacity, ROM recovery and physical power/geometry evidence separate.
+
+The native Mbed TLS experiment establishes library behavior only. No IDF build,
+MCU firmware, Keychain-to-device join or received configuration is completed by it.
+
 ## Composition specification delivery
 
 The [consolidated research](../research/conjunct-adoption.md) supports the

@@ -151,13 +151,102 @@ the exact key, partition and recovery policy before that action. The
 requires appropriate buffer capability and alignment; available PSRAM alone
 does not establish DMA behavior or bounded memory during TLS and refresh.
 
-**Next implementable slice:** the capability-selected indexed4 host artifact
-and preview contract in the [content pipeline](../architecture/content-pipeline.md#closed-indexed4-software-profile).
-Use synthetic palette fixtures and an independently enumerated vendor row
-oracle. That can establish deterministic software packing without selecting a
-controller or claiming measured pigment color. MCU build, mTLS/key custody,
-bounded panel adapter, interrupted refresh, signed rollback, whole-board power
-and exact installed geometry remain distinct M1 acceptance work under
+#### TLS commissioning: pinned source and native handshake findings
+
+The proposed IDF cohort needs an explicit commissioning TLS profile. A secure
+HTTPS server is insufficient evidence that a client certificate is requested,
+retained or authorized. The following files were retrieved with `gh` on
+2026-10-06 at IDF commit `b774170ff46c393eeb5e495ea37936038d3f4f4f`:
+
+| Source boundary | Exact inspected behavior | Consequence |
+| --- | --- | --- |
+| [`esp_https_server.h`](https://github.com/espressif/esp-idf/blob/b774170ff46c393eeb5e495ea37936038d3f4f4f/components/esp_https_server/include/esp_https_server.h), `HTTPD_SSL_CONFIG_DEFAULT` | Client CA is null, optional client auth is false, session tickets are false, four sockets and a 10,240-byte task stack are defaults. `tls_handshake_timeout_ms: 0` selects the underlying ten-second default | Pin explicit resource and handshake budgets. Defaults do not qualify memory consumption during simultaneous TLS, flash writes and refresh. |
+| [`https_server.c`](https://github.com/espressif/esp-idf/blob/b774170ff46c393eeb5e495ea37936038d3f4f4f/components/esp_https_server/src/https_server.c), `create_secure_context` and `httpd_ssl_open` | Copies CA and server identity into ESP-TLS; after handshake invokes `open_fn` without using its return value, then the `void` user callback | Neither callback is an authorization result. Extract a bounded peer identity through supported APIs and require it at the request owner; never replace HTTPS-owned transport context or send/receive overrides. |
+| [`esp_tls_mbedtls.c`](https://github.com/espressif/esp-idf/blob/b774170ff46c393eeb5e495ea37936038d3f4f4f/components/esp-tls/esp_tls_mbedtls.c), `set_server_config` | `set_ca_cert` sets required verification. The optional-auth override is inside the non-null CA branch and compiled only with `CONFIG_ESP_TLS_SERVER_MIN_AUTH_MODE_OPTIONAL` | Setting the optional boolean while leaving CA null does not request the intended bootstrap authentication. Freeze and test the bootstrap trust/configuration path rather than borrowing the post-pair CA path. |
+| [`mbedtls/Kconfig`](https://github.com/espressif/esp-idf/blob/b774170ff46c393eeb5e495ea37936038d3f4f4f/components/mbedtls/Kconfig) | TLS 1.3 defaults off and depends on retained peer certificates. `MBEDTLS_SSL_KEEP_PEER_CERTIFICATE` defaults on; disabling it makes `mbedtls_ssl_get_peer_cert` return null in the pinned library | Build and test explicit TLS 1.3, certificate-based exchange and retained-peer settings. A smaller build that removes the certificate cannot satisfy the pairing boundary. |
+
+The server source blob is `7f4e083ac308f91bb00248cb3ab2fbcc054cb75b`, SHA-256
+`80cf8b2a90d38535a6f9c819b008927fed00a9b1c7c6bc45160c94a3d2243067`;
+the header blob is `dd18e1701d90b3b5d0eeca266af802c45e67565e`, SHA-256
+`69d83b88248964501ca20c6c388314ea39a7880fa44c785b6bff77bcf5a1eeb9`.
+The ESP-TLS implementation blob is `9507f056464bc929945f9249e2e25b35f979255a`,
+SHA-256 `d8403ebfbfcd59f2b8a064514c6fce2799fbf370ddb95deeff29eee6e59839aa`;
+the Mbed TLS Kconfig blob is `899ad410a9d1c42ad972d2a3174d5c13a26e4d98`,
+SHA-256 `c84df6aa9a4435fa38c7e387ca7276d848cee33721fe516b7fd0f34bcebb0fe8`.
+The public [ESP-TLS header](https://github.com/espressif/esp-idf/blob/b774170ff46c393eeb5e495ea37936038d3f4f4f/components/esp-tls/esp_tls.h)
+exports `esp_tls_get_conn_sockfd` and `esp_tls_get_ssl_context`. These establish
+candidate extraction boundaries, not a completed request-to-peer implementation.
+The [HTTPS event configuration](https://github.com/espressif/esp-idf/blob/b774170ff46c393eeb5e495ea37936038d3f4f4f/components/esp_https_server/Kconfig)
+defaults to a 2,000 ms posting timeout; `-1` selects an indefinite wait. Keep
+this finite and include event/HTTP handling in the overall operation budget.
+
+IDF's exact Mbed TLS submodule is
+[`9d669eadb1955d348986b9280156710aaaadf79f`](https://github.com/espressif/mbedtls/tree/9d669eadb1955d348986b9280156710aaaadf79f),
+which reports Mbed TLS 3.6.6. Its
+[`ssl.h`](https://github.com/espressif/mbedtls/blob/9d669eadb1955d348986b9280156710aaaadf79f/include/mbedtls/ssl.h),
+`mbedtls_ssl_conf_authmode`, documents server default `VERIFY_NONE`; optional
+verification continues after certificate-chain failure. The
+[`ssl_tls.c`](https://github.com/espressif/mbedtls/blob/9d669eadb1955d348986b9280156710aaaadf79f/library/ssl_tls.c)
+peer getter returns null when certificate retention is disabled. Those facts
+were checked against actual native loopback handshakes, not inferred from an
+HTTPS feature list.
+
+**Native experiment:** built the pinned submodule's `ssl_server2` and
+`ssl_client2` in an isolated temporary directory on macOS 27.0.1 arm64, using
+CMake 4.4.4, Apple Clang 21.0.0 (`clang-2100.3.34.2`) and GNU Make 3.81.
+CMake used upstream Python 3.14.8 for configuration checks; no project Python
+code or shipped runtime was added. Python uses the PSF license; Mbed TLS offers
+Apache-2.0 or GPL-2.0-or-later, CMake uses BSD-3-Clause, and GNU Make uses GPL.
+The build used upstream configuration with `ENABLE_PROGRAMS=ON`,
+`ENABLE_TESTING=OFF`, `GEN_FILES=OFF`; its configuration-header SHA-256 is
+`6a1ca93154a35e9b4e3b5a05d4ca6373096e1d28823a81b17d16a4e5de35b87c`.
+This enables TLS 1.3 and certificate retention, unlike IDF's unmodified TLS 1.3
+default. The observed downloaded archive SHA-256 is
+`9beefd652664a896167011515bdd1fd65cb0e3463b4e9a3a93052bd61a95f66a`;
+the immutable submodule commit owns source identity, not GitHub archive encoding.
+Observed server/client executable SHA-256 values are respectively
+`cc7ac042195f62685f013d596d35f145578111b121337e34c6db89e2df238741`
+and `5738cbd3b88b88bcb4ee09eb731278f3250928e5bcb3f6e6c42974b88d015a7a`.
+These identify the experiment outputs, not a portable firmware build.
+
+Each server bound only loopback, disabled tickets and forced TLS 1.3. The client
+required server verification, used `server_name=localhost`, forced TLS 1.3 and
+bounded reads to 3,000 ms. Trusted identities/CA came from the upstream test
+programs; the untrusted client was a newly generated one-day P-256 self-signed
+fixture made with OpenSSL 4.0.3, not a product credential. Anonymous clients
+used `crt_file=none key_file=none`. Every client had a seven-second fixture
+deadline; every server was terminated and reaped after its case.
+
+| Server auth mode | Client certificate | Actual handshake | Retained peer certificate |
+| --- | --- | --- | --- |
+| None | Trusted fixture supplied | TLS 1.3 succeeds | Absent: the server did not request it |
+| Optional | Trusted fixture | TLS 1.3 succeeds | Present |
+| Optional | Untrusted self-signed fixture | TLS 1.3 succeeds; untrusted-chain flag remains | Present |
+| Optional | Absent | TLS 1.3 succeeds | Absent |
+| Required | Trusted fixture | TLS 1.3 succeeds | Present |
+| Required | Untrusted fixture | Refused | No completed session |
+| Required | Absent | Refused | No completed session |
+
+All seven cases passed on 2026-10-06. This establishes the pinned library's
+certificate-presence and verification behavior. It does not compile IDF,
+exercise its HTTPS callback/session ownership, prove malformed-signature refusal,
+test the Mac Keychain identity or qualify the physical board. Optional chain
+verification must never authorize an anonymous caller. Before pairing, require
+the actual TLS peer certificate and private-key proof plus the physical window,
+one-time secret and request identity. After pairing, independently require the
+exact durable admitted fingerprint for every protected request, even if another
+certificate passes a CA check. A certificate in JSON or an HTTP header remains
+unauthenticated data.
+
+**Implementation sequence:** retain the completed capability-selected indexed4
+host/preview and receiver custody/integrity fixtures. Next freeze the isolated
+IDF build inputs and configuration, then join its actual TLS peer export to
+physical commissioning and durable authority. Test absent/untrusted/wrong peer,
+lost response, replay and authority restart through the supported request API
+before exposing any normal protocol operation. Bound memory and task lifetimes
+alongside inactive asset verification, signed OTA and a failure-propagating panel
+adapter. Actual module capacity, flash faults, interrupted refresh, rollback,
+whole-board power and installed geometry retain the separate M1 gates under
 [H-001–H-009 and P-001–P-004](../hardware/validation-plan.md).
 
 ### Large-format future
