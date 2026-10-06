@@ -1194,9 +1194,21 @@ absolute/relative byte parity and Node unavailable. The retained full host's
 resource checks bracket the actual offline SDK child with unchanged custody,
 313 catalog entries, two resolved/not-downloaded models, zero observed network
 attempts and an empty model root. Continue the retained native producer/library
-and around-compiler joins, with one-shot CLI failure/child lifetime qualified
-before child-bearing consumer cutover; then RT3 and H3-L3 updater integration.
+and around-compiler joins before child-bearing consumer cutover; then RT3 and
+H3-L3 updater integration.
 The portable descriptor/input adapter and Elixir owners remain independent work.
+
+One-shot SDK/compiler commands now retain their exact borrowed phase owners after
+printing a fixed refusal until direct-child exit is known. Cancellation of the
+retaining caller cannot abandon the monitor or admit late output; no further
+signal, effect replay, stage cleanup or cross-process journal is added. Two new
+retention groups pass within all 78 tool tests with real SDK inputs; actual
+public phase ownership and release-built record/refusal bytes remain unchanged.
+Ignored-TERM active retention is established by the shared owner fixture, while
+the CLI corpus uses normally exiting pinned Apple children. A running/unconfirmed
+child may extend process lifetime beyond the failed admission budget. Continue
+qualified child-bearing native producer/library joins; unknown and externally
+terminated scope cannot count as stopped or production/descendant proof.
 
 Deliver each coherent port with its own review, proportionate checks and logical
 commit in the active implementation task. Keep acceptance fixtures at the

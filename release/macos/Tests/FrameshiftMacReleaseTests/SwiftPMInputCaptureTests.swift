@@ -10,7 +10,14 @@ final class SwiftPMInputCaptureTests: XCTestCase {
     let fixture = try await SwiftPMCaptureFixture.resolved()
     defer { fixture.remove() }
     let before = try fixture.identities()
-    let result = try await fixture.capture()
+    let manifestOwner = OwnedCommand()
+    let materialOwner = OwnedCommand()
+    let result = try await SwiftPMInputCapture.capture(
+      repository: fixture.root, manifestChild: manifestOwner, materialChild: materialOwner)
+    let manifestExit = await manifestOwner.retainUntilExitAfterRefusal()
+    let materialExit = await materialOwner.retainUntilExitAfterRefusal()
+    XCTAssertEqual(manifestExit, .stopped(.exited(0)))
+    XCTAssertEqual(materialExit, .stopped(.exited(0)))
     XCTAssertEqual(result.files.count, 86)
     XCTAssertEqual(result.inventoryEntries, 152)
     XCTAssertEqual(result.files.last?.path, SwiftPMInputCapture.archivePath)

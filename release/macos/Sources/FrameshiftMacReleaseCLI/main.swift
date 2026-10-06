@@ -27,14 +27,18 @@ else {
   )
   exit(64)
 }
+let manifestChild = OwnedCommand()
+let materialChild = OwnedCommand()
 do {
   if captureCommand {
-    var bytes = try await SwiftPMInputCapture.capture(repository: arguments[1]).observationBytes()
+    var bytes = try await SwiftPMInputCapture.capture(
+      repository: arguments[1], manifestChild: manifestChild, materialChild: materialChild
+    ).observationBytes()
     bytes.append(10)
     FileHandle.standardOutput.write(bytes)
   } else if frameworkCommand {
     var bytes = try await PinnedSparkleFramework.verify(
-      archive: arguments[1], framework: arguments[2]
+      archive: arguments[1], framework: arguments[2], child: materialChild
     ).observationBytes()
     bytes.append(10)
     FileHandle.standardOutput.write(bytes)
@@ -74,11 +78,14 @@ do {
   if captureCommand {
     FileHandle.standardError.write(
       Data("recorded updater compiler inputs unavailable, unsafe or changed\n".utf8))
+    _ = await manifestChild.retainUntilExitAfterRefusal()
+    _ = await materialChild.retainUntilExitAfterRefusal()
     exit(1)
   }
   if frameworkCommand {
     FileHandle.standardError.write(
       Data("pinned updater material unavailable, unsafe or changed\n".utf8))
+    _ = await materialChild.retainUntilExitAfterRefusal()
     exit(1)
   }
   if resourceCommand {

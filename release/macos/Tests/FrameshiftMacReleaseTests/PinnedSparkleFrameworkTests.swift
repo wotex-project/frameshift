@@ -10,7 +10,11 @@ final class PinnedSparkleFrameworkTests: XCTestCase {
     let fixture = try await SparkleMaterialFixture()
     defer { fixture.remove() }
     let before = try fixture.identities()
-    let result = try await fixture.verify()
+    let owner = OwnedCommand()
+    let result = try await PinnedSparkleFramework.verify(
+      archive: fixture.archive, framework: fixture.framework, child: owner)
+    let stopped = await owner.retainUntilExitAfterRefusal()
+    XCTAssertEqual(stopped, .stopped(.exited(0)))
     XCTAssertEqual(result.files.count, 85)
     XCTAssertEqual(result.directories.count, 57)
     XCTAssertEqual(result.links.count, 9)

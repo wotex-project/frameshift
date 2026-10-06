@@ -124,6 +124,15 @@ only completed verified scratch is removed. Cancellation after child success
 still refuses. This does not resolve/repair the compiler workspace, derive CPU
 code, re-sign, execute the SDK or establish upstream build/license/release trust.
 
+Child-bearing CLI commands borrow the same `OwnedCommand` objects used by the
+library. On failure they print their fixed refusal, then retain those owners
+until each direct child is known not-started or reaped. This read-only wait
+ignores the failed caller's task cancellation, sends no further signal and
+never promotes late bytes or removes failed scratch. Running/unconfirmed custody
+can keep the CLI alive beyond the admission deadline; external process termination
+does not prove child/descendant exit and creates no cross-process recovery journal.
+Independent GUI observations keep their finite cancellable exit API.
+
 The existing `scripts/check-macos-closure` and `scripts/check-sdk-resources`
 wrappers now build this development tool and execute its completed binary.
 They preserve caller-relative input, record bytes and fixed 64/1 messages;

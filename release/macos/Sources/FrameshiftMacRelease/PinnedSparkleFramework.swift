@@ -90,7 +90,14 @@ public enum PinnedSparkleFramework {
   public static func verify(archive: String, framework: String) async throws
     -> PinnedSparkleFrameworkObservation
   {
-    try await verify(archive: archive, framework: framework, work: nil, child: OwnedCommand())
+    try await verify(archive: archive, framework: framework, child: OwnedCommand())
+  }
+
+  /// Uses a caller-retained owner so a one-shot CLI can observe exit after refusal.
+  public static func verify(archive: String, framework: String, child: OwnedCommand) async throws
+    -> PinnedSparkleFrameworkObservation
+  {
+    try await verify(archive: archive, framework: framework, work: nil, child: child)
   }
 
   static func verify(

@@ -566,6 +566,22 @@ Traced stop notifications are not classified as exit. When a reaped child's
 pipes remain inherited by a descendant, refuse incomplete output after 200 ms
 and close the readers; direct-child exit does not establish descendant exit.
 
+For a one-shot CLI, keep the failed command's ownership objects alive until each
+started direct child has a confirmed reaped exit. Print the existing fixed
+refusal immediately and emit no observation. `retainUntilExitAfterRefusal()`
+performs read-only retention outside the failed admission budget, ignores caller
+task cancellation, and never signals, restarts or replays an effect. Not-started
+and reaped owners permit error exit; running or unconfirmed custody does not.
+Do not claim a finite process-exit deadline for a child that will not stop or a
+custody error that cannot be resolved. An external termination of the tool leaves
+its scratch incomplete and does not establish child/descendant exit; the monitor
+is still process-local, with no PID-only recovery or cross-process journal.
+Expose borrowed ownership for the Sparkle archive child and both SwiftPM capture
+phases so the CLI can retain the actual objects used by the library. A late zero
+exit permits only the original error exit; it never admits late bytes or deletes
+the failed scratch. Independent finite GUI observations keep their existing
+cancellable `observeExit(seconds:)` semantics.
+
 A failed native producer must keep its private incomplete stage and the previous
 accepted output, even if the failed child later exits zero. It must never promote
 that late output or assume cancellation stopped an effect. A fresh invocation
@@ -575,6 +591,23 @@ deadline/actual exit, ignored TERM and late private-stage mutation, exactly one
 TERM across read-only observations, cancellation before/after launch, nonzero
 exit, inherited-pipe refusal, failed-launch descriptor cleanup, selected Xcode
 execution, working-directory isolation and argument/limit refusal.
+
+The CLI now borrows and retains the exact library ownership objects for manifest
+and original-archive extraction. Two additional retention groups pass within all
+78 Mac release-tool tests on macOS 27.0.1 arm64 / Xcode 27 with both actual SDK
+inputs and no exclusions. A controlled child handles TERM once, remains running
+through cancellation of the retaining caller, writes only its late pending bytes
+and exits zero; retention observes that actual exit without another signal,
+relaunch, accepted-file change or output promotion. Unused, already reaped and
+failed-launch owners return their known status. Actual pinned extraction and
+SwiftPM capture expose the actual stopped phase owners through the public API.
+Release-built CLI facts still match all retained SDK/compiler bytes with complete
+input custody unchanged; early failure and failure after actual manifest exit
+preserve fixed text/no observation and the original malformed state. The active
+ignored-TERM lifetime is shared-owner test evidence, not a claim that the pinned
+Apple tools ignored TERM in that CLI experiment. Unknown custody and external
+termination remain incomplete states; no cross-process or descendant proof is
+established by this local retention change.
 
 ### Native release property lists
 

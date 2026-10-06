@@ -152,6 +152,26 @@ public actor OwnedCommand {
     return status()
   }
 
+  /// Keeps a one-shot caller alive after refusal until this direct child's exit is known.
+  ///
+  /// This read-only wait ignores the failed caller's task cancellation and has
+  /// no deadline: admission already refused. Running or unconfirmed custody
+  /// cannot permit caller exit merely because a TERM was requested. No signal,
+  /// restart, output promotion or descendant-exit claim occurs. GUI callers
+  /// should keep using finite cancellable `observeExit(seconds:)` observations.
+  public nonisolated func retainUntilExitAfterRefusal() async -> OwnedChildStatus {
+    await Task.detached { [self] in
+      while true {
+        let current = await status()
+        switch current {
+        case .notStarted, .stopped: return current
+        case .running, .unconfirmed:
+          try? await Task.sleep(for: .milliseconds(10))
+        }
+      }
+    }.value
+  }
+
   private func monitor() async {
     while true {
       drain(&stdout, into: &output)

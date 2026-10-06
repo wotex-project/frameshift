@@ -50,11 +50,21 @@ public enum SwiftPMInputCapture {
     "apps/macos/.build/artifacts/macos/Sparkle/Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework/"
 
   public static func capture(repository: String) async throws -> SwiftPMInputObservation {
-    try await capture(repository: repository, work: nil, child: OwnedCommand())
+    try await capture(
+      repository: repository, manifestChild: OwnedCommand(), materialChild: OwnedCommand())
+  }
+
+  /// Both phase owners remain with the caller for read-only exit retention after refusal.
+  public static func capture(
+    repository: String, manifestChild: OwnedCommand, materialChild: OwnedCommand
+  ) async throws -> SwiftPMInputObservation {
+    try await capture(
+      repository: repository, work: nil, child: manifestChild, materialChild: materialChild)
   }
 
   static func capture(
     repository: String, work: String?, child: OwnedCommand, seconds: Double = 180,
+    materialChild: OwnedCommand = OwnedCommand(),
     limits: ChildLimits? = nil,
     observe: (@Sendable (SwiftPMCapturePhase) throws -> Void)? = nil
   ) async throws -> SwiftPMInputObservation {
@@ -136,7 +146,7 @@ public enum SwiftPMInputCapture {
         framework: framework, seconds: budget.remaining(maximum: 120))
       try observe?(.workspaceChecked)
       let material = try await PinnedSparkleFramework.verify(
-        archive: archive, framework: framework, work: nil, child: OwnedCommand(),
+        archive: archive, framework: framework, work: nil, child: materialChild,
         seconds: budget.remaining(maximum: 120))
       try observe?(.materialChecked)
       guard

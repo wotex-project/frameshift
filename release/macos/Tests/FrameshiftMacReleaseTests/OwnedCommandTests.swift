@@ -101,6 +101,63 @@ final class OwnedCommandTests: XCTestCase {
     XCTAssertEqual(stopped, .stopped(.signalled(SIGTERM)))
   }
 
+  func testRefusalRetentionSurvivesCallerCancellationUntilActualLateExitWithoutAnotherTERM()
+    async throws
+  {
+    let root = try directory()
+    defer { try? FileManager.default.removeItem(atPath: root) }
+    let signals = root + "/signals"
+    let gate = root + "/exit-gate"
+    let pending = root + "/stage.pending"
+    let accepted = root + "/accepted"
+    try Data("accepted".utf8).write(to: URL(fileURLWithPath: accepted))
+    let original = try identity(accepted)
+    let owner = OwnedCommand()
+    let command = try shell(
+      "trap 'printf t >> \"$2\"' TERM; printf pending > \"$1\"; while [ ! -f \"$3\" ]; do :; done; printf late >> \"$1\"",
+      extra: [pending, signals, gate])
+    try await refuses(.childDeadline) {
+      try await owner.run(command, limits: ChildLimits(seconds: 0.1))
+    }
+    // Release only this controlled fixture on an assertion failure, never signal again.
+    defer { try? Data().write(to: URL(fileURLWithPath: gate)) }
+    guard case .running(let pid) = await owner.status() else {
+      return XCTFail("Ignored TERM lost ownership before retention")
+    }
+    let retention = Task { await owner.retainUntilExitAfterRefusal() }
+    retention.cancel()
+    try await Task.sleep(for: .milliseconds(30))
+    let active = await owner.status()
+    XCTAssertEqual(active, .running(pid))
+    XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: signals)), Data("t".utf8))
+    XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: pending)), Data("pending".utf8))
+    try Data().write(to: URL(fileURLWithPath: gate), options: .withoutOverwriting)
+    let stopped = await retention.value
+    XCTAssertEqual(stopped, .stopped(.exited(0)))
+    XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: signals)), Data("t".utf8))
+    XCTAssertEqual(try Data(contentsOf: URL(fileURLWithPath: pending)), Data("pendinglate".utf8))
+    XCTAssertEqual(try identity(accepted), original)
+    let repeated = await owner.retainUntilExitAfterRefusal()
+    XCTAssertEqual(repeated, stopped)
+    try await refuses(.childAlreadyStarted) { try await owner.run(command) }
+  }
+
+  func testRefusalRetentionReturnsOnlyAlreadyKnownUnusedReapedOrFailedLaunchStatus() async throws {
+    let unused = await OwnedCommand().retainUntilExitAfterRefusal()
+    XCTAssertEqual(unused, .notStarted)
+    let owner = OwnedCommand()
+    try await refuses(.childFailed) { try await owner.run(shell("exit 42")) }
+    let known = await owner.retainUntilExitAfterRefusal()
+    XCTAssertEqual(known, .stopped(.exited(42)))
+    let failed = OwnedCommand()
+    try await refuses(.childLaunch) {
+      try await failed.run(
+        AppleCommand(executable: "/private/missing-frameshift-tool", arguments: []))
+    }
+    let absent = await failed.retainUntilExitAfterRefusal()
+    XCTAssertEqual(absent, .notStarted)
+  }
+
   func testReadOnlyObservationsNeverRepeatTERM() async throws {
     let root = try directory()
     defer { try? FileManager.default.removeItem(atPath: root) }
