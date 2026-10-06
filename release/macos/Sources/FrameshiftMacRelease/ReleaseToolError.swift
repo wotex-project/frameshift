@@ -11,6 +11,15 @@ public enum ReleaseToolError: Error, Equatable, Sendable, CustomStringConvertibl
   case deadline
   case readFailed
   case digestMismatch
+  case invalidCommand
+  case childLaunch
+  case childAlreadyStarted
+  case childDeadline
+  case childCancelled
+  case childOutputLimit
+  case childOutputIncomplete
+  case childFailed
+  case childCustodyUnknown
 
   public var description: String {
     switch self {
@@ -21,6 +30,15 @@ public enum ReleaseToolError: Error, Equatable, Sendable, CustomStringConvertibl
     case .deadline: "release input admission deadline"
     case .readFailed: "release input unavailable"
     case .digestMismatch: "pinned release digest mismatch"
+    case .invalidCommand: "invalid Mac release command"
+    case .childLaunch: "Mac release child could not start"
+    case .childAlreadyStarted: "Mac release child owner already used"
+    case .childDeadline: "Mac release child deadline; retain incomplete output"
+    case .childCancelled: "Mac release child cancelled; retain incomplete output"
+    case .childOutputLimit: "Mac release child output limit; retain incomplete output"
+    case .childOutputIncomplete: "Mac release child output incomplete; retain incomplete output"
+    case .childFailed: "Mac release child failed; retain incomplete output"
+    case .childCustodyUnknown: "Mac release child exit unconfirmed; retain incomplete output"
     }
   }
 }

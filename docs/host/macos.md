@@ -431,8 +431,54 @@ between naming/opening and after opening/reading, truncation/growth/same-byte
 rewrite, permission changes, hard links, sparse oversize files, invalid bounds,
 monotonic expiry and descriptor cleanup. Independently running the CLI on the
 pinned actual ZIP joins this foundation to upstream bytes. Native closure,
-property-list and owned-process foundations require their own acceptance
-before a release wrapper switches.
+property-list and closure ports require their own acceptance before a release
+wrapper switches. The owned-process foundation is defined below.
+
+### Native release child custody
+
+`AppleCommand` selects a fixed `/usr/bin/` Apple executable and a literal
+argument array. It admits at most 256 arguments, 8 KiB per string and 256 KiB
+aggregate argument bytes; NUL and relative working directories refuse. Native
+consumers own command-specific semantics and selected SDK evidence. No shell
+command string or record-selected executable is interpreted. Child environment
+keeps a fixed system PATH/locale and only HOME/USER/LOGNAME/TMPDIR/DEVELOPER_DIR/
+SDKROOT context; DYLD and language-runtime hooks are excluded.
+
+`OwnedCommand.run(_:limits:)` owns one direct `posix_spawn` launch attempt. It
+closes stdin, closes unrelated inherited descriptors and drains separate
+nonblocking stdout/stderr pipes in finite fair turns. Default capture is 64 KiB
+per pipe and 30 seconds; validated limits cap at 16 MiB per pipe and 900 seconds.
+The monotonic budget starts before spawn. As with file admission, a synchronous
+kernel spawn call cannot be preempted by this library. The Mac 14 deployment
+build uses the older working-directory extension before Mac 26 and the standard
+API from Mac 26; compilation is not proof of an older installed tool host.
+
+Success requires `waitpid` to reap exit zero and both output pipes to reach EOF
+within the deadline. Nonzero/signal exit, output flood, cancellation and deadline
+return a fixed refusal. A refusal requests TERM at most once for this unreaped
+direct child; it never escalates or signals a process group. The retained monitor
+continues bounded draining/discarding and observing actual exit after the caller
+receives a refusal. A TERM request does not change custody to stopped. This
+monitor lasts within the running tool process; its existence is not a durable
+cross-process recovery journal.
+
+`status()` reports not-started, running PID, reaped exit/signal or unconfirmed
+custody. `observeExit(seconds:)` observes that same child without another signal,
+restart or command replay. A used owner refuses another launch. Unexpected
+wait/reap failure reports unconfirmed custody and permits no further signal.
+Traced stop notifications are not classified as exit. When a reaped child's
+pipes remain inherited by a descendant, refuse incomplete output after 200 ms
+and close the readers; direct-child exit does not establish descendant exit.
+
+A failed native producer must keep its private incomplete stage and the previous
+accepted output, even if the failed child later exits zero. It must never promote
+that late output or assume cancellation stopped an effect. A fresh invocation
+refuses retained partial state under the producer's owning profile. The twelve
+`OwnedCommandTests` cover both-pipe pressure/closed stdin, each-pipe floods,
+deadline/actual exit, ignored TERM and late private-stage mutation, exactly one
+TERM across read-only observations, cancellation before/after launch, nonzero
+exit, inherited-pipe refusal, failed-launch descriptor cleanup, selected Xcode
+execution, working-directory isolation and argument/limit refusal.
 
 ### Native closure admission
 

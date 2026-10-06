@@ -1067,7 +1067,7 @@ The guide links only to real verified artifacts. See
 
 **Decision:** [D-003](../decisions/README.md#d-003--language-boundary), supported by
 [the source review](../research/software-stack.md#release-tooling-language-boundary).
-**State:** Swift descriptor/hash foundation implemented; the remaining native
+**State:** Swift descriptor/hash and owned-process foundations implemented; remaining native
 ports and portable descriptor adapter remain unimplemented/unqualified. The
 pinned compiler capture is at its validated checkpoint. Use this order for
 affected release tooling. Do not extend Mac-native
@@ -1085,9 +1085,9 @@ UI/lifecycle deliverables.
 | RT6 — Cutover and removal; after each affected port is qualified | Update wrapper dispatch, release/Mac/Ubuntu/guide checks, CI and command docs to actual replacements. Remove obsolete Mac JS modules/fixtures only after their consumers and regression coverage have moved; retain a temporary comparison oracle only with an identified remaining consumer. | Dependency/import and process-trace checks show no Node production dependency in the migrated release path. Existing product and source-custody regressions pass. The verification map names the actual new tools/tests and remaining installed/credentialed evidence. |
 
 RT1's separate Swift package, workspace owner and `mac-release` lane now exist.
-Its twelve descriptor/hash fixtures and actual pinned archive CLI admission pass
-on macOS 27.0.1 arm64 / Xcode 27. This qualifies only the input foundation;
-property-list, owned-process and portable adapter work remain open, and no
+Its twelve descriptor/hash fixtures, twelve owned-child fixtures and actual
+pinned archive CLI admission pass on macOS 27.0.1 arm64 / Xcode 27. These qualify
+only those foundations; property-list and portable adapter work remain open. No
 existing release wrapper has switched. See the
 [foundation contract](../host/macos.md#native-release-input-foundation).
 

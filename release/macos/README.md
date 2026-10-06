@@ -29,6 +29,15 @@ before returning a result. Buffered reads cap at 16 MiB; streaming hashes cap at
 directory admission. A monotonic deadline is checked between synchronous file
 operations and cannot preempt an already blocked filesystem call.
 
-See the [owning contract](../../docs/host/macos.md#native-release-input-foundation),
+`AppleCommand` and `OwnedCommand` execute fixed Apple tools with bounded argument
+arrays, closed stdin and fairly drained output. Timeout/cancellation/flood returns
+a refusal after at most one TERM to the owned child. The retained monitor still
+observes actual exit; `status()` and `observeExit(seconds:)` never repeat a signal
+or effect. Failed native producers retain their private pending stage and never
+promote late output. This owner claims only its direct child; inherited pipes
+held by descendants refuse separately.
+
+See the [child contract](../../docs/host/macos.md#native-release-child-custody) and
+the [owning contract](../../docs/host/macos.md#native-release-input-foundation),
 [migration sequence](../../docs/architecture/implementation-plan.md#release-tooling-migration)
 and [verification map](../../docs/architecture/verification.md#installed-product-and-guide).
