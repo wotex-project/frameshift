@@ -261,7 +261,10 @@ receipts to producer inputs separately.
 `scripts/check-sparkle-source TAG COMMIT SOURCE_RECORD ARCHIVE FRAMEWORK OUTPUT`
 creates a private input receipt without fetching, compiling application code,
 thinning, signing or updating an app. First verify the exact frozen source and
-use SwiftPM's bounded `dump-package` parser on its Mac manifest. Require the
+use SwiftPM's bounded `dump-package` parser on its Mac manifest in a separate
+private scratch directory. Workspace initialization can reset an unsupported
+state file even for manifest dumping; evaluation must not open the compiler's
+evidence workspace. Require the
 single Sparkle binary target's exact approved URL and ZIP checksum and bind the
 manifest file hash. Then apply the
 [pinned updater material admission](../host/macos.md#pinned-updater-material-and-private-cpu-derivation)

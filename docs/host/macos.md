@@ -581,6 +581,23 @@ and compiler-cohort checks.
 
 ### Dependency source receipt archive handoff
 
+Native capture must use SwiftPM's parsed binary target and recorded compiler
+artifact, not a separately supplied parallel framework. For the exact Sparkle
+target, admit workspace-state versions six and seven with their respective
+`xcframework` kind encodings, one root-package `macos` artifact, exact package
+location, URL/checksum and fixed cache path. Refuse external package artifacts,
+other dependencies/prebuilts, unknown formats, redirected/aliased/unsafe parents
+and changed manifest/state/cache custody during capture. Bound manifest parsing
+to 60 seconds, workspace input to 128 KiB and complete capture to three minutes.
+Compare the artifact with the pinned archive before returning any SDK facts.
+Evaluate the manifest in a separate private scratch workspace: SwiftPM can reset
+unsupported workspace state even when only dumping a manifest. Preserve the
+actual compiler-state file when refusing it. Keep the complete SDK's 152 members
+and binary bytes within the existing aggregate inventory ceilings.
+Perform no fetch, resolution, compilation, thinning, signing or cache repair
+in this capture gate. Repeat admission around native compilation; when the
+parsed package has no binary target, preserve the existing input inventory.
+
 Updater-bearing candidates must additionally join an independently hashed
 `sparkle-material.json` from the pinned updater source gate. Capture its 85
 regular framework files below

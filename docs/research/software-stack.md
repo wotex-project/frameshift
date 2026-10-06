@@ -1149,6 +1149,30 @@ Frameworks path. This compiler observation does not establish a self-contained
 running app; packaging must admit the actual cache and eliminate the unwanted
 external search path under a bounded rule.
 
+**Observation:** 2026-10-06. SwiftPM's
+[`Workspace+BinaryArtifacts.swift`](https://github.com/swiftlang/swift-package-manager/blob/647baecc198c1d45394ec49932caf5d31e7a77dd/Sources/Workspace/Workspace%2BBinaryArtifacts.swift)
+uses package identity and target name beneath the artifact directory and stores
+the derived artifact path with its remote URL/checksum. The current
+[`Workspace+State.swift`](https://github.com/swiftlang/swift-package-manager/blob/647baecc198c1d45394ec49932caf5d31e7a77dd/Sources/Workspace/Workspace%2BState.swift)
+records schema seven and retains schema-six decoding; their artifact-kind
+encodings differ. Its initializer catches load errors and resets the original
+workspace state. A real refusal fixture reproduced loss of malformed state
+when `dump-package` used that workspace. Manifest dumping now uses a separate
+private scratch directory, preserving original state on refusal.
+
+The producer capture gate requires the exact root `macos` package location,
+recorded compiler artifact path, binary target and approved remote identity,
+then verifies every cached SDK byte/alias against the pinned archive. Four
+groups pass actual SwiftPM schema-seven resolution, separately synthesized
+schema-six decoding, redirected/unknown/unsafe/changed state/cache and manifest
+mutation refusal, absent-target preservation and the aggregate 8,192-member
+boundary including all 152 SDK/archive members. Five source-receipt groups and
+twelve native producer/SDK receiver regressions pass. A dedicated compiler-role
+producer captures and rejoins 86 SDK binary facts, replays without building,
+and retains incomplete custody when the final app omits the SDK or a cached
+header changes during the build. Full Frameshift host/runtime updater,
+native Intel/older OS, installed and production acceptance remain separate.
+
 The material consumer verifies archive size/hash before invoking extraction
 on those fixed admitted bytes, compares all 85 regular files, 57 directories and
 nine aliases with the actual SwiftPM framework, and preserves pre/post archive

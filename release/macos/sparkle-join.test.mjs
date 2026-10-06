@@ -1,12 +1,13 @@
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
 import { execFileSync } from 'node:child_process';
-import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, copyFileSync, existsSync, lstatSync, mkdirSync, readFileSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import test from 'node:test';
 import { isSparkleInput } from '../macos-framework.mjs';
 import { stageDependencyMaterial } from '../material-handoff.mjs';
 import { inspectMacCandidate } from './cohort.mjs';
+import { candidateCommand, macBuildCandidate } from './candidate.mjs';
 import { macImageTool } from './dmg.mjs';
 import { temporary } from './fixture.mjs';
 import { stageMacMaterial } from './material-handoff.mjs';
@@ -86,4 +87,40 @@ test('SDK archive member/digest conflicts and child-time replacement preserve re
   } }));
   assert.ok(existsSync(join(request.output, 'handoff.pending'))); assert.equal(existsSync(join(request.output, 'handoff.json')), false);
   await assert.rejects(() => stageMacMaterial(request), /incomplete/);
+});
+
+test('native producer captures the real SwiftPM artifact before and after the build boundary and refuses changed inputs', mac, async t => {
+  const f = await sparkleJoinFixture(t, zip), built = join(f.repository, 'apps/macos/.build/artifacts/Frameshift.app');
+  const execute = (command, args, options) => {
+    if (command.endsWith('/scripts/package-macos')) { return candidateCommand('/usr/bin/ditto', [join(f.candidate, 'Frameshift.app'), built], { cwd: f.repository, timeout: 120_000 }); }
+    return candidateCommand(command, args, options);
+  };
+  const request = { ...f, output: f.output + '-produced' }, first = await macBuildCandidate(request, execute);
+  assert.equal(first.disposition, 'native-build-candidate');
+  const record = JSON.parse(readFileSync(join(request.output, 'candidate.json')));
+  assert.equal(record.material.filter(file => isSparkleInput(file.path)).length, 86);
+  const joined = await macMaterialJoin({ ...f, candidate: request.output, candidateSha256: first.recordSha256, output: f.output + '-producer-joined' });
+  assert.equal(joined.updaterInputs, 86);
+  const replay = await macBuildCandidate(request, (command, args, options) => { assert.equal(command.endsWith('/scripts/package-macos'), false); return candidateCommand(command, args, options); });
+  assert.equal(replay.recordSha256, first.recordSha256);
+  const unused = { ...f, output: f.output + '-unused' };
+  await assert.rejects(() => macBuildCandidate(unused, (command, args, options) => {
+    const result = execute(command, args, options);
+    if (command.endsWith('/scripts/package-macos')) {
+      rmSync(join(built, 'Contents/Frameworks'), { recursive: true });
+      copyFileSync(join(built, 'Contents/MacOS/frameshiftctl'), join(built, 'Contents/MacOS/Frameshift'));
+      candidateCommand('/usr/bin/codesign', ['--force', '--sign', '-', '--timestamp=none', built], { cwd: f.repository });
+    }
+    return result;
+  }), /updater inputs and bundle differ/);
+  assert.ok(existsSync(join(unused.output, 'build.pending')));
+  const changed = { ...f, output: f.output + '-changed' };
+  await assert.rejects(() => macBuildCandidate(changed, (command, args, options) => {
+    const result = execute(command, args, options);
+    if (command.endsWith('/scripts/package-macos')) {
+      const header = join(f.framework, 'Versions/B/Headers/SPUUpdater.h'), bytes = readFileSync(header); writeFileSync(header, Buffer.from(bytes).fill(32, 0, 1));
+    }
+    return result;
+  }));
+  assert.ok(existsSync(join(changed.output, 'build.pending'))); assert.equal(existsSync(join(changed.output, 'candidate.json')), false);
 });

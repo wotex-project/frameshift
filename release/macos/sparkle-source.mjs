@@ -1,6 +1,6 @@
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { constants, closeSync, fstatSync, fsyncSync, lstatSync, mkdirSync, openSync, readdirSync, realpathSync, unlinkSync, writeFileSync } from 'node:fs';
+import { chmodSync, constants, closeSync, fstatSync, fsyncSync, lstatSync, mkdirSync, mkdtempSync, openSync, readdirSync, realpathSync, rmSync, unlinkSync, writeFileSync } from 'node:fs';
 import { basename, dirname, join, posix, resolve, sep } from 'node:path';
 import { isDeepStrictEqual as same } from 'node:util';
 import { readReleaseInput } from '../files.mjs';
@@ -32,9 +32,14 @@ function synchronize(path, isDirectory = false) {
   } finally { closeSync(fd); }
 }
 export function readSwiftManifest(packageRoot, timeout = 60_000) {
-  const result = spawnSync('/usr/bin/swift', ['package', '--package-path', packageRoot, 'dump-package'], { encoding: 'utf8', timeout, maxBuffer: 512 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
-  if (result.error || result.status !== 0) fail();
-  try { return JSON.parse(result.stdout); } catch { fail(); }
+  // Workspace initialization can discard an unsupported state file even for
+  // dump-package. Keep evaluation separate from the compiler's evidence cache.
+  const scratch = mkdtempSync('/tmp/frameshift-swift-manifest.'); chmodSync(scratch, 0o700);
+  try {
+    const result = spawnSync('/usr/bin/swift', ['package', '--package-path', packageRoot, '--scratch-path', scratch, 'dump-package'], { encoding: 'utf8', timeout, killSignal: 'SIGKILL', maxBuffer: 512 * 1024, stdio: ['ignore', 'pipe', 'pipe'] });
+    if (result.error || result.status !== 0) fail();
+    try { return JSON.parse(result.stdout); } catch { fail(); }
+  } finally { rmSync(scratch, { recursive: true, force: true }); }
 }
 function binaryIdentity(manifest) {
   if (!Array.isArray(manifest.targets)) fail();

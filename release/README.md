@@ -131,7 +131,11 @@ binds actual SwiftPM manifest parsing and admitted SDK/cache bytes to frozen
 source in a private `sparkle-material.json`. It performs no fetch, app compile,
 thinning, signing or update. Replays verify unchanged receipt custody. The
 independent digest consumer preserves strict source/profile/schema bounds; the
-material join and archive receiver consume it for updater-bearing candidates; native compiler-input capture remains separate. See the
+material join and archive receiver consume it for updater-bearing candidates.
+The native producer captures the actual SwiftPM root artifact and compares it
+with the pinned archive before and after its build; manifest evaluation uses a
+private scratch workspace to preserve unsupported original state on refusal.
+The capture gate performs no resolution, download or repair. See the
 [updater source contract](../docs/architecture/release-manifest.md#pinned-mac-updater-source-material).
 
 The plan is compact JSON with one trailing newline, such as:

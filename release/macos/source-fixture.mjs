@@ -24,7 +24,8 @@ export async function sourceFixture(t, { sourceFiles = {}, materialFiles = {}, p
   const sourcePath = join(repository, 'var/inputs/source-inputs.json'), source = await verifyInputs(repository, tag, commit, sourcePath);
   put(repository, 'apps/core/deps/example/source.c', 'dependency source\n'); put(repository, 'packages/decision-kernel/build/packages/example/source.gleam', 'Gleam source\n');
   for (const [path, bytes] of Object.entries(materialFiles)) put(repository, path, bytes);
-  const material = [...await macMaterial(repository), ...await prepareMaterial({ repository, tag, commit, sourcePath, source })], candidates = [];
+  const prepared = await prepareMaterial({ repository, tag, commit, sourcePath, source });
+  const material = [...await macMaterial(repository), ...prepared], candidates = [];
   for (const architecture of ['arm64', 'x86_64']) {
     const f = nativeFixture(t, architecture), candidate = join(repository, 'var', architecture); mkdirSync(candidate, { mode: 0o700 });
     const app = f.root;

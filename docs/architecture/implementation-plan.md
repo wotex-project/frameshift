@@ -758,9 +758,18 @@ separate from core/Gleam source counts and generated exceptions. Three actual
 SDK/compiler groups pass both CPU joins, fourth-receipt BSD USTAR transport,
 immutable CLI replay and missing/partial/mismatched source, input, member,
 digest and child-time replacement refusal. The no-updater and Ubuntu profiles
-retain their existing formats. Continue native SwiftPM/compiler-input capture,
-application updater integration and installed/release acceptance; these local
-consumer fixtures do not authenticate remote compilation or grant publication.
+retain their existing formats. Native capture now admits the actual parsed
+root-package binary target and recorded SwiftPM compiler artifact, compares all
+SDK bytes with the pinned archive, and repeats that gate around the build.
+Manifest evaluation uses a separate private scratch workspace after a refusal
+fixture exposed SwiftPM resetting invalid original state. Four capture groups
+pass real schema-seven resolution, supported schema-six decoding, unknown/
+redirected/unsafe/changed custody, absent/wrong targets, manifest-child mutation
+and the complete aggregate member boundary. Five source groups, twelve native
+producer/SDK consumer regressions and the dedicated producer's omitted-SDK/
+changed-input refusal pass. Continue application updater integration and full
+host/installed/release acceptance; these compiler-role fixtures do not
+authenticate remote compilation or grant publication.
 
 S5's independent authentication groundwork uses the existing Access domain and
 Ash Authentication's public password/token actions with explicitly pinned

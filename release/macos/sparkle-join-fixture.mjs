@@ -1,4 +1,4 @@
-import { copyFileSync, mkdirSync, writeFileSync } from 'node:fs';
+import { copyFileSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { sparkleArchive, sparkleInputArchive, sparkleInputFramework } from '../macos-framework.mjs';
 import { materialFixture } from './material-fixture.mjs';
@@ -11,19 +11,19 @@ export async function sparkleJoinFixture(t, archive) {
   const f = await materialFixture(t, {
     sourceFiles: {
       '.gitignore': 'var/\n_build/\ndeps/\nbuild/\n.build/\n',
+      'apps/macos/App/Info.plist': readFileSync(new URL('../../apps/macos/App/Info.plist', import.meta.url)),
+      'scripts/package-macos': '#!/bin/sh\nexit 0\n',
       'apps/macos/Package.swift': `// swift-tools-version: 6.0\nimport PackageDescription\nlet package = Package(name: "UpdaterJoinFixture", platforms: [.macOS(.v14)], targets: [.binaryTarget(name: "Sparkle", url: "${sparkleArchive.url}", checksum: "${sparkleArchive.sha256}")])\n`,
     },
     prepareMaterial: async source => {
       const zip = join(source.repository, sparkleInputArchive), framework = join(source.repository, sparkleInputFramework);
       mkdirSync(dirname(zip), { recursive: true, mode: 0o700 }); copyFileSync(archive, zip);
       run('/bin/chmod', ['600', zip]);
-      const artifact = join(source.repository, 'apps/macos/.build/artifacts/macos/Sparkle'); mkdirSync(artifact, { recursive: true });
-      run('/usr/bin/unzip', ['-q', zip, 'Sparkle.xcframework/macos-arm64_x86_64/Sparkle.framework/*', '-d', artifact]);
+      run('/usr/bin/swift', ['package', '--package-path', join(source.repository, 'apps/macos'), 'resolve']);
       const output = join(source.repository, 'var/sdk-proof'), result = await checkSparkleSource({ ...source, archive: zip, framework, output });
-      const sparklePath = join(output, 'sparkle-material.json'), receipt = await readSparkleSourceReceipt(sparklePath, result.receiptSha256, source.source);
+      const sparklePath = join(output, 'sparkle-material.json'); await readSparkleSourceReceipt(sparklePath, result.receiptSha256, source.source);
       sdk = { sparklePath, sparkleSha256: result.receiptSha256, archive: zip, framework };
-      return [...receipt.framework.files.map(file => ({ ...file, path: sparkleInputFramework + file.path })),
-        { path: sparkleInputArchive, mode: 0o600, bytes: sparkleArchive.bytes, sha256: sparkleArchive.sha256 }];
+      return [];
     },
     prepareApp: async (native, architecture) => {
       await stageSparkleFramework(sdk.archive, native.root, architecture);

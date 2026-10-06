@@ -8,6 +8,8 @@ import { readReleaseInput, withReleaseInput } from '../files.mjs';
 import { inspectGleamMetadata, prepareGleamMetadata } from '../gleam-metadata.mjs';
 import { auditMacBundle } from './closure.mjs';
 import { verifyDevelopmentSignatures } from './dmg.mjs';
+import { captureSparkleInputs } from './sparkle-capture.mjs';
+import { isSparkleInput } from '../macos-framework.mjs';
 
 const encode = value => Buffer.from(JSON.stringify(value) + '\n');
 const hash = value => createHash('sha256').update(value).digest('hex');
@@ -78,6 +80,9 @@ export async function macMaterial(repository) {
   }
   for (const path of ['apps/core/deps', 'packages/decision-kernel/build/packages']) await visit(path, 0);
   if (!files.length) fail('Mac dependency material missing');
+  const sdk = await captureSparkleInputs(repository); budget();
+  if (entries + sdk.length + (sdk.length ? 66 : 0) > 8192 || total + sdk.reduce((sum, file) => sum + file.bytes, 0) > 512 * 1024 * 1024) fail('Mac material aggregate inventory limit');
+  files.push(...sdk);
   return files;
 }
 
@@ -124,6 +129,8 @@ export async function macBuildCandidate({ repository, tag, commit, sourcePath, a
     if (!metadata.bytes.equals(metadata.canonical)) fail('canonical Gleam metadata preparation required before new Mac candidate');
   }
   const material = await macMaterial(repository);
+  const updater = material.some(file => isSparkleInput(file.path));
+  const checkUpdater = bundle => { if (Boolean(bundle.links?.length) !== updater) fail('Mac build updater inputs and bundle differ'); };
   const physical = join(realpathSync(dirname(output)), basename(output));
   const artifactRoot = join(repository, 'apps/macos/.build/artifacts');
   if (physical === repository || physical === artifactRoot || physical.startsWith(artifactRoot + sep) || artifactRoot.startsWith(physical + sep) || (physical.startsWith(repository + sep) && !releaseGit(repository, ['check-ignore', '--no-index', physical]).length)) fail('Mac candidate output overlaps source or mutable artifacts');
@@ -145,7 +152,7 @@ export async function macBuildCandidate({ repository, tag, commit, sourcePath, a
     const before = outputDirectory(output);
     if (!same(readdirSync(output).sort(), ['Frameshift.app', 'candidate.json'])) fail('incomplete or unknown Mac candidate output');
     const bytes = await readReleaseInput(recordPath, { maximum: maximumRecord, privateKey: true });
-    const bundle = await auditMacBundle(app, architecture); versions(app); nativeSignatures(app, bundle, repository, execute);
+    const bundle = await auditMacBundle(app, architecture); checkUpdater(bundle); versions(app); nativeSignatures(app, bundle, repository, execute);
     if (!bytes.equals(encode({ ...subject, bundle }))) fail('Mac candidate inputs or bytes changed');
     await recheck();
     const final = outputDirectory(output);
@@ -160,6 +167,7 @@ export async function macBuildCandidate({ repository, tag, commit, sourcePath, a
   await prepareGleamMetadata({ repository, tag, commit, sourcePath });
   await recheck();
   const built = join(repository, 'apps/macos/.build/artifacts/Frameshift.app'), bundle = await auditMacBundle(built, architecture);
+  checkUpdater(bundle);
   versions(built); nativeSignatures(built, bundle, repository, execute);
   execute('/usr/bin/ditto', [built, app], { cwd: repository, timeout: 120_000 });
   if (!same(bundle, await auditMacBundle(app, architecture))) fail('Mac candidate copy differs');
