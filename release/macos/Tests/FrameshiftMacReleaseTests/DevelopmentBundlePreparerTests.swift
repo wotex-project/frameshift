@@ -9,14 +9,14 @@ final class DevelopmentBundlePreparerTests: XCTestCase {
   func testRealBothCPUsAndUniversalRemoveUnusedSelectedPathsAndDeriveMinimum() async throws {
     let toolchain = try await selectedLibrary()
     for architecture: NativeBundleArchitecture in [.arm64, .intel, .universal] {
-      let fixture = try await PreparationFixture(architecture: architecture)
+      let unused = toolchain + "swift-fixture/macosx"
+      let fixture = try await PreparationFixture(architecture: architecture, rpath: unused)
       defer { fixture.remove() }
       let shell = fixture.app + "/Contents/MacOS/Frameshift"
-      let unused = toolchain + "swift-fixture/macosx"
-      try await fixture.base.tool(["install_name_tool", "-add_rpath", unused, shell])
       try fixture.base.plist(minimum: "13.0").write(
         to: URL(fileURLWithPath: fixture.app + "/Contents/Info.plist"))
       let before = try MachOInspector.inspect(shell)
+      XCTAssertTrue(before.allSatisfy { $0.rpaths == [unused] })
       let accepted = fixture.base.root + "/accepted"
       try Data("retained accepted output".utf8).write(to: URL(fileURLWithPath: accepted))
       let acceptedIdentity = try named(accepted)
@@ -25,6 +25,7 @@ final class DevelopmentBundlePreparerTests: XCTestCase {
       XCTAssertEqual(result.declaredMinimum, "14.0.0")
       XCTAssertEqual(result.nativeMinimum, "14.0.0")
       XCTAssertEqual(result.natives.count, 7)
+      XCTAssertTrue(result.natives.allSatisfy { $0.slices.allSatisfy { $0.rpaths.isEmpty } })
       let after = try MachOInspector.inspect(shell)
       for (left, right) in zip(before, after) {
         XCTAssertEqual(left.minimum, right.minimum)
@@ -238,8 +239,8 @@ final class PreparationFixture {
   let base: NativeBundleFixture
   let parent: String
   let app: String
-  init(architecture: NativeBundleArchitecture = .arm64) async throws {
-    base = try await NativeBundleFixture(architecture: architecture)
+  init(architecture: NativeBundleArchitecture = .arm64, rpath: String? = nil) async throws {
+    base = try await NativeBundleFixture(architecture: architecture, rpath: rpath)
     parent = base.root + "/.package." + UUID().uuidString.replacingOccurrences(of: "-", with: "")
     app = parent + "/Frameshift.app"
     try FileManager.default.createDirectory(

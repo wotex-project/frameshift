@@ -158,7 +158,7 @@ final class NativeBundleFixture {
   let app: String
   let executable: String
   let library: String
-  init(architecture: NativeBundleArchitecture = .arm64) async throws {
+  init(architecture: NativeBundleArchitecture = .arm64, rpath: String? = nil) async throws {
     root = "/tmp/frameshift-bundle-\(UUID().uuidString)"
     app = root + "/Frameshift.app"
     executable = root + "/exe"
@@ -178,9 +178,11 @@ final class NativeBundleFixture {
           let path = root + "/\(kind)-\(arch)"
           let flags =
             kind == "lib" ? ["-dynamiclib", "-install_name", "@loader_path/fixture.dylib"] : []
+          // Link the initial search path without depending on spare load-command space.
+          let search = rpath.map { ["-Wl,-rpath,\($0)"] } ?? []
           try await tool(
             ["clang", "-target", "\(arch)-apple-macos14.0", "-Wl,-headerpad_max_install_names"]
-              + flags + [source, "-o", path])
+              + flags + search + [source, "-o", path])
           slices.append(path)
         }
         if slices.count == 2 {
